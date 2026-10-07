@@ -10,7 +10,8 @@ import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsa
   textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
-  textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection } from "./omega/benchmarks/nyxTextBenchmark";
+  textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
+  textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -650,6 +651,52 @@ check("preflight cannot silently substitute a task family input oracle or infere
 check("recovered or unknown usage cannot be called stable delivery readiness", () => {
   for (const delta of [{logicalCalls: 2}, {physicalCalls: 2}, {providerFailures: 1}, {retries: 1}, {unknownUsageCalls: 1}])
     assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], usage: {...preflightRows[1].usage, ...delta}}]));
+});
+check("the new contract diagnostic is development-only and counterbalanced", () => {
+  const tasks = textSessionContractSelection();
+  assert.equal(tasks.length, 4);
+  assert(tasks.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC" && task.recoveryProfile === "BOUNDED_RECOVERY"));
+  assert.deepEqual(tasks.map(task => task.configuration), ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT",
+    "SESSION_ACTION_CONTRACT", "OBSERVATION_ALIGNED_SCHEMA"]);
+  assert(TEXT_SESSION_CONTRACT_DIAGNOSTICS.every(task =>
+    ![...TEXT_DELIVERY_DIAGNOSTICS, ...TEXT_ACTION_SCHEMA_DIAGNOSTICS, ...TEXT_COMPATIBILITY_DIAGNOSTICS]
+      .some(previous => previous.taskId === task.taskId || previous.question === task.question)));
+});
+check("the candidate selects the shared session contract rather than a replacement request shim", () => {
+  assert.strictEqual(textConfiguredRequest(originalRequest, "SESSION_ACTION_CONTRACT"), originalRequest);
+  assert.deepEqual(textSessionActionContract("SESSION_ACTION_CONTRACT", "SCOPED_FILE"),
+    {kind: "READ_THEN_REPLY", path: "src/question.mjs"});
+  assert.deepEqual(textSessionActionContract("SESSION_ACTION_CONTRACT", "DIRECT"), {kind: "REPLY_ONLY"});
+  for (const configuration of ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"] as const)
+    assert.equal(textSessionActionContract(configuration, "SCOPED_FILE"), undefined);
+});
+check("contract selection cannot silently change defaults or accept unknown delivery", () => {
+  assert.throws(() => textSessionActionContract("UNKNOWN" as never, "DIRECT"));
+  assert.throws(() => textSessionActionContract("SESSION_ACTION_CONTRACT", "NETWORK" as never));
+  assert.strictEqual(textConfiguredRequest(originalRequest, "EXISTING_DEFAULT"), originalRequest);
+});
+const contractPair = pairRows.map((row, index) => ({...row,
+  configuration: index ? "SESSION_ACTION_CONTRACT" as const : "OBSERVATION_ALIGNED_SCHEMA" as const}));
+check("contract comparison cannot substitute for historical default-schema comparisons", () => {
+  assert(compareTextContractPair(contractPair).boundPair);
+  assert(!compareTextPair(contractPair).boundPair);
+  assert(!compareTextContractPair(pairRows).boundPair);
+  assert.equal(compareTextContractPair(contractPair).cognitivePromotion, false);
+});
+check("protocol comparison records provider instability and unknown compute without promotion", () => {
+  const rows = [contractPair[0], {...contractPair[1], usage: {...contractPair[1].usage,
+    providerFailures: 1, unknownUsageCalls: 1}}];
+  assert(!compareTextContractPair(rows).stable); assert(!compareTextContractPair(rows).matchedRealizedCompute);
+  assert(!compareTextContractPair(rows).cognitivePromotion);
+});
+check("phase denials remain visible and cannot be counted as a tool operation or correct answer", () => {
+  const denied = sanitizedTextResult({family: "DEVELOPMENT_DIAGNOSTIC", taskId: "PHASE-DENIED",
+    question: "independent", answer: "731"}, {...result, outcome: "BUDGET_EXHAUSTED", events: [{sequence: 1,
+      eventType: "DENIAL", requestDigest: "a".repeat(64), resultDigest: "b".repeat(64), evidenceClass: "E3",
+      evidenceId: "PHASE-EVIDENCE", outcome: "action_not_permitted_in_current_phase"}]}, [], null, 1);
+  assert.equal(denied.correct, null); assert.equal(denied.state, "PROTOCOL_OR_AUTHORIZATION_FAILURE");
+  assert.equal(denied.eventOutcomes[0].outcome, "action_not_permitted_in_current_phase");
+  assert.equal(denied.usage.toolCalls, 0);
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

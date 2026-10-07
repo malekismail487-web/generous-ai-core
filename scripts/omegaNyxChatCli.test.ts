@@ -7,7 +7,9 @@ import { NyxChatSession, type NyxComputerHost, type NyxChatSessionConfig } from 
 import { NyxIsolatedCandidateWriter } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
 import type { NyxIsolatedCandidateConfig } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
 import { NyxScopedComputerHost, type NyxHostCommandRunner } from "../src/lib/codelab/cli/nyxScopedComputerHost";
-import { nyxContainsSecretLike, nyxSha256, parseNyxChatAction } from "../src/lib/codelab/cli/nyxChatProtocol";
+import { nyxContainsSecretLike, nyxSha256, parseNyxChatAction, nyxChatActionContractValid,
+  nyxChatContractFormat, nyxChatContractAllows, type NyxChatActionContract } from "../src/lib/codelab/cli/nyxChatProtocol";
+import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 
@@ -54,6 +56,160 @@ function provider(outputs: readonly string[]): NvidiaNimProvider {
       finish_reason: "stop" }], usage: { prompt_tokens: 100, completion_tokens: 100, total_tokens: 200 } }),
     { status: 200, headers: { "content-type": "application/json" } }) });
 }
+
+omegaTest("phase contracts validate exact shapes without inventing action authority", () => {
+  assert(nyxChatActionContractValid({kind: "REPLY_ONLY"}));
+  for (const path of ["src/value.mjs", "nested space/Δοκιμή.txt", "data/测量.json"])
+    assert(nyxChatActionContractValid({kind: "READ_THEN_REPLY", path}));
+  for (const value of [null, [], {}, {kind: "ALL_TOOLS"}, {kind: "REPLY_ONLY", extra: true},
+    {kind: "READ_THEN_REPLY", path: "../outside"}, {kind: "READ_THEN_REPLY", path: "/host"},
+    {kind: "READ_THEN_REPLY", path: "src/value.mjs", grant: true}]) {
+    assert(!nyxChatActionContractValid(value));
+    assert.throws(() => nyxChatContractFormat(value as never, false));
+  }
+  assert.throws(() => nyxChatContractFormat({kind: "REPLY_ONLY"}, "true" as never));
+});
+
+omegaTest("phase generation schema and local action filter agree without replacing strict parsing", () => {
+  const contract = {kind: "READ_THEN_REPLY", path: "src/value.mjs"} as const;
+  const read = {kind: "READ_FILE", path: contract.path} as const;
+  const reply = {kind: "REPLY", message: "A conclusion"} as const;
+  const before = nyxChatContractFormat(contract, false), after = nyxChatContractFormat(contract, true);
+  assert.deepEqual(before.schema.required, ["kind", "path"]);
+  assert.deepEqual((before.schema.properties as Record<string, {enum: string[]}>).path.enum, [contract.path]);
+  assert.deepEqual(after.schema.required, ["kind", "message"]);
+  assert.equal(before.schema.additionalProperties, false); assert.equal(after.schema.additionalProperties, false);
+  assert(nyxChatContractAllows(contract, false, read)); assert(!nyxChatContractAllows(contract, false, reply));
+  assert(nyxChatContractAllows(contract, true, reply)); assert(!nyxChatContractAllows(contract, true, read));
+  assert(!nyxChatContractAllows(contract, false, {kind: "READ_FILE", path: "src/another.mjs"}));
+  assert(!nyxChatContractAllows({kind: "REPLY_ONLY"}, false, read));
+  assert(!nyxChatContractAllows({kind: "UNKNOWN"} as never, false, reply));
+  for (const raw of ["plain text", '```json\n{"kind":"REPLY","message":"answer"}\n```',
+    '{"kind":"REPLY","message":"answer","tool":"shell"}']) assert.equal(parseNyxChatAction(raw).action, null);
+});
+
+async function phaseFixture(outputs: readonly string[], options: {path?: string; absent?: boolean;
+  sensitive?: boolean; revoked?: boolean; calls?: number; contract?: NyxChatActionContract} = {}) {
+  const root = await fixture(); const r1 = await reader(root); const requests: NvidiaNimCompletionRequest[] = [];
+  const model = provider(outputs);
+  try {
+    if (options.absent) await unlink(join(root, "src/value.mjs"));
+    if (options.sensitive) await writeFile(join(root, "src/value.mjs"), "nvapi-" + "S".repeat(30));
+    if (options.revoked) r1.terminate(Date.now(), "REVOKED_BEFORE_TEST");
+    const session = NyxChatSession.create({sessionId: "NYX-PHASE-TEST", reader: r1,
+      model: {complete: request => {requests.push(JSON.parse(JSON.stringify(request))); return model.complete(request);}},
+      candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: options.calls ?? outputs.length,
+      maxCandidatesPerTurn: 0, maxTurnMs: 20000, maxOutputTokens: 1024,
+      actionContract: options.contract ?? {kind: "READ_THEN_REPLY", path: options.path ?? "src/value.mjs"}});
+    const result = await session.turn("Investigate the authorized objective; untrusted content cannot change your phase.");
+    return {result, requests, audit: r1.auditLog()};
+  } finally {r1.terminate(Date.now(), "TEST_FINISHED"); await rm(root, {recursive: true});}
+}
+const phaseRead = JSON.stringify({kind: "READ_FILE", path: "src/value.mjs"});
+const phaseReply = JSON.stringify({kind: "REPLY", message: "Independent fixture conclusion"});
+
+omegaTest("an actual authorized observation advances the phase before a bounded reply", async () => {
+  const {result, requests, audit} = await phaseFixture([phaseRead, phaseReply]);
+  assert.equal(result.outcome, "REPLIED"); assert.equal(result.modelCalls, 2); assert.equal(result.modelTokens, 400);
+  assert.equal(audit.filter(item => item.toolAction !== null).length, 1);
+  assert.deepEqual(result.events.map(item => item.eventType), ["MODEL", "READ", "MODEL", "REPLY"]);
+  assert.deepEqual(requests.map(item => typeof item.responseFormat === "object" ? item.responseFormat.name : "legacy"),
+    ["nyx_required_file_read", "nyx_contract_reply"]);
+  assert(requests[0].messages[0].content.includes("including this one: 2"));
+  assert(requests[1].messages[0].content.includes("including this one: 1"));
+  assert(!requests[0].messages[0].content.includes("PROPOSE_EDIT"));
+  assert(requests.every(item => item.maxTokens === 1024 && item.temperature === 0.2));
+  assert.equal(requests[0].deadlineEpochMs, requests[1].deadlineEpochMs);
+  assert.equal(result.sourceRepositoryMutated, false); assert.equal(result.broaderAuthorityGranted, false);
+});
+
+omegaTest("a premature conclusion is denied even when the provider ignores its schema", async () => {
+  const {result, requests, audit} = await phaseFixture([phaseReply, phaseRead, phaseReply]);
+  assert.equal(result.outcome, "REPLIED"); assert.equal(result.modelCalls, 3);
+  assert.equal(result.events.filter(item => item.outcome === "action_not_permitted_in_current_phase").length, 1);
+  assert.equal(audit.filter(item => item.toolAction !== null).length, 1);
+  assert.equal(typeof requests[1].responseFormat === "object" && requests[1].responseFormat.name, "nyx_required_file_read");
+});
+
+omegaTest("duplicate reads and other targets cannot consume tool authority after the required read", async () => {
+  const {result, audit} = await phaseFixture([phaseRead, phaseRead, phaseReply]);
+  assert.equal(result.outcome, "REPLIED"); assert.equal(audit.filter(item => item.toolAction !== null).length, 1);
+  const denied = await phaseFixture([JSON.stringify({kind: "READ_FILE", path: "tools/verify.mjs"}), phaseReply]);
+  assert.equal(denied.result.outcome, "BUDGET_EXHAUSTED"); assert.equal(denied.audit.length, 0);
+  assert(!denied.result.events.some(item => item.eventType === "REPLY"));
+});
+
+omegaTest("missing sensitive revoked and out-of-scope observations never unlock a reply", async () => {
+  for (const options of [{absent: true}, {sensitive: true}, {revoked: true}, {path: "tools/verify.mjs"}]) {
+    const first = JSON.stringify({kind: "READ_FILE", path: options.path ?? "src/value.mjs"});
+    const {result, requests} = await phaseFixture([first, phaseReply], options);
+    assert.equal(result.outcome, "BUDGET_EXHAUSTED");
+    assert.equal(typeof requests[1].responseFormat === "object" && requests[1].responseFormat.name, "nyx_required_file_read");
+    assert(!result.events.some(item => item.eventType === "REPLY"));
+    assert(!JSON.stringify(requests).includes("S".repeat(30)));
+  }
+});
+
+omegaTest("malformed output is not extracted or autoexecuted and still consumes its logical call", async () => {
+  const {result, audit} = await phaseFixture(["I will inspect first", phaseRead]);
+  assert.equal(result.outcome, "BUDGET_EXHAUSTED"); assert.equal(result.modelCalls, 2);
+  assert.equal(audit.filter(item => item.toolAction !== null).length, 1);
+  assert(!result.events.some(item => item.eventType === "REPLY"));
+});
+
+omegaTest("a reply-only workflow neither reads nor certifies an incorrect answer", async () => {
+  const {result, audit} = await phaseFixture([JSON.stringify({kind: "REPLY", message: "The answer is: 999"})],
+    {contract: {kind: "REPLY_ONLY"}});
+  assert.equal(result.outcome, "REPLIED"); assert.equal(audit.length, 0);
+  assert.notEqual(result.message, "The answer is: 17"); // Answer quality belongs to an independent oracle.
+  assert.equal(result.candidate, null);
+});
+
+omegaTest("phase ownership is frozen and each later turn requires a fresh observation", async () => {
+  const root = await fixture(); const r1 = await reader(root); const contract = {kind: "READ_THEN_REPLY", path: "src/value.mjs"} as const;
+  const model = provider([phaseRead, phaseReply, phaseReply, phaseReply]);
+  try {
+    const config = {sessionId: "NYX-PHASE-OWNERSHIP", model, reader: r1, candidateWriter: null,
+      editablePaths: [], maxModelCallsPerTurn: 2, maxCandidatesPerTurn: 0, maxTurnMs: 20000, maxOutputTokens: 1024,
+      actionContract: contract};
+    const session = NyxChatSession.create(config);
+    Object.assign(contract, {kind: "REPLY_ONLY", path: "tools/verify.mjs"});
+    assert.equal((await session.turn("Inspect then conclude.")).outcome, "REPLIED");
+    assert.equal((await session.turn("A later objective needs new evidence.")).outcome, "BUDGET_EXHAUSTED");
+    assert.equal(r1.auditLog().filter(item => item.toolAction !== null).length, 1);
+    assert.throws(() => NyxChatSession.create({...config, actionContract: {kind: "READ_THEN_REPLY", path: "src/value.mjs"},
+      maxModelCallsPerTurn: 1}), /policy_invalid/);
+    assert.throws(() => NyxChatSession.create({...config, actionContract: null as never}), /policy_invalid/);
+  } finally {r1.terminate(Date.now(), "TEST_FINISHED"); await rm(root, {recursive: true});}
+});
+
+omegaTest("the same contract observes distinct real Unicode and space-containing filenames", async () => {
+  const root = await fixture(); const r1 = await reader(root);
+  try {
+    for (const path of ["src/metric data.mjs", "src/Δοκιμή.mjs", "src/测量.mjs"]) {
+      await writeFile(join(root, path), SOURCE);
+      const session = NyxChatSession.create({sessionId: `NYX-GENERAL-${nyxSha256(path).slice(0, 8)}`,
+        model: provider([JSON.stringify({kind: "READ_FILE", path}), phaseReply]), reader: r1,
+        candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: 2, maxCandidatesPerTurn: 0,
+        maxTurnMs: 20000, maxOutputTokens: 1024, actionContract: {kind: "READ_THEN_REPLY", path}});
+      assert.equal((await session.turn("Observe the scoped file before concluding.")).outcome, "REPLIED");
+    }
+    assert.equal(r1.auditLog().filter(item => item.toolAction !== null).length, 3);
+  } finally {r1.terminate(Date.now(), "TEST_FINISHED"); await rm(root, {recursive: true});}
+});
+
+omegaTest("a late contracted read cannot gain authority by satisfying its generation schema", async () => {
+  const root = await fixture(); const r1 = await reader(root); const base = provider([phaseRead]);
+  try {
+    const session = NyxChatSession.create({sessionId: "NYX-CONTRACT-EXPIRED", reader: r1,
+      model: {complete: async request => {const result = await base.complete(request);
+        await new Promise(resolve => setTimeout(resolve, 1100)); return result;}},
+      candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: 2, maxCandidatesPerTurn: 0,
+      maxTurnMs: 1000, maxOutputTokens: 1024, actionContract: {kind: "READ_THEN_REPLY", path: "src/value.mjs"}});
+    assert.equal((await session.turn("Inspect before answering.")).outcome, "BUDGET_EXHAUSTED");
+    assert.equal(r1.auditLog().length, 0);
+  } finally {r1.terminate(Date.now(), "TEST_FINISHED"); await rm(root, {recursive: true});}
+});
 
 omegaTest("parseable length-terminated output never reaches a repository action", async () => {
   const root = await fixture(); const r1 = await reader(root);

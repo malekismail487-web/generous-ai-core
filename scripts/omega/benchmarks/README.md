@@ -2,6 +2,41 @@
 
 This is a reproducible **data/evaluation harness**, not a new executor or a new model. It does not claim a cognitive improvement, an official leaderboard score, or near-perfect readiness. Its format tests are development fixtures, never NYX performance evidence.
 
+## Session-owned action phases (development candidate)
+
+The successful deliveries in the offset-16 comparison exposed a generic protocol
+gap: a JSON-object request and a broad action menu did not reliably produce the
+required read-then-answer sequence within two logical calls. The existing schema
+experiment guides generation but does not own the runtime phase. The opt-in
+`NyxChatSession.actionContract` now expresses `REPLY_ONLY` or `READ_THEN_REPLY`
+for an arbitrary safe relative file path. The session sends only the current
+phase's schema/instructions and independently rejects out-of-phase actions even
+when the provider ignores that schema. Only an actual successful, non-sensitive
+observation advances the phase. Each turn starts unobserved; caller mutation,
+old conversation history and model claims cannot advance it. The contract narrows
+requests, never grants R1 scope, extends a lease or certifies answer correctness.
+Historical defaults and frozen comparison interpretations remain unchanged.
+
+`CONTRACT_DIAGNOSTIC` exercises the candidate via the existing text epoch, session,
+provider, R1 executor, disposable repository and independent integer oracle. It
+opens no benchmark dataset. Two new development objectives are counterbalanced
+between the existing schema-only configuration and `SESSION_ACTION_CONTRACT`.
+Both arms use the same fixed model, 8,192 output-token ceiling, two logical calls,
+four shared physical attempts, original 180-second task lease, scoped read and
+unchanged acceptance checks. The existing two-consecutive-delivery-failure circuit
+remains enabled. Record realized compute, unknown usage and incomplete pairs;
+equal ceilings are not proof of equal realized compute. The experiment establishes
+at most local/live protocol behavior, never a cognitive or broad benchmark gain.
+The narrow push trigger must be removed when this one-shot is frozen.
+
+Ω plan coverage: directly implements no action without provenance, no observation
+without evidence and plan/capability/authority separation. It supports the live
+engineering substrate and generator/detector separation. Broader planning, memory,
+recursion, additional cognitive layers and production/default promotion are
+deferred. No conflict with the existing authority model was identified: parser,
+R1 authorization, private oracle and rollback/cleanup remain independent.
+Coverage remains PARTIAL / JUST-IN-TIME, not complete corpus certification.
+
 ## Actual composition
 
 Existing Nemotron-backed NYX cognition → existing typed Omega execution → candidate artifact → independent benchmark verifier → this harness's bound, sanitized record → general capability-gap investigation.

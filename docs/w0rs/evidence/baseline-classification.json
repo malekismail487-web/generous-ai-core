@@ -6746,6 +6746,7 @@
           "scripts/omegaBoundedReasoningWorkbench.test.ts",
           "scripts/omegaGroundedEngineering.test.ts",
           "scripts/omegaNvidiaNimProvider.test.ts",
+          "scripts/omegaNyxChatCli.test.ts",
           "scripts/omegaNyxContainerExecution.test.ts",
           "scripts/omegaNyxTextBenchmark.test.ts",
           "scripts/omegaQuantitativeConstraintFeedback.test.ts",

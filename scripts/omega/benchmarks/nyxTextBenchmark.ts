@@ -1,6 +1,7 @@
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, type NvidiaNimEvidence, type NvidiaNimCompletionRequest,
   type NvidiaNimTransport } from "../../../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxChatSession, type NyxChatSessionConfig, type NyxChatTurnResult } from "../../../src/lib/codelab/cli/nyxChatSession";
+import type { NyxChatActionContract } from "../../../src/lib/codelab/cli/nyxChatProtocol";
 import { theoryDigest } from "../../../src/lib/codelab/research/theoryContracts";
 import { usageSchema, zeroUsage, type Usage } from "./contracts";
 import { createCapabilityGap, gapExport } from "./gaps";
@@ -46,7 +47,7 @@ export function textTransferSelection(tasks: readonly PrivateTextTask[], start =
   return families.flatMap(population => population.slice(start, start + 2));
 }
 
-export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED"] as const;
+export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED", "SESSION_ACTION_CONTRACT"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE";
@@ -93,7 +94,7 @@ export function textConfiguredRequest(request: NvidiaNimCompletionRequest, confi
   delivery: "DIRECT" | "SCOPED_FILE" = "DIRECT", questionObserved = false): NvidiaNimCompletionRequest {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration)) throw Error("text_inference_configuration_invalid");
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery) || typeof questionObserved !== "boolean") throw Error("text_action_schema_state_invalid");
-  if (configuration === "EXISTING_DEFAULT") return request;
+  if (configuration === "EXISTING_DEFAULT" || configuration === "SESSION_ACTION_CONTRACT") return request;
   if (configuration === "OBSERVATION_ALIGNED_SCHEMA") {
     // Hosted generation constraint only: parseNyxChatAction and Omega still independently authorize.
     // The existing task contract already requires one whole-question read before its final reply.
@@ -110,6 +111,29 @@ export function textConfiguredRequest(request: NvidiaNimCompletionRequest, confi
       : configuration === "HOSTED_BOUNDED" ? "ULTRA_HOSTED_NATIVE" as const : "ULTRA_NATIVE" as const,
     reasoningEffort: "MEDIUM" as const, reasoningBudgetTokens: 2048,
     ...(configuration === "BOUNDED_STRICT_LOCAL" ? {structuredOutputMode: "STRICT_LOCAL" as const} : {})};
+}
+
+/** Candidate uses the shared session contract, not a benchmark-owned replacement executor/parser. */
+export function textSessionActionContract(configuration: TextInferenceConfiguration,
+  delivery: "DIRECT" | "SCOPED_FILE"): NyxChatActionContract | undefined {
+  if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration) || !["DIRECT", "SCOPED_FILE"].includes(delivery))
+    throw Error("text_session_action_contract_invalid");
+  if (configuration !== "SESSION_ACTION_CONTRACT") return undefined;
+  return delivery === "DIRECT" ? {kind: "REPLY_ONLY"} : {kind: "READ_THEN_REPLY", path: "src/question.mjs"};
+}
+
+/** New development objectives only: no reserved benchmark problem, answer or observed failure pattern. */
+export const TEXT_SESSION_CONTRACT_DIAGNOSTICS: readonly PrivateTextTask[] = Object.freeze([
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "CONTRACT-READINGS",
+    question: "Five counter readings are 17, 4, 9, 12, and 6. Discard the smallest and largest readings. What is the median of the remaining readings?", answer: "9"},
+  {family: "DEVELOPMENT_DIAGNOSTIC", taskId: "CONTRACT-DEPENDENCIES",
+    question: "Job A starts at time 0 and takes 5 minutes. Jobs B and C start after A finishes and take 7 and 4 minutes respectively. Job D starts after both B and C finish and takes 3 minutes. Jobs can overlap when their dependencies permit. At what time does D finish?", answer: "15"},
+]);
+export function textSessionContractSelection() {
+  return TEXT_SESSION_CONTRACT_DIAGNOSTICS.flatMap((task, index) =>
+    (index ? ["SESSION_ACTION_CONTRACT", "OBSERVATION_ALIGNED_SCHEMA"] as const
+      : ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT"] as const).map(configuration =>
+        ({...task, taskId: `${task.taskId}-${configuration}`, configuration, recoveryProfile: "BOUNDED_RECOVERY" as const})));
 }
 
 /** Frozen before live diagnosis; unrelated to reserved benchmark questions or reference answers. */
@@ -341,6 +365,7 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
         "OBSERVED", "EXECUTED", "UNVERIFIED", "VERIFIED", "ABSENT", "INACCESSIBLE", "UNKNOWN",
         "model_output_not_json", "model_output_not_object", "model_output_oversized", "unknown_or_malformed_typed_action",
         "model_output_credential_pattern", "SENSITIVE_CONTENT_BLOCKED", "candidate_authority_unavailable",
+        "action_not_permitted_in_current_phase",
         "candidate_budget_exhausted", "path_not_editable", "file_not_observed_by_r1", "stale_or_fabricated_base_hash"]
         .includes(item.outcome) ? item.outcome : "OTHER_RECORDED_OUTCOME",
       evidenceClass: item.evidenceClass})) ?? [],
@@ -369,11 +394,12 @@ export function textCapabilityGap(row: ReturnType<typeof sanitizedTextResult>) {
     failureEvidenceDigest: theoryDigest(row), benchmarkInputDigest: row.inputDigest}));
 }
 
-export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
+function compareTextConfigurationPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[],
+  configurations: readonly TextInferenceConfiguration[]) {
   const boundPair = pair.length === 2 && pair[0].inputDigest === pair[1].inputDigest
     && pair[0].privateOracleDigest === pair[1].privateOracleDigest
     && new Set(pair.map(row => row.configuration)).size === 2
-    && pair.every(row => ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"].includes(row.configuration));
+    && pair.every(row => configurations.includes(row.configuration));
   const stable = boundPair && pair.every(row => row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0
     && row.usage.retries === 0 && row.usage.physicalCalls > 0);
   const matchedRealizedCompute = stable && (["logicalCalls", "physicalCalls", "reportedTokens", "toolCalls", "toolWorkUnits"] as const)
@@ -382,6 +408,14 @@ export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextR
   return {configurations: pair.map(row => row.configuration), outcomes: pair.map(row => row.state),
     usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
     cognitivePromotion: false, interpretation: "INTERFACE_ABLATION_NOT_COGNITIVE_GAIN"};
+}
+
+export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
+  return compareTextConfigurationPair(pair, ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"]);
+}
+
+export function compareTextContractPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
+  return compareTextConfigurationPair(pair, ["OBSERVATION_ALIGNED_SCHEMA", "SESSION_ACTION_CONTRACT"]);
 }
 
 export function compareTextTimeoutPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {

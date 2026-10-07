@@ -1,4 +1,35 @@
 import { createHash } from "node:crypto";
+import type { NvidiaNimJsonSchemaResponseFormat } from "../model/nvidiaNimProvider";
+
+/** Host-owned workflow restriction, not a capability token or an authorization grant. */
+export type NyxChatActionContract =
+  | { readonly kind: "REPLY_ONLY" }
+  | { readonly kind: "READ_THEN_REPLY"; readonly path: string };
+
+export function nyxChatActionContractValid(value: unknown): value is NyxChatActionContract {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const contract = value as Record<string, unknown>;
+  return contract.kind === "REPLY_ONLY" && exactKeys(contract, ["kind"])
+    || contract.kind === "READ_THEN_REPLY" && exactKeys(contract, ["kind", "path"])
+      && nyxSafeRelativePath(contract.path);
+}
+
+/** Generation guidance only; the strict parser, phase check and R1 executor remain independent. */
+export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean): NvidiaNimJsonSchemaResponseFormat {
+  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") throw Error("nyx_chat_action_contract_invalid");
+  const readRequired = contract.kind === "READ_THEN_REPLY" && !observed;
+  return { type: "JSON_SCHEMA", name: readRequired ? "nyx_required_file_read" : "nyx_contract_reply",
+    schema: { type: "object", properties: readRequired
+      ? { kind: { type: "string", enum: ["READ_FILE"] }, path: { type: "string", enum: [contract.path] } }
+      : { kind: { type: "string", enum: ["REPLY"] }, message: { type: "string", minLength: 1, maxLength: 8000 } },
+      required: readRequired ? ["kind", "path"] : ["kind", "message"], additionalProperties: false } };
+}
+
+export function nyxChatContractAllows(contract: NyxChatActionContract, observed: boolean, action: NyxChatAction): boolean {
+  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") return false;
+  return contract.kind === "READ_THEN_REPLY" && !observed
+    ? action.kind === "READ_FILE" && action.path === contract.path : action.kind === "REPLY";
+}
 
 export type NyxChatAction =
   | { readonly kind: "REPLY"; readonly message: string }
