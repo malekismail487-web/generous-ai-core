@@ -666,3 +666,25 @@ job still fails its unchanged full-score completeness check; no missing answer
 becomes a pass or a zero-cost result. Partial execution, capability blocks, changed
 source, malformed/missing reports, a real outage halt or expired epoch do not
 admit BBEH. This removes an artificial cross-family dependency, not a scoring gate.
+
+The corrected Super AIME execution `1c0bc4f8` (37665577413) exhausted all 30 selected
+tasks: 16 correct, two wrong integers, one final-format failure, ten ungraded
+token-limit truncations and one ungraded timeout. All 30 authorized question reads
+completed. There were 60 logical/physical requests, 165,079 reported tokens, one
+unknown-usage request, zero retries, zero observed 503s and 1,256,018 ms of epoch
+time. The generic adapter failure count of 11 is not eleven provider outages.
+The AIME job correctly remains failed for incomplete grading, not a complete score.
+
+Its archive-hash-checked original report agrees with the terminal log and is
+preserved in `docs/omega/evidence/nyx-super-corrected-aime-1c0bc4f8.json`.
+Policy, population and selection digests are unchanged from the initial Super
+campaign. All ten shared initial read-request digests match. Correct solutions in
+that common subset changed from six to five, with different realized tokens.
+Only execution coverage improved; no cognitive gain, matched-compute advantage or
+architectural promotion is established. The dominant observed limit is missing
+final content at the frozen token ceiling, separate from wrong-answer reasoning.
+
+The independent BBEH Mini job has begun at the same frozen `1c0bc4f8` candidate;
+its result remains pending, not inferred from AIME. Automatic push replay is now
+removed without interrupting that already-started job. Production defaults,
+authority, credential custody and all original acceptance checks remain unchanged.

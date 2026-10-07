@@ -1,8 +1,5 @@
 name: Omega NYX Super corrected delivery classification evaluation
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -66,7 +63,7 @@ jobs:
           let proceed = false;
           try {
             const r = JSON.parse(readFileSync(join(process.env.RUNNER_TEMP, `nyx-text-benchmark-${process.env.GITHUB_SHA}.json`), 'utf8'));
-            proceed = r.schemaVersion === 1 && r.candidate === process.env.GITHUB_SHA
+            proceed = r.schemaVersion === 1 && r.mode === 'FULL_AIME' && r.candidate === process.env.GITHUB_SHA
               && r.policy.model === 'nvidia/nemotron-3-super-120b-a12b'
               && textFamilyExecutionExhausted(r.mode, r.stopReason, r.sourceUnchanged, r.families);
           } catch { /* Missing or malformed evidence fails closed. */ }
