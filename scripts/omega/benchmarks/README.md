@@ -552,3 +552,37 @@ failure. Stable delivery, configuration superiority and cognitive improvement
 remain unestablished. No 429 or new-key requirement was demonstrated. Automatic
 push replay is removed; completing this campaign requires stable authorized
 same-model serving, not weaker acceptance or repeated unchanged outage probes.
+
+### Pre-lease inherited-capacity scheduling correction — 2026-10-07
+
+The `ce926d2f` report exposes a host scheduling cost: the third task spent 59,997 ms
+of its already-issued 180-second lease in the preceding task's known cooldown.
+The full-family workflow now explicitly opts into `BEFORE_TASK_LEASE` scheduling.
+It waits in the existing shared capacity gate before issuing that next task's
+repository/capability lease. Readiness reserves no dispatch, creates no sandbox,
+reads no credential and grants no authority. The provider independently reacquires
+capacity before each actual request, so stale readiness cannot bypass a new cooldown.
+
+A separate virtual-clock DEVELOPMENT workload reproduces the old deadline loss
+with two ordinary successful logical requests taking 30 and 100 seconds behind
+an inherited 60-second cooldown. Pre-lease scheduling allows the same workload
+to finish using the same two requests and original 180-second task lifetime.
+Cancellation, expiry, changed cooldown, malformed deadlines and timer cleanup are
+tested. This is a general scheduling correction, not a benchmark-answer fix or
+proof that NVIDIA serving is reliable. Production defaults are unchanged.
+
+The new public campaign retains the model, selected populations, output ceiling,
+logical/physical limits, per-request timeouts, strict parser, independent graders,
+original task lifetime and two-consecutive-failure circuit. Queue waiting is
+recorded separately and remains charged to the unchanged epoch wall-clock budget.
+No already-issued authority is renewed. This explicitly changed scheduling policy
+precludes claiming an unchanged or realized-compute-matched rerun. Earlier results
+remain preserved; these public tasks are not fresh held-out transfer. The narrow
+push trigger exists only to execute this authorized correction and must be removed
+after its evidence is captured. No cognitive promotion is inferred from unit tests.
+
+Ω Plan Coverage: PARTIAL / JUST-IN-TIME. Directly implements honest resource
+scheduling and lease preservation; supports scope, provenance, independent grading
+and fail-closed execution; defers cognitive layers, protected benchmark access and
+container-dependent families. It supersedes charging a previous task's known
+provider cooldown against a newly issued task lease, not any security requirement.

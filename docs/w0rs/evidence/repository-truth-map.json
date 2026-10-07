@@ -2427,6 +2427,12 @@
       ]
     },
     {
+      "name": "NYX_TEXT_CAPACITY_SCHEDULING",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_TEXT_CONFIGURATION",
       "files": [
         "scripts/omega/nyx-text-benchmark-epoch.ts"

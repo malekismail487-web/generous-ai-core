@@ -1255,6 +1255,86 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
   }
 }
 
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("60");
+  const ready = await drive(gate.waitUntilReady(NOW + 300000, new AbortController().signal), clock);
+  check(ready.state === "READY" && ready.waitedMs === 60000 && Object.isFrozen(ready),
+    "host readiness accounts inherited cooldown without creating an executor lease");
+  const admission = await drive(gate.acquire(clock.time + 180000, new AbortController().signal), clock);
+  check(admission.state === "ADMITTED" && admission.waitedMs === 0 && clock.time === NOW + 60000,
+    "readiness consumes no dispatch reservation or artificial model request");
+  gate.defer("2");
+  const stale = await drive(gate.acquire(clock.time + 180000, new AbortController().signal), clock);
+  check(stale.state === "ADMITTED" && stale.waitedMs === 2000,
+    "readiness cannot bypass a subsequently changed provider cooldown");
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("60");
+  const expired = await drive(gate.waitUntilReady(NOW + 30000, new AbortController().signal), clock);
+  check(expired.state === "WAITING_FOR_CAPACITY" && expired.waitedMs === 0 && clock.jobs.length === 0,
+    "readiness beyond the campaign expiry fails closed without a task or timer");
+  const controller = new AbortController();
+  const pending = gate.waitUntilReady(NOW + 300000, controller.signal);
+  controller.abort();
+  const cancelled = await drive(pending, clock);
+  check(cancelled.state === "CANCELLED" && clock.jobs.length === 0,
+    "cancelled pre-lease waiting leaves no background timer");
+  for (const deadline of [NaN, Infinity, -1, 1.5, "180000" as never]) {
+    try {await gate.waitUntilReady(deadline, new AbortController().signal); check(false, "malformed readiness expiry rejected");}
+    catch (error) {check(String(error).includes("nvidia_capacity_deadline_invalid") && clock.jobs.length === 0,
+      "malformed readiness expiry rejected before queue allocation");}
+  }
+}
+{
+  const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+  gate.defer("2"); let changed = false;
+  const ready = await drive(gate.waitUntilReady(NOW + 300000, new AbortController().signal, () => {
+    if (!changed) {changed = true; gate.defer("4");}
+  }), clock);
+  check(ready.state === "READY" && ready.waitedMs === 4000,
+    "pre-lease queue rechecks cooldown extensions rather than trusting a stale snapshot");
+  check(clock.jobs.length === 0, "settled pre-lease readiness cleans every timer");
+}
+// Independent virtual-clock workload: two ordinary successful logical requests
+// take 30s and 100s. Only inherited queue placement changes, never task lifetime,
+// payloads, request count, model controls, acceptance or an already issued lease.
+{
+  async function workload(queueBeforeLease: boolean) {
+    const clock = new ManualClock(); const gate = new NvidiaCapacityCoordinator(clock);
+    gate.defer("60"); let calls = 0, credentialReads = 0;
+    const client = capacityProvider(gate, async () => {
+      clock.time += ++calls === 1 ? 30000 : 100000; return success();
+    }, () => {credentialReads++; return "synthetic-development-credential";}).withHttpAttemptBudget(4);
+    const ready = queueBeforeLease
+      ? await drive(gate.waitUntilReady(NOW + 300000, new AbortController().signal), clock) : null;
+    check(credentialReads === 0 && calls === 0, "pre-lease scheduling reads no credential and performs no network action");
+    const issuedAt = clock.time, expiry = issuedAt + 180000;
+    const first = await drive(client.complete(request({deadlineEpochMs: expiry})), clock);
+    const answer = await drive(client.complete(request({requestId: "SYNTHETIC-ANSWER-PHASE", deadlineEpochMs: expiry})), clock);
+    return {ready, first, answer, calls, credentialReads, issuedAt, expiry, finished: clock.time, timers: clock.jobs.length};
+  }
+  const historical = await workload(false), queued = await workload(true);
+  check(historical.first.decision === "COMPLETED" && historical.answer.decision !== "COMPLETED",
+    "development workload reproduces inherited cooldown consuming the original task lease");
+  check(queued.ready?.state === "READY" && queued.first.decision === "COMPLETED" && queued.answer.decision === "COMPLETED",
+    "the same development workload completes when known cooldown precedes task issuance");
+  check(historical.calls === 2 && queued.calls === 2 && historical.credentialReads === 2 && queued.credentialReads === 2,
+    "queue correction adds no logical or physical requests or credential reads");
+  check(historical.expiry - historical.issuedAt === 180000 && queued.expiry - queued.issuedAt === 180000
+    && queued.finished < queued.expiry && queued.answer.evidence.delivery?.authorityRenewed === false,
+    "both workloads retain exactly the original task lifetime and never renew issued authority");
+  check(historical.timers === 0 && queued.timers === 0, "paired queue reproduction leaves no background work");
+  console.log(`NYX_PRELEASE_QUEUE_DEVELOPMENT ${JSON.stringify({
+    historical: {answer: historical.answer.decision, taskLifetimeMs: historical.expiry - historical.issuedAt,
+      physicalCalls: historical.calls, inheritedWaitInsideLeaseMs: 60000},
+    corrected: {answer: queued.answer.decision, taskLifetimeMs: queued.expiry - queued.issuedAt,
+      physicalCalls: queued.calls, queueWaitBeforeLeaseMs: queued.ready?.waitedMs},
+    liveModelCalls: 0, cognitiveGain: false, authorityRenewed: false,
+    inference: "SYNTHETIC_SCHEDULING_REPRODUCTION_NOT_PROOF_OF_PROVIDER_AVAILABILITY"})}`);
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

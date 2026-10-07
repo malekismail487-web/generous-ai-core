@@ -3001,6 +3001,17 @@ var NvidiaCapacityCoordinator = class {
     this.#nextStart = Math.max(this.#nextStart, this.clock.now() + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs);
   }
   async acquire(deadline, signal, onWait) {
+    return this.#wait(deadline, signal, onWait, true);
+  }
+  /** Queue host work before it creates an executor lease. This observes capacity,
+   * reserves no dispatch, reads no credential and grants no authority. A real
+   * request must still acquire again because readiness is not a reservation. */
+  async waitUntilReady(deadline, signal, onWait) {
+    const result = await this.#wait(deadline, signal, onWait, false);
+    return Object.freeze({ ...result, state: result.state === "ADMITTED" ? "READY" : result.state });
+  }
+  async #wait(deadline, signal, onWait, reserveDispatch) {
+    if (!Number.isSafeInteger(deadline) || deadline < 0) throw Error("nvidia_capacity_deadline_invalid");
     const started = this.clock.now();
     const result = (state, notBeforeEpochMs = null) => Object.freeze({ state, waitedMs: Math.max(0, this.clock.now() - started), notBeforeEpochMs });
     if (signal.aborted) return result("CANCELLED");
@@ -3013,7 +3024,7 @@ var NvidiaCapacityCoordinator = class {
         const notBefore = Math.max(this.#nextStart, this.#cooldownUntil);
         if (now >= deadline || notBefore >= deadline) return result("WAITING_FOR_CAPACITY", Math.max(now, notBefore));
         if (now >= notBefore) {
-          this.#nextStart = now + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs;
+          if (reserveDispatch) this.#nextStart = now + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs;
           return result("ADMITTED");
         }
         if (onWait) {

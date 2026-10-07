@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEvidence } from
   "../../src/lib/codelab/model/nvidiaNimProvider";
+import { liveNvidiaCapacity, type NvidiaCapacityReadiness } from "../../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
@@ -29,6 +30,9 @@ export async function runTextBenchmarkEpoch() {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
+  const capacityScheduling = process.env.NYX_TEXT_CAPACITY_SCHEDULING;
+  if (capacityScheduling !== undefined && (capacityScheduling !== "BEFORE_TASK_LEASE"
+    || !["FULL", "FULL_AIME", "FULL_BBEH"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
   const preflight = mode === "DELIVERY_PREFLIGHT";
   const contractDiagnostic = mode === "CONTRACT_DIAGNOSTIC";
   const contractCandidate = configuration === "SESSION_NATIVE_PHASE_CONTRACT" ? configuration : "SESSION_ACTION_CONTRACT";
@@ -116,6 +120,7 @@ export async function runTextBenchmarkEpoch() {
   const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration,
     timeoutProfile?: TextTimeoutProfile; recoveryProfile?: TextRecoveryProfile; requestRejections: typeof requestRejections})[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
+  const capacityQueue: (NvidiaCapacityReadiness & {beforeTaskId: string; executorLeaseCreated: false})[] = [];
   const populationDigest = theoryDigest(preflight ? TEXT_ACTION_SCHEMA_DIAGNOSTICS
     : contractDiagnostic ? TEXT_SESSION_CONTRACT_DIAGNOSTICS : tasks);
   const selectionDigest = theoryDigest(selection);
@@ -124,13 +129,21 @@ export async function runTextBenchmarkEpoch() {
     await writeFile(`${path}.pending`, JSON.stringify({schemaVersion: 1, candidate, mode,
       executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
       populationDigest, selectionDigest, selectedTaskIds: selection.map(task => task.taskId),
-      results, blocked, completeness: "PARTIAL_PROGRESS_NOT_FINAL_REPORT", grantsAuthority: false}));
+      results, blocked, capacityScheduling: capacityScheduling ?? "WITHIN_TASK_LEASE", capacityQueue,
+      completeness: "PARTIAL_PROGRESS_NOT_FINAL_REPORT", grantsAuthority: false}));
     await rename(`${path}.pending`, path);
   };
   await checkpoint(); // Freeze the whole selection even if the first provider call never returns.
   let consecutiveProviderFailures = 0;
   for (const task of selection) {
     if (Date.now() >= deadline || !diagnostic && consecutiveProviderFailures >= 2) break;
+    if (capacityScheduling === "BEFORE_TASK_LEASE") {
+      const ready = await liveNvidiaCapacity.waitUntilReady(deadline, new AbortController().signal);
+      capacityQueue.push({...ready, beforeTaskId: task.taskId, executorLeaseCreated: false});
+      await checkpoint();
+      if (ready.state !== "READY") break;
+    }
+    if (Date.now() >= deadline) break;
     const started = Date.now(); const evidence: NvidiaNimEvidence[] = [];
     const taskDeadline = Math.min(deadline, started + TEXT_BENCHMARK_POLICY.maxTaskMs);
     const taskProvider = providers.get(task.timeoutProfile ?? "FIXED_ATTEMPT")!
@@ -239,6 +252,8 @@ export async function runTextBenchmarkEpoch() {
       : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
     transientUnavailableRecovery: transientRecovery ?? "FIXED_RETRY_LIMIT",
+    capacityScheduling: capacityScheduling ?? "WITHIN_TASK_LEASE", capacityQueue,
+    epochWallClockMs: Date.now() - began,
     contractReadiness: contractDiagnostic ? {result: sourceUnchanged && textContractDiagnosticReady(results, contractCandidate)
       ? "READY_FOR_BOUNDED_TEXT_BENCHMARK" : "NOT_READY", cognitivePromotion: false,
       scope: "REPEATED_DEVELOPMENT_READ_THEN_REPLY_NOT_SUSTAINED_AVAILABILITY"} : null,
@@ -282,6 +297,7 @@ export async function runTextBenchmarkEpoch() {
     sourceUnchanged, authorityDelta: "NONE", repairAttempts: 0,
     firstAttemptOnly: true, broadPromotion: false, calibration: "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
     stopReason: !diagnostic && consecutiveProviderFailures >= 2 ? "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS"
+      : capacityQueue.some(wait => wait.state !== "READY") ? "CAPACITY_NOT_READY_WITHIN_EPOCH"
       : Date.now() >= deadline ? "FROZEN_WALL_CLOCK_BUDGET" : "SELECTION_EXHAUSTED",
     contamination: dataFree ? "DEVELOPMENT_OBJECTIVES_NOT_HELD_OUT"
       : "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"};

@@ -42,6 +42,10 @@ export interface NvidiaCapacityAdmission {
   readonly notBeforeEpochMs: number | null;
 }
 
+export interface NvidiaCapacityReadiness extends Omit<NvidiaCapacityAdmission, "state"> {
+  readonly state: "READY" | "WAITING_FOR_CAPACITY" | "CANCELLED";
+}
+
 export interface NvidiaCapacityWait {
   readonly observedAtEpochMs: number;
   readonly notBeforeEpochMs: number;
@@ -71,6 +75,22 @@ export class NvidiaCapacityCoordinator {
 
   async acquire(deadline: number, signal: AbortSignal,
     onWait?: (progress: NvidiaCapacityWait) => void): Promise<NvidiaCapacityAdmission> {
+    return this.#wait(deadline, signal, onWait, true);
+  }
+
+  /** Queue host work before it creates an executor lease. This observes capacity,
+   * reserves no dispatch, reads no credential and grants no authority. A real
+   * request must still acquire again because readiness is not a reservation. */
+  async waitUntilReady(deadline: number, signal: AbortSignal,
+    onWait?: (progress: NvidiaCapacityWait) => void): Promise<NvidiaCapacityReadiness> {
+    const result = await this.#wait(deadline, signal, onWait, false);
+    return Object.freeze({...result, state: result.state === "ADMITTED" ? "READY" : result.state});
+  }
+
+  async #wait(deadline: number, signal: AbortSignal,
+    onWait: ((progress: NvidiaCapacityWait) => void) | undefined,
+    reserveDispatch: boolean): Promise<NvidiaCapacityAdmission> {
+    if (!Number.isSafeInteger(deadline) || deadline < 0) throw Error("nvidia_capacity_deadline_invalid");
     const started = this.clock.now();
     const result = (state: NvidiaCapacityAdmission["state"], notBeforeEpochMs: number | null = null) =>
       Object.freeze({ state, waitedMs: Math.max(0, this.clock.now() - started), notBeforeEpochMs });
@@ -85,7 +105,7 @@ export class NvidiaCapacityCoordinator {
         if (now >= deadline || notBefore >= deadline) return result("WAITING_FOR_CAPACITY", Math.max(now, notBefore));
         if (now >= notBefore) {
           // No await between check and reservation: concurrent callers cannot consume the same slot.
-          this.#nextStart = now + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs;
+          if (reserveDispatch) this.#nextStart = now + NVIDIA_CAPACITY_POLICY.minimumStartIntervalMs;
           return result("ADMITTED");
         }
         if (onWait) {
