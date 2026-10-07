@@ -37,6 +37,21 @@ deferred. No conflict with the existing authority model was identified: parser,
 R1 authorization, private oracle and rollback/cleanup remain independent.
 Coverage remains PARTIAL / JUST-IN-TIME, not complete corpus certification.
 
+The development comparison at `3230f9ce` is terminal in run 37623036780.
+Both attempted configurations successfully read the authorized file. The
+schema-only control then emitted non-JSON after recovering a transient request;
+the session-contract candidate's answer request received repeated HTTP 503s.
+The unchanged delivery circuit stopped after two affected attempts: two of four
+attempts executed, zero independently graded, two unexecuted. Six physical
+requests, 1,426 reported tokens and three requests of unknown usage are retained
+in `docs/omega/evidence/nyx-session-action-contract-3230f9ce.json`. Its original
+report exactly matches the downloaded, hash-verified artifact. No stable or
+compute-matched pair, live answer-phase success, cognitive gain or benchmark score
+is established. Local phase enforcement passed adversarial tests; reliable live
+completion remains unverified. The optional candidate is not a new default.
+Automatic replay is removed; another unchanged experiment needs an external
+delivery readiness change, not additional speculative architecture.
+
 ## Actual composition
 
 Existing Nemotron-backed NYX cognition → existing typed Omega execution → candidate artifact → independent benchmark verifier → this harness's bound, sanitized record → general capability-gap investigation.
