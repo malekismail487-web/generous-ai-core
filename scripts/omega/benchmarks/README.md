@@ -301,6 +301,19 @@ admission, cognitive gain or new authority. Current SWE/Terminal quota, HLE acce
 and formal-math environment requirements remain separate. The one-shot push
 trigger is removed after this authorized current-availability check completes.
 
+The data-free run at `0613a66b` (37603998015) independently graded both development
+answers correct: two HTTP 200 responses, 2,347 reported tokens, no retries, unknown
+usage or provider failures. Its artifact byte digest and exact original report
+were reconciled in `docs/omega/evidence/nyx-delivery-preflight-0613a66b.json`.
+This permits one fresh frozen text comparison, not a claim of permanent recovery.
+The next existing default-versus-observation-schema comparison freezes positional
+offset 14 (two AIME and two BBEH objectives, eight paired attempts) before opening
+questions or answers. Both arms retain the same model, scoped read, two logical
+and physical requests, 8,192 output-token bound, original 180-second lease and
+unchanged graders. Actual compute matching and stability must be established from
+results, not assumed from equal ceilings. The temporary push trigger is removed
+when this single comparison is frozen; earlier negative evidence stays intact.
+
 The historical direct-text physical allowance is one request, which deliberately
 prevents even the provider's existing sixty-second retry from dispatching again.
 The opt-in `BOUNDED_RECOVERY` evaluation profile adds two physical attempts to the
