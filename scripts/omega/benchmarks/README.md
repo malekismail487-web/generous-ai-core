@@ -308,3 +308,14 @@ experiment, never automatic cognitive promotion. The offset-12 workflow is froze
 before questions or reference answers are observed, and its narrow automatic push
 trigger must be removed after the one-shot finishes. Preserve original negative
 receipts; do not reinterpret an incomplete rerun as a full benchmark score.
+
+The frozen offset-12 run at `21161cc` is terminal. Its artifact was independently
+hash-checked and reconciled with the lossless original report in
+`docs/omega/evidence/nyx-delivery-recovery-21161cc.json`. Eight attempts were selected;
+two executed, neither was graded, and six were unexecuted. The fixed arm timed out.
+The recovery arm actually waited and dispatched twice, receiving 503 both times;
+119,995 ms of capacity waiting includes the inherited preceding-request cooldown.
+All three physical calls have unknown token usage. Recovery dispatch is verified,
+but improved live delivery, matched compute, reasoning improvement and a benchmark
+score are not established. The outage circuit remains intact and automatic replay
+is removed. Another unchanged retry is not a correction for sustained unavailability.
