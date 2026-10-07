@@ -11,7 +11,7 @@ import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextR
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textFullFamilySelection, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
-  textDeliveryPreflightSelection, textDeliveryPreflightReady,
+  textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
   type TextInferenceConfiguration, type TextTimeoutProfile, type TextRecoveryProfile, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
@@ -60,7 +60,7 @@ export async function runTextBenchmarkEpoch() {
   }
   const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "HOSTED_DIAGNOSTIC"].includes(mode);
   const transferTasks = preflight ? [] : textTransferSelection(tasks, transferStart);
-  const selection: (PrivateTextTask & {configuration: TextInferenceConfiguration; timeoutProfile?: TextTimeoutProfile;
+  const baseSelection: (PrivateTextTask & {configuration: TextInferenceConfiguration; timeoutProfile?: TextTimeoutProfile;
     recoveryProfile?: TextRecoveryProfile})[] =
     preflight ? [...textDeliveryPreflightSelection()]
     : mode === "RECOVERY_TRANSFER_ABLATION" ? textRecoveryTransferSelection(tasks, transferStart)
@@ -86,6 +86,8 @@ export async function runTextBenchmarkEpoch() {
       : ["SMOKE", "FRESH", "TRANSFER"].includes(mode) ? [...tasks.filter(t => t.family === "AIME_2025").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2),
       ...tasks.filter(t => t.family === "BBEH_MINI").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2)] : tasks)
       .map(task => ({...task, configuration: configuration as TextInferenceConfiguration}));
+  const selection = textSharedRecoverySelection(baseSelection,
+    process.env.NYX_TEXT_RECOVERY_PROFILE as TextRecoveryProfile | undefined);
   const before = git("ls-files", "-s"); const began = Date.now();
   const deadline = began + (preflight ? 2 * TEXT_BENCHMARK_POLICY.maxTaskMs
     : mode === "RECOVERY_TRANSFER_ABLATION" ? 25 * 60000
@@ -219,6 +221,13 @@ export async function runTextBenchmarkEpoch() {
       : mode === "HOSTED_DIAGNOSTIC" ? "COUNTERBALANCED_NATIVE_TEMPLATE_VS_HOSTED_NATIVE"
       : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
+    sharedDeliveryRecovery: process.env.NYX_TEXT_RECOVERY_PROFILE ? {
+      profile: process.env.NYX_TEXT_RECOVERY_PROFILE,
+      identicalAcrossArms: true, logicalCallsPerTask: delivery === "DIRECT" ? 1 : 2,
+      physicalCallsPerTask: textHttpAttemptAllowance(delivery as "DIRECT" | "SCOPED_FILE",
+        process.env.NYX_TEXT_RECOVERY_PROFILE as TextRecoveryProfile),
+      originalTaskLeaseMs: TEXT_BENCHMARK_POLICY.maxTaskMs, additionalReasoningTurns: false,
+      unknownRetryComputePreserved: true, productionDefaultsChanged: false} : null,
     deliveryRecoveryProfiles: mode === "RECOVERY_TRANSFER_ABLATION" ? {
       version: "nyx-text-bounded-delivery-recovery/1", logicalCallsPerTask: 1,
       fixedPhysicalCallsPerTask: textHttpAttemptAllowance("DIRECT", "FIXED_REQUESTS"),

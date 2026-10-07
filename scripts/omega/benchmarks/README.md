@@ -314,6 +314,29 @@ unchanged graders. Actual compute matching and stability must be established fro
 results, not assumed from equal ceilings. The temporary push trigger is removed
 when this single comparison is frozen; earlier negative evidence stays intact.
 
+That offset-14 comparison is terminal in run 37604506015 at `dcdd7384`: two of
+eight attempts executed, none graded. Both first logical calls recovered from a
+transient service failure. The default then emitted a malformed typed action;
+the schema arm completed the required read. Both exhausted the two physical
+attempts before a final answer. Four physical requests, 754 reported tokens and
+two unknown-usage calls are preserved in `nyx-text-transfer-dcdd7384.json`.
+This is not a mathematical failure or a passing score.
+
+The general correction makes the existing bounded recovery policy prospectively
+selectable for every arm with `NYX_TEXT_RECOVERY_PROFILE=BOUNDED_RECOVERY`. An
+independent scoped development fixture reproduces the failed two-attempt
+read/answer sequence and completes it with bounded recovery: two logical calls,
+three physical requests including the failed retry, one authorized read and
+verified cleanup. The absolute lease, parser, graders and tools are unchanged.
+The selector cannot overwrite a heterogeneous recovery ablation, silently renew
+a budget or grant an additional reasoning turn. Historical defaults remain fixed.
+
+Fresh transfer now freezes offset 16 with the same four-objective/eight-attempt
+comparison, and the same recovery allowance for both arms (at most four physical
+requests, two logical calls and the original 180-second lease). Unknown retry
+compute still prevents a matched-realized-compute claim. No task answer, identity
+or observed mathematical pattern is encoded in the correction.
+
 The historical direct-text physical allowance is one request, which deliberately
 prevents even the provider's existing sixty-second retry from dispatching again.
 The opt-in `BOUNDED_RECOVERY` evaluation profile adds two physical attempts to the

@@ -10,7 +10,7 @@ import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsa
   textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
-  textDeliveryPreflightSelection, textDeliveryPreflightReady } from "./omega/benchmarks/nyxTextBenchmark";
+  textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -540,6 +540,80 @@ check("recovery comparisons reject mixed tasks, oracles, configurations and dupl
   assert(!compareTextRecoveryPair([recoveryPair[0], recoveryPair[0]]).boundPair);
 });
 const preflightTasks = textDeliveryPreflightSelection();
+check("shared recovery applies equally to all task arms without modifying source selection", () => {
+  const original = [{configuration: "EXISTING_DEFAULT", recoveryProfile: undefined},
+    {configuration: "OBSERVATION_ALIGNED_SCHEMA", recoveryProfile: undefined}];
+  const changed = textSharedRecoverySelection(original, "BOUNDED_RECOVERY");
+  assert(changed.every(row => row.recoveryProfile === "BOUNDED_RECOVERY"));
+  assert(original.every(row => row.recoveryProfile === undefined));
+  assert.deepEqual(textSharedRecoverySelection(original), original);
+});
+check("shared recovery rejects invalid profiles and cannot overwrite a transport ablation", () => {
+  assert.throws(() => textSharedRecoverySelection([], "UNLIMITED" as never));
+  assert.throws(() => textSharedRecoverySelection([{recoveryProfile: "FIXED_REQUESTS" as const},
+    {recoveryProfile: "BOUNDED_RECOVERY" as const}], "BOUNDED_RECOVERY"));
+});
+async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY") {
+  const began = Date.now(), expires = began + 180000;
+  let virtualNow = began, physical = 0;
+  const observations: NvidiaNimEvidence[] = [], bodies: string[] = [];
+  const source = 'export const question = "Independent delivery exercise";\n';
+  const repository = await R3BenchmarkRepositorySession.create({"src/question.mjs": source}, "a".repeat(40), expires, 1);
+  const scopedReader = await ReadOnlyRepositoryExecutor.create({executorId: `SCOPED-RECOVERY-${profile}`,
+    tokenId: `SCOPED-RECOVERY-TOKEN-${profile}`, repositoryRoot: repository.sourceRoot,
+    resourceScopes: ["src/question.mjs"], issuedAtEpochMs: began - 1, expiresAtEpochMs: expires,
+    constraints: {maxFileBytes: 64000, maxDirectoryEntries: 1, allowedExtensions: [".mjs"]},
+    issuer: "DEVELOPMENT-ONLY", auditIdentity: `SCOPED-RECOVERY-AUDIT-${profile}`});
+  const provider = NvidiaNimProvider.create({providerId: `SCOPED-RECOVERY-${profile}`, model: TEXT_BENCHMARK_POLICY.model,
+    authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-double", read: () => "synthetic-not-a-credential"},
+    maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 5000, onCapacityProgress: () => undefined,
+    testCapacity: new NvidiaCapacityCoordinator({now: () => virtualNow,
+      sleep: async (ms, signal) => {signal.throwIfAborted(); virtualNow += ms;}}),
+    transport: async (_url, init) => {
+      bodies.push(String(init?.body));
+      if (++physical === 1) return new Response(null, {status: 503});
+      const content = physical === 2 ? '{"kind":"READ_FILE","path":"src/question.mjs"}'
+        : '{"kind":"REPLY","message":"The answer is: 731"}';
+      return new Response(JSON.stringify({choices: [{message: {content}, finish_reason: "stop"}],
+        usage: {prompt_tokens: 40, completion_tokens: 20, total_tokens: 60}}), {status: 200});
+    }}).withHttpAttemptBudget(textHttpAttemptAllowance("SCOPED_FILE", profile));
+  try {
+    const outcome = await invokeExistingNyxText({...config(provider), sessionId: `SCOPED-RECOVERY-${profile}`,
+      reader: scopedReader, maxModelCallsPerTurn: 2, maxTurnMs: expires - Date.now(),
+      model: {complete: async request => {
+        const response = await provider.complete(textBoundedTaskRequest(textConfiguredRequest(request,
+          "OBSERVATION_ALIGNED_SCHEMA", "SCOPED_FILE", scopedReader.auditLog().some(row => row.toolAction !== null)), expires));
+        observations.push(response.evidence); return response;
+      }}}, "Independent delivery exercise", "SCOPED_FILE");
+    const correct = outcome?.outcome === "REPLIED" ? gradeAime(outcome.message, "731") : null;
+    return {outcome, row: sanitizedTextResult({family: "DEVELOPMENT_DIAGNOSTIC", taskId: "SCOPED-RECOVERY",
+      question: "Independent delivery exercise", answer: "731"}, outcome, observations, correct, virtualNow - began),
+      bodies, observations, reads: scopedReader.auditLog().filter(row => row.toolAction !== null).length};
+  } finally {
+    scopedReader.terminate(Date.now(), "DEVELOPMENT_FINISHED");
+    const cleanup = await repository.close();
+    assert(cleanup.sourceUnchanged && cleanup.cleanupVerified);
+  }
+}
+const scopedFixed = await scopedRecoveryReproduction("FIXED_REQUESTS");
+const scopedRecovered = await scopedRecoveryReproduction("BOUNDED_RECOVERY");
+check("two physical attempts reproduce a recovered read followed by blocked final answer", () => {
+  assert.equal(scopedFixed.row.state, "RESOURCE_EXHAUSTION"); assert.equal(scopedFixed.row.correct, null);
+  assert.equal(scopedFixed.reads, 1); assert.equal(scopedFixed.row.usage.physicalCalls, 2);
+});
+check("shared bounded recovery completes read and answer without adding reasoning turns", () => {
+  assert.equal(scopedRecovered.row.correct, true); assert.equal(scopedRecovered.row.state, "PASS");
+  assert.equal(scopedRecovered.outcome?.modelCalls, 2); assert.equal(scopedRecovered.reads, 1);
+  assert.equal(scopedRecovered.row.usage.physicalCalls, 3); assert.equal(scopedRecovered.row.usage.unknownUsageCalls, 1);
+});
+check("scoped recovery retains identical retry payload and never sends the private reference", () => {
+  assert.equal(scopedRecovered.bodies[0], scopedRecovered.bodies[1]);
+  assert(scopedRecovered.bodies.every(body => !body.includes("731")));
+});
+check("scoped retry cannot extend the original task expiry or change authorization", () => {
+  assert(scopedRecovered.observations.every(row => row.delivery?.authorityRenewed === false));
+  assert(scopedRecovered.row.broaderAuthorityGranted === false && scopedRecovered.row.sourceRepositoryMutated === false);
+});
 const preflightRows = preflightTasks.map(task => ({...sanitizedTextResult(task, result,
   [{...retry, delivery: {...retry.delivery, httpAttempts: 1, transientUnavailableResponses: 0,
     capacityWaitMs: 0}}], true, 1), configuration: task.configuration, recoveryProfile: task.recoveryProfile}));

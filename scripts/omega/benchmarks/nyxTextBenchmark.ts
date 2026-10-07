@@ -58,6 +58,15 @@ export function textHttpAttemptAllowance(delivery: "DIRECT" | "SCOPED_FILE", pro
   const logicalCalls = delivery === "DIRECT" ? 1 : 2;
   return logicalCalls + (profile === "BOUNDED_RECOVERY" ? 2 : 0);
 }
+/** Apply one prospectively declared transport policy equally to every comparison arm. */
+export function textSharedRecoverySelection<T extends {recoveryProfile?: TextRecoveryProfile}>(
+  selection: readonly T[], profile?: TextRecoveryProfile) {
+  if (profile !== undefined && !["FIXED_REQUESTS", "BOUNDED_RECOVERY"].includes(profile))
+    throw Error("text_shared_recovery_profile_invalid");
+  if (profile !== undefined && selection.some(task => task.recoveryProfile !== undefined && task.recoveryProfile !== profile))
+    throw Error("text_shared_recovery_cannot_overwrite_an_ablation");
+  return selection.map(task => profile === undefined ? task : {...task, recoveryProfile: profile});
+}
 /** Same fresh tasks/configuration in both arms. Only the explicitly recorded transport allowance differs. */
 export function textRecoveryTransferSelection(tasks: readonly PrivateTextTask[], start: number) {
   return textTransferSelection(tasks, start).flatMap((task, index) =>

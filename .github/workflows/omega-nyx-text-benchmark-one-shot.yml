@@ -46,7 +46,8 @@ jobs:
           NYX_TEXT_EPOCH_MODE: TRANSFER_ABLATION
           NYX_TEXT_CONFIGURATION: OBSERVATION_ALIGNED_SCHEMA
           NYX_TEXT_DELIVERY: SCOPED_FILE
-          NYX_TEXT_TRANSFER_START: '14'
+          NYX_TEXT_TRANSFER_START: '16'
+          NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
           NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
