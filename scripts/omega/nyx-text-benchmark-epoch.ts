@@ -7,7 +7,7 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEv
 import { liveNvidiaCapacity, type NvidiaCapacityReadiness } from "../../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
-import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextResult,
+import { TEXT_BENCHMARK_POLICY, textEvaluationModel, gradeAime, invokeExistingNyxText, sanitizedTextResult,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textFullFamilySelection, textPopulationIsFullyGraded, textFullRunIncomplete, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
@@ -28,6 +28,7 @@ export async function runTextBenchmarkEpoch() {
   if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DELIVERY_PREFLIGHT", "CONTRACT_DIAGNOSTIC", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
+  const evaluationModel = textEvaluationModel(process.env.NYX_TEXT_EVALUATION_MODEL);
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
   const capacityScheduling = process.env.NYX_TEXT_CAPACITY_SCHEDULING;
@@ -110,7 +111,7 @@ export async function runTextBenchmarkEpoch() {
     : mode === "FULL" || mode === "FULL_BBEH" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
   const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
   const makeProvider = (profile: TextTimeoutProfile) => NvidiaNimProvider.create({providerId: `NYX-ACTUAL-TEXT-BENCHMARK-${profile}`,
-    model: TEXT_BENCHMARK_POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
+    model: evaluationModel, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
     maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 120000,
     ...(profile === "FINAL_CALLER_LEASE" ? {finalAttemptTimeoutMs: TEXT_BENCHMARK_POLICY.maxTaskMs} : {}),
@@ -234,7 +235,7 @@ export async function runTextBenchmarkEpoch() {
     : "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001", candidate, mode,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
     environment: `${process.platform}-${process.arch}-node-${process.version}`,
-    policy: {...TEXT_BENCHMARK_POLICY, delivery, maxCallsPerTurn: delivery === "DIRECT" ? 1 : 2,
+    policy: {...TEXT_BENCHMARK_POLICY, model: evaluationModel, delivery, maxCallsPerTurn: delivery === "DIRECT" ? 1 : 2,
       tools: delivery === "DIRECT" ? [] : ["READ_ONLY_DISPOSABLE_QUESTION_FILE"],
       fixtureCleanupRequired: true, inputTruncationAllowed: false},
     populationDigest, selectionDigest,
@@ -251,6 +252,8 @@ export async function runTextBenchmarkEpoch() {
       : mode === "HOSTED_DIAGNOSTIC" ? "COUNTERBALANCED_NATIVE_TEMPLATE_VS_HOSTED_NATIVE"
       : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
+    modelSelection: {model: evaluationModel, defaultModel: TEXT_BENCHMARK_POLICY.model,
+      evaluationOnlyOverride: evaluationModel !== TEXT_BENCHMARK_POLICY.model, automaticFallback: false},
     transientUnavailableRecovery: transientRecovery ?? "FIXED_RETRY_LIMIT",
     capacityScheduling: capacityScheduling ?? "WITHIN_TASK_LEASE", capacityQueue,
     epochWallClockMs: Date.now() - began,

@@ -2457,6 +2457,12 @@
       ]
     },
     {
+      "name": "NYX_TEXT_EVALUATION_MODEL",
+      "files": [
+        "scripts/omega/nyx-text-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_TEXT_RECOVERY_PROFILE",
       "files": [
         "scripts/omega/nyx-text-benchmark-epoch.ts"

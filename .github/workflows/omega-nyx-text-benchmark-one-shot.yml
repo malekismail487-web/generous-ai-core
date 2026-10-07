@@ -1,9 +1,9 @@
-name: Omega NYX full public AIME and BBEH evaluation
+name: Omega NYX authorized Nemotron Super public evaluation
 on:
-  workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
     paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -39,7 +39,7 @@ jobs:
           git -C "$RUNNER_TEMP/bbeh" checkout 80d12ca916b7158f22293fcf3144f4d3d854d4be
           curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2025/resolve/c94da77eb22bbd6439e62a323bec18493a421302/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2025.parquet"
           python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare --aime "$RUNNER_TEMP/aime-2025.parquet" --bbeh "$RUNNER_TEMP/bbeh" --output "$RUNNER_TEMP/nyx-text-data.json"
-      - name: Execute all 30 AIME problems through the existing NYX session once
+      - name: Execute all 30 AIME problems through NYX with explicitly authorized Super
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
@@ -49,6 +49,7 @@ jobs:
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
           NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
           NYX_TEXT_CAPACITY_SCHEDULING: BEFORE_TASK_LEASE
+          NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-super-120b-a12b
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
           NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
@@ -56,7 +57,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-full-aime-${{ github.sha }}
+          name: nyx-super-full-aime-${{ github.sha }}
           path: |
             ${{ runner.temp }}/nyx-text-benchmark-*.json
             ${{ runner.temp }}/nyx-text-progress-*.json
@@ -86,7 +87,7 @@ jobs:
           git -C "$RUNNER_TEMP/bbeh" checkout 80d12ca916b7158f22293fcf3144f4d3d854d4be
           curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2025/resolve/c94da77eb22bbd6439e62a323bec18493a421302/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2025.parquet"
           python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare --aime "$RUNNER_TEMP/aime-2025.parquet" --bbeh "$RUNNER_TEMP/bbeh" --output "$RUNNER_TEMP/nyx-text-data.json"
-      - name: Execute all 460 BBEH Mini problems once within the frozen epoch budget
+      - name: Execute all 460 BBEH Mini problems through NYX with the same Super model
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
@@ -96,6 +97,7 @@ jobs:
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
           NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
           NYX_TEXT_CAPACITY_SCHEDULING: BEFORE_TASK_LEASE
+          NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-super-120b-a12b
           NYX_TEXT_DATA: ${{ runner.temp }}/nyx-text-data.json
           NYX_BBEH_ROOT: ${{ runner.temp }}/bbeh
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
@@ -103,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-full-bbeh-${{ github.sha }}
+          name: nyx-super-full-bbeh-${{ github.sha }}
           path: |
             ${{ runner.temp }}/nyx-text-benchmark-*.json
             ${{ runner.temp }}/nyx-text-progress-*.json

@@ -5,7 +5,7 @@ import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapaci
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
+  TEXT_BENCHMARK_POLICY, textEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
@@ -18,6 +18,20 @@ import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
   try {action(); passed++;} catch (error) {failed++; console.error(`FAILED ${name}: ${String(error)}`);}
+}
+check("evaluation selection leaves the existing Ultra default unchanged", () => {
+  assert.equal(textEvaluationModel(), "nvidia/nemotron-3-ultra-550b-a55b");
+  assert.equal(textEvaluationModel(TEXT_BENCHMARK_POLICY.model), TEXT_BENCHMARK_POLICY.model);
+  assert(Object.isFrozen(TEXT_BENCHMARK_POLICY));
+});
+check("authorized Super is selected explicitly without changing production policy", () => {
+  assert.equal(textEvaluationModel("nvidia/nemotron-3-super-120b-a12b"), "nvidia/nemotron-3-super-120b-a12b");
+  assert.equal(TEXT_BENCHMARK_POLICY.model, "nvidia/nemotron-3-ultra-550b-a55b");
+});
+for (const unauthorized of ["", " ", " nvidia/nemotron-3-super-120b-a12b", "NVIDIA/nemotron-3-super-120b-a12b",
+  "https://example.invalid/model", "nvidia/unknown", "nvidia/nemotron-3-super-120b-a12b/fallback", null, 123, {}]) {
+  check(`unsupported evaluation model fails closed: ${JSON.stringify(unauthorized)}`, () =>
+    assert.throws(() => textEvaluationModel(unauthorized as string), /text_evaluation_model_not_authorized/));
 }
 check("AIME final integer accepted with only harmless leading zeroes", () => assert(gradeAime("The answer is: 007", "7")));
 check("AIME wrong final integer rejected", () => assert(!gradeAime("The answer is: 8", "7")));
@@ -578,7 +592,8 @@ check("shared recovery rejects invalid profiles and cannot overwrite a transport
     {recoveryProfile: "BOUNDED_RECOVERY" as const}], "BOUNDED_RECOVERY"));
 });
 async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY",
-  options: {failuresBeforeRead?: number; configuration?: "SESSION_NATIVE_PHASE_CONTRACT";
+  options: {failuresBeforeRead?: number; configuration?: "SESSION_NATIVE_PHASE_CONTRACT" | "SESSION_ACTION_CONTRACT";
+    evaluationModel?: string;
     transientRecovery?: "WITHIN_SHARED_BUDGET"} = {}) {
   const began = Date.now(), expires = began + 180000;
   let virtualNow = began, physical = 0;
@@ -590,7 +605,7 @@ async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_R
     resourceScopes: ["src/question.mjs"], issuedAtEpochMs: began - 1, expiresAtEpochMs: expires,
     constraints: {maxFileBytes: 64000, maxDirectoryEntries: 1, allowedExtensions: [".mjs"]},
     issuer: "DEVELOPMENT-ONLY", auditIdentity: `SCOPED-RECOVERY-AUDIT-${profile}`});
-  const provider = NvidiaNimProvider.create({providerId: `SCOPED-RECOVERY-${profile}`, model: TEXT_BENCHMARK_POLICY.model,
+  const provider = NvidiaNimProvider.create({providerId: `SCOPED-RECOVERY-${profile}`, model: textEvaluationModel(options.evaluationModel),
     authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-double", read: () => "synthetic-not-a-credential"},
     maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 5000, onCapacityProgress: () => undefined,
     testCapacity: new NvidiaCapacityCoordinator({now: () => virtualNow,
@@ -624,6 +639,31 @@ async function scopedRecoveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_R
 }
 const scopedFixed = await scopedRecoveryReproduction("FIXED_REQUESTS");
 const scopedRecovered = await scopedRecoveryReproduction("BOUNDED_RECOVERY");
+const superScoped = await scopedRecoveryReproduction("BOUNDED_RECOVERY", {
+  failuresBeforeRead: 0, configuration: "SESSION_ACTION_CONTRACT",
+  evaluationModel: "nvidia/nemotron-3-super-120b-a12b"});
+check("explicit Super uses the existing scoped read and independent final-answer grading path", () => {
+  assert.equal(superScoped.row.state, "PASS"); assert.equal(superScoped.row.correct, true);
+  assert.equal(superScoped.reads, 1); assert.equal(superScoped.row.usage.logicalCalls, 2);
+  assert.equal(superScoped.row.usage.physicalCalls, 2);
+});
+check("both Super requests and their attributable evidence identify the selected model", () => {
+  assert(superScoped.bodies.every(body => JSON.parse(body).model === "nvidia/nemotron-3-super-120b-a12b"));
+  assert(superScoped.observations.every(row => row.model === "nvidia/nemotron-3-super-120b-a12b"));
+});
+check("Super selection adds no Ultra-specific controls or private reference to requests", () => {
+  for (const body of superScoped.bodies) {
+    const parsed = JSON.parse(body);
+    assert.equal(parsed.reasoning_effort, undefined); assert.equal(parsed.reasoning_budget, undefined);
+    assert.equal(parsed.max_tokens, 8192); assert.equal(parsed.response_format.type, "json_schema");
+    assert(!body.includes("731"));
+  }
+});
+check("Super selection retains source integrity, lease and forbidden-authority guarantees", () => {
+  assert(!superScoped.row.sourceRepositoryMutated && !superScoped.row.broaderAuthorityGranted);
+  assert(superScoped.observations.every(row => row.delivery?.authorityRenewed === false));
+  assert.equal(TEXT_BENCHMARK_POLICY.model, "nvidia/nemotron-3-ultra-550b-a55b");
+});
 check("two physical attempts reproduce a recovered read followed by blocked final answer", () => {
   assert.equal(scopedFixed.row.state, "RESOURCE_EXHAUSTION"); assert.equal(scopedFixed.row.correct, null);
   assert.equal(scopedFixed.reads, 1); assert.equal(scopedFixed.row.usage.physicalCalls, 2);

@@ -586,3 +586,47 @@ scheduling and lease preservation; supports scope, provenance, independent gradi
 and fail-closed execution; defers cognitive layers, protected benchmark access and
 container-dependent families. It supersedes charging a previous task's known
 provider cooldown against a newly issued task lease, not any security requirement.
+
+The actual rerun at `5960d525` (37641184650) is terminal. The second task's inherited
+59,998 ms cooldown was observed before lease creation; task authority was not
+renewed. Both tasks' initial read-intent requests then received three 503s each.
+Zero question reads or answers completed. AIME selected 30, attempted two, graded
+none and left 28 unexecuted; BBEH Mini's dependent job was skipped. All six physical
+calls have unknown token usage; zero reported tokens is not zero model compute.
+The epoch records 302,417 ms, separately preserving pre-lease waiting and task time.
+
+The archive-hash-checked original report matches the terminal log and is preserved
+in `docs/omega/evidence/nyx-prelease-queue-5960d525.json`. Both read request digests
+exactly match previously accepted HTTP-200 read requests from `ce926d2f`; a newly
+changed model payload does not explain these failures. No reasoning failure or
+provider-stable improvement is established. NVIDIA's [hosted-endpoint guidance](https://docs.nvidia.com/aiq-blueprint/2.2.1/resources/troubleshooting.html#nemotron-hosted-endpoint-availability)
+documents high-demand 503s for this exact Ultra model and recommends bounded retry,
+lower concurrency or self-hosting for consistent throughput. That is consistent
+with the observations, not incident-specific proof of an internal provider cause.
+Automatic Ultra replay is removed. This terminal result does not itself authorize
+any endpoint, model, credential, grader, lease or authority substitution.
+
+### Explicitly authorized alternate-model campaign — 2026-10-07
+
+After six consecutive Ultra 503s, the operator explicitly authorized testing
+another model through the existing NVIDIA endpoint as a separately labeled
+campaign. The next one-shot selects `nvidia/nemotron-3-super-120b-a12b` explicitly;
+there is no automatic fallback, production model change or new routing system.
+NVIDIA's [model-selection documentation](https://docs.nvidia.com/nemoclaw/user-guide/hermes/inference/learn-and-choose/choose-model)
+identifies Super as a tool-planning option; live execution, not that catalog, must
+establish availability and suitability for this NYX protocol.
+
+The pinned AIME-2025 30-task and BBEH-Mini 460-task populations, NYX session,
+scoped question-file read, strict structured action parser, withheld-reference
+graders, output ceiling, logical/physical request limits, original task lease,
+pre-lease capacity scheduling, epoch limits and delivery-failure circuit remain
+unchanged. Only the evaluation model changes. Reports and artifacts explicitly
+identify Super, keep Ultra's evidence intact, and preserve unknown token usage.
+Equal ceilings do not imply matched realized compute or an architectural gain.
+Public reruns are not fresh held-out tests. No promotion follows merely from a
+different model answering successfully. The temporary narrow push trigger is
+removed after this separately authorized campaign's terminal evidence is captured.
+
+Ω Plan Coverage remains PARTIAL / JUST-IN-TIME: applies measured model/integration
+diagnosis, independent grading, resource limits and provenance; preserves execution
+boundaries; defers model routing, cognitive expansion and broad superiority claims.

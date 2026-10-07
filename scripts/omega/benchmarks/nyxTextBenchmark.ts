@@ -14,6 +14,15 @@ export const TEXT_BENCHMARK_POLICY = Object.freeze({
   tools: [], sourceWrites: false, credentialForwarding: false, generalNetwork: false,
 });
 
+/** Explicit experiment selection, never routing or fallback. Production model,
+ * endpoint, credentials, execution authority and acceptance checks are unchanged. */
+export function textEvaluationModel(model?: string) {
+  if (model === undefined) return TEXT_BENCHMARK_POLICY.model;
+  if (model !== TEXT_BENCHMARK_POLICY.model && model !== "nvidia/nemotron-3-super-120b-a12b")
+    throw Error("text_evaluation_model_not_authorized");
+  return model;
+}
+
 export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 
