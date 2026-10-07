@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
-  compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection } from "./omega/benchmarks/nyxTextBenchmark";
+  compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
+  textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -420,5 +422,121 @@ check("unknown timeout compute prevents matched-cognitive comparison", () =>
   assert(!compareTextTimeoutPair([timeoutRows[0], {...timeoutRows[1], usage: {...timeoutRows[1].usage, unknownUsageCalls: 1}}]).matchedRealizedCompute));
 check("timeout reliability comparison never promotes cognition automatically", () =>
   assert.equal(compareTextTimeoutPair(timeoutRows).cognitivePromotion, false));
+check("historical physical limits remain unchanged unless recovery is explicitly selected", () => {
+  assert.equal(textHttpAttemptAllowance("DIRECT"), 1);
+  assert.equal(textHttpAttemptAllowance("SCOPED_FILE"), 2);
+  assert.equal(textHttpAttemptAllowance("DIRECT", "BOUNDED_RECOVERY"), 3);
+  assert.equal(textHttpAttemptAllowance("SCOPED_FILE", "BOUNDED_RECOVERY"), 4);
+});
+check("unknown recovery or delivery requests cannot obtain retry authority", () => {
+  assert.throws(() => textHttpAttemptAllowance("DIRECT", "UNBOUNDED" as never));
+  assert.throws(() => textHttpAttemptAllowance("SHELL" as never, "BOUNDED_RECOVERY"));
+});
+check("fresh recovery comparison changes only the named delivery allowance", () => {
+  const selection = textRecoveryTransferSelection(wholeTasks, 12);
+  assert.equal(selection.length, 8);
+  assert.deepEqual(selection.slice(0, 4).map(t => t.recoveryProfile),
+    ["FIXED_REQUESTS", "BOUNDED_RECOVERY", "BOUNDED_RECOVERY", "FIXED_REQUESTS"]);
+  assert(selection.every(t => t.configuration === "OBSERVATION_ALIGNED_SCHEMA"));
+  assert.deepEqual(selection.map(t => t.question), textRecoveryTransferSelection(
+    wholeTasks.map(t => ({...t, answer: "different private reference"})), 12).map(t => t.question));
+});
+
+// Independent fault schedules exercise the actual NYX session/provider/capacity composition.
+// Virtual waiting avoids real network, credentials, benchmark questions and sixty-second test sleeps.
+async function deliveryReproduction(profile: "FIXED_REQUESTS" | "BOUNDED_RECOVERY", statuses: number[],
+  options: {leaseMs?: number; content?: string; finishReason?: string} = {}) {
+  const frozenAt = Date.now(); let virtualNow = frozenAt;
+  const bodies: string[] = []; const observations: NvidiaNimEvidence[] = [];
+  const starts: number[] = []; let credentialReads = 0;
+  const provider = NvidiaNimProvider.create({providerId: "TEXT-RECOVERY-DEVELOPMENT", model: TEXT_BENCHMARK_POLICY.model,
+    authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-double:recovery", read: () => {
+      credentialReads++; return "synthetic-not-a-credential";}},
+    maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 5000,
+    testCapacity: new NvidiaCapacityCoordinator({now: () => virtualNow, sleep: async (ms, signal) => {
+      signal.throwIfAborted(); virtualNow += ms;}}), onCapacityProgress: () => undefined,
+    transport: async (_url, init) => {
+      const index = bodies.length; bodies.push(String(init?.body)); starts.push(virtualNow);
+      const status = statuses[index] ?? 200;
+      if (status !== 200) return new Response(null, {status});
+      return new Response(JSON.stringify({choices: [{message: {content: options.content
+        ?? '{"kind":"REPLY","message":"The answer is: 731"}'}, finish_reason: options.finishReason ?? "stop"}],
+        usage: {prompt_tokens: 40, completion_tokens: 20, total_tokens: 60}}), {status: 200});
+    }}).withHttpAttemptBudget(textHttpAttemptAllowance("DIRECT", profile));
+  const outcome = await invokeExistingNyxText({...config(provider), sessionId: `RECOVERY-${profile}`,
+    maxTurnMs: 180000, model: {complete: async request => {
+      const response = await provider.complete(textBoundedTaskRequest(
+        textConfiguredRequest(request, "OBSERVATION_ALIGNED_SCHEMA", "DIRECT"), frozenAt + (options.leaseMs ?? 180000)));
+      observations.push(response.evidence); return response;}}}, task.question);
+  const correct = outcome?.outcome === "REPLIED" ? gradeAime(outcome.message, task.answer) : null;
+  return {row: sanitizedTextResult(task, outcome, observations, correct, virtualNow - frozenAt),
+    bodies, starts, credentialReads, outcome};
+}
+const fixedRecovery = await deliveryReproduction("FIXED_REQUESTS", [503, 200]);
+const boundedRecovery = await deliveryReproduction("BOUNDED_RECOVERY", [503, 200]);
+check("baseline reproduces one-request cap preventing an otherwise recoverable delivery", () => {
+  assert.equal(fixedRecovery.row.correct, null); assert.equal(fixedRecovery.bodies.length, 1);
+  assert.equal(fixedRecovery.row.state, "RESOURCE_EXHAUSTION");
+});
+check("bounded recovery actually resumes the same NYX request after a sixty-second 503 cooldown", () => {
+  assert.equal(boundedRecovery.row.correct, true); assert.equal(boundedRecovery.row.state, "PASS");
+  assert.equal(boundedRecovery.starts[1] - boundedRecovery.starts[0], 60000);
+  assert.equal(new Set(boundedRecovery.bodies).size, 1); assert.equal(boundedRecovery.outcome?.modelCalls, 1);
+});
+check("recovery preserves failed physical work and unknown usage instead of claiming free compute", () => {
+  assert.equal(boundedRecovery.row.usage.logicalCalls, 1); assert.equal(boundedRecovery.row.usage.physicalCalls, 2);
+  assert.equal(boundedRecovery.row.usage.unknownUsageCalls, 1); assert.equal(boundedRecovery.row.usage.providerFailures, 1);
+  assert.equal(boundedRecovery.row.usage.retries, 1); assert.equal(boundedRecovery.row.usage.reportedTokens, 60);
+});
+const doubleRateLimit = await deliveryReproduction("BOUNDED_RECOVERY", [429, 429, 200]);
+check("two successive rate limits recover within the original finite lease and three-request cap", () => {
+  assert.equal(doubleRateLimit.row.correct, true); assert.equal(doubleRateLimit.row.usage.physicalCalls, 3);
+  assert.equal(doubleRateLimit.starts[2] - doubleRateLimit.starts[0], 120000);
+  assert(doubleRateLimit.row.modelEvidence.every(e => e.delivery?.authorityRenewed === false));
+});
+const shortLease = await deliveryReproduction("BOUNDED_RECOVERY", [429, 200], {leaseMs: 42000});
+check("a cooldown beyond task expiry cannot renew the lease or read a credential for another attempt", () => {
+  assert.equal(shortLease.row.correct, null); assert.equal(shortLease.bodies.length, 1);
+  assert.equal(shortLease.credentialReads, 1); assert.equal(shortLease.row.state, "PROVIDER_FAILURE");
+});
+const repeatedUnavailable = await deliveryReproduction("BOUNDED_RECOVERY", [503, 503, 200]);
+check("persistent service unavailability stops under existing transient retry policy", () => {
+  assert.equal(repeatedUnavailable.bodies.length, 2); assert.equal(repeatedUnavailable.row.correct, null);
+  assert.equal(repeatedUnavailable.row.state, "PROVIDER_FAILURE");
+});
+const authFailure = await deliveryReproduction("BOUNDED_RECOVERY", [401, 200]);
+check("credential rejection is not retried or bypassed by recovery", () => {
+  assert.equal(authFailure.bodies.length, 1); assert.equal(authFailure.row.correct, null);
+});
+const recoveredWrong = await deliveryReproduction("BOUNDED_RECOVERY", [503, 200],
+  {content: '{"kind":"REPLY","message":"The answer is: 730"}'});
+check("an independently graded wrong answer after delivery recovery remains a reasoning failure", () => {
+  assert.equal(recoveredWrong.row.correct, false); assert.equal(recoveredWrong.row.state, "REASONING_FAILURE");
+  assert(!textDeliveryBlocked(recoveredWrong.row));
+});
+const recoveredFormat = await deliveryReproduction("BOUNDED_RECOVERY", [503, 200],
+  {content: '{"kind":"REPLY","message":"Several answers may be possible"}'});
+check("an invalid final answer format is not falsely diagnosed as a reasoning failure", () =>
+  assert.equal(recoveredFormat.row.state, "ANSWER_FORMAT_FAILURE"));
+const emptyTruncation = await deliveryReproduction("BOUNDED_RECOVERY", [200], {content: "", finishReason: "length"});
+check("explicit token-limit stop with no final content is truncation rather than reasoning or outage", () =>
+  assert.equal(emptyTruncation.row.state, "TRUNCATION"));
+const malformedRecovered = await deliveryReproduction("BOUNDED_RECOVERY", [503, 200], {content: "not JSON"});
+check("recovery never relaxes the strict typed action parser", () =>
+  assert.equal(malformedRecovered.row.state, "SCHEMA_FAILURE"));
+const recoveryPair = [{...fixedRecovery.row, configuration: "OBSERVATION_ALIGNED_SCHEMA" as const,
+  recoveryProfile: "FIXED_REQUESTS" as const}, {...boundedRecovery.row, configuration: "OBSERVATION_ALIGNED_SCHEMA" as const,
+  recoveryProfile: "BOUNDED_RECOVERY" as const}];
+check("reliability advantage with unknown retry compute cannot certify a cognitive gain", () => {
+  const comparison = compareTextRecoveryPair(recoveryPair);
+  assert(comparison.boundPair); assert(!comparison.matchedRealizedCompute); assert(!comparison.cognitivePromotion);
+  assert.deepEqual(comparison.graded, [false, true]);
+});
+check("recovery comparisons reject mixed tasks, oracles, configurations and duplicate profiles", () => {
+  assert(!compareTextRecoveryPair([recoveryPair[0], {...recoveryPair[1], inputDigest: "a".repeat(64)}]).boundPair);
+  assert(!compareTextRecoveryPair([recoveryPair[0], {...recoveryPair[1], privateOracleDigest: "b".repeat(64)}]).boundPair);
+  assert(!compareTextRecoveryPair([recoveryPair[0], {...recoveryPair[1], configuration: "EXISTING_DEFAULT"}]).boundPair);
+  assert(!compareTextRecoveryPair([recoveryPair[0], recoveryPair[0]]).boundPair);
+});
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

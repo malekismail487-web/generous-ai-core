@@ -10,7 +10,8 @@ import { TEXT_BENCHMARK_POLICY, gradeAime, invokeExistingNyxText, sanitizedTextR
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textFullFamilySelection, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection, compareTextTimeoutPair, textBoundedTaskRequest,
-  type TextInferenceConfiguration, type TextTimeoutProfile, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
+  textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
+  type TextInferenceConfiguration, type TextTimeoutProfile, type TextRecoveryProfile, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
 
 export async function runTextBenchmarkEpoch() {
@@ -21,17 +22,19 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
   if (mode === "TIMEOUT_TRANSFER_ABLATION" && (delivery !== "SCOPED_FILE" || configuration !== "OBSERVATION_ALIGNED_SCHEMA"))
     throw Error("text_timeout_ablation_requires_identical_observation_schema_and_scoped_authority");
+  if (mode === "RECOVERY_TRANSFER_ABLATION" && (delivery !== "DIRECT" || configuration !== "OBSERVATION_ALIGNED_SCHEMA"))
+    throw Error("text_recovery_ablation_requires_identical_direct_schema_and_authority");
   // Committed workflow configuration fixes this window before any private answers are loaded.
   const transferStart = process.env.NYX_TEXT_TRANSFER_START === undefined ? 4 : Number(process.env.NYX_TEXT_TRANSFER_START);
   if (!Number.isSafeInteger(transferStart) || transferStart < 0
-    || process.env.NYX_TEXT_TRANSFER_START !== undefined && !["TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION"].includes(mode))
+    || process.env.NYX_TEXT_TRANSFER_START !== undefined && !["TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION"].includes(mode))
     throw Error("text_epoch_transfer_window_invalid");
   if (!process.env.NYX_TEXT_DATA || !process.env.NYX_BBEH_ROOT) throw Error("text_epoch_data_missing");
   const data = JSON.parse(await readFile(resolve(process.env.NYX_TEXT_DATA), "utf8"));
@@ -49,8 +52,10 @@ export async function runTextBenchmarkEpoch() {
       || typeof t.question !== "string" || typeof t.answer !== "string")) throw Error("text_epoch_population_invalid");
   const diagnostic = ["DIAGNOSTIC", "REJECTION_DIAGNOSTIC", "ACTION_SCHEMA", "HOSTED_DIAGNOSTIC"].includes(mode);
   const transferTasks = textTransferSelection(tasks, transferStart);
-  const selection: (PrivateTextTask & {configuration: TextInferenceConfiguration; timeoutProfile?: TextTimeoutProfile})[] =
-    mode === "TIMEOUT_TRANSFER_ABLATION" ? textTimeoutTransferSelection(tasks, transferStart)
+  const selection: (PrivateTextTask & {configuration: TextInferenceConfiguration; timeoutProfile?: TextTimeoutProfile;
+    recoveryProfile?: TextRecoveryProfile})[] =
+    mode === "RECOVERY_TRANSFER_ABLATION" ? textRecoveryTransferSelection(tasks, transferStart)
+    : mode === "TIMEOUT_TRANSFER_ABLATION" ? textTimeoutTransferSelection(tasks, transferStart)
     : mode === "HOSTED_DIAGNOSTIC" ? TEXT_HOSTED_DIAGNOSTICS.flatMap((task, index) =>
     (index ? ["HOSTED_BOUNDED", "BOUNDED_GUIDED"] as const : ["BOUNDED_GUIDED", "HOSTED_BOUNDED"] as const)
       .map(variant => ({...task, taskId: `${task.taskId}-${variant}`, configuration: variant})))
@@ -73,7 +78,8 @@ export async function runTextBenchmarkEpoch() {
       ...tasks.filter(t => t.family === "BBEH_MINI").slice(mode === "TRANSFER" ? 4 : mode === "FRESH" ? 2 : 0, mode === "TRANSFER" ? 6 : mode === "FRESH" ? 4 : 2)] : tasks)
       .map(task => ({...task, configuration: configuration as TextInferenceConfiguration}));
   const before = git("ls-files", "-s"); const began = Date.now();
-  const deadline = began + (mode === "FULL_AIME" ? 30 * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
+  const deadline = began + (mode === "RECOVERY_TRANSFER_ABLATION" ? 25 * 60000
+    : mode === "FULL_AIME" ? 30 * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
     : mode === "FULL" || mode === "FULL_BBEH" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
   const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
   const makeProvider = (profile: TextTimeoutProfile) => NvidiaNimProvider.create({providerId: `NYX-ACTUAL-TEXT-BENCHMARK-${profile}`,
@@ -85,7 +91,7 @@ export async function runTextBenchmarkEpoch() {
   const providers = new Map<TextTimeoutProfile, NvidiaNimProvider>([["FIXED_ATTEMPT", makeProvider("FIXED_ATTEMPT")]]);
   if (mode === "TIMEOUT_TRANSFER_ABLATION") providers.set("FINAL_CALLER_LEASE", makeProvider("FINAL_CALLER_LEASE"));
   const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration,
-    timeoutProfile?: TextTimeoutProfile; requestRejections: typeof requestRejections})[] = [];
+    timeoutProfile?: TextTimeoutProfile; recoveryProfile?: TextRecoveryProfile; requestRejections: typeof requestRejections})[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
   const populationDigest = theoryDigest(tasks); const selectionDigest = theoryDigest(selection);
   const checkpoint = async () => {
@@ -102,7 +108,8 @@ export async function runTextBenchmarkEpoch() {
     if (Date.now() >= deadline || !diagnostic && consecutiveProviderFailures >= 2) break;
     const started = Date.now(); const evidence: NvidiaNimEvidence[] = [];
     const taskDeadline = Math.min(deadline, started + TEXT_BENCHMARK_POLICY.maxTaskMs);
-    const taskProvider = providers.get(task.timeoutProfile ?? "FIXED_ATTEMPT")!.withHttpAttemptBudget(delivery === "SCOPED_FILE" ? 2 : 1);
+    const taskProvider = providers.get(task.timeoutProfile ?? "FIXED_ATTEMPT")!
+      .withHttpAttemptBudget(textHttpAttemptAllowance(delivery as "DIRECT" | "SCOPED_FILE", task.recoveryProfile));
     const rejectionStart = requestRejections.length;
     const questionFile = `export const question = ${JSON.stringify(task.question)};\n`;
     if (delivery === "SCOPED_FILE" && Buffer.byteLength(questionFile) > 64000) {
@@ -161,6 +168,7 @@ export async function runTextBenchmarkEpoch() {
       throw Error("text_epoch_unexpected_repository_action");
     const row = {...sanitizedTextResult(task, result, evidence, correct, Date.now() - started), configuration: task.configuration,
       ...(task.timeoutProfile ? {timeoutProfile: task.timeoutProfile} : {}),
+      ...(task.recoveryProfile ? {recoveryProfile: task.recoveryProfile} : {}),
       requestRejections: requestRejections.slice(rejectionStart)};
     row.usage.toolCalls = reader?.auditLog().filter(t => t.toolAction !== null).length ?? 0;
     row.usage.toolWorkUnits = row.usage.toolCalls * Buffer.byteLength(questionFile);
@@ -188,16 +196,24 @@ export async function runTextBenchmarkEpoch() {
       tools: delivery === "DIRECT" ? [] : ["READ_ONLY_DISPOSABLE_QUESTION_FILE"],
       fixtureCleanupRequired: true, inputTruncationAllowed: false},
     populationDigest, selectionDigest,
-    transferWindow: ["TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION"].includes(mode) ? {start: transferStart, countPerFamily: 2,
+    transferWindow: ["TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION"].includes(mode) ? {start: transferStart, countPerFamily: 2,
       selection: "POSITIONAL_COMMITTED_BEFORE_OBSERVATION_NOT_CORRECTNESS_SELECTED"} : null,
     selectedTaskIds: selection.map(t => t.taskId), verifier: {bbehRevision: data.bbehRevision,
       bbehSourceDigest: data.bbehEvaluatorDigest, aime: "EXACT_FINAL_INTEGER_CUSTOM_ADAPTER_NOT_MATHARENA_HARNESS"},
-    configuration: mode === "TIMEOUT_TRANSFER_ABLATION" ? "IDENTICAL_OBSERVATION_SCHEMA_FIXED_VS_FINAL_CALLER_LEASE"
+    configuration: mode === "RECOVERY_TRANSFER_ABLATION" ? "IDENTICAL_DIRECT_SCHEMA_FIXED_VS_BOUNDED_RECOVERY"
+      : mode === "TIMEOUT_TRANSFER_ABLATION" ? "IDENTICAL_OBSERVATION_SCHEMA_FIXED_VS_FINAL_CALLER_LEASE"
       : mode === "DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_BOUNDED_GUIDED_VS_BOUNDED_STRICT_LOCAL"
       : mode === "REJECTION_DIAGNOSTIC" ? "COUNTERBALANCED_DEFAULT_VS_TEMPLATE_BOUNDED"
       : mode === "HOSTED_DIAGNOSTIC" ? "COUNTERBALANCED_NATIVE_TEMPLATE_VS_HOSTED_NATIVE"
       : ["ACTION_SCHEMA", "TRANSFER_ABLATION"].includes(mode) ? "COUNTERBALANCED_DEFAULT_VS_OBSERVATION_ALIGNED_SCHEMA" : configuration,
     configurationIsEvaluationOnly: true, productionDefaultsChanged: false,
+    deliveryRecoveryProfiles: mode === "RECOVERY_TRANSFER_ABLATION" ? {
+      version: "nyx-text-bounded-delivery-recovery/1", logicalCallsPerTask: 1,
+      fixedPhysicalCallsPerTask: textHttpAttemptAllowance("DIRECT", "FIXED_REQUESTS"),
+      recoveryPhysicalCallsPerTask: textHttpAttemptAllowance("DIRECT", "BOUNDED_RECOVERY"),
+      taskLeaseMs: TEXT_BENCHMARK_POLICY.maxTaskMs, providerTimeoutMs: 120000,
+      identicalPayloadRetriesOnly: true, callerDeadlineRenewed: false,
+      additionalReasoningTurns: false, matchedComputeNotAssumed: true} : null,
     deliveryTimeoutProfiles: mode === "TIMEOUT_TRANSFER_ABLATION" ? {
       fixedAttemptMs: 120000, finalAttemptCeilingMs: 180000, taskLeaseMs: TEXT_BENCHMARK_POLICY.maxTaskMs,
       lastSharedBudgetAttemptOnly: true, callerDeadlineRenewed: false, additionalRequestsGranted: false} : null,
@@ -209,6 +225,8 @@ export async function runTextBenchmarkEpoch() {
       ({inputDigest: theoryDigest(task.question), ...compareTextPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
     pairedTimeoutResults: mode === "TIMEOUT_TRANSFER_ABLATION" ? transferTasks.map(task =>
       ({inputDigest: theoryDigest(task.question), ...compareTextTimeoutPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
+    pairedRecoveryResults: mode === "RECOVERY_TRANSFER_ABLATION" ? transferTasks.map(task =>
+      ({inputDigest: theoryDigest(task.question), ...compareTextRecoveryPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
     sourceUnchanged, authorityDelta: "NONE", repairAttempts: 0,
     firstAttemptOnly: true, broadPromotion: false, calibration: "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
     stopReason: !diagnostic && consecutiveProviderFailures >= 2 ? "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS"

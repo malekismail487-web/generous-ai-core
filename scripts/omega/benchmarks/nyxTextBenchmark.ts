@@ -50,6 +50,21 @@ export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDE
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE";
+export type TextRecoveryProfile = "FIXED_REQUESTS" | "BOUNDED_RECOVERY";
+/** Delivery retries share a finite task budget; they never create another reasoning turn or renew its lease. */
+export function textHttpAttemptAllowance(delivery: "DIRECT" | "SCOPED_FILE", profile: TextRecoveryProfile = "FIXED_REQUESTS") {
+  if (!["DIRECT", "SCOPED_FILE"].includes(delivery)
+    || !["FIXED_REQUESTS", "BOUNDED_RECOVERY"].includes(profile)) throw Error("text_recovery_profile_invalid");
+  const logicalCalls = delivery === "DIRECT" ? 1 : 2;
+  return logicalCalls + (profile === "BOUNDED_RECOVERY" ? 2 : 0);
+}
+/** Same fresh tasks/configuration in both arms. Only the explicitly recorded transport allowance differs. */
+export function textRecoveryTransferSelection(tasks: readonly PrivateTextTask[], start: number) {
+  return textTransferSelection(tasks, start).flatMap((task, index) =>
+    (index % 2 ? ["BOUNDED_RECOVERY", "FIXED_REQUESTS"] as const : ["FIXED_REQUESTS", "BOUNDED_RECOVERY"] as const)
+      .map(recoveryProfile => ({...task, taskId: `${task.taskId}-${recoveryProfile}`,
+        configuration: "OBSERVATION_ALIGNED_SCHEMA" as const, recoveryProfile})));
+}
 /** Setup/turn scheduling cannot renew the task lease frozen before repository provisioning. */
 export function textBoundedTaskRequest(request: NvidiaNimCompletionRequest, taskDeadlineEpochMs: number): NvidiaNimCompletionRequest {
   if (!Number.isSafeInteger(taskDeadlineEpochMs) || taskDeadlineEpochMs < 0
@@ -220,6 +235,10 @@ export function textOutcome(result: NyxChatTurnResult | null, evidence: readonly
   correct: boolean | null): string {
   if (!result) return "INFRASTRUCTURE_FAILURE";
   if (evidence.some(item => item.delivery?.httpAttemptBudget?.dispatchDenied)) return "RESOURCE_EXHAUSTION";
+  // A provider explicitly reporting an output-token stop with missing content is truncation,
+  // not an unavailable service and not evidence that the model got the problem wrong.
+  if (evidence.some(item => item.finishReason === "length"
+    && (item.failureCategory === null || item.failureCategory === "PROVIDER_RESPONSE_SCHEMA_ERROR"))) return "TRUNCATION";
   if (evidence.some(item => item.failureCategory || item.delivery && item.delivery.state !== "DELIVERED"
     && ((item.delivery.timedOutAttempts ?? 0) > 0 || (item.delivery.transientUnavailableResponses ?? 0) > 0
       || (item.delivery.rateLimitedResponses ?? 0) > 0))) return "PROVIDER_FAILURE";
@@ -346,5 +365,23 @@ export function compareTextTimeoutPair(pair: readonly (ReturnType<typeof sanitiz
   return {profiles: pair.map(row => row.timeoutProfile), outcomes: pair.map(row => row.state),
     usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
     cognitivePromotion: false, interpretation: "DELIVERY_TIMEOUT_ABLATION_NOT_COGNITIVE_GAIN"};
+}
+
+export function compareTextRecoveryPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {
+  configuration: TextInferenceConfiguration; recoveryProfile?: TextRecoveryProfile })[]) {
+  const boundPair = pair.length === 2 && pair[0].inputDigest === pair[1].inputDigest
+    && pair[0].privateOracleDigest === pair[1].privateOracleDigest
+    && pair.every(row => row.configuration === "OBSERVATION_ALIGNED_SCHEMA")
+    && new Set(pair.map(row => row.recoveryProfile)).size === 2
+    && pair.every(row => row.recoveryProfile === "FIXED_REQUESTS" || row.recoveryProfile === "BOUNDED_RECOVERY");
+  const stable = boundPair && pair.every(row => row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0
+    && row.usage.retries === 0 && row.usage.physicalCalls > 0);
+  const matchedRealizedCompute = stable && (["logicalCalls", "physicalCalls", "reportedTokens", "toolCalls", "toolWorkUnits"] as const)
+    .every(key => Math.max(...pair.map(row => row.usage[key])) - Math.min(...pair.map(row => row.usage[key]))
+      <= Math.max(...pair.map(row => row.usage[key]), 1) * 0.1);
+  return {profiles: pair.map(row => row.recoveryProfile), outcomes: pair.map(row => row.state),
+    usages: pair.map(row => row.usage), boundPair, stable, matchedRealizedCompute,
+    graded: pair.map(row => row.correct !== null), cognitivePromotion: false,
+    interpretation: "DELIVERY_ALLOWANCE_ABLATION_NOT_COGNITIVE_GAIN"};
 }
 

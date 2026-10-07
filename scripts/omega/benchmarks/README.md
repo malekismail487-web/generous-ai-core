@@ -281,3 +281,30 @@ existing delivery-failure circuit stopped the campaign. This establishes neither
 a BBEH score nor a reasoning failure or cognitive gain. The narrow automatic
 trigger is now removed; manual dispatch remains. Do not replay the unchanged
 campaign or add cognitive layers to compensate for unavailable model delivery.
+
+### Bounded delivery recovery
+
+The historical direct-text physical allowance is one request, which deliberately
+prevents even the provider's existing sixty-second retry from dispatching again.
+The opt-in `BOUNDED_RECOVERY` evaluation profile adds two physical attempts to the
+existing shared task budget, not two reasoning turns. Default callers and historical
+campaigns keep their original limits. Retries use the same frozen payload, configured
+endpoint, server cooldown, 120-second per-attempt ceiling and original 180-second
+task expiry; cancellation, transient retry limits and the outage circuit remain.
+No failed or unknown-usage call is free, and no task lease is renewed.
+
+Independent synthetic fault schedules compose the actual NYX session, provider,
+capacity gate and unchanged grader. They reproduce the one-request failure and
+successful recovery after 503 or two 429 responses; persistent unavailability,
+credential rejection, expired leases, malformed actions and wrong answers still
+fail. An explicit token-limit stop with missing final content is classified as
+truncation, not as evidence of incorrect reasoning or a service outage.
+
+`RECOVERY_TRANSFER_ABLATION` counterbalances both delivery profiles on the same
+fresh positional window, with identical observation-aligned JSON schema, model,
+tokens, logical calls, authority and oracle. The changed physical retry ceiling is
+explicit: realized compute is recorded, not assumed matched. This is a delivery
+experiment, never automatic cognitive promotion. The offset-12 workflow is frozen
+before questions or reference answers are observed, and its narrow automatic push
+trigger must be removed after the one-shot finishes. Preserve original negative
+receipts; do not reinterpret an incomplete rerun as a full benchmark score.
