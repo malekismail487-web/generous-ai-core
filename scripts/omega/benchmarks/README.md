@@ -337,6 +337,26 @@ requests, two logical calls and the original 180-second lease). Unknown retry
 compute still prevents a matched-realized-compute claim. No task answer, identity
 or observed mathematical pattern is encoded in the correction.
 
+The corrected offset-16 run at `c5d8b908` (37605637564) is also terminal:
+three of eight attempts executed, zero graded, five unexecuted. The shared physical
+allowance was not exhausted. The default received two successful responses but
+emitted non-JSON before reading, leaving no answer within its unchanged logical
+limit. The constrained arm encountered repeated HTTP 503 responses on one task;
+on the next it completed the required read, then the answer request timed out at
+the original expiry. Six physical requests, 1,229 reported tokens and three calls
+of unknown usage remain in `nyx-scoped-recovery-c5d8b908.json`, independently
+reconciled with its downloaded artifact. These are protocol and provider failures,
+not established wrong mathematical answers, a matched comparison or a full score.
+
+The general scoped-budget defect is corrected and development-verified; sustained
+delivery and the default serialization gap remain unresolved. The existing scoped
+schema correction is not broadly promoted from this unstable comparison. Automatic
+benchmark replay is disabled. Further meaningful live evaluation needs reliable
+authorized model-serving capacity; do not change providers, credentials, deadlines,
+authority, graders or protected-access restrictions silently. Official engineering
+and formal-math environments, HLE access/judge/multimodal integration and protected
+FrontierMath access remain outstanding, not completed by a passing preflight.
+
 The historical direct-text physical allowance is one request, which deliberately
 prevents even the provider's existing sixty-second retry from dispatching again.
 The opt-in `BOUNDED_RECOVERY` evaluation profile adds two physical attempts to the
