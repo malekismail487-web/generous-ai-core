@@ -284,6 +284,23 @@ campaign or add cognitive layers to compensate for unavailable model delivery.
 
 ### Bounded delivery recovery
 
+`DELIVERY_PREFLIGHT` now runs the same NYX chat/provider/strict parser on the two
+existing `TEXT_ACTION_SCHEMA_DIAGNOSTICS` development objectives without downloading,
+opening, selecting or evaluating benchmark data. It uses the existing direct
+observation-aligned schema and bounded recovery profile: one logical call, at most
+three physical attempts per objective, 8,192 output tokens and the original
+180-second task lease. The entire check is bounded to six minutes; it is not an
+automatic campaign retry or a new cognitive layer.
+
+Narrow readiness requires both expected objectives to receive independent grading,
+with no delivery failures, retries or unknown compute. A graded wrong answer is
+recorded as a reasoning failure, not relabeled as an outage. Failure exits nonzero.
+Passing means only that bounded text evaluation can proceed at that time, not
+sustained provider availability, a full benchmark score, other-family environment
+admission, cognitive gain or new authority. Current SWE/Terminal quota, HLE access
+and formal-math environment requirements remain separate. The one-shot push
+trigger is removed after this authorized current-availability check completes.
+
 The historical direct-text physical allowance is one request, which deliberately
 prevents even the provider's existing sixty-second retry from dispatching again.
 The opt-in `BOUNDED_RECOVERY` evaluation profile adds two physical attempts to the

@@ -130,6 +130,31 @@ export const TEXT_HOSTED_DIAGNOSTICS: readonly PrivateTextTask[] = Object.freeze
     question: "Four events U, V, W, X occur in positions 1 through 4. U is before V, X is before U, and W is after V. What is the position of U?", answer: "2"},
 ]);
 
+/** Transport/protocol readiness uses existing development objectives, never benchmark questions. */
+export function textDeliveryPreflightSelection() {
+  return Object.freeze(TEXT_ACTION_SCHEMA_DIAGNOSTICS.map(task => Object.freeze({...task,
+    configuration: "OBSERVATION_ALIGNED_SCHEMA" as const, recoveryProfile: "BOUNDED_RECOVERY" as const})));
+}
+
+/** A wrong but independently graded answer is measurable; outages and unknown compute are not readiness. */
+export function textDeliveryPreflightReady(rows: readonly (ReturnType<typeof sanitizedTextResult> & {
+  configuration: TextInferenceConfiguration; recoveryProfile?: TextRecoveryProfile;
+})[]) {
+  const expected = textDeliveryPreflightSelection();
+  return rows.length === expected.length && expected.every(task => {
+    const matches = rows.filter(row => row.taskId === task.taskId);
+    if (matches.length !== 1) return false;
+    const row = matches[0];
+    return row.family === "DEVELOPMENT_DIAGNOSTIC" && row.inputDigest === theoryDigest(task.question)
+      && row.privateOracleDigest === theoryDigest(task.answer) && row.configuration === task.configuration
+      && row.recoveryProfile === task.recoveryProfile
+      && (row.correct === true && row.state === "PASS" || row.correct === false && row.state === "REASONING_FAILURE")
+      && row.usage.logicalCalls === 1
+      && row.usage.physicalCalls === 1 && row.usage.providerFailures === 0 && row.usage.retries === 0
+      && row.usage.unknownUsageCalls === 0;
+  });
+}
+
 const REJECTION_PARAMETERS = ["reasoning_budget", "reasoning_effort", "response_format", "chat_template_kwargs",
   "enable_thinking", "medium_effort", "force_nonempty_content", "max_tokens", "model"] as const;
 const REJECTION_SIGNALS = [

@@ -9,7 +9,8 @@ import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsa
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
-  textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair } from "./omega/benchmarks/nyxTextBenchmark";
+  textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
+  textDeliveryPreflightSelection, textDeliveryPreflightReady } from "./omega/benchmarks/nyxTextBenchmark";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -537,6 +538,44 @@ check("recovery comparisons reject mixed tasks, oracles, configurations and dupl
   assert(!compareTextRecoveryPair([recoveryPair[0], {...recoveryPair[1], privateOracleDigest: "b".repeat(64)}]).boundPair);
   assert(!compareTextRecoveryPair([recoveryPair[0], {...recoveryPair[1], configuration: "EXISTING_DEFAULT"}]).boundPair);
   assert(!compareTextRecoveryPair([recoveryPair[0], recoveryPair[0]]).boundPair);
+});
+const preflightTasks = textDeliveryPreflightSelection();
+const preflightRows = preflightTasks.map(task => ({...sanitizedTextResult(task, result,
+  [{...retry, delivery: {...retry.delivery, httpAttempts: 1, transientUnavailableResponses: 0,
+    capacityWaitMs: 0}}], true, 1), configuration: task.configuration, recoveryProfile: task.recoveryProfile}));
+check("delivery preflight selects only pre-existing independent development objectives", () => {
+  assert.equal(preflightTasks.length, 2); assert(Object.isFrozen(preflightTasks));
+  assert(preflightTasks.every(task => task.family === "DEVELOPMENT_DIAGNOSTIC" && Object.isFrozen(task)));
+  assert.deepEqual(preflightTasks.map(task => task.question), TEXT_ACTION_SCHEMA_DIAGNOSTICS.map(task => task.question));
+});
+check("preflight preserves exact inference configuration and bounded retry profile", () =>
+  assert(preflightTasks.every(task => task.configuration === "OBSERVATION_ALIGNED_SCHEMA"
+    && task.recoveryProfile === "BOUNDED_RECOVERY")));
+check("complete stable independently graded development delivery establishes narrow readiness", () =>
+  assert(textDeliveryPreflightReady(preflightRows)));
+check("a wrong independently graded answer remains measurable rather than an infrastructure block", () =>
+  assert(textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], correct: false, state: "REASONING_FAILURE"}])));
+check("empty partial duplicated or extra preflight rows cannot establish readiness", () => {
+  for (const rows of [[], preflightRows.slice(0, 1), [preflightRows[0], preflightRows[0]], [...preflightRows, preflightRows[0]]])
+    assert(!textDeliveryPreflightReady(rows));
+});
+check("ungraded provider schema truncation and resource outcomes never establish readiness", () => {
+  for (const state of ["PROVIDER_FAILURE", "SCHEMA_FAILURE", "TRUNCATION", "RESOURCE_EXHAUSTION", "ANSWER_FORMAT_FAILURE"])
+    assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], correct: null, state}]));
+});
+check("contradictory correctness and outcome labels cannot establish readiness", () => {
+  assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], correct: false}]));
+  assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], state: "REASONING_FAILURE"}]));
+});
+check("preflight cannot silently substitute a task family input oracle or inference profile", () => {
+  for (const delta of [{family: "AIME_2025" as const}, {inputDigest: "a".repeat(64)},
+    {privateOracleDigest: "b".repeat(64)}, {configuration: "EXISTING_DEFAULT" as const},
+    {recoveryProfile: "FIXED_REQUESTS" as const}])
+    assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], ...delta}]));
+});
+check("recovered or unknown usage cannot be called stable delivery readiness", () => {
+  for (const delta of [{logicalCalls: 2}, {physicalCalls: 2}, {providerFailures: 1}, {retries: 1}, {unknownUsageCalls: 1}])
+    assert(!textDeliveryPreflightReady([preflightRows[0], {...preflightRows[1], usage: {...preflightRows[1].usage, ...delta}}]));
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
