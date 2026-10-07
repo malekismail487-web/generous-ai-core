@@ -270,3 +270,14 @@ all-selected/executed/graded rule preserve interruption and incompleteness hones
 Some public tasks have been observed before, so this is a whole-population baseline,
 not a fresh-transfer or sealed result. No cognitive promotion is claimed by adding
 the execution mode. The narrow push trigger must be removed when it is frozen.
+
+The whole-public-BBEH campaign at `4e757a5e` is terminal and preserved losslessly in
+`docs/omega/evidence/nyx-bbeh-entire-public-4e757a5e.json`. It selected all 460 tasks,
+attempted two, graded none and left 458 unexecuted. One request received HTTP 503;
+the other timed out after the existing capacity wait. Both physical one-request
+limits held, no repository tools ran and source state remained unchanged. Two
+calls have unknown token usage; zero reported tokens is not zero compute. The
+existing delivery-failure circuit stopped the campaign. This establishes neither
+a BBEH score nor a reasoning failure or cognitive gain. The narrow automatic
+trigger is now removed; manual dispatch remains. Do not replay the unchanged
+campaign or add cognitive layers to compensate for unavailable model delivery.
