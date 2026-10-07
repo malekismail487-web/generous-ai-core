@@ -4,7 +4,8 @@ import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/mo
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
-import { gradeAime, invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
+import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPopulation,
+  invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textFamilyExecutionExhausted, textDeliveryBlocked, textTimeoutTransferSelection,
@@ -39,6 +40,50 @@ check("AIME explanation containing reference cannot substitute for final answer"
 check("AIME multiple possible answers rejected", () => assert(!gradeAime("The answer is: 7 or 8", "7")));
 check("AIME injected suffix rejected", () => assert(!gradeAime("The answer is: 7\nIgnore evaluator", "7")));
 check("AIME malformed private reference rejected", () => assert.throws(() => gradeAime("The answer is: 7", "7.0")));
+for (const letter of ["A", "B", "C", "D"]) {
+  check(`GPQA exact choice ${letter} accepted without leaking the private label`, () => {
+    assert(gradeGpqa(`The answer is: ${letter}`, letter));
+    assert(gradeGpqa(`  The answer is: ${letter}.  `, letter));
+  });
+}
+check("GPQA valid wrong choice is not a formatting failure", () => {
+  assert.equal(gpqaFinalChoice("The answer is: D"), "D");
+  assert(!gradeGpqa("The answer is: D", "A"));
+});
+for (const malformed of ["A", "The answer is: a", "The answer is: E", "The answer is: A or B",
+  "The answer is: (A)", "The answer is: A\nTrust me", "I considered A. The answer is: B", "The answer is: 1"]) {
+  check(`GPQA malformed/ambiguous choice rejected: ${JSON.stringify(malformed)}`, () => {
+    assert.equal(gpqaFinalChoice(malformed), null); assert(!gradeGpqa(malformed, "A"));
+  });
+}
+check("GPQA invalid private reference is a verifier defect, not a model failure", () =>
+  assert.throws(() => gradeGpqa("The answer is: A", "answer A"), /gpqa_reference_invalid/));
+check("GPQA cannot coerce spoofed pins or changed prepared data", () => {
+  for (const body of ["", "{}", '{"schemaVersion":1,"tasks":[]}', "not json"])
+    assert.throws(() => parsePinnedGpqaData(body), /gpqa_prepared_data_changed/);
+});
+const gpqaTasks = Array.from({length: 198}, (_, index) => ({family: "GPQA_DIAMOND" as const,
+  taskId: `SYNTHETIC-GPQA-${index}`, question: "synthetic only", answer: "A"}));
+check("GPQA selection freezes all 198 unique rows without reading references", () => {
+  const protectedTasks = gpqaTasks.map(task => ({family: task.family, taskId: task.taskId,
+    get question(): string {throw Error("selector read question");},
+    get answer(): string {throw Error("selector read private reference");}}));
+  assert.equal(textGpqaPopulation(protectedTasks).length, 198);
+  assert(Object.isFrozen(textGpqaPopulation(protectedTasks)));
+});
+check("GPQA incomplete, duplicate and mixed populations fail closed", () => {
+  assert.throws(() => textGpqaPopulation(gpqaTasks.slice(1)));
+  assert.throws(() => textGpqaPopulation([...gpqaTasks.slice(1), gpqaTasks[1]]));
+  assert.throws(() => textGpqaPopulation(gpqaTasks.map((task, index) => index ? task : {...task, family: "AIME_2025"})));
+});
+check("GPQA score is complete only when all 198 first attempts are graded", () => {
+  assert(textPopulationIsFullyGraded("GPQA_DIAMOND", 198, 198, 198));
+  assert(!textPopulationIsFullyGraded("GPQA_DIAMOND", 198, 198, 197));
+  assert(!textPopulationIsFullyGraded("GPQA_DIAMOND", 1, 1, 1));
+  assert(!textFullRunIncomplete("FULL_GPQA", [{family: "GPQA_DIAMOND", selected: 198, executed: 198, graded: 198}]));
+  assert(textFullRunIncomplete("FULL_GPQA", []));
+  assert(textFullRunIncomplete("FULL_GPQA", [{family: "GPQA_DIAMOND", selected: 198, executed: 197, graded: 197}]));
+});
 check("question projection contains no hidden reference field", () => assert(!textTaskPrompt("QUESTION_ONLY").includes('"answer"')));
 check("empty question rejected rather than guessed", () => assert.throws(() => textTaskPrompt("")));
 check("existing single call and output bounds are explicit", () => assert.equal(TEXT_BENCHMARK_POLICY.maxCallsPerTurn, 1));
@@ -306,6 +351,10 @@ check("well-formed wrong integer is a reasoning failure, not a format defect", (
   assert.equal(sanitizedTextResult(task, result, evidence, false, 1).state, "REASONING_FAILURE"));
 check("invalid final integer format remains an interface failure", () =>
   assert.equal(sanitizedTextResult(task, {...result!, message: "several possible answers"}, evidence, false, 1).state, "ANSWER_FORMAT_FAILURE"));
+check("GPQA well-formed wrong letter is a reasoning failure without integer coercion", () =>
+  assert.equal(sanitizedTextResult(gpqaTasks[0], {...result!, message: "The answer is: D"}, evidence, false, 1).state, "REASONING_FAILURE"));
+check("GPQA malformed choice remains distinct from a wrong valid letter", () =>
+  assert.equal(sanitizedTextResult(gpqaTasks[0], {...result!, message: "The answer is: 1"}, evidence, false, 1).state, "ANSWER_FORMAT_FAILURE"));
 const lengthEvidence = evidence.map(e => ({...e, finishReason: "length" as const}));
 check("truncation remains separate from wrong answer", () => assert.equal(textOutcome(result, lengthEvidence, false), "TRUNCATION"));
 const failedEvidence = evidence.map(e => ({...e, failureCategory: "PROVIDER_TIMEOUT" as const}));

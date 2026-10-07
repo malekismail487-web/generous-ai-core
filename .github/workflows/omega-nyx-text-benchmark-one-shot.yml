@@ -6,9 +6,6 @@ on:
         description: Explicitly authorize the separate long BBEH campaign
         type: boolean
         default: false
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-text-benchmark-one-shot.yml]
 permissions:
   contents: read
 concurrency:

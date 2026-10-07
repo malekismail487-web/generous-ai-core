@@ -1,0 +1,65 @@
+name: Omega NYX full GPQA Diamond evaluation
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-gpqa-one-shot.yml]
+permissions:
+  contents: read
+# Share the existing live campaign slot: never compete with the active AIME run
+# for the same provider's process-local rate/cooldown accounting.
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  gpqa-diamond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify strict grading, projection, isolation and unchanged provider contract
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
+          python -B scripts/omega/benchmarks/test-prepare-gpqa.py
+          node scripts/typescript/typecheck-ratchet.mjs
+          node scripts/security/scan-secrets.mjs
+      - name: Prepare all 198 pinned author questions outside the source repository
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/Idavidrein/gpqa.git "$RUNNER_TEMP/gpqa"
+          git -C "$RUNNER_TEMP/gpqa" checkout 56686c06f5e19865c153de0fdb11be3890014df7
+          python -B scripts/omega/benchmarks/prepare-text-benchmarks.py prepare-gpqa --gpqa "$RUNNER_TEMP/gpqa" --output "$RUNNER_TEMP/nyx-gpqa-data.json"
+      - name: Execute frozen full GPQA Diamond through existing read-then-reply NYX
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_TEXT_EPOCH_MODE: FULL_GPQA
+          NYX_TEXT_CONFIGURATION: SESSION_SUPER_PHASE_CONTRACT
+          NYX_TEXT_DELIVERY: SCOPED_FILE
+          NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
+          NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
+          NYX_TEXT_CAPACITY_SCHEDULING: BEFORE_TASK_LEASE
+          NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-super-120b-a12b
+          NYX_TEXT_DATA: ${{ runner.temp }}/nyx-gpqa-data.json
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
+      - name: Preserve only sanitized evidence, never reference data or raw model reasoning
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-super-full-gpqa-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/nyx-text-benchmark-*.json
+            ${{ runner.temp }}/nyx-text-progress-*.json
+          if-no-files-found: error

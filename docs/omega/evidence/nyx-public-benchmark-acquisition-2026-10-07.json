@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-PUBLIC-BENCHMARK-ACQUISITION-2026-10-07",
+  "scope": "Public sources identified from published Astra, Fable 5.1 and Opus 5.5 evaluations; not possession of every private vendor evaluation.",
+  "localRoot": "C:/Users/loka3/Documents/Codex/2026-08-20/h/benchmark-data",
+  "sourceExecution": false,
+  "gitLfsSmudge": false,
+  "submodulesInitialized": false,
+  "referenceAnswersPrinted": false,
+  "sources": [
+    {
+      "benchmark": "GPQA Diamond",
+      "repository": "https://github.com/Idavidrein/gpqa",
+      "path": "gpqa-harness",
+      "commit": "56686c06f5e19865c153de0fdb11be3890014df7",
+      "tree": "b9bcb451e0aed56b96410a6443937299fc91dc14",
+      "cleanCheckout": true,
+      "archiveBytes": 2348038,
+      "archiveSha256": "461ae7329f15a3e35f8184d2dac24b990f34fdf12f366ca4062d8e6638cd08dc",
+      "csvMember": "dataset/gpqa_diamond.csv",
+      "csvSha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+      "preparedSha256": "760b5a1eab8abb403b644dbc84edd55af3ff50066d4eda1299c220db7f224942",
+      "populationVerifiedLocally": 198,
+      "status": "FULL_PUBLIC_DIAMOND_POPULATION_ACQUIRED",
+      "preparation": "Author-published archive instructions; CSV projection; author baseline choice order with local Python random seed 0; no explanatory or validator metadata in model input.",
+      "adapter": "Existing bounded NYX text runner; custom strict final-choice grading, not the author's inference harness.",
+      "contamination": "PUBLIC_DATA_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+    },
+    {
+      "benchmark": "Terminal-Bench-Science 0.1",
+      "repository": "https://github.com/harbor-framework/terminal-bench-science",
+      "release": "v0.1.0",
+      "path": "terminal-bench-science-0.1",
+      "commit": "f81afac4f11048e77a15dfc8fb1dbfb897fea0ce",
+      "tree": "d880cb1969f28eb0f7f85df681232e26b2a3e7e3",
+      "cleanCheckout": true,
+      "taskManifests": 70,
+      "manifestDigest": "5a5a1c9ff35c6aefeab5e0dec1dd096c8664fedc5ec10a364bb8cbc006227a77",
+      "manifestDigestDefinition": "SHA256 of compact Python JSON of path/sha256 objects sorted by task.toml path; hashes raw checked-out bytes.",
+      "status": "RELEASE_SOURCE_ACQUIRED_NOT_EXECUTED",
+      "blocker": "Approved quota-enforcing isolated container environment and task-specific resource admission unavailable; release assets/images not verified equivalent.",
+      "questionsAndSolutionsInspected": false
+    },
+    {
+      "benchmark": "OSWorld 2.1",
+      "repository": "https://github.com/xlang-ai/OSWorld-V2",
+      "release": "osworld-v2.1",
+      "path": "osworld-2.1",
+      "commit": "3d778a3c9a34a079316f70df023b166700445792",
+      "tree": "4c0a344c568e16a87d3f05b2a2b0b502233f42e8",
+      "cleanCheckout": true,
+      "status": "HARNESS_ACQUIRED_NOT_FULL_GATED_POPULATION",
+      "officialTaskCountFromReleaseMetadata": 108,
+      "tasksRevision": "0a1aadad95aa79b00b3783e717d865089ab06e26",
+      "gatedAssetsRevision": "384b3834faba5700a7b589e6cc181490c9808949",
+      "blocker": "Authorized gated task/assets access plus approved isolated VM/KVM and website environment; no desktop or live-account authority granted.",
+      "fablePublishedOSWorld20Equivalent": false
+    },
+    {
+      "benchmark": "Chartography",
+      "repository": "https://github.com/surge-ai/chartography",
+      "path": "chartography",
+      "commit": "3f1bf837232d3918c2cc35c6e2418c9e70d2a57b",
+      "tree": "dd1e1acad4917d7ddf2f219dfbfcb7de077808e4",
+      "cleanCheckout": true,
+      "status": "HARNESS_AND_DUMMY_EXAMPLES_ONLY",
+      "fullDatasetAnonymousMetadataRequest": "HTTP_401",
+      "blocker": "Full author dataset access, verified NYX vision pathway and authorized independent judge unavailable; dummy examples cannot establish a benchmark score."
+    },
+    {
+      "benchmark": "AutomationBench public 1.0.6",
+      "repository": "https://github.com/zapier/AutomationBench",
+      "path": "automationbench",
+      "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+      "tree": "6dcb76e0830b24e84181fd8983b41a9b4a192127",
+      "cleanCheckout": true,
+      "status": "PUBLIC_SOURCE_ACQUIRED_NOT_EXECUTED",
+      "authorReportedScoredTasks": 600,
+      "authorReportedUnscoredSimpleTasks": 200,
+      "officialPrivateLeaderboardPopulationEquivalent": false,
+      "blocker": "NYX lacks a verified typed adapter for the simulated API toolset; upstream requires Python >=3.13. No real SaaS account actions authorized."
+    },
+    {
+      "benchmark": "ARC-AGI-3",
+      "repository": "https://github.com/arcprize/ARC-AGI",
+      "path": "arc-agi-3-toolkit",
+      "commit": "f12822c4d550121c35a275008d964afbbed47d2f",
+      "tree": "9ee140e4183df0df109cec50b7cd0d2531c47168",
+      "cleanCheckout": true,
+      "status": "OFFICIAL_TOOLKIT_ACQUIRED_NOT_FULL_GAME_POPULATION",
+      "blocker": "No verified NYX interactive game-action adapter or admitted official game population; two toolkit test environments are not the official benchmark."
+    },
+    {
+      "benchmark": "GDPval public v2 release",
+      "repository": "https://huggingface.co/datasets/openai/gdpval",
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "path": "gdpval-public.parquet",
+      "bytes": 1913489,
+      "sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+      "status": "TASK_TABLE_ACQUIRED_REFERENCE_AND_DELIVERABLE_ASSETS_NOT_DOWNLOADED",
+      "localRowCount": null,
+      "metadataInspection": "Windows Application Control blocked the installed DuckDB DLL; not bypassed.",
+      "gdpvalAa21LeaderboardEquivalent": false,
+      "blocker": "Full assets, deliverable-generation scope and independent grading remain unavailable; no official score claimed."
+    }
+  ],
+  "inaccessibleEvaluations": [
+    {"benchmark": "FrontierCode v1.1 Main", "state": "UNRELEASED_AUTHOR_EVALUATION", "reference": "https://cognition.com/blog/frontier-code", "action": "Obtain authorized evaluation access from Cognition; do not substitute public examples."},
+    {"benchmark": "CursorBench 3.2 / 4.0", "state": "INTERNAL_VENDOR_EVALUATION", "reference": "https://prod.cursor.com/blog/cursorbench", "action": "Obtain authorized Cursor evaluation access."},
+    {"benchmark": "FrontierMath Tier 4 v2", "state": "PROTECTED_TASKS_AND_VERIFIERS", "reference": "https://epoch.ai/benchmarks/frontiermath-tier-4-v2", "action": "Obtain authorized Epoch AI access; public samples are not equivalent."},
+    {"benchmark": "HLE", "state": "HARNESS_ACQUIRED_DATASET_ACCESS_AND_JUDGE_UNRESOLVED", "action": "Authorized dataset access, independent judge and multimodal pathway remain required."}
+  ],
+  "priorAcquisitionsPreserved": ["Terminal-Bench 4.0 release source", "Terminal-Bench 2.0", "SWE-bench Verified", "ARC-AGI-2 public sets", "AIME 2025", "BBEH Mini", "HLE harness", "FrontierMath public Erdos variant"],
+  "executionPolicy": {
+    "noScoreFromDownloads": true,
+    "firstAttemptsAndRepairsSeparate": true,
+    "developmentFixesCannotUseReservedAnswers": true,
+    "providerFailuresNotReasoningFailures": true,
+    "bbehAutomaticRestart": false,
+    "productionModelDefaultsUnchanged": true,
+    "authorityDelta": "NONE"
+  },
+  "planCoverage": {
+    "direct": ["Reality over prediction", "No self-certification", "Explicit benchmark versions", "No authority without scope"],
+    "supporting": ["Reference custody", "Strict outcome classification", "General development fixes before fresh evaluation"],
+    "deferred": ["Cognitive promotion", "Protected evaluation access", "New execution environments", "Biological expansion", "Recursion"],
+    "conflicts": ["A public toolkit or alternate split cannot be relabeled as a private vendor benchmark."],
+    "coverage": "PARTIAL / JUST-IN-TIME"
+  }
+}

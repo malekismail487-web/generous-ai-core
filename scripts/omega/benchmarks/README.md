@@ -767,3 +767,38 @@ grader, model default or authority boundary has been relaxed to obtain a score.
 Protected FrontierMath Tier 4 v2 tasks/verifiers are unavailable; authorized Epoch
 AI access is required. Public samples and the public Erdős acquisition are not
 equivalent. No Terminal-Bench 4.0 or protected FrontierMath score is claimed.
+
+### Public frontier benchmark acquisition and GPQA execution
+
+The [2026-10-07 acquisition receipt](../../../docs/omega/evidence/nyx-public-benchmark-acquisition-2026-10-07.json)
+pins additional author sources and distinguishes full populations from
+harness-only, gated, alternate-split and missing-asset acquisitions. Downloads
+remain outside the candidate repository. No vendor-private benchmark is claimed
+downloaded, and no score follows from source acquisition.
+
+`FULL_GPQA` composes the existing bounded NYX text session, provider, disposable
+question repository, strict protocol, cleanup and usage accounting. All 198
+GPQA Diamond rows are frozen in author CSV order. The author baseline's choice
+shuffle uses Python seed 0; repeated official distractors are preserved. Archive,
+CSV and complete prepared-data SHA256 pins prevent silent task/reference changes.
+Only the question and four unlabeled choices reach cognition, not explanations,
+validator metadata or the correct-choice label. Final A–D grading is exact;
+wrong choices, format errors, truncations, provider failures, schema errors,
+authorization failures and unexecuted tasks remain distinct. This is our custom
+closed-book adapter, not the authors' inference harness or a sealed held-out set.
+
+The GPQA campaign explicitly selects the authorized Super evaluation model and
+phase controls; Ultra production defaults remain unchanged. It has the same
+8,192-token ceiling, two logical calls, at most four HTTP attempts and 180-second
+task lease as the scoped full-AIME configuration. No repair feedback or extra
+reasoning turns are granted. The finite campaign deadline is 19,000,000ms;
+two consecutive delivery failures stop execution with partial evidence, not a
+manufactured score. Capacity waiting happens before task leases. Both workflows
+share the existing campaign concurrency group and cannot compete for process-local
+provider accounting. BBEH remains manual opt-in and cancellation-aware; neither
+push campaign restarts it.
+
+Local verification: 108 suites / 11,141 checks passed, five synthetic Python
+projection tests passed, and TypeScript 5.8.3 remains zero. These verify the adapter
+and preserved boundaries, not NYX reasoning performance. GPQA must actually
+finish and be independently graded before a result is claimed.

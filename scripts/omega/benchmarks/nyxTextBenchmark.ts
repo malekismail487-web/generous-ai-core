@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, type NvidiaNimEvidence, type NvidiaNimCompletionRequest,
   type NvidiaNimTransport } from "../../../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxChatSession, type NyxChatSessionConfig, type NyxChatTurnResult } from "../../../src/lib/codelab/cli/nyxChatSession";
@@ -23,8 +24,38 @@ export function textEvaluationModel(model?: string) {
   return model;
 }
 
-export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "DEVELOPMENT_DIAGNOSTIC";
+export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "GPQA_DIAMOND" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
+
+export const GPQA_DIAMOND_SOURCE = Object.freeze({
+  revision: "56686c06f5e19865c153de0fdb11be3890014df7",
+  archiveDigest: "461ae7329f15a3e35f8184d2dac24b990f34fdf12f366ca4062d8e6638cd08dc",
+  csvDigest: "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+  preparedDigest: "760b5a1eab8abb403b644dbc84edd55af3ff50066d4eda1299c220db7f224942",
+  shuffleSeed: 0, population: 198,
+});
+
+/** Bind the complete prepared population, not just self-asserted version fields. */
+export function parsePinnedGpqaData(raw: string): {schemaVersion: 1; tasks: PrivateTextTask[]} {
+  if (createHash("sha256").update(raw, "utf8").digest("hex") !== GPQA_DIAMOND_SOURCE.preparedDigest)
+    throw Error("gpqa_prepared_data_changed");
+  const data = JSON.parse(raw);
+  if (data.schemaVersion !== 1 || data.gpqaRevision !== GPQA_DIAMOND_SOURCE.revision
+    || data.gpqaArchiveDigest !== GPQA_DIAMOND_SOURCE.archiveDigest
+    || data.gpqaCsvDigest !== GPQA_DIAMOND_SOURCE.csvDigest || data.shuffleSeed !== GPQA_DIAMOND_SOURCE.shuffleSeed
+    || !Array.isArray(data.tasks)) throw Error("gpqa_data_pin_invalid");
+  textGpqaPopulation(data.tasks);
+  return data;
+}
+
+/** Entire frozen author population, never answer-dependent selection. */
+export function textGpqaPopulation(tasks: readonly PrivateTextTask[]) {
+  if (tasks.length !== GPQA_DIAMOND_SOURCE.population
+    || tasks.some(task => task.family !== "GPQA_DIAMOND")
+    || new Set(tasks.map(task => task.taskId)).size !== GPQA_DIAMOND_SOURCE.population)
+    throw Error("gpqa_population_invalid");
+  return Object.freeze([...tasks]);
+}
 
 /** Whole pinned populations only. Selection cannot inspect questions or private references. */
 export function textWholePopulation(tasks: readonly PrivateTextTask[], family: "AIME_2025" | "BBEH_MINI") {
@@ -44,7 +75,8 @@ export function textFullFamilySelection(tasks: readonly PrivateTextTask[], mode:
 
 /** Empty, partial, unexecuted and ungraded selections never establish a full score. */
 export function textPopulationIsFullyGraded(family: TextTaskFamily, selected: number, executed: number, graded: number) {
-  const expected = family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460 : null;
+  const expected = family === "AIME_2025" ? 30 : family === "BBEH_MINI" ? 460
+    : family === "GPQA_DIAMOND" ? GPQA_DIAMOND_SOURCE.population : null;
   return expected !== null && [selected, executed, graded].every(count => Number.isSafeInteger(count) && count === expected);
 }
 
@@ -54,7 +86,8 @@ export function textFullRunIncomplete(mode: string, families: readonly {
   family: string; selected: number; executed: number; graded: number;
 }[]) {
   const required = mode === "FULL" ? ["AIME_2025", "BBEH_MINI"] as const
-    : mode === "FULL_AIME" ? ["AIME_2025"] as const : mode === "FULL_BBEH" ? ["BBEH_MINI"] as const : [];
+    : mode === "FULL_AIME" ? ["AIME_2025"] as const : mode === "FULL_BBEH" ? ["BBEH_MINI"] as const
+      : mode === "FULL_GPQA" ? ["GPQA_DIAMOND"] as const : [];
   return required.some(family => {
     const rows = families.filter(row => row.family === family);
     return rows.length !== 1 || !textPopulationIsFullyGraded(family,
@@ -348,6 +381,15 @@ export function gradeAime(message: string, reference: string): boolean {
   return aimeFinalInteger(message) === Number(reference);
 }
 
+/** Closed-book choice grading. Never search explanations for a convenient letter. */
+export function gpqaFinalChoice(message: string): string | null {
+  return /^The answer is:\s*([A-D])\s*\.?$/.exec(message.trim())?.[1] ?? null;
+}
+export function gradeGpqa(message: string, reference: string): boolean {
+  if (!/^[A-D]$/.test(reference)) throw Error("gpqa_reference_invalid");
+  return gpqaFinalChoice(message) === reference;
+}
+
 export function textInferenceUsage(evidence: readonly NvidiaNimEvidence[], elapsedMs: number): Usage {
   const usage = zeroUsage();
   usage.wallClockMs = elapsedMs;
@@ -427,7 +469,8 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
   evidence: readonly NvidiaNimEvidence[], correct: boolean | null, elapsedMs: number) {
   let state = textOutcome(result, evidence, correct);
   if (state === "REASONING_OR_ANSWER_FORMAT_FAILURE" && task.family !== "BBEH_MINI" && result)
-    state = aimeFinalInteger(result.message) === null ? "ANSWER_FORMAT_FAILURE" : "REASONING_FAILURE";
+    state = (task.family === "GPQA_DIAMOND" ? gpqaFinalChoice(result.message)
+      : aimeFinalInteger(result.message)) === null ? "ANSWER_FORMAT_FAILURE" : "REASONING_FAILURE";
   return { taskId: task.taskId, family: task.family, inputDigest: theoryDigest(task.question),
     privateOracleDigest: theoryDigest(task.answer), predictionDigest: result?.outcome === "REPLIED"
       ? theoryDigest(result.message) : null, state, correct,
