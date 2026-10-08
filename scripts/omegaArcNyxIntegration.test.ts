@@ -102,6 +102,36 @@ for (const configuration of ["SUPER_HOSTED_NONE", "SUPER_HOSTED_BOUNDED"] as con
 }
 for (const configuration of ["SUPER_HOSTED_NONE", "SUPER_HOSTED_BOUNDED"] as const)
   rejects(() => arcInferenceConfiguration(configuration, 8192, spec("CURRENT_NYX").model), `${configuration} rejects wrong model`);
+for (const arm of ["CURRENT_NYX", "CANDIDATE_NYX"] as const) {
+  const bodies: any[] = [], traces: any[] = [];
+  const p = NvidiaNimProvider.create({providerId:"QUALITY-TRANSFER-COMPOSITION-ONLY",model:"nvidia/nemotron-3-super-120b-a12b",
+    authorityMode:"TEST_DOUBLE_ONLY",credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-not-a-real-credential"},
+    maxPromptBytes:64000,maxOutputTokens:8192,timeoutMs:1000,transport:async(_url,init)=>{
+      bodies.push(JSON.parse(String(init?.body)));return reply(intent(correct));}});
+  const output = await createArcAdapter({spec:{...spec(arm),model:p.profile().model},provider:p,candidateCommit:"a".repeat(40),
+    maxOutputTokens:8192,inferenceConfiguration:"SUPER_HOSTED_NONE",preserveProviderArrayBounds:true,
+    providerIntentShape:"DECISION_REQUIRED_FIELDS",...(arm==="CANDIDATE_NYX"?{qualityRepairGuidance:"STRUCTURE_SITES" as const}:{}),
+    onIntegrationEvidence:value=>traces.push(value)}).invoke(request());
+  check(output.failure===null&&bodies.length===1&&bodies[0].response_format.json_schema.schema.anyOf.length>1,
+    `${arm} composes repaired grammar with the existing bounded ARC execution path`);
+  check(bodies[0].reasoning_effort==="none"&&bodies[0].max_tokens===8192&&!bodies[0].reasoning_budget,
+    `${arm} quality experiment leaves model compute policy unchanged`);
+  const prompt = JSON.parse(bodies[0].messages[1].content);
+  check(!prompt.measuredQualityRepair&&traces[0].providerIntentShape==="DECISION_REQUIRED_FIELDS"
+    &&traces[0].qualityRepairGuidance===(arm==="CANDIDATE_NYX"?"STRUCTURE_SITES":null),
+    `${arm} reports actual opt-in treatment without inventing first-attempt rejection feedback`);
+  check(traces[0].cleanupVerified&&traces[0].sourceUnchanged&&!traces[0].productionAuthority,
+    `${arm} repaired-grammar treatment preserves confinement and lifecycle cleanup`);
+}
+for (const option of ["providerIntentShape","qualityRepairGuidance"] as const) {
+  for (const value of [null,"UNKNOWN",false]) rejects(()=>createArcAdapter({spec:spec("CURRENT_NYX"),
+    provider:provider(async()=>reply(intent(correct))),candidateCommit:"a".repeat(40),maxOutputTokens:8192,[option]:value} as never),
+    `${option} malformed treatment rejected before inference`);
+  for (const arm of ["RAW_MODEL","MODEL_EQUIVALENT_TOOLS"] as const) rejects(()=>createArcAdapter({spec:spec(arm),
+    provider:provider(async()=>reply(intent(correct))),candidateCommit:"a".repeat(40),maxOutputTokens:8192,
+    [option]:option==="providerIntentShape"?"DECISION_REQUIRED_FIELDS":"STRUCTURE_SITES"} as never),
+    `${arm} cannot silently ignore NYX-only ${option} treatment`);
+}
 for (const invalid of ["UNKNOWN", "", null, 1])
   rejects(() => arcInferenceConfiguration(invalid as never, 8192, "nvidia/nemotron-3-super-120b-a12b"), "unknown inference configuration fails closed");
 rejects(() => arcInferenceConfiguration("SUPER_HOSTED_BOUNDED", 1, "nvidia/nemotron-3-super-120b-a12b"), "reasoning needs output reserve");

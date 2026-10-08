@@ -1614,3 +1614,36 @@ checks. Automatic launch was removed; no production or default Ultra change.
 Next: investigate structural quality-feedback interpretation using existing
 measured/declaration-site guidance and fresh controlled tasks, not task-specific
 patches, looser quality gates or another cognitive layer.
+
+### Fresh ARC decision-contract / quality-feedback transfer
+
+`NYX_ARC_DECISION_QUALITY_COMPARISON=1` reuses the existing ARC epoch, R3
+repository session, bounded repair loop and exact withheld-grid scorer. The
+eight task identities are frozen as the next lexicographic paths after the
+eighteen previously exercised public evaluation tasks, before inspecting their
+contents. Public pretraining exposure remains unknown; this is neither sealed
+evaluation nor the full ARC population. No task-specific algorithm is added.
+
+Both arms use separately labeled Super, native reasoning `none`, temperature
+zero, 8,192 output tokens, the repaired `DECISION_REQUIRED_FIELDS` generation
+grammar, and identical existing authority, tools, time/call/patch limits and
+strict functional/static-quality acceptance. `CURRENT_NYX` receives existing
+public quality findings; `CANDIDATE_NYX` enables the already implemented
+`STRUCTURE_SITES` explanation only after a bound quality rejection. It exposes
+current declaration locations, the cumulative original-state limit and the
+required reduction, not hidden answers, candidate code solutions or authority.
+First-attempt treatment payloads are identical. No cognitive layer, production
+change, default Ultra change or quality-threshold relaxation is introduced.
+
+Hypothesis: existing source-linked feedback lets the model translate static
+rejections into valid architectural repairs on unseen benchmark tasks. Measure
+first-attempt and repaired full acceptance separately; retain schema, syntax,
+functional, hidden-grid, quality, provider and resource failures separately.
+Each trace records numeric public quality findings and the actual treatment.
+Equal limits are not matched realized work: report per-task and total calls,
+tokens, verification work, latency and unknown usage before interpreting gains.
+No gain, no exercised quality-repair pathway, provider instability or inadequate
+compute matching cannot support promotion. Lower schema rejection alone remains
+interface reliability, not cognitive improvement. The one-shot push trigger is
+removed immediately after confirming the single launch; artifacts also retain
+an explicitly partial checkpoint if execution is interrupted.

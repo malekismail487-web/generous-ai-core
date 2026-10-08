@@ -118,11 +118,15 @@ export interface ArcIntegrationEvidence {
   readonly inferenceConfiguration: ArcInferenceConfiguration;
   readonly reasoningControl: "SUPER_HOSTED_NATIVE" | null;
   readonly reasoningBudgetTokens: number | null;
+  readonly providerIntentShape: "DECISION_REQUIRED_FIELDS" | null;
+  readonly qualityRepairGuidance: "STRUCTURE_SITES" | null;
   readonly loopOutcome: string;
   readonly loopReason: string;
   readonly repairIterations: number;
   readonly iterationResults: readonly { readonly iteration: number; readonly functionalPass: boolean;
-    readonly qualityDecision: string | null; readonly diagnosticDigest: string }[];
+    readonly qualityDecision: string | null; readonly diagnosticDigest: string;
+    readonly qualityFindings: readonly { readonly dimension: string; readonly code: string; readonly paths: readonly string[];
+      readonly measurement?: {readonly observed: number; readonly limit: number} }[] }[];
   readonly rejectedSourceFailures: readonly string[];
   readonly rejectedIntentDiagnostics: readonly { readonly reason: string; readonly category: string;
     readonly path: string; readonly observedCode: string; readonly diagnosticDigest: string }[];
@@ -139,15 +143,21 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
   sourceRepresentation?: "TEXT" | "LINES";
   preserveProviderArrayBounds?: boolean;
   inferenceConfiguration?: ArcInferenceConfiguration;
+  providerIntentShape?: "DECISION_REQUIRED_FIELDS";
+  qualityRepairGuidance?: "STRUCTURE_SITES";
   onIntegrationEvidence?: (value: ArcIntegrationEvidence) => void }): BenchmarkAdapter {
   const config = Object.freeze({ ...rawConfig, spec: immutableTheoryValue(armSchema.parse(jsonValue(rawConfig.spec))) });
   if (!/^[a-f0-9]{40}$/.test(config.candidateCommit) || !Number.isInteger(config.maxOutputTokens)
     || config.maxOutputTokens < 1 || config.maxOutputTokens > 8192
     || (config.compactPublicData !== undefined && typeof config.compactPublicData !== "boolean")
-    || (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean"))
+    || (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean")
+    || (config.providerIntentShape !== undefined && config.providerIntentShape !== "DECISION_REQUIRED_FIELDS")
+    || (config.qualityRepairGuidance !== undefined && config.qualityRepairGuidance !== "STRUCTURE_SITES"))
     throw Error("arc_adapter_resource_or_candidate_identity");
   const inferenceConfiguration = config.inferenceConfiguration === undefined ? "LEGACY_TEMPLATE_NONE" : config.inferenceConfiguration;
   const inference = arcInferenceConfiguration(inferenceConfiguration, config.maxOutputTokens, config.spec.model);
+  if ((config.providerIntentShape || config.qualityRepairGuidance)
+    && !["CURRENT_NYX", "CANDIDATE_NYX"].includes(config.spec.arm)) throw Error("arc_treatment_requires_nyx_execution_arm");
   if (!config.spec.supportedCapabilities.includes("JSON_GRID_OUTPUT")
     || config.spec.model !== config.provider.profile().model
     || (config.spec.arm === "CANDIDATE_NYX" && config.publicFeedbackMode !== "COMPACT_WITNESS"
@@ -212,6 +222,7 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
         experimentVariant: config.spec.arm === "MODEL_EQUIVALENT_TOOLS" ? "MINIMAL_REFERENCE" : "CURRENT",
         comparisonInferencePolicy: inference.inferencePolicy, comparisonReasoningControl: inference.reasoningControl,
         comparisonReasoningBudgetTokens: inference.reasoningBudgetTokens,
+        providerIntentShape: config.providerIntentShape, qualityRepairGuidance: config.qualityRepairGuidance,
         preserveProviderArrayBounds: config.preserveProviderArrayBounds });
       const loop = R3BoundedRepairLoop.create({ loopId: `ARC-${request.inputDigest.slice(0, 16)}`, evaluatorVersion: ARC_R3_ADAPTER_VERSION,
         observerIdentity: "OMEGA-ARC-OBSERVER", cognition, candidateBuilder: { builderIdentity: "OMEGA-ARC-EXISTING-R3",
@@ -252,6 +263,7 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
     config.onIntegrationEvidence?.({ inputDigest: request.inputDigest, arm: config.spec.arm, inferencePolicy: inference.inferencePolicy,
       inferenceConfiguration, reasoningControl: inference.reasoningControl ?? null,
       reasoningBudgetTokens: inference.reasoningBudgetTokens ?? null,
+      providerIntentShape: config.providerIntentShape ?? null, qualityRepairGuidance: config.qualityRepairGuidance ?? null,
       loopOutcome: result?.outcome ?? "INFRASTRUCTURE_ERROR", loopReason: result?.reason ?? "infrastructure_failure",
       repairIterations: result?.iterations.length ?? 0, rejectedSourceFailures: result?.cognitionFailures.map(i => i.reason) ?? [],
       rejectedIntentDiagnostics: result?.cognitionFailures.flatMap(f => f.diagnostics.map(d => ({ reason: f.reason,
@@ -260,6 +272,7 @@ export function createArcAdapter(rawConfig: { spec: ArmSpec; provider: NvidiaNim
         diagnosticDigest: theoryDigest(d) }))) ?? [],
       iterationResults: result?.iterations.map(i => ({ iteration: i.iteration, functionalPass: i.functionallyPassed,
         qualityDecision: i.candidateAdmission?.decision ?? null,
+        qualityFindings: i.candidateAdmission?.findings ?? [],
         diagnosticDigest: theoryDigest(i.verifications.map(v => v.observation.diagnostics)) })) ?? [],
       omegaExecutionEvidence: result?.iterations.flatMap(i => i.verifications.map(v => v.execution.evidence.evidenceId)) ?? [],
       candidatePredictionArtifactProduced: artifact !== null, ...cleanup, productionAuthority: false, hostileCodeSandbox: false,

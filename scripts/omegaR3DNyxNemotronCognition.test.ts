@@ -827,6 +827,27 @@ function schemaKeys(value: unknown): string[] {
   check(deliveredSites?.length===6&&(detailedPrompt.measuredQualityRepair as typeof sites).version==="nyx-measured-quality-repair/2"
     &&JSON.stringify(detailedPrompt.constraints)===JSON.stringify(getPrompt(payloads[3]).constraints),
     "bound public declaration sites reach actual cognition prompt with unchanged constraints and parser");
+  const repairedGrammarPayloads: any[] = [];
+  for (const enabled of [false, true]) {
+    const instance = NyxNemotronEngineeringCognition.create({cognitionId:"REQUIRED-GRAMMAR-SITES-COMPOSITION",
+      provider:provider(async(url,init)=>{repairedGrammarPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);}), maxPromptBytes:50000, maxOutputTokens:1024,
+      providerIntentShape:"DECISION_REQUIRED_FIELDS", ...(enabled?{qualityRepairGuidance:"STRUCTURE_SITES" as const}:{})});
+    await instance.proposeRepair(request());
+    await instance.proposeRepair(measuredRequest);
+  }
+  check(JSON.stringify(repairedGrammarPayloads[0])===JSON.stringify(repairedGrammarPayloads[2]),
+    "required grammar plus source-site treatment keeps complete first-attempt wire payload identical");
+  const {measuredQualityRepair:composedSites,...composedBase}=getPrompt(repairedGrammarPayloads[3]);
+  check(composedSites.corrections[0].measurements[0].declarationSites.length===6
+    &&JSON.stringify(composedBase)===JSON.stringify(getPrompt(repairedGrammarPayloads[1])),
+    "required grammar composition changes only the bound post-rejection source-site explanation");
+  check(repairedGrammarPayloads.every(p=>p.response_format.json_schema.schema.anyOf.length>1)
+    &&JSON.stringify(repairedGrammarPayloads[1].response_format)===JSON.stringify(repairedGrammarPayloads[3].response_format),
+    "both treatment arms retain identical decision-required provider grammar through repair");
+  check(!composedSites.hiddenEvidenceUsed&&!composedSites.authorityGranted
+    &&composedSites.corrections[0].maximumCandidateTotal===5,
+    "composed treatment preserves public-only evidence, original-state quality budget and no authority grant");
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });

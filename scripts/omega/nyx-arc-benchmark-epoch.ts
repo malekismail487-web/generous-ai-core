@@ -24,9 +24,13 @@ export const ARC_SUPER_CONFIGURATION_SELECTION = Object.freeze({...ARC_PUBLIC_EP
   selection: "NEXT_EIGHT_LEXICOGRAPHIC_PATHS_AFTER_TEN_EXPOSED_TASKS_CONFIGURATION_ONLY",
   taskIds: Object.freeze(["20270e3b", "20a9e565", "21897d95", "221dfab4", "247ef758", "269e22fb", "271d71e2", "28a6681f"])});
 
-export type ArcEpochMode = "BASELINE" | "ARRAY_BOUND_TRANSFER" | "FULL_PUBLIC" | "SUPER_CONFIGURATION_TRANSFER";
+export const ARC_DECISION_QUALITY_SELECTION = Object.freeze({...ARC_PUBLIC_EPOCH_SELECTION,
+  selection: "NEXT_EIGHT_LEXICOGRAPHIC_PATHS_AFTER_EIGHTEEN_EXERCISED_TASKS_QUALITY_GUIDANCE_ONLY",
+  taskIds: Object.freeze(["291dc1e1", "2b83f449", "2ba387bc", "2c181942", "2d0172a1", "31f7f899", "332f06d7", "35ab12c3"])});
+
+export type ArcEpochMode = "BASELINE" | "ARRAY_BOUND_TRANSFER" | "FULL_PUBLIC" | "SUPER_CONFIGURATION_TRANSFER" | "DECISION_QUALITY_TRANSFER";
 export function selectArcEpoch(mode: ArcEpochMode, rawNames: readonly string[]) {
-  if (!["BASELINE", "ARRAY_BOUND_TRANSFER", "FULL_PUBLIC", "SUPER_CONFIGURATION_TRANSFER"].includes(mode)) throw Error("arc_epoch_mode_invalid");
+  if (!["BASELINE", "ARRAY_BOUND_TRANSFER", "FULL_PUBLIC", "SUPER_CONFIGURATION_TRANSFER", "DECISION_QUALITY_TRANSFER"].includes(mode)) throw Error("arc_epoch_mode_invalid");
   const names = [...rawNames].sort();
   if (names.length !== ARC_PUBLIC_EPOCH_SELECTION.population || new Set(names).size !== names.length
     || names.some(name => !/^[a-f0-9]{8}\.json$/.test(name))) throw Error("arc_epoch_population_invalid");
@@ -35,6 +39,11 @@ export function selectArcEpoch(mode: ArcEpochMode, rawNames: readonly string[]) 
     taskIds: Object.freeze(names.map(name => name.slice(0, -5)))});
   const transfer = mode === "ARRAY_BOUND_TRANSFER";
   const superComparison = mode === "SUPER_CONFIGURATION_TRANSFER";
+  if (mode === "DECISION_QUALITY_TRANSFER") {
+    if (theoryDigest(names.slice(18, 26).map(n => n.slice(0, -5))) !== theoryDigest(ARC_DECISION_QUALITY_SELECTION.taskIds))
+      throw Error("arc_epoch_frozen_selection_changed");
+    return ARC_DECISION_QUALITY_SELECTION;
+  }
   const selection = superComparison ? ARC_SUPER_CONFIGURATION_SELECTION : transfer ? ARC_ARRAY_BOUND_TRANSFER_SELECTION : ARC_PUBLIC_EPOCH_SELECTION;
   if (theoryDigest(names.slice(superComparison ? 10 : transfer ? 8 : 0, superComparison ? 18 : transfer ? 10 : 8).map(n => n.slice(0, -5))) !== theoryDigest(selection.taskIds))
     throw Error("arc_epoch_frozen_selection_changed");
@@ -45,6 +54,7 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
   const transfer = mode === "ARRAY_BOUND_TRANSFER";
   const full = mode === "FULL_PUBLIC";
   const superComparison = mode === "SUPER_CONFIGURATION_TRANSFER";
+  const qualityComparison = mode === "DECISION_QUALITY_TRANSFER";
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("arc_epoch_requires_explicit_network_and_injected_secret");
   const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -65,16 +75,21 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
   const tasks = selection.taskIds.map(taskId => {
     const path = `${selection.partition}/${taskId}.json`;
     const raw = JSON.parse(execFileSync("git", ["-C", root, "show", `${selection.revision}:${path}`], {encoding: "utf8"}));
-    const previouslyExposed = [...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds].includes(taskId);
+    const previouslyExposed = [...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds,
+      ...ARC_SUPER_CONFIGURATION_SELECTION.taskIds, ...ARC_DECISION_QUALITY_SELECTION.taskIds].includes(taskId);
     return prepareTask("ARC_AGI", taskId, full && previouslyExposed ? "DEVELOPMENT" : "VALIDATION", {dataset: "arcprize/ARC-AGI-2 public evaluation",
       revision: selection.revision, contentDigest: theoryDigest(raw), visibility: "PUBLIC", kind: "DATASET_TASK",
       provenance: `https://github.com/arcprize/ARC-AGI-2/blob/${selection.revision}/${path}; public evaluation, not protected leaderboard evaluation.`}, raw);
   });
-  const began = Date.now(); const model = superComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
-  const configurationByArm: Partial<Record<ArmSpec["arm"], ArcInferenceConfiguration>> = superComparison
+  const began = Date.now(); const model = superComparison || qualityComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
+  const configurationByArm: Partial<Record<ArmSpec["arm"], ArcInferenceConfiguration>> = qualityComparison
+    ? {CURRENT_NYX: "SUPER_HOSTED_NONE", CANDIDATE_NYX: "SUPER_HOSTED_NONE"} : superComparison
     ? {CURRENT_NYX: "SUPER_HOSTED_NONE", CANDIDATE_NYX: "SUPER_HOSTED_BOUNDED"} : {};
   const modelConfiguration = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: 8192,
     maxProviderPromptBytes: 64000, timeoutMs: 65000,
+    ...(qualityComparison ? {configurationByArm, providerIntentShape: "DECISION_REQUIRED_FIELDS",
+      qualityGuidanceByArm: {CURRENT_NYX: "PUBLIC_FINDINGS_ONLY", CANDIDATE_NYX: "STRUCTURE_SITES"},
+      binding: "IDENTICAL_MODEL_GENERATION_GRAMMAR_LIMITS_AND_ACCEPTANCE_QUALITY_REPAIR_GUIDANCE_ONLY"} : {}),
     ...(superComparison ? {inferencePolicy: "EXPLICIT_CONFIGURATION_BY_ARM", configurationByArm,
       reasoningBudgetTokens: 4096, outputReserveTokens: 4096,
       binding: "WHOLE_EXPERIMENT_COMMON_SETTINGS_AND_DECLARED_TREATMENT_NOT_IDENTICAL_ARM_CONFIGURATION"} : {})};
@@ -83,16 +98,16 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
   const tools = {tool: "EXISTING_R3B_TEST", maxChangedFiles: 1, maxPatchBytes: 12000, timeoutMs: 2000,
     publicFeedback: "FULL_DUMP", sourceRepresentation: "LINES", dataEncoding: "LOSSLESS_COMPACT_JSON",
     acceptance: "UNCHANGED_PUBLIC_EXAMPLES_STATIC_ADMISSION_AND_PRIVATE_EXACT_TWO_GUESS_SCORER"};
-  const spec: CampaignSpec = {schemaVersion: 1, campaignId: superComparison ? "NYX-ARC-SUPER-CONFIGURATION-FRESH-TRANSFER-001" : full ? "NYX-ARC-ENTIRE-PUBLIC-POPULATION-CURRENT-001"
+  const spec: CampaignSpec = {schemaVersion: 1, campaignId: qualityComparison ? "NYX-ARC-DECISION-QUALITY-FRESH-TRANSFER-001" : superComparison ? "NYX-ARC-SUPER-CONFIGURATION-FRESH-TRANSFER-001" : full ? "NYX-ARC-ENTIRE-PUBLIC-POPULATION-CURRENT-001"
     : transfer ? "NYX-ARC-ARRAY-BOUND-FRESH-TRANSFER-001" : "NYX-ARC-PUBLIC-EVALUATION-BASELINE-001",
     environmentIdentity: `${process.platform}-${process.arch}-node-${process.version}`,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "authorized-local"}`,
-    frozenAtEpochMs: began, expiresAtEpochMs: began + (full ? 19500000 : superComparison ? 2600000 : transfer ? 900000 : 2900000), taskDigests: tasks.map(t => t.manifest.taskDigest), model,
+    frozenAtEpochMs: began, expiresAtEpochMs: began + (full ? 19500000 : superComparison || qualityComparison ? 2600000 : transfer ? 900000 : 2900000), taskDigests: tasks.map(t => t.manifest.taskDigest), model,
     modelConfigDigest: theoryDigest(modelConfiguration), authorityDigest: theoryDigest(authority), toolEnvelopeDigest: theoryDigest(tools),
     verifierVersion: "arc-exact-two-predictions/1", verifierSourceDigest: contentHash(await readFile("scripts/omega/benchmarks/tasks.ts", "utf8")),
     limits: {maxCallsPerTask: 2, maxReportedTokensPerTask: 100000, maxToolCallsPerTask: 3, maxToolWorkUnitsPerTask: 600,
       maxAttemptsPerTask: 1, maxArtifactBytes: 50000, maxWallClockMsPerTask: 155000,
-      maxWallClockMs: full ? 19000000 : superComparison ? 2500000 : transfer ? 800000 : 2800000},
+      maxWallClockMs: full ? 19000000 : superComparison || qualityComparison ? 2500000 : transfer ? 800000 : 2800000},
     realizedComputeTolerance: 0.1};
   const provider = NvidiaNimProvider.create({providerId: "NYX-ARC-PUBLIC-BASELINE", model,
     authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
@@ -100,7 +115,7 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
     timeoutMs: modelConfiguration.timeoutMs});
   const integration: ArcIntegrationEvidence[] = [];
   // Full current-system baseline, not a compute-matched candidate comparison.
-  const arms: ArmSpec["arm"][] = full ? ["CURRENT_NYX"] : transfer || superComparison ? ["CURRENT_NYX", "CANDIDATE_NYX"]
+  const arms: ArmSpec["arm"][] = full ? ["CURRENT_NYX"] : transfer || superComparison || qualityComparison ? ["CURRENT_NYX", "CANDIDATE_NYX"]
     : ["RAW_MODEL", "MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX"];
   const adapters = arms.map(arm => {
     const armSpec: ArmSpec = {arm, version: "nyx-existing-r3-arc/1", sourceDigest: theoryDigest({sourceDigest, arm}),
@@ -110,6 +125,9 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
     return createArcAdapter({spec: armSpec, provider, candidateCommit: candidate, maxOutputTokens: modelConfiguration.maxOutputTokens,
       compactPublicData: true, ...(transfer ? {preserveProviderArrayBounds: arm === "CANDIDATE_NYX"} : {}),
       ...(superComparison ? {inferenceConfiguration: configurationByArm[arm], preserveProviderArrayBounds: true} : {}),
+      ...(qualityComparison ? {inferenceConfiguration: configurationByArm[arm], preserveProviderArrayBounds: true,
+        providerIntentShape: "DECISION_REQUIRED_FIELDS" as const,
+        ...(arm === "CANDIDATE_NYX" ? {qualityRepairGuidance: "STRUCTURE_SITES" as const} : {})} : {}),
       onIntegrationEvidence: trace => {
         integration.push(trace); console.log(`NYX_ARC_PUBLIC_TRACE ${JSON.stringify(trace)}`);
       }});
@@ -126,7 +144,7 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
   // Freeze the entire requested population before the first model call, including if that call crashes.
   await checkpoint();
   const campaign = await runCampaign(spec, tasks, adapters, null, undefined, Date.now, {
-    ...(full || superComparison ? {maxConsecutiveProviderFailures: 2} : {}),
+    ...(full || superComparison || qualityComparison ? {maxConsecutiveProviderFailures: 2} : {}),
     onRun: async run => {
       progress.push(run);
       // Explicitly partial: interrupted checkpoints cannot certify a finished campaign.
@@ -137,10 +155,11 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
     }});
   const pairs = tasks.map(task => ({taskDigest: task.manifest.taskDigest,
     currentVersusReferenceMatched: matchedObservedAttempts(campaign.runs.filter(r => r.taskDigest === task.manifest.taskDigest
-      && ["CURRENT_NYX", transfer || superComparison ? "CANDIDATE_NYX" : "MODEL_EQUIVALENT_TOOLS"].includes(r.arm)).flatMap(r => r.attempts), spec.realizedComputeTolerance)}));
+      && ["CURRENT_NYX", transfer || superComparison || qualityComparison ? "CANDIDATE_NYX" : "MODEL_EQUIVALENT_TOOLS"].includes(r.arm)).flatMap(r => r.attempts), spec.realizedComputeTolerance)}));
   const sourceUnchanged = sourceBefore === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
   const report = {schemaVersion: 1, candidate, selection, modelConfiguration, authority, tools,
-    changedVariable: superComparison ? "SAME_SUPER_HOSTED_NONE_VS_HIGH_REASONING_BUDGET_4096_ONLY"
+    changedVariable: qualityComparison ? "PUBLIC_STATIC_FINDINGS_VS_EXISTING_SOURCE_LINKED_STRUCTURE_SITES_ONLY"
+      : superComparison ? "SAME_SUPER_HOSTED_NONE_VS_HIGH_REASONING_BUDGET_4096_ONLY"
       : transfer ? "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY" : "BASELINE_ARMS",
     campaign, integration, pairs, sourceUnchanged, inference: "E4_LIVE_NVIDIA", verification: "E3_INDEPENDENT_EXACT_GRID_SCORER",
     broadPromotion: false, fullBenchmarkScoreClaim: false, grantsAuthority: false,
@@ -154,7 +173,7 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
     interpretation: full ? "ENTIRE_PUBLIC_POPULATION_CURRENT_BASELINE_NO_COGNITIVE_PROMOTION_OR_PROTECTED_SCORE"
       : "FROZEN_PUBLIC_EVALUATION_SUBSET_NOT_FULL_BENCHMARK_OR_PROTECTED_SCORE"};
   await writeFile(join(outputRoot, `nyx-arc-public-${candidate}.json`), JSON.stringify(report, null, 2));
-  if (full || superComparison) console.log(`NYX_ARC_PUBLIC_EPOCH_SUMMARY ${JSON.stringify({candidate, selection, modelConfiguration,
+  if (full || superComparison || qualityComparison) console.log(`NYX_ARC_PUBLIC_EPOCH_SUMMARY ${JSON.stringify({candidate, selection, modelConfiguration,
     reportDigest: theoryDigest(report), currentSystemPopulation: report.currentSystemPopulation,
     summaries: campaign.summaries, pairs, current: campaign.summaries.find(s => s.arm === "CURRENT_NYX"), providerFailureCircuit: campaign.providerFailureCircuit,
     sourceUnchanged, integrationTraceComplete: report.integrationTraceComplete, broadPromotion: false,
@@ -164,7 +183,11 @@ export async function runArcBenchmarkEpoch(mode: ArcEpochMode = "BASELINE") {
     process.exitCode = 1;
   return report;
 }
-if (process.argv[1]?.replace(/\\/g, "/").endsWith("/nyx-arc-benchmark-epoch.ts"))
+if (process.argv[1]?.replace(/\\/g, "/").endsWith("/nyx-arc-benchmark-epoch.ts")) {
+  if (["NYX_ARC_FULL_PUBLIC", "NYX_ARC_SUPER_COMPARISON", "NYX_ARRAY_BOUND_COMPARISON", "NYX_ARC_DECISION_QUALITY_COMPARISON"]
+    .filter(key => process.env[key] === "1").length > 1) throw Error("arc_comparison_variables_must_not_be_combined");
   await runArcBenchmarkEpoch(process.env.NYX_ARC_FULL_PUBLIC === "1" ? "FULL_PUBLIC"
-    : process.env.NYX_ARC_SUPER_COMPARISON === "1" ? "SUPER_CONFIGURATION_TRANSFER"
+    : process.env.NYX_ARC_DECISION_QUALITY_COMPARISON === "1" ? "DECISION_QUALITY_TRANSFER"
+      : process.env.NYX_ARC_SUPER_COMPARISON === "1" ? "SUPER_CONFIGURATION_TRANSFER"
       : process.env.NYX_ARRAY_BOUND_COMPARISON === "1" ? "ARRAY_BOUND_TRANSFER" : "BASELINE");
+}

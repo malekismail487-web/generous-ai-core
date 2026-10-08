@@ -1,6 +1,6 @@
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { selectArcEpoch, ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION,
-  ARC_SUPER_CONFIGURATION_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
+  ARC_SUPER_CONFIGURATION_SELECTION, ARC_DECISION_QUALITY_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { runCampaign, type AdapterOutput, type TaskRun } from "./omega/benchmarks/campaign";
 import { zeroUsage, type ArmSpec, type CampaignSpec } from "./omega/benchmarks/contracts";
 import { prepareTask } from "./omega/benchmarks/tasks";
@@ -29,6 +29,20 @@ check(Object.isFrozen(configurationSelection.taskIds)
   && configurationSelection.taskIds.every(id => ![...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds].includes(id)),
   "fresh configuration identities are immutable and disjoint from ten previously exposed tasks");
 check(throws(() => selectArcEpoch("SUPER_CONFIGURATION_TRANSFER", names)), "configuration transfer cannot substitute easier task identities");
+const qualityNames = [...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds,
+  ...ARC_SUPER_CONFIGURATION_SELECTION.taskIds, ...ARC_DECISION_QUALITY_SELECTION.taskIds,
+  ...Array.from({length: 94}, (_, i) => `f${i.toString(16).padStart(7, "0")}`)].map(id => `${id}.json`);
+const qualitySelection = selectArcEpoch("DECISION_QUALITY_TRANSFER", [...qualityNames].reverse());
+check(qualitySelection.taskIds.join() === ARC_DECISION_QUALITY_SELECTION.taskIds.join()
+  && qualitySelection.taskIds.length === 8, "quality transfer freezes next eight paths before inspecting task contents");
+check(Object.isFrozen(qualitySelection) && Object.isFrozen(qualitySelection.taskIds)
+  && qualitySelection.taskIds.every(id => ![...ARC_PUBLIC_EPOCH_SELECTION.taskIds,
+    ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds, ...ARC_SUPER_CONFIGURATION_SELECTION.taskIds].includes(id)),
+  "quality transfer is immutable and disjoint from eighteen previously exercised identities");
+check(throws(() => selectArcEpoch("DECISION_QUALITY_TRANSFER", frozenNames)),
+  "quality transfer cannot reuse the previous task selection or silently substitute paths");
+check(throws(() => selectArcEpoch("DECISION_QUALITY_TRANSFER", qualityNames.map(n => n === "291dc1e1.json" ? "291dc1e2.json" : n))),
+  "a single changed fresh identity invalidates the frozen quality selection");
 
 // Independently authored protocol fixtures, never actual ARC task answers or cognitive evidence.
 const tasks = Array.from({length: 6}, (_, i) => {
