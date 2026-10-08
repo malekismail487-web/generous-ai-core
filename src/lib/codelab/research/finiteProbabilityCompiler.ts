@@ -6,7 +6,7 @@ import { EXACT_DERIVATION_POLICY, quantitativeProgramFinding, validQuantitativeP
  * Interventions assume the stated Markovian DAG with independent exogenous noise.
  * This cannot infer missing causes, identify an unknown graph, or certify those assumptions.
  */
-export const FINITE_PROBABILITY_POLICY = Object.freeze({ version: "nyx-finite-probability-lowering/1",
+export const FINITE_PROBABILITY_POLICY = Object.freeze({ version: "nyx-finite-probability-lowering/2",
   maxVariables: 8, maxParents: 3, maxQueries: 4, maxOutputs: 4, maxInputBytes: 30000,
   maxCompilationWork: 30000, grantsAuthority: false });
 export interface ProbabilityAssignment { readonly variable: string; readonly value: boolean }
@@ -48,7 +48,7 @@ function data(v: unknown, seen = new Set<object>(), budget = { nodes: 0 }, depth
 }
 export function finiteProbabilityDiagnostic(error: unknown): string | null {
   return error instanceof Error
-    ? error.message.match(/^finite_probability_invalid:(NON_DATA|BYTE_BOUND|SHAPE|CONSTANTS|VARIABLE|PARENTS|TABLE|PROBABILITY|QUERY|ASSIGNMENT|OUTPUT|COMPILATION_BOUND|STEP_BOUND|REGISTER_BOUND|LOWERED_PROGRAM)$/)?.[1] ?? null : null;
+    ? error.message.match(/^finite_probability_invalid:(NON_DATA|BYTE_BOUND|SHAPE|CONSTANTS|VARIABLE|PARENTS|TABLE|PROBABILITY|QUERY_SHAPE|QUERY_ID|QUERY_DUPLICATE|ASSIGNMENT|OUTPUT|COMPILATION_BOUND|STEP_BOUND|REGISTER_BOUND|LOWERED_PROGRAM)$/)?.[1] ?? null : null;
 }
 
 /** Compilation has a finite independent bound and accepts a host-owned work/lease tick.
@@ -115,7 +115,9 @@ export function lowerFiniteProbability(problem: QuantitativeProblem, value: unkn
   const model = value as unknown as FiniteProbabilityModel;
   const queryValues = new Map<string, Ref>();
   for (const query of model.queries) {
-    if (!keys(query, ["id", "event", "given", "interventions"]) || !id(query.id) || queryValues.has(query.id)) return fail("QUERY");
+    if (!keys(query, ["id", "event", "given", "interventions"])) return fail("QUERY_SHAPE");
+    if (!id(query.id)) return fail("QUERY_ID");
+    if (queryValues.has(query.id)) return fail("QUERY_DUPLICATE");
     const event = assignments(query.event, 1), given = assignments(query.given), interventions = assignments(query.interventions);
     let numerator = c(zero), denominator = c(zero);
     for (let mask = 0; mask < 2 ** model.variables.length; mask++) {

@@ -202,6 +202,8 @@ export class NyxChatSession {
       + `probabilityTrue lists named constants for P(variable=true|parents), in the listed parent order, false before true, first parent most significant. `
       + `Use one table entry for a root and exactly 2^parentCount entries otherwise. No invented numerical values or implicit independence. `
       + `Queries specify event, given observations, and interventions as arrays of {variable,value:boolean}. `
+      + `Every query has exactly id, event, given, interventions, including empty arrays for unused given/interventions. `
+      + `Use a distinct identifier for each query and refer to those identifiers from outputs. `
       + `The compiler sums over all remaining variables. Interventions remove the intervened variable's mechanism; given observations do not. `
       + `Causal interpretation assumes the supplied Markovian DAG with independent exogenous noise; do not invent missing causal assumptions. `
       + `Up to 4 queries and outputs. An IDENTITY output uses the same query ID in left and right; SUB computes left minus right. `

@@ -42,6 +42,15 @@ export function computationOutcome(result:NyxChatTurnResult|null,evidence:readon
 export function computationPhysicalUsage(executions:readonly NvidiaNimEvidence[],elapsedMs:number){
   return textInferenceUsage(executions,elapsedMs);
 }
+/** A compiler rejection can spend the shared native budget without returning an
+ * analysis. Read host-owned counters; never represent that execution as free.
+ * Unreturned elapsed time is unknown, not an invented zero. */
+export function computationNativeAccounting(session:BoundedReasoningSession|undefined,reportedElapsedMs:number,observedAnalyses:number){
+  if(!session)return {workUnits:0,requests:0,elapsedMs:0};
+  const d=session.descriptor(),requests=Number(d.maxRequests)-Number(d.remainingRequests);
+  return {workUnits:Number(d.maxWorkUnits)-Number(d.remainingWorkUnits),requests,
+    elapsedMs:requests===observedAnalyses?reportedElapsedMs:null};
+}
 /** Only public synthetic native model/actions; never a question, choice, oracle or private inference. */
 export function captureProbabilityReplay(problem:QuantitativeProblem,proposal:string|null,observation:string|null){
   if(typeof proposal!=="string"||typeof observation!=="string"||Buffer.byteLength(proposal)>50000||Buffer.byteLength(observation)>50000)return null;
@@ -141,7 +150,8 @@ export async function runComputationTransfer(){
     finalAttemptSelection:"LAST_ATTEMPT_OR_NO_RETRY_WINDOW"});
   type Row={taskId:string;stage:string;domain:string;arm:ComputationArm;state:string;correct:boolean|null;
     logicalCalls:number;allocatedTokens:number;allocatedHttpAttempts:number;unknownUsageCalls:number;providerFailures:number;
-    toolWorkUnits:number;toolElapsedMs:number;elapsedMs:number;allocatedElapsedMs:number;prefixReplayed:boolean;
+    toolWorkUnits:number;toolElapsedMs:number|null;nativeRequests:number;firstDeniedActionOutcome:string|null;
+    elapsedMs:number;allocatedElapsedMs:number;prefixReplayed:boolean;
     inputDigest:string;programDigest:string|null;computedModelCorrect:boolean|null;sharedIntentDigest:string|null;
     logicalUsage:ReturnType<typeof textInferenceUsage>;physicalAccounting:unknown;events:unknown;
     evidence:unknown;compilerFindings:string[];nativeReplay:ReturnType<typeof captureComputationReplay>;nativeReplayCaptureMs:number;
@@ -159,14 +169,16 @@ export async function runComputationTransfer(){
     const sourceUnchanged=sourceBefore===git("ls-files","-s")&&!git("status","--porcelain");
     const report={schemaVersion:1,identity:"NYX-COMPUTATION-TRANSFER-001",candidate,executionIdentity:process.env.GITHUB_RUN_ID?`github-actions-${process.env.GITHUB_RUN_ID}`:"LOCAL",
       environment:`${process.platform}-${process.arch}-${process.version}`,
-      policy:probabilityComparison?{...POLICY,version:2,corpusDigest:theoryDigest(tasks.map(publicTask)),
+      policy:probabilityComparison?{...POLICY,version:3,corpusDigest:theoryDigest(tasks.map(publicTask)),
         purpose:"FINITE_PROBABILISTIC_MODEL_FORMULATION_ABLATION_NOT_OFFICIAL_BENCHMARK"}:POLICY,stage,populationDigest:theoryDigest(tasks),
       selectedTasks:tasks.map(t=>({taskId:t.taskId,stage:t.stage,domain:t.domain,inputDigest:theoryDigest(publicTask(t))})),
       selectedTaskArms:tasks.length*2,attempted:rows.length,graded:rows.filter(r=>r.correct!==null).length,
       correct:rows.filter(r=>r.correct===true).length,ungraded:rows.filter(r=>r.correct===null).length,unexecuted:tasks.length*2-rows.length,
       actualUniqueModelUsage:computationPhysicalUsage(physicalExecutions,Date.now()-started),rows,pairs,blocked,
-      nativeToolUsage:{workUnits:rows.reduce((n,r)=>n+r.toolWorkUnits,0),elapsedMs:rows.reduce((n,r)=>n+r.toolElapsedMs,0),
-        scope:"RETURNED_NATIVE_ANALYSIS_ACCOUNTING_SEPARATE_FROM_MODEL_USAGE"},
+      nativeToolUsage:{workUnits:rows.reduce((n,r)=>n+r.toolWorkUnits,0),requests:rows.reduce((n,r)=>n+r.nativeRequests,0),
+        elapsedMs:rows.some(r=>r.toolElapsedMs===null)?null:rows.reduce((n,r)=>n+(r.toolElapsedMs??0),0),
+        knownElapsedMs:rows.reduce((n,r)=>n+(r.toolElapsedMs??0),0),unknownElapsedRows:rows.filter(r=>r.toolElapsedMs===null).length,
+        scope:"HOST_SESSION_COUNTERS_INCLUDE_REJECTED_COMPILATION_UNRETURNED_ELAPSED_UNKNOWN"},
       nativeReplayCaptureElapsedMs:rows.reduce((n,r)=>n+r.nativeReplayCaptureMs,0),
       intervention:probabilityComparison?"DECLARATIVE_PROBABILISTIC_MODEL_VS_BOUNDED_PHASE_IR":boundsComparison?"NATIVE_COLLECTION_BOUND_GENERATION_SCHEMA":"EXACT_EXECUTION_OF_SHARED_PROPOSAL",
       firstProposalProtocol:independentProposals?"INDEPENDENT_INFERENCE_REPRESENTATION_IS_THE_INTERVENTION":"SHARED_LIVE_PUBLIC_PROPOSAL",
@@ -216,7 +228,8 @@ export async function runComputationTransfer(){
         maxElapsedMs:POLICY.maxToolMs,maxRequests:1,expiresAtEpochMs:activeDeadline}):undefined;
       // Different generation schemas require independent proposals. Existing branch accounting
       // is reused, but no response, operation, prefix time or inference is replayed between these arms.
-      const branch=(independentProposals?createSharedFirstProposal(completePhysical):shared).branch(),evidence:NvidiaNimEvidence[]=[],compilerFindings:string[]=[];let toolWorkUnits=0,toolElapsedMs=0;
+      const branch=(independentProposals?createSharedFirstProposal(completePhysical):shared).branch(),evidence:NvidiaNimEvidence[]=[],compilerFindings:string[]=[];
+      let toolElapsedMs=0,observedAnalyses=0;
       if(independentProposals){prefixEvidence=null;programDigest=null;computedModelCorrect=null;}
       let result:NyxChatTurnResult|null=null,session:NyxChatSession|null=null;
       let publicProposal:string|null=null,nativeReplay:ReturnType<typeof captureComputationReplay>=null,nativeReplayCaptureMs=0;
@@ -239,7 +252,7 @@ export async function runComputationTransfer(){
               // Failed/budget-exhausted native analyses still spend resources.
               if(observation.analysis&&Number.isSafeInteger(observation.analysis.workUnits)&&observation.analysis.workUnits>=0
                 &&Number.isFinite(observation.analysis.elapsedMs)&&observation.analysis.elapsedMs>=0){
-                toolWorkUnits=observation.analysis.workUnits;toolElapsedMs=observation.analysis.elapsedMs;
+                observedAnalyses++;toolElapsedMs+=observation.analysis.elapsedMs;
               }
               if(observation.omegaObservation==="CONSTRUCTED"){
                 const quantities=observation.analysis.payload?.outputs;
@@ -256,13 +269,16 @@ export async function runComputationTransfer(){
         result=await session.turn(task.question);
       }catch{/* Sanitized infrastructure outcome only; do not persist a raw exception or response. */}
       finally{session?.dispose();tool?.revoke();reader.terminate(Date.now(),"COMPUTATION_TASK_FINISHED");}
+      const nativeUsage=computationNativeAccounting(tool,toolElapsedMs,observedAnalyses);
       const usage=textInferenceUsage(evidence,Date.now()-began),prefix=!independentProposals&&prefixEvidence?textInferenceUsage([prefixEvidence],prefixMs):null;
       const {state,correct}=computationOutcome(result,evidence,task.answer);
       const row:Row={taskId:task.taskId,stage:task.stage,domain:task.domain,arm,state,correct,logicalCalls:evidence.length,
         allocatedTokens:usage.reportedTokens-(prefix?.reportedTokens??0)/2,
         allocatedHttpAttempts:usage.httpAttempts-(prefix?.httpAttempts??0)/2,unknownUsageCalls:usage.unknownUsageCalls,providerFailures:usage.providerFailures,
         elapsedMs:Date.now()-began,allocatedElapsedMs:Date.now()-began+prefixMs,
-        toolWorkUnits,toolElapsedMs,compilerFindings,nativeReplay,probabilityReplay,nativeReplayCaptureMs,prefixReplayed:branch.accounting().receipt?.replayed??false,
+        toolWorkUnits:nativeUsage.workUnits,toolElapsedMs:nativeUsage.elapsedMs,nativeRequests:nativeUsage.requests,
+        firstDeniedActionOutcome:result?.events.find(e=>e.eventType==="DENIAL")?.outcome??null,
+        compilerFindings,nativeReplay,probabilityReplay,nativeReplayCaptureMs,prefixReplayed:branch.accounting().receipt?.replayed??false,
         inputDigest:theoryDigest(publicTask(task)),programDigest,computedModelCorrect:arm!=="PROPOSAL_ONLY"?computedModelCorrect:null,
         sharedIntentDigest:branch.accounting().receipt?.intentDigest??null,logicalUsage:usage,
         physicalAccounting:{...branch.accounting(),receipt:undefined},

@@ -1,13 +1,17 @@
-name: Omega NYX finite probabilistic model development comparison
+name: Omega NYX finite probabilistic model transfer comparison
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-probability-model-one-shot.yml]
 permissions:
   contents: read
 concurrency:
   group: omega-real-benchmark-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  probability-development:
+  probability-transfer:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-probability-transfer-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 32
     steps:
@@ -32,11 +36,11 @@ jobs:
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-computation-transfer.ts
           node scripts/typescript/typecheck-ratchet.mjs
           node scripts/security/scan-secrets.mjs
-      - name: Compare frozen development objectives once with no oracle feedback to cognition
+      - name: Compare frozen topology-changing transfer objectives once without grader feedback
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          OMEGA_COMPUTATION_STAGE: PROBABILITY_DEVELOPMENT
+          OMEGA_COMPUTATION_STAGE: PROBABILITY_TRANSFER
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-computation-transfer.ts
       - name: Independently replay constructed public probability models
         if: always()
@@ -45,6 +49,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-probability-development-${{ github.sha }}
+          name: nyx-probability-transfer-${{ github.sha }}
           path: ${{ runner.temp }}/nyx-computation-*-${{ github.sha }}.json
           if-no-files-found: error

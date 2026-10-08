@@ -1330,3 +1330,42 @@ leases and causal-assumption visibility. Defers cognitive promotion, official
 benchmark retesting, general causal discovery and production deployment. Resolves
 the representation/executor boundary by reusing one native execution capability.
 Coverage remains PARTIAL / JUST-IN-TIME. The ≥80% cross-benchmark goal is not met.
+
+### Finite-probability development result: no promotion
+
+Frozen candidate `0eaca83b`, [run 37813542513](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37813542513),
+completed all eight task-arms: seven graded/correct, one ungraded, none unexecuted.
+The bounded phase-IR baseline jointly passed **4/4**; declarative probability
+jointly passed **3/4**. Joint acceptance requires both the final choice and the
+native quantity to be correct. There were no wrong valid final choices, provider
+failures, truncations or unknown-usage calls. Candidate selection failed first
+with `derivation_ir_invalid / QUERY`, then exhausted its original one-request
+native allowance. This is not a demonstrated hidden-case reasoning failure.
+The original coarse diagnostic cannot establish whether fields, ID syntax or a
+duplicate query ID caused rejection; the rejected proposal was not retained.
+
+Consumption: **16 logical/physical model calls, 54,636 reported tokens** and
+338,195 ms. Baseline used 30,319 tokens; candidate used 24,317. All four pairs
+were provider-stable, but **none** met the frozen 10% realized-model-compute
+tolerance. Lower token use with lower acceptance is not cognitive promotion.
+Three constructed probability models and four phase-IR programs agree with
+separate-language Python execution. That checks computation, not formulation
+validity or independent replication. Source integrity and authority were preserved.
+
+The SHA256-verified archive, report, progress and all terminal rows agree; see
+[sanitized receipt](../../../docs/omega/evidence/nyx-probability-development-0eaca83b.json).
+Its original native-work total is incomplete: a rejected compiler invocation
+spent budget but returned no analysis, so the old runner recorded zero for it.
+The follow-up reads existing host session counters, preserves first denial
+separately from terminal outcome, and records unreturned elapsed time as unknown.
+`QUERY_SHAPE`, `QUERY_ID` and `QUERY_DUPLICATE` now distinguish future failures;
+query-field/unique-ID instructions clarify existing constraints without relaxing
+them. These are reliability/measurement repairs, not measured cognitive gains.
+The already-frozen topology-changing transfer corpus remains byte-unchanged.
+One follow-up transfer comparison will retain the original budgets and grader;
+no exposed official benchmark question or answer enters the mechanism.
+
+Ω coverage: detector validation, first-attempt preservation, failure localization
+and honest resource accounting; supports bounded leases and fresh transfer.
+Defers promotion, official benchmark retesting and production authority. No
+authority or acceptance rule is superseded. Coverage: PARTIAL / JUST-IN-TIME.

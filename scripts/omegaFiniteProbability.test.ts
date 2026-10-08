@@ -14,7 +14,7 @@ import { parseNyxChatAction } from "../src/lib/codelab/cli/nyxChatProtocol";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider, type NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { probabilityTransferTasks } from "./omega/benchmarks/probabilityTransferTasks";
-import { captureProbabilityReplay } from "./omega/nyx-computation-transfer";
+import { captureProbabilityReplay, computationNativeAccounting } from "./omega/nyx-computation-transfer";
 
 let passed = 0, failed = 0;
 function check(condition: unknown, name: string) { if (condition) passed++; else { failed++; console.error(`x ${name}`); } }
@@ -52,6 +52,21 @@ boundedSession.analyze(boundedRequest);
 check(rejects(() => boundedSession.analyze(boundedRequest)), "probabilistic compilation cannot reset the original request budget");
 boundedSession.revoke();
 check(rejects(() => boundedSession.analyze(boundedRequest)), "revocation remains effective for the new representation");
+const rejectedSession = BoundedReasoningSession.create(problem, { maxWorkUnits: 50000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now() + 10000 });
+check(rejects(() => rejectedSession.analyze({ ...boundedRequest, program: { ...model, queries: [model.queries[0], model.queries[0]] } }), "QUERY_DUPLICATE"),
+  "reproduce a generic query identity collision without a frozen task");
+const rejectedUsage = computationNativeAccounting(rejectedSession, 0, 0);
+check(rejectedUsage.workUnits > 0 && rejectedUsage.requests === 1 && rejectedUsage.elapsedMs === null,
+  "rejected compilation is charged and unreturned native elapsed time remains unknown");
+rejectedSession.revoke();
+check(computationNativeAccounting(rejectedSession, 0, 0).workUnits === rejectedUsage.workUnits,
+  "revocation cannot erase consumed work from evidence");
+check(computationNativeAccounting(undefined, 0, 0).requests === 0, "proposal-only mode invents no native work");
+const accountedSession = BoundedReasoningSession.create(problem, { maxWorkUnits: 50000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now() + 10000 });
+const accountedResult = accountedSession.analyze(boundedRequest), accountedUsage = computationNativeAccounting(accountedSession, accountedResult.elapsedMs, 1);
+check(accountedUsage.workUnits === accountedResult.workUnits && accountedUsage.requests === 1 && accountedUsage.elapsedMs === accountedResult.elapsedMs,
+  "successful analysis counters agree with returned native evidence");
+accountedSession.revoke();
 let clock = 100;
 const expiring = BoundedReasoningSession.create(problem, { maxWorkUnits: 50000, maxElapsedMs: 1, maxRequests: 1, expiresAtEpochMs: 10000 }, () => clock++);
 check(expiring.analyze({ ...boundedRequest, problemDigest: expiring.problemDigest }).status === "BUDGET_EXHAUSTED",
@@ -66,11 +81,13 @@ const invalid: [unknown, string][] = [
   [{ ...model, variables: [model.variables[0], { ...model.variables[1], parents: ["A", "A"] }] }, "PARENTS"],
   [{ ...model, variables: [model.variables[0], { ...model.variables[1], probabilityTrue: ["low"] }] }, "TABLE"],
   [{ ...model, variables: [{ ...model.variables[0], probabilityTrue: ["invented"] }] }, "PROBABILITY"],
-  [{ ...model, queries: [model.queries[0], model.queries[0]] }, "QUERY"],
+  [{ ...model, queries: [model.queries[0], model.queries[0]] }, "QUERY_DUPLICATE"],
+  [{ ...model, queries: [{ ...model.queries[0], id: "not an identifier" }] }, "QUERY_ID"],
+  [{ ...model, queries: [{ id: "q", event: model.queries[0].event, given: [] }] }, "QUERY_SHAPE"],
   [{ ...model, queries: [{ ...model.queries[0], event: [] }] }, "ASSIGNMENT"],
   [{ ...model, queries: [{ ...model.queries[0], given: [event("B"), event("B", false)] }] }, "ASSIGNMENT"],
   [{ ...model, queries: [{ ...model.queries[0], event: [event("X")] }] }, "ASSIGNMENT"],
-  [{ ...model, queries: [{ ...model.queries[0], oracle: "secret" }] }, "QUERY"],
+  [{ ...model, queries: [{ ...model.queries[0], oracle: "secret" }] }, "QUERY_SHAPE"],
   [{ ...model, outputs: [{ ...model.outputs[0], right: "missing" }] }, "OUTPUT"],
   [{ ...model, outputs: [model.outputs[0], model.outputs[0]] }, "OUTPUT"],
   [{ ...model, shell: "not executable" }, "SHAPE"],
