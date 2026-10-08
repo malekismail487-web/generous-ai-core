@@ -102,6 +102,13 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(len(capsules), 1)
         self.assertEqual(coverage, {"missingConstructedReplays": 1, "unconstructedRows": 1,
                                     "selectedTaskArms": 4, "attemptedTaskArms": 3, "unexecutedTaskArms": 1})
+        empty = {**report, "attempted": 0, "rows": []}
+        capsules, zero = checker.report_capsules(empty)
+        self.assertEqual(capsules, [])
+        self.assertEqual(zero["unexecutedTaskArms"], 4)
+        self.assertEqual(zero["attemptedTaskArms"], 0)
+        with self.assertRaises(checker.Rejected):
+            checker.report_capsules({**empty, "attempted": False})
         report["rows"][0]["programDigest"] = "0"*64
         with self.assertRaises(checker.Rejected):
             checker.report_capsules(report)

@@ -204,9 +204,9 @@ def report_capsules(report):
             and report.get("officialBenchmark") is False and report.get("sourceUnchanged") is True
             and report.get("gpqaQuestionsOrAnswersLoaded") is False and report.get("rawPrivateReasoningStored") is False
             and report.get("productionAuthority") is False)
-    rows = array(report.get("rows"), 200, 1)
-    integer(report.get("selectedTaskArms"), len(rows), 200)
-    require(report.get("attempted") == len(rows))
+    rows = array(report.get("rows"), 200)
+    integer(report.get("selectedTaskArms"), max(1, len(rows)), 200)
+    integer(report.get("attempted"), len(rows), len(rows))
     capsules, missing, unconstructed = [], 0, 0
     for row in rows:
         require(type(row) is dict and "nativeReplay" in row and "computedModelCorrect" in row
