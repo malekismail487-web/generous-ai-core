@@ -1383,6 +1383,47 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
     inference: "SYNTHETIC_SCHEDULING_REPRODUCTION_NOT_PROOF_OF_PROVIDER_AVAILABILITY"})}`);
 }
 
+// Multiple unused dispatches do not constitute a usable retry when cooldown
+// exceeds the remaining lease. Reproduce independently for both fetch and body.
+{
+  const make = (transport: NvidiaNimTransport, enabled: boolean) => NvidiaNimProvider.create({
+    providerId: "NO-RETRY-WINDOW", model: "nvidia/development-model", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: {sourceIdentity: "synthetic:no-retry-window", read: () => "synthetic-development-credential"},
+    maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 100, finalAttemptTimeoutMs: 500,
+    ...(enabled ? {finalAttemptSelection: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" as const} : {}), transport});
+  for (const phase of ["FETCH", "BODY"] as const) for (const enabled of [false, true]) {
+    let calls = 0;
+    const delay = () => new Promise<void>(resolve => setTimeout(resolve, 200));
+    const raw = {choices: [{message: {content: "DEVELOPMENT_WINDOW"}, finish_reason: "stop"}],
+      usage: {prompt_tokens: 6, completion_tokens: 2, total_tokens: 8}};
+    const client = make(async () => {
+      calls++; if (phase === "FETCH") {await delay(); return new Response(JSON.stringify(raw), {status: 200});}
+      return {ok: true, status: 200, headers: new Headers(), json: async () => {await delay(); return raw;}} as Response;
+    }, enabled).withHttpAttemptBudget(4);
+    const deadline = Date.now() + 900, result = await client.complete(request({deadlineEpochMs: deadline}));
+    check(enabled ? result.decision === "COMPLETED" : result.evidence.failureCategory === "PROVIDER_TIMEOUT",
+      `${phase}: no-retry-window policy fixes the controlled cutoff despite three unused dispatches`);
+    check(calls === 1 && result.evidence.delivery?.httpAttemptBudget?.dispatched === 1
+      && result.evidence.delivery?.attemptTimeout?.finalAttemptUsed === enabled
+      && result.evidence.delivery?.attemptTimeout?.callerDeadlineEpochMs === deadline
+      && result.evidence.delivery?.authorityRenewed === false,
+    `${phase}: policy neither dispatches again nor renews the caller lease`);
+  }
+  const ample = make(async () => {await new Promise<void>(resolve => setTimeout(resolve, 200)); return success();}, true)
+    .withHttpAttemptBudget(4);
+  const result = await ample.complete(request({deadlineEpochMs: Date.now() + 61000}));
+  check(result.evidence.failureCategory === "PROVIDER_TIMEOUT" && !result.evidence.delivery?.attemptTimeout?.finalAttemptUsed,
+    "a usable retry window preserves the original attempt cutoff");
+  for (const selection of ["UNKNOWN", null, true]) {
+    let rejected = false;
+    try {NvidiaNimProvider.create({providerId: "BAD-SELECTION", model: "nvidia/development-model", authorityMode: "TEST_DOUBLE_ONLY",
+      credentialSource: {sourceIdentity: "synthetic:bad-selection", read: () => "synthetic-development-credential"},
+      maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 100, finalAttemptTimeoutMs: 500,
+      finalAttemptSelection: selection as never});} catch {rejected = true;}
+    check(rejected, "unrecognized final-attempt selection fails closed");
+  }
+}
+
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");
 assert(NVIDIA_NIM_PROVIDER_STATUS.liveNetworkAuthorityGranted === false && !NVIDIA_NIM_PROVIDER_STATUS.productionEligible,
   "provider adapter does not grant live or production authority by construction");

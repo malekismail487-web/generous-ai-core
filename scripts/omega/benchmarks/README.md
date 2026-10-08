@@ -863,3 +863,49 @@ The AIME 16/30 complete result, historical AIME failures, original Ultra and ear
 Super evidence are preserved. BBEH remains cancelled and its watch paused. This
 completion watch captures evidence only and pauses after publication; it does not
 launch benchmarks, repair reserved questions or promote cognition.
+
+### General diagnosis and frozen transfer after GPQA
+
+The 46 wrong valid choices remain reasoning/knowledge outcomes of unknown finer
+cause; no GPQA answers or task-specific patches are used in this correction.
+The four delivery timeouts expose a separate mechanism: a 120-second attempt
+cutoff plus the required 60-second cooldown cannot fit inside a task's original
+180-second lease. The prior opt-in longer timeout selected only the last shared
+physical attempt, not the last usable opportunity within that lease.
+
+`LAST_ATTEMPT_OR_NO_RETRY_WINDOW` is an opt-in host policy: let the current attempt
+use the remaining original lease when a retry cannot fit. It grants neither
+extra calls nor a new lease. Default inference, timeouts, cooldowns, source scope,
+secret boundary and authority are unchanged. Fetch/body controlled reproductions
+cover the difference, cancellation and expiry. This is delivery work, not a
+cognitive-gain claim; a live server can still fail or exceed the finite lease.
+
+The bounded live ablation compares the existing Super read-then-reply control
+with an opt-in in-call `CONSTRAINT_COUNTERCHECK` procedure. Both use the same
+model, high/6144 answer reasoning, 8192-token call ceiling, two logical calls,
+four shared physical dispatches, single scoped question read, 180-second task
+lease and strict exact-answer oracle. One-shot execution freezes four development
+and eight transfer instances across Bayesian conditioning, causal adjustment,
+rotation symmetry and program-state reasoning before any model results. It
+counterbalances arm order and passes no development feedback into transfer.
+These are implementer-authored procedural tasks, NOT independent replication or
+an official benchmark. Python Decimal/Burnside/actual list semantics cross-check
+all twelve host-side oracles without loading official benchmark reference data.
+
+Record paired first-attempt outcomes, reported/unknown tokens, calls, tools,
+latency and failures. Realized compute must match within 10% per pair for a
+compute-controlled claim; matching ceilings alone is insufficient. No automatic
+promotion, task-specific retries, answer-specific tuning or default-model change.
+
+Benchmark sessions already start fresh per question, use no persistent-memory
+store, and clean their disposable question repositories. They now explicitly
+dispose local history/observation references in `finally` and reject session
+reuse. This is not forensic zeroization, provider-retention deletion or model
+weight unlearning. Preserve prior exposure and original GPQA/AIME evidence;
+never relabel an exposed question as blind after clearing local context.
+
+Ω Plan Coverage: directly implements evidence-over-confidence, bounded general
+repair and explicit context lifetime; supports generator/detector separation and
+honest compute accounting. Broader cognitive claims, official-benchmark reruns,
+brain expansion, recursion and production authority are deferred. No conflicting
+authority policy is superseded. Coverage remains PARTIAL / JUST-IN-TIME.

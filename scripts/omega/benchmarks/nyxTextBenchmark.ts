@@ -116,11 +116,11 @@ export function textTransferSelection(tasks: readonly PrivateTextTask[], start =
   return families.flatMap(population => population.slice(start, start + 2));
 }
 
-export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED", "SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT"] as const;
+export const TEXT_INFERENCE_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL", "TEMPLATE_BOUNDED", "OBSERVATION_ALIGNED_SCHEMA", "HOSTED_BOUNDED", "SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"] as const;
 export const TEXT_DIAGNOSTIC_CONFIGURATIONS = ["EXISTING_DEFAULT", "BOUNDED_GUIDED", "BOUNDED_STRICT_LOCAL"] as const;
 export type TextInferenceConfiguration = typeof TEXT_INFERENCE_CONFIGURATIONS[number];
 export type TextSessionContractCandidate = "SESSION_ACTION_CONTRACT" | "SESSION_NATIVE_PHASE_CONTRACT" | "SESSION_SUPER_PHASE_CONTRACT";
-export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE";
+export type TextTimeoutProfile = "FIXED_ATTEMPT" | "FINAL_CALLER_LEASE" | "LEASE_NO_RETRY_WINDOW";
 export type TextRecoveryProfile = "FIXED_REQUESTS" | "BOUNDED_RECOVERY";
 /** Delivery retries share a finite task budget; they never create another reasoning turn or renew its lease. */
 export function textHttpAttemptAllowance(delivery: "DIRECT" | "SCOPED_FILE", profile: TextRecoveryProfile = "FIXED_REQUESTS") {
@@ -165,7 +165,7 @@ export function textConfiguredRequest(request: NvidiaNimCompletionRequest, confi
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration)) throw Error("text_inference_configuration_invalid");
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery) || typeof questionObserved !== "boolean") throw Error("text_action_schema_state_invalid");
   if (configuration === "EXISTING_DEFAULT" || configuration === "SESSION_ACTION_CONTRACT") return request;
-  if (configuration === "SESSION_SUPER_PHASE_CONTRACT") {
+  if (configuration === "SESSION_SUPER_PHASE_CONTRACT" || configuration === "SESSION_SUPER_COUNTERCHECK") {
     if (!Number.isSafeInteger(request.maxTokens) || request.maxTokens < 4) throw Error("text_super_output_bound_invalid");
     const readRequired = delivery === "SCOPED_FILE" && !questionObserved;
     // Same total ceiling: reserve a quarter for final JSON rather than allowing thinking to consume it all.
@@ -206,7 +206,7 @@ export function textSessionActionContract(configuration: TextInferenceConfigurat
   delivery: "DIRECT" | "SCOPED_FILE"): NyxChatActionContract | undefined {
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration) || !["DIRECT", "SCOPED_FILE"].includes(delivery))
     throw Error("text_session_action_contract_invalid");
-  if (!["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT"].includes(configuration)) return undefined;
+  if (!["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"].includes(configuration)) return undefined;
   return delivery === "DIRECT" ? {kind: "REPLY_ONLY"} : {kind: "READ_THEN_REPLY", path: "src/question.mjs"};
 }
 
@@ -451,7 +451,10 @@ export async function invokeExistingNyxText(config: NyxChatSessionConfig, questi
   if (input.length > TEXT_BENCHMARK_POLICY.maxInputCharacters) return null;
   // New session per task; no earlier answers, failed cases, or hidden feedback become shared memory.
   const auditStart = config.reader.auditLog().length;
-  const result = await NyxChatSession.create(config).turn(input);
+  const session = NyxChatSession.create(config);
+  let result: NyxChatTurnResult;
+  try { result = await session.turn(input); }
+  finally { session.dispose(); }
   if (delivery === "SCOPED_FILE" && result.outcome === "REPLIED") {
     const observed = config.reader.auditLog().slice(auditStart).filter(t =>
       t.request.action === "READ_FILE" && t.request.resourcePath === "src/question.mjs"
@@ -541,6 +544,11 @@ function compareTextConfigurationPair(pair: readonly (ReturnType<typeof sanitize
 
 export function compareTextPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
   return compareTextConfigurationPair(pair, ["EXISTING_DEFAULT", "OBSERVATION_ALIGNED_SCHEMA"]);
+}
+
+export function compareGeneralReasoningPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[]) {
+  return {...compareTextConfigurationPair(pair, ["SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"]),
+    interpretation: "COUNTERCHECK_PROCEDURE_ABLATION_NOT_AUTOMATIC_COGNITIVE_PROMOTION"};
 }
 
 export function compareTextContractPair(pair: readonly (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration})[],

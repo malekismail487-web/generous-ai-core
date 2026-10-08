@@ -17,6 +17,8 @@ import { TEXT_BENCHMARK_POLICY, textEvaluationModel, gradeAime, gradeGpqa, parse
   textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair, textContractDiagnosticReady,
   type TextInferenceConfiguration, type TextTimeoutProfile, type TextRecoveryProfile, type PrivateTextTask } from "./benchmarks/nyxTextBenchmark";
 import { R3BenchmarkRepositorySession } from "./benchmarks/r3RepositorySession";
+import { generalReasoningTasks, type GeneralReasoningStage } from "./benchmarks/generalReasoningTasks";
+import { compareGeneralReasoningPair } from "./benchmarks/nyxTextBenchmark";
 
 export async function runTextBenchmarkEpoch() {
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
@@ -26,7 +28,9 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DELIVERY_PREFLIGHT", "CONTRACT_DIAGNOSTIC", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DELIVERY_PREFLIGHT", "CONTRACT_DIAGNOSTIC", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  const generalStage: GeneralReasoningStage | null = mode === "GENERAL_REPAIR_DEVELOPMENT" ? "DEVELOPMENT"
+    : mode === "GENERAL_REPAIR_TRANSFER" ? "TRANSFER" : null;
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const evaluationModel = textEvaluationModel(process.env.NYX_TEXT_EVALUATION_MODEL);
@@ -34,19 +38,21 @@ export async function runTextBenchmarkEpoch() {
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
   const capacityScheduling = process.env.NYX_TEXT_CAPACITY_SCHEDULING;
   if (capacityScheduling !== undefined && (capacityScheduling !== "BEFORE_TASK_LEASE"
-    || !["FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
+    || !["FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
   const preflight = mode === "DELIVERY_PREFLIGHT";
   const contractDiagnostic = mode === "CONTRACT_DIAGNOSTIC";
   const contractCandidate = configuration === "SESSION_NATIVE_PHASE_CONTRACT" || configuration === "SESSION_SUPER_PHASE_CONTRACT"
     ? configuration : "SESSION_ACTION_CONTRACT";
   if (contractDiagnostic && !["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT"].includes(configuration))
     throw Error("text_contract_diagnostic_candidate_invalid");
-  if (configuration === "SESSION_SUPER_PHASE_CONTRACT" && evaluationModel !== "nvidia/nemotron-3-super-120b-a12b")
+  if (["SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"].includes(configuration) && evaluationModel !== "nvidia/nemotron-3-super-120b-a12b")
     throw Error("text_super_configuration_requires_explicit_super_model");
+  if (generalStage && (configuration !== "SESSION_SUPER_PHASE_CONTRACT" || delivery !== "SCOPED_FILE"))
+    throw Error("general_repair_requires_frozen_super_scoped_control");
   const transientRecovery = process.env.NYX_TEXT_TRANSIENT_RECOVERY;
   if (transientRecovery !== undefined && (transientRecovery !== "WITHIN_SHARED_BUDGET"
     || process.env.NYX_TEXT_RECOVERY_PROFILE !== "BOUNDED_RECOVERY")) throw Error("text_transient_recovery_profile_invalid");
-  const dataFree = preflight || contractDiagnostic;
+  const dataFree = preflight || contractDiagnostic || generalStage !== null;
   if (contractDiagnostic && delivery !== "SCOPED_FILE") throw Error("text_contract_diagnostic_requires_scoped_read");
   if (preflight && (delivery !== "DIRECT" || configuration !== "OBSERVATION_ALIGNED_SCHEMA"))
     throw Error("text_preflight_requires_existing_direct_schema");
@@ -61,6 +67,7 @@ export async function runTextBenchmarkEpoch() {
     throw Error("text_epoch_transfer_window_invalid");
   let data = null;
   let tasks: PrivateTextTask[] = [];
+  if (generalStage) tasks = [...generalReasoningTasks(generalStage)];
   if (mode === "FULL_GPQA") {
     if (!process.env.NYX_TEXT_DATA) throw Error("text_epoch_data_missing");
     data = parsePinnedGpqaData(await readFile(resolve(process.env.NYX_TEXT_DATA), "utf8"));
@@ -87,6 +94,10 @@ export async function runTextBenchmarkEpoch() {
     recoveryProfile?: TextRecoveryProfile})[] =
     preflight ? [...textDeliveryPreflightSelection()]
     : contractDiagnostic ? textSessionContractSelection(contractCandidate)
+    : generalStage ? tasks.flatMap((task, index) => (index % 2
+      ? ["SESSION_SUPER_COUNTERCHECK", "SESSION_SUPER_PHASE_CONTRACT"] as const
+      : ["SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"] as const).map(configuration =>
+        ({...task, taskId: `${task.taskId}-${configuration}`, configuration, timeoutProfile: "LEASE_NO_RETRY_WINDOW" as const})))
     : mode === "RECOVERY_TRANSFER_ABLATION" ? textRecoveryTransferSelection(tasks, transferStart)
     : mode === "TIMEOUT_TRANSFER_ABLATION" ? textTimeoutTransferSelection(tasks, transferStart)
     : mode === "HOSTED_DIAGNOSTIC" ? TEXT_HOSTED_DIAGNOSTICS.flatMap((task, index) =>
@@ -114,7 +125,8 @@ export async function runTextBenchmarkEpoch() {
   const selection = textSharedRecoverySelection(baseSelection,
     process.env.NYX_TEXT_RECOVERY_PROFILE as TextRecoveryProfile | undefined);
   const before = git("ls-files", "-s"); const began = Date.now();
-  const deadline = began + (preflight ? 2 * TEXT_BENCHMARK_POLICY.maxTaskMs
+  const deadline = began + (generalStage ? selection.length * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
+    : preflight ? 2 * TEXT_BENCHMARK_POLICY.maxTaskMs
     : mode === "RECOVERY_TRANSFER_ABLATION" ? 25 * 60000
     : mode === "FULL_AIME" ? 30 * TEXT_BENCHMARK_POLICY.maxTaskMs + 60000
     : mode === "FULL" || mode === "FULL_BBEH" || mode === "FULL_GPQA" ? 19000000 : mode === "DIAGNOSTIC" ? 1200000 : 900000);
@@ -123,10 +135,13 @@ export async function runTextBenchmarkEpoch() {
     model: evaluationModel, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
     maxOutputTokens: TEXT_BENCHMARK_POLICY.maxOutputTokens, timeoutMs: 120000,
-    ...(profile === "FINAL_CALLER_LEASE" ? {finalAttemptTimeoutMs: TEXT_BENCHMARK_POLICY.maxTaskMs} : {}),
+    ...(profile === "FINAL_CALLER_LEASE" || profile === "LEASE_NO_RETRY_WINDOW"
+      ? {finalAttemptTimeoutMs: TEXT_BENCHMARK_POLICY.maxTaskMs} : {}),
+    ...(profile === "LEASE_NO_RETRY_WINDOW" ? {finalAttemptSelection: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" as const} : {}),
     transport: textDiagnosticTransport(hint => requestRejections.push(hint))});
   const providers = new Map<TextTimeoutProfile, NvidiaNimProvider>([["FIXED_ATTEMPT", makeProvider("FIXED_ATTEMPT")]]);
   if (mode === "TIMEOUT_TRANSFER_ABLATION") providers.set("FINAL_CALLER_LEASE", makeProvider("FINAL_CALLER_LEASE"));
+  if (generalStage) providers.set("LEASE_NO_RETRY_WINDOW", makeProvider("LEASE_NO_RETRY_WINDOW"));
   const results: (ReturnType<typeof sanitizedTextResult> & {configuration: TextInferenceConfiguration,
     timeoutProfile?: TextTimeoutProfile; recoveryProfile?: TextRecoveryProfile; requestRejections: typeof requestRejections})[] = [];
   const blocked: {taskId: string; reason: string}[] = [];
@@ -180,6 +195,7 @@ export async function runTextBenchmarkEpoch() {
         blocked.push({taskId: task.taskId, reason: "TASK_LEASE_EXPIRED_DURING_SETUP"}); await checkpoint(); continue;
       }
       result = await invokeExistingNyxText({sessionId: task.taskId, reader,
+        ...(task.configuration === "SESSION_SUPER_COUNTERCHECK" ? {reasoningPolicy: "CONSTRAINT_COUNTERCHECK" as const} : {}),
         actionContract: textSessionActionContract(task.configuration, delivery as "DIRECT" | "SCOPED_FILE"),
         model: {complete: async request => {
           const questionObserved = reader!.auditLog().some(t => t.request.action === "READ_FILE"
@@ -259,7 +275,8 @@ export async function runTextBenchmarkEpoch() {
         choiceOrdering: "AUTHOR_BASELINE_INCORRECT_1_2_3_CORRECT_PYTHON_RANDOM_SEED_0",
         closedBook: true, excluded: ["Explanations", "Validator metadata", "Reference label"],
         referenceChoiceIncludedAmongFourUnlabeledChoices: true} : null},
-    configuration: contractDiagnostic ? (contractCandidate === "SESSION_SUPER_PHASE_CONTRACT"
+    configuration: generalStage ? "COUNTERBALANCED_SUPER_BASELINE_VS_CONSTRAINT_COUNTERCHECK"
+      : contractDiagnostic ? (contractCandidate === "SESSION_SUPER_PHASE_CONTRACT"
       ? "COUNTERBALANCED_SESSION_CONTRACT_VS_SUPER_PHASE_CONTROLS" : contractCandidate === "SESSION_NATIVE_PHASE_CONTRACT"
         ? "COUNTERBALANCED_SESSION_CONTRACT_VS_NATIVE_PHASE_CONTROLS" : "COUNTERBALANCED_SCHEMA_ONLY_VS_SESSION_ACTION_CONTRACT")
       : mode === "RECOVERY_TRANSFER_ABLATION" ? "IDENTICAL_DIRECT_SCHEMA_FIXED_VS_BOUNDED_RECOVERY"
@@ -316,6 +333,21 @@ export async function runTextBenchmarkEpoch() {
     pairedRecoveryResults: mode === "RECOVERY_TRANSFER_ABLATION" ? transferTasks.map(task =>
       ({inputDigest: theoryDigest(task.question), ...compareTextRecoveryPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})) : [],
     sourceUnchanged, authorityDelta: "NONE", repairAttempts: 0,
+    generalReasoning: generalStage ? {stage: generalStage, officialBenchmark: false,
+      objectiveSource: "PROCEDURAL_INSTANCES_WITH_NO_GPQA_QUESTIONS_OR_REFERENCE_ANSWERS",
+      domains: generalReasoningTasks(generalStage).map(task => ({taskId: task.taskId, domain: task.domain})),
+      hypothesis: "An in-call constraint and counterexample check may reduce valid wrong answers without extra model calls or tools.",
+      independentNewKnowledgeSupplied: false, reasoningEngine: "SAME_NEMOTRON_INFERENCE_NOT_NEW_ENGINE",
+      sameModelCallsTokensToolsLeaseAndOracleCeilings: true, realizedComputeTolerance: 0.1,
+      timeoutProfileSharedAcrossArms: "LEASE_NO_RETRY_WINDOW",
+      providerStableRequired: true, allPairsMustBeMatchedForComputeControlledClaim: true,
+      pairedResults: tasks.map(task => ({taskId: task.taskId, inputDigest: theoryDigest(task.question),
+        ...compareGeneralReasoningPair(results.filter(row => row.inputDigest === theoryDigest(task.question)))})),
+      memory: {newSessionPerTask: true,localReferencesDisposedInFinally: true,
+        providerErasureClaimed: false,weightUnlearningClaimed: false,
+        historicalExposurePreserved: true,previouslyExposedGpqaRelabeledFresh: false},
+      evaluatorIndependence: "E3_IMPLEMENTER_AUTHORED_SYNTHETIC_ORACLES_NOT_INDEPENDENT_REPLICATION",
+      automaticPromotion: false} : null,
     firstAttemptOnly: true, broadPromotion: false, calibration: "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
     stopReason: !diagnostic && consecutiveProviderFailures >= 2 ? "PROVIDER_DELIVERY_FAILURE_CONSECUTIVE_TASKS"
       : capacityQueue.some(wait => wait.state !== "READY") ? "CAPACITY_NOT_READY_WITHIN_EPOCH"
@@ -325,7 +357,8 @@ export async function runTextBenchmarkEpoch() {
   await writeFile(join(process.env.RUNNER_TEMP || tmpdir(), `nyx-text-benchmark-${candidate}.json`), JSON.stringify(report, null, 2));
   console.log(`NYX_TEXT_EPOCH ${JSON.stringify(report)}`);
   if (!sourceUnchanged || textFullRunIncomplete(mode, families) || preflight && !textDeliveryPreflightReady(results)
-    || contractDiagnostic && !textContractDiagnosticReady(results, contractCandidate)) process.exitCode = 1;
+    || contractDiagnostic && !textContractDiagnosticReady(results, contractCandidate)
+    || generalStage && (results.length !== selection.length || results.some(row => row.correct === null))) process.exitCode = 1;
   return report;
 }
 if (process.argv[1]?.replace(/\\/g, "/").endsWith("/nyx-text-benchmark-epoch.ts")) await runTextBenchmarkEpoch();

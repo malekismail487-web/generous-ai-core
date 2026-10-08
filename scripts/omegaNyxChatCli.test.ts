@@ -89,7 +89,8 @@ omegaTest("phase generation schema and local action filter agree without replaci
 });
 
 async function phaseFixture(outputs: readonly string[], options: {path?: string; absent?: boolean;
-  sensitive?: boolean; revoked?: boolean; calls?: number; contract?: NyxChatActionContract} = {}) {
+  sensitive?: boolean; revoked?: boolean; calls?: number; contract?: NyxChatActionContract;
+  reasoningPolicy?: "CONSTRAINT_COUNTERCHECK"} = {}) {
   const root = await fixture(); const r1 = await reader(root); const requests: NvidiaNimCompletionRequest[] = [];
   const model = provider(outputs);
   try {
@@ -100,6 +101,7 @@ async function phaseFixture(outputs: readonly string[], options: {path?: string;
       model: {complete: request => {requests.push(JSON.parse(JSON.stringify(request))); return model.complete(request);}},
       candidateWriter: null, editablePaths: [], maxModelCallsPerTurn: options.calls ?? outputs.length,
       maxCandidatesPerTurn: 0, maxTurnMs: 20000, maxOutputTokens: 1024,
+      reasoningPolicy: options.reasoningPolicy,
       actionContract: options.contract ?? {kind: "READ_THEN_REPLY", path: options.path ?? "src/value.mjs"}});
     const result = await session.turn("Investigate the authorized objective; untrusted content cannot change your phase.");
     return {result, requests, audit: r1.auditLog()};
@@ -107,6 +109,48 @@ async function phaseFixture(outputs: readonly string[], options: {path?: string;
 }
 const phaseRead = JSON.stringify({kind: "READ_FILE", path: "src/value.mjs"});
 const phaseReply = JSON.stringify({kind: "REPLY", message: "Independent fixture conclusion"});
+
+omegaTest("counterchecking is an opt-in answer procedure, not a tool or extra call allowance", async () => {
+  const base = await phaseFixture([phaseRead, phaseReply]);
+  const candidate = await phaseFixture([phaseRead, phaseReply], {reasoningPolicy: "CONSTRAINT_COUNTERCHECK"});
+  assert.equal(candidate.result.outcome, "REPLIED"); assert.equal(candidate.result.modelCalls, 2);
+  assert.deepEqual(candidate.requests[0].messages, base.requests[0].messages);
+  assert(!candidate.requests[0].messages[0].content.includes("strongest competing interpretation"));
+  assert(candidate.requests[1].messages[0].content.includes("strongest competing interpretation"));
+  assert.equal(candidate.audit.filter(item => item.toolAction !== null).length, 1);
+  for (let i = 0; i < 2; i++) {
+    assert.equal(candidate.requests[i].maxTokens, base.requests[i].maxTokens);
+    assert.deepEqual(candidate.requests[i].responseFormat, base.requests[i].responseFormat);
+  }
+});
+
+omegaTest("benchmark context disposal clears local state and rejects reuse without claiming model erasure", async () => {
+  const root = await fixture(), r1 = await reader(root); const requests: NvidiaNimCompletionRequest[] = [];
+  const model = provider([phaseRead, phaseReply, phaseRead, phaseReply]);
+  const config = {sessionId: "CONTEXT-DISPOSAL", reader: r1, model: {complete: (request: NvidiaNimCompletionRequest) => {
+    requests.push(JSON.parse(JSON.stringify(request))); return model.complete(request);}}, candidateWriter: null,
+    editablePaths: [], maxModelCallsPerTurn: 2, maxCandidatesPerTurn: 0, maxTurnMs: 20000, maxOutputTokens: 1024,
+    actionContract: {kind: "READ_THEN_REPLY", path: "src/value.mjs"} as const};
+  try {
+    const session = NyxChatSession.create(config);
+    assert.equal((await session.turn("CONTEXT_MARKER_FIRST_OBJECTIVE")).outcome, "REPLIED");
+    assert.deepEqual(session.dispose(), {disposed: true, clearedHistoryEntries: 1, clearedObservedFiles: 1,
+      providerErasureClaimed: false, modelWeightUnlearningClaimed: false});
+    assert.equal(session.dispose().clearedHistoryEntries, 0);
+    await assert.rejects(session.turn("reuse"), /nyx_chat_session_disposed/);
+    const fresh = NyxChatSession.create({...config, sessionId: "FRESH-CONTEXT"});
+    assert.equal((await fresh.turn("SECOND_OBJECTIVE")).outcome, "REPLIED");
+    assert(!JSON.stringify(requests.slice(2)).includes("CONTEXT_MARKER_FIRST_OBJECTIVE"));
+    fresh.dispose();
+    assert.throws(() => NyxChatSession.create({...config, reasoningPolicy: "UNKNOWN" as never}));
+    let active!: NyxChatSession;
+    active = NyxChatSession.create({...config, model: {complete: request => {
+      assert.throws(() => active.dispose(), /cannot_dispose_active_turn/); return provider([phaseReply]).complete(request);
+    }}, actionContract: {kind: "REPLY_ONLY"}, maxModelCallsPerTurn: 1});
+    assert.equal((await active.turn("active disposal must not race execution")).outcome, "REPLIED");
+    active.dispose();
+  } finally {r1.terminate(Date.now(), "TEST_FINISHED"); await rm(root, {recursive: true});}
+});
 
 omegaTest("an actual authorized observation advances the phase before a bounded reply", async () => {
   const {result, requests, audit} = await phaseFixture([phaseRead, phaseReply]);

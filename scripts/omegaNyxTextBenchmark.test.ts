@@ -13,7 +13,8 @@ import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPop
   textHttpAttemptAllowance, textRecoveryTransferSelection, compareTextRecoveryPair,
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
   textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair,
-  textContractDiagnosticReady } from "./omega/benchmarks/nyxTextBenchmark";
+  textContractDiagnosticReady, compareGeneralReasoningPair } from "./omega/benchmarks/nyxTextBenchmark";
+import { generalReasoningTasks, ringCounts } from "./omega/benchmarks/generalReasoningTasks";
 import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 
 let passed = 0; let failed = 0;
@@ -995,6 +996,46 @@ check("recovered success still cannot assert stable delivery or new executor aut
   assert(twoErrorRecovered.observations.every(evidence => evidence.delivery?.authorityRenewed === false));
   assert(!textContractDiagnosticReady([{...nativeReadyRows[0], usage: twoErrorRecovered.row.usage},
     ...nativeReadyRows.slice(1)], "SESSION_NATIVE_PHASE_CONTRACT"));
+});
+check("general transfer is disjoint from development with bounded exact options and no official dataset", () => {
+  const development = generalReasoningTasks("DEVELOPMENT"), transfer = generalReasoningTasks("TRANSFER");
+  assert.equal(development.length, 4); assert.equal(transfer.length, 8);
+  assert.equal(new Set([...development, ...transfer].map(task => task.question)).size, 12);
+  assert.equal(new Set([...development, ...transfer].map(task => task.taskId)).size, 12);
+  assert.deepEqual(generalReasoningTasks("TRANSFER"), transfer);
+  for (const tasks of [development, transfer]) assert.equal(new Set(tasks.map(task => task.domain)).size, 4);
+  for (const task of [...development, ...transfer]) {
+    assert.equal(task.family, "DEVELOPMENT_DIAGNOSTIC"); assert(/^[1-4]$/.test(task.answer));
+    assert.equal(task.question.split("\n").filter(line => /^[1-4]\. /.test(line)).length, 4);
+    assert.equal(gradeAime(`The answer is: ${task.answer}`, task.answer), true);
+  }
+  assert.throws(() => generalReasoningTasks("UNKNOWN" as never));
+});
+check("rotation enumeration agrees with independent fixed-point Burnside counting", () => {
+  for (const [n, k] of [[9, 3], [10, 4], [12, 4], [14, 5], [15, 5], [16, 4]]) {
+    let fixedSum = 0;
+    for (let rotation = 0; rotation < n; rotation++) for (let bits = 0; bits < 2 ** n; bits++) {
+      const bit = (i: number) => (bits >> (i % n)) & 1;
+      if (Array.from({length: n}, (_, i) => bit(i)).reduce((a, b) => a + b, 0) !== k) continue;
+      if (Array.from({length: n}, (_, i) => bit(i) * bit(i + 1)).some(Boolean)) continue;
+      if (Array.from({length: n}, (_, i) => bit(i) !== bit(i + rotation)).some(Boolean)) continue;
+      fixedSum++;
+    }
+    assert.equal(ringCounts(n, k).rotations, fixedSum / n);
+  }
+});
+check("countercheck ablation preserves inference ceilings and never treats unmatched compute as gain", () => {
+  for (const observed of [false, true]) {
+    assert.deepEqual(textConfiguredRequest(originalRequest, "SESSION_SUPER_COUNTERCHECK", "SCOPED_FILE", observed),
+      textConfiguredRequest(originalRequest, "SESSION_SUPER_PHASE_CONTRACT", "SCOPED_FILE", observed));
+  }
+  const pair = pairRows.map((row, i) => ({...row,
+    configuration: i ? "SESSION_SUPER_COUNTERCHECK" as const : "SESSION_SUPER_PHASE_CONTRACT" as const}));
+  assert(compareGeneralReasoningPair(pair).matchedRealizedCompute);
+  assert(!compareGeneralReasoningPair(pair).cognitivePromotion);
+  assert(!compareGeneralReasoningPair([pair[0], {...pair[1], usage: {...pair[1].usage, reportedTokens: 99999}}]).matchedRealizedCompute);
+  assert(!compareGeneralReasoningPair([pair[0], {...pair[1], usage: {...pair[1].usage, unknownUsageCalls: 1}}]).stable);
+  assert(!compareGeneralReasoningPair([pair[0], pair[0]]).boundPair);
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
