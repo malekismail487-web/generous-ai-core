@@ -26,6 +26,12 @@ const keys=(v:unknown,names:readonly string[]):v is Record<string,unknown>=>!!v&
   &&Object.keys(v).sort().join("\0")===[...names].sort().join("\0");
 const boundedArray=(v:unknown,max:number,min=0):v is unknown[]=>Array.isArray(v)&&v.length>=min&&v.length<=max;
 const ops=new Set<string>(EXACT_DERIVATION_OPERATIONS);
+/** Public compiler codes only: never reflect an arbitrary exception, input or host path. */
+export function quantitativeEquationDiagnostic(error:unknown):string|null {
+  if(!(error instanceof Error))return null;
+  const match=error.message.match(/^quantitative_equations_invalid:(SHAPE|ZERO_CONSTANT_REQUIRED|INITIAL_BINDING|CYCLE_BOUND|PHASE_BOUND|SOURCE_TYPE|EXPRESSION_SOURCE_NOT_BOUND|EXPRESSION_SHAPE|UPDATE_TARGET|SNAPSHOT_CAPACITY|LOWERED_STEP_BOUND|OUTPUT_BINDING|LOWERED_PROGRAM_REJECTED)$/);
+  return match?.[1]??null;
+}
 /** Caller rejects accessors/host objects, cycles, and input-byte overflow before entering this compiler. */
 export function lowerQuantitativeEquations(problem:QuantitativeProblem,value:unknown):QuantitativeProgram {
   const fail=(code:string):never=>{throw Error(`quantitative_equations_invalid:${code}`);};

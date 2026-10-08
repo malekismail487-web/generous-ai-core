@@ -1071,3 +1071,36 @@ TypeScript ratchet includes `src`, not this script. The corrected workflow now
 also type-checks this evaluator and its imports with pinned TypeScript before
 live inference. Task population, prompts, oracles, model, budgets and acceptance
 checks are unchanged for the corrected execution.
+
+### Computation pilot: no accuracy promotion; reporting corrections
+
+Corrected candidate `a9c7e42e`, run `37758318211`, selected/attempted all 24
+task-arms. Each arm graded/correct 1/4 development and 3/8 transfer. Twelve
+task-arms had native-IR rejection, two truncation, and two provider lease-timeout
+outcomes: 8 graded/correct, 16 ungraded, zero unexecuted. This is NOT 100%
+accuracy: only 8/24 selected task-arms reached grading. Exact execution had no
+acceptance advantage. Five exact computations were observed; only three modeled
+the objective correctly. One correct final choice followed an incorrect model.
+
+Artifact/log reconciliation found two evaluator defects. Original
+`actualUniqueModelUsage` incorrectly deduplicated content-addressed request IDs:
+distinct physical inferences on identical requests can share an evidence ID.
+The original report claims 28 calls / 192,687 tokens; retained per-branch counters
+and allocated sums independently establish **34 actual HTTP calls / 253,810
+reported tokens, plus two calls with unknown usage**. There were 46 logical calls
+including 12 explicit prefix replays. Two null-category provider lease timeouts
+were originally mislabeled `INTEGRATION_FAILURE`; delivery records establish
+`PROVIDER_FAILURE`. Original artifact bytes and labels are preserved, not edited.
+Receipt `docs/omega/evidence/nyx-computation-transfer-a9c7e42e.json` records the
+audited interpretation. Seven pairs match model compute, but only one of those
+also reached final grading; it tied. No cognitive promotion is supported.
+
+The narrow correction counts actual completion callbacks (never replays),
+classifies timeout delivery records, exposes only allowlisted native-compiler
+findings, and tells cognition the existing native representation bounds. It
+does not relax the 64-step interpreter, grant a tool to normal chat/GPQA, change
+the model, expand task leases or supply oracle feedback. A four-objective fresh
+`DIAGNOSTIC` cohort probes native emission under the same two-call limits. It is
+development evidence, not a transfer/GPQA score or proof of general improvement.
+The exact rejection causes were NOT recoverable from the pilot's generic
+findings; do not claim the bounds were proven to cause every rejected program.

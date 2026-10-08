@@ -4,7 +4,8 @@ import { nyxCanonical, nyxContainsSecretLike, nyxSafeRelativePath, nyxSha256, pa
   nyxChatActionContractValid, nyxChatContractFormat, nyxChatContractAllows, type NyxChatAction, type NyxChatActionContract } from "./nyxChatProtocol";
 import { BoundedReasoningSession } from "../research/boundedReasoningWorkbench";
 import { immutableTheoryValue, theoryDigest } from "../research/theoryContracts";
-import { lowerQuantitativeEquations } from "../research/quantitativeEquationCompiler";
+import { lowerQuantitativeEquations, quantitativeEquationDiagnostic, EQUATION_COMPILER_POLICY } from "../research/quantitativeEquationCompiler";
+import { EXACT_DERIVATION_POLICY } from "../research/exactQuantitativeDerivation";
 
 export interface NyxChatModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
@@ -191,6 +192,8 @@ export class NyxChatSession {
       + `In a phase, evaluate e0..e15 expressions in dependency order using constants, state slots or earlier expressions in that phase; `
       + `then commit distinct slot updates simultaneously. Use ordered phases for sequential updates. `
       + `Outputs name state slots or constants. ADD/SUB/MUL/DIV/MIN/MAX/BINOMIAL only; no literal sources or code. `
+      + `Native bounds: at most ${EQUATION_COMPILER_POLICY.stateSlots} state slots, ${EQUATION_COMPILER_POLICY.expressionSlotsPerPhase} expressions and ${EQUATION_COMPILER_POLICY.stateSlots} updates per phase, ${EQUATION_COMPILER_POLICY.maxPhasesPerCycle} phases per cycle, ${EQUATION_COMPILER_POLICY.maxCycles} cycles, ${EXACT_DERIVATION_POLICY.maxIterations} iterations per cycle. `
+      + `The WHOLE program must lower to at most ${EXACT_DERIVATION_POLICY.maxSteps} primitive steps: each expression and each update costs one step, plus one snapshot for each distinct state-slot source copied in a phase. Static steps are counted once, not multiplied by iterations. Omit unused expressions/updates. `
       + `Omega may return evaluated quantities or retain the proposal without execution. Neither is acceptance of your mathematical model. `
       + `Then reply using the actual observation and original objective. No other tools are available.` : "";
     const systemMessage = this.#config.actionContract ? systemContract + derivationContract
@@ -312,9 +315,9 @@ export class NyxChatSession {
       evidenceClass: NyxChatEvent["evidenceClass"], evidenceId: string, outcome: string) => void): Promise<{ message: string; candidate: NyxCandidateResult | null }> {
     if (action.kind === "DERIVE_QUANTITIES") {
       const contract = this.#config.actionContract;
-      const reject = (reason: string) => {
-        event("DENIAL", action, {reason}, "E3", `${requestId}-DENIAL`, reason);
-        return {message:JSON.stringify({omegaObservation:"REJECTED",reason,grantsAuthority:false}),candidate:null};
+      const reject = (reason: string, compilerFinding:string|null=null) => {
+        event("DENIAL", action, {reason,compilerFinding}, "E3", `${requestId}-DENIAL`, reason);
+        return {message:JSON.stringify({omegaObservation:"REJECTED",reason,compilerFinding,grantsAuthority:false}),candidate:null};
       };
       if (contract?.kind !== "DERIVE_THEN_REPLY" || action.problemDigest !== theoryDigest(contract.problem))
         return reject("derivation_scope_unavailable");
@@ -337,7 +340,7 @@ export class NyxChatSession {
         const message=error instanceof Error?error.message:"";
         return reject(message==="reasoning_session_unavailable"?"derivation_capability_unavailable"
           :message==="reasoning_session_budget_exhausted"?"derivation_resource_exhausted"
-          :/^quantitative_(?:program|equations)_invalid:/.test(message)?"derivation_ir_invalid":"derivation_computation_rejected");
+          :/^quantitative_(?:program|equations)_invalid:/.test(message)?"derivation_ir_invalid":"derivation_computation_rejected",quantitativeEquationDiagnostic(error));
       }
     }
     if (action.kind === "READ_FILE" || action.kind === "LIST_DIRECTORY") {

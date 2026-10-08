@@ -5,7 +5,11 @@ import sys
 from fractions import Fraction as F
 
 tasks = json.load(sys.stdin)
-assert len(tasks) == 12 and len({t['taskId'] for t in tasks}) == 12
+counts = {stage: sum(t['stage'] == stage for t in tasks) for stage in ('DEVELOPMENT', 'TRANSFER', 'DIAGNOSTIC')}
+assert counts in ({'DEVELOPMENT': 4, 'TRANSFER': 8, 'DIAGNOSTIC': 0},
+                  {'DEVELOPMENT': 0, 'TRANSFER': 0, 'DIAGNOSTIC': 4},
+                  {'DEVELOPMENT': 4, 'TRANSFER': 8, 'DIAGNOSTIC': 4})
+assert len({t['taskId'] for t in tasks}) == len(tasks) == sum(counts.values())
 for task in tasks:
     c = {x['id']: F(x['value']) for x in task['problem']['constants']}
     domain = task['domain']
@@ -58,4 +62,4 @@ for task in tasks:
         raise ValueError('unknown domain')
     assert F(task['expectedQuantity']) == expected
     assert task['question'].splitlines()[int(task['answer'])] == f"{task['answer']}. {expected}"
-print('COMPUTATION_ORACLES_CROSSCHECKED tasks=12 native_IR_used=false model_code_executed=false')
+print(f'COMPUTATION_ORACLES_CROSSCHECKED tasks={len(tasks)} native_IR_used=false model_code_executed=false')

@@ -3,7 +3,7 @@ import type { QuantitativeProblem } from "../../../src/lib/codelab/research/exac
 
 /** Fresh development/transfer objectives. No GPQA questions, answers, failure indices or
  * provider traces are imported. This tests finite numerical modeling, not scientific knowledge. */
-export type ComputationStage = "DEVELOPMENT" | "TRANSFER";
+export type ComputationStage = "DEVELOPMENT" | "TRANSFER" | "DIAGNOSTIC";
 export type ComputationDomain = "LATENT_BAYES" | "SELECTED_INTERVENTION" | "COUPLED_STATE" | "CONDITIONAL_SAMPLING";
 export interface ComputationTask {
   readonly taskId:string; readonly stage:ComputationStage; readonly domain:ComputationDomain;
@@ -64,9 +64,9 @@ function task(stage:ComputationStage,domain:ComputationDomain,replicate:number,v
     answer:String(ordered.indexOf(expected)+1),expectedQuantity:expected});
 }
 export function computationTasks(stage:ComputationStage):readonly ComputationTask[]{
-  if(!["DEVELOPMENT","TRANSFER"].includes(stage))throw Error("computation_stage_invalid");
+  if(!["DEVELOPMENT","TRANSFER","DIAGNOSTIC"].includes(stage))throw Error("computation_stage_invalid");
   const all:ComputationTask[]=[];
-  for(const k of stage==="DEVELOPMENT"?[0]:[1,2]){
+  for(const k of stage==="DEVELOPMENT"?[0]:stage==="DIAGNOSTIC"?[3]:[1,2]){
     all.push(task(stage,"LATENT_BAYES",k,{pr:`${11+k}/100`,hD:"7/10",hN:"2/5",
       aDH:"19/20",aDL:"4/5",aNH:"3/10",aNL:"1/20",bDH:"4/5",bDL:"3/5",bNH:"2/5",bNL:"1/10",
       sDH:"3/4",sDL:"2/5",sNH:"1/2",sNL:"1/4"},

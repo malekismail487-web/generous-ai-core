@@ -14,6 +14,7 @@ import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnly
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
+import { quantitativeEquationDiagnostic } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 
 const SOURCE = "export function value() { return 1; }\n";
 const REPLACEMENT = "export function value() { return 2; }\n";
@@ -97,6 +98,21 @@ omegaTest("revocation, exhaustion, malformed native IR and stale binding fail cl
     assert(!result.events.some(e=>e.eventType==="ANALYSIS"&&e.outcome==="CONSTRUCTED"));
     assert.equal(result.modelCalls,2);assert.equal(result.sourceRepositoryMutated,false);
   }
+});
+
+omegaTest("native rejection supplies a safe specific compiler finding without authorizing a reply",async()=>{
+  const bad={...arithmeticAction,program:{...arithmeticProgram,initialState:[{slot:"r0",source:"e0"}]}};
+  const {result,requests}=await arithmeticFixture(true,{action:bad});
+  const observation=JSON.parse(requests[1].messages.at(-1)!.content);
+  assert.equal(observation.reason,"derivation_ir_invalid");
+  assert.equal(observation.compilerFinding,"INITIAL_BINDING");
+  assert.equal(observation.grantsAuthority,false);assert.notEqual(result.outcome,"REPLIED");
+  assert(requests[0].messages[0].content.includes("at most 64 primitive steps"));
+  assert(requests[0].messages[0].content.includes("snapshot"));
+  for(const e of [null,"SHAPE",new Error("host path or arbitrary error"),
+    new Error("quantitative_equations_invalid:UNKNOWN"),new Error("quantitative_equations_invalid:SHAPE\nprivate")])
+    assert.equal(quantitativeEquationDiagnostic(e),null);
+  assert.equal(quantitativeEquationDiagnostic(new Error("quantitative_equations_invalid:LOWERED_STEP_BOUND")),"LOWERED_STEP_BOUND");
 });
 
 async function fixture() {

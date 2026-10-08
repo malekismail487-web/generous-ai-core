@@ -17,7 +17,7 @@ import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPop
 import { generalReasoningTasks, ringCounts, ternaryRotationCounts, generatorChallengeValue } from "./omega/benchmarks/generalReasoningTasks";
 import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 import {computationTasks,computationExpected,COMPUTATION_TRANSFER_POLICY} from "./omega/benchmarks/computationTransferTasks";
-import {computationOutcome,computationPairMatched} from "./omega/nyx-computation-transfer";
+import {computationOutcome,computationPairMatched,computationPhysicalUsage} from "./omega/nyx-computation-transfer";
 import type {NyxChatTurnResult} from "../src/lib/codelab/cli/nyxChatSession";
 
 let passed = 0; let failed = 0;
@@ -1105,6 +1105,24 @@ check("computation comparison separates wrong choices, incomplete delivery, sche
   for(const [outcome,state] of [["derivation_ir_invalid","SCHEMA_OR_NATIVE_IR_FAILURE"],
     ["derivation_capability_unavailable","AUTHORIZATION_FAILURE"],["derivation_resource_exhausted","RESOURCE_EXHAUSTION"]])
     assert.equal(computationOutcome({...reply,events:[{eventType:"DENIAL",outcome} as never]},[],"2").state,state);
+});
+check("identical request evidence identities do not collapse distinct physical executions",()=>{
+  const evidence={evidenceId:"SAME_REQUEST_CONTENT",networkAttempted:true,failureCategory:null,
+    usage:{totalTokens:100},delivery:{httpAttempts:1,timedOutAttempts:0,rateLimitedResponses:0,transientUnavailableResponses:0}} as unknown as NvidiaNimEvidence;
+  const usage=computationPhysicalUsage([evidence,{...evidence,usage:{...evidence.usage,totalTokens:150}}],5);
+  assert.equal(usage.physicalCalls,2);assert.equal(usage.reportedTokens,250);assert.equal(usage.unknownUsageCalls,0);
+});
+check("provider lease timeout with null failure category remains ungraded provider failure",()=>{
+  const result={outcome:"MODEL_FAILURE",message:"",events:[]} as unknown as NyxChatTurnResult;
+  const e={failureCategory:null,finishReason:null,delivery:{state:"WAITING_FOR_CAPACITY",timedOutAttempts:1,
+    transientUnavailableResponses:0,rateLimitedResponses:0}} as unknown as NvidiaNimEvidence;
+  assert.deepEqual(computationOutcome(result,[e],"1"),{state:"PROVIDER_FAILURE",correct:null});
+});
+check("new native diagnostics do not recycle exposed development or transfer objectives",()=>{
+  const previous=[...computationTasks("DEVELOPMENT"),...computationTasks("TRANSFER")];
+  const fresh=computationTasks("DIAGNOSTIC");assert.equal(fresh.length,4);
+  assert.equal(new Set([...previous,...fresh].map(t=>t.taskId)).size,16);
+  assert.equal(new Set([...previous,...fresh].map(t=>t.question)).size,16);
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
