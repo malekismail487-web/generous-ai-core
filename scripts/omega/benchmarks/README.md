@@ -1250,3 +1250,39 @@ proved insufficient; private reasoning and official benchmark data remain
 excluded. No authority, acceptance, model, lease or rollback policy is superseded.
 Coverage remains PARTIAL / JUST-IN-TIME. The frozen GPQA recovery candidate and
 its quiet completion watch remain unchanged.
+
+### GPQA failure recovery: terminal, target not reached
+
+Candidate `e52cbb79`, [run 37779484122](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37779484122),
+attempted all 50 selected cases once: **47 graded, 12 correct, 35 wrong valid
+choices, three ungraded provider timeouts, zero unexecuted**. Of the original 46
+wrong cases, nine recovered, 34 remained wrong and three timed out. Of the four
+original ungraded cases, three were correct and one was wrong. No format,
+truncation, schema, authorization or infrastructure failure was recorded.
+The above-90% recovery target was not reached; neither was 80%. Unchanged replay
+did not resolve the cohort. This is exposed recovery, NOT a fresh transfer or
+full-GPQA score. The original 148 correct / 46 wrong / four ungraded remain
+unchanged; the original 148 passing cases were not retested.
+
+The SHA256-verified artifact agrees with the terminal report, all 50 task rows
+and final progress. Selection membership and every input digest agree with the
+pinned original receipt. Consumption: **100 logical / 100 physical requests,
+238,766 reported tokens, three unknown-usage calls**, 50 scoped file reads,
+2,832,368 ms epoch duration, 180,072 ms pre-lease capacity waits and 50,667 ms
+capacity waits inside provider calls. All recorded source repositories remained
+unmutated; no broader authority was granted. Model/configuration, source pins,
+closed-book scope, strict A-D grading, 8,192 output-token ceiling and original
+180-second task lease were unchanged. The three answer timeouts hit the fixed
+120-second provider limit; delivery repair is separate from wrong-choice repair.
+
+See [sanitized recovery receipt](../../../docs/omega/evidence/nyx-super-gpqa-failure-recovery-e52cbb79.json).
+Outcome-only evidence cannot identify specific scientific knowledge or reasoning
+defects. Next investigate competing hypotheses and discriminating experiments
+on separate development tasks, beyond the already-tested prompt-only check.
+Do not read official reference answers, merge stale successes, replay until
+lucky, or promote cognition from this result. Default Ultra, prior AIME/GPQA
+and BBEH cancellation are preserved. The completion watch is paused after capture.
+
+Ω coverage: evidence-linked claims, immutable first-attempt/recovery separation,
+finite leases and honest compute; defers fresh transfer, full recertification and
+production authority. Coverage remains PARTIAL / JUST-IN-TIME.
