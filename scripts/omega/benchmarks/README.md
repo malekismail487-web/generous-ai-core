@@ -1079,8 +1079,10 @@ task-arms. Each arm graded/correct 1/4 development and 3/8 transfer. Twelve
 task-arms had native-IR rejection, two truncation, and two provider lease-timeout
 outcomes: 8 graded/correct, 16 ungraded, zero unexecuted. This is NOT 100%
 accuracy: only 8/24 selected task-arms reached grading. Exact execution had no
-acceptance advantage. Five exact computations were observed; only three modeled
-the objective correctly. One correct final choice followed an incorrect model.
+acceptance advantage. Five exact computations were observed; three numerical
+outputs agreed with the independent oracle and two disagreed. One correct final
+choice followed a numerical disagreement. This does not independently establish
+semantic model correctness or identify the disagreement's root cause.
 
 Artifact/log reconciliation found two evaluator defects. Original
 `actualUniqueModelUsage` incorrectly deduplicated content-addressed request IDs:
@@ -1113,8 +1115,12 @@ first proposal was rejected with `PHASE_BOUND`, followed by another rejection;
 the precise field is not recorded. No provider failures, truncations or unknown
 usage occurred: 12 actual HTTP requests, 88,622 reported tokens, 16 logical calls
 including four prefix replays. Three model-compute-matched pairs exist; the two
-graded matched pairs tie. Of three exact models executed, one was correct and
-two were wrong despite correct final choices. **No cognitive/tool advantage.**
+graded matched pairs tie. Of three executed programs, one numerical output
+agreed with the independent oracle and two disagreed despite correct final
+choices. The legacy `computedModelCorrect` field measures this output agreement,
+not semantic correctness of the entire model. Program digests alone cannot
+attribute a disagreement to formulation, lowering or execution.
+**No cognitive/tool advantage.**
 Receipt `docs/omega/evidence/nyx-native-derivation-37dc44bb.json` preserves the
 original sanitized report, archive digest and exact report/log reconciliation.
 Candidate CI caught stale generated W0 inventories; refreshed inventories at
@@ -1134,3 +1140,30 @@ leases and grader; only schema cardinality/numeric constraints differ. Proposals
 are independent, not replayed, because the generation schema is the treatment.
 Realized tokens, tool work and unmatched pairs remain explicit. These are fresh
 development parameter variants, not independent replication or a GPQA score.
+
+The frozen ablation at `86fd1b3f` is terminal in
+[run 37775509813](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37775509813).
+Legacy schema graded/correct 2/4; bounded schema graded/correct 3/4. All eight
+task-arms were attempted, five graded/correct, three ungraded. The legacy arm
+had a `CYCLE_BOUND` rejection; both arms truncated their first proposal on one
+objective at the unchanged 8,192-token ceiling. No provider failures, retries
+or unknown usage occurred. Each arm used seven physical requests: legacy
+55,103 tokens, bounded 47,785; total 102,888. **Zero pairs met the realized-model-
+compute matching criterion.** The small coverage difference is not a demonstrated
+cognitive gain or reproducible promotion. The optional schema remains unpromoted.
+Five native computations ran: two numerical outputs agreed with the independent
+oracle, three disagreed, despite five correct final choices. Final-choice grading
+and numerical-output agreement remain separate; no acceptance check was changed.
+
+Receipt `docs/omega/evidence/nyx-native-collection-bounds-86fd1b3f.json` preserves
+the original report, SHA256-verified archive, exact terminal-log/row reconciliation
+and physical-call accounting. CI at the same candidate passed 108 suites /
+11,175 checks, TypeScript 5.8.3 zero, secret scan, Linux build and package smoke.
+An ephemeral independent Python `Fraction` phase interpreter also agreed with
+the existing compiler/executor on 200 generated programs / 1,200 output
+comparisons, including all seven operations, dependent expressions, simultaneous
+state copies, multiple phases and constant/name collisions. This is a narrow E3
+execution cross-check, not model reasoning evidence or independent replication;
+it does not retrospectively identify the earlier numerical disagreements.
+No GPQA rerun, official-question ingestion, default change or authority increase
+occurred. The original 198-selected / 194-graded / 148-correct GPQA result stands.
