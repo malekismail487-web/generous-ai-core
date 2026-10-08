@@ -1,8 +1,6 @@
 name: Omega NYX finite probabilistic model development comparison
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:
@@ -10,7 +8,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   probability-development:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-probability-development-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 32
     steps:
