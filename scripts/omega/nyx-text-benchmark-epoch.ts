@@ -28,9 +28,9 @@ export async function runTextBenchmarkEpoch() {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
     throw Error("text_epoch_requires_clean_candidate");
   const mode = process.env.NYX_TEXT_EPOCH_MODE || "SMOKE";
-  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DELIVERY_PREFLIGHT", "CONTRACT_DIAGNOSTIC", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER"].includes(mode)) throw Error("text_epoch_mode_invalid");
+  if (!["SMOKE", "FRESH", "TRANSFER", "TRANSFER_ABLATION", "TIMEOUT_TRANSFER_ABLATION", "RECOVERY_TRANSFER_ABLATION", "DELIVERY_PREFLIGHT", "CONTRACT_DIAGNOSTIC", "DIAGNOSTIC", "COMPATIBILITY", "REJECTION_DIAGNOSTIC", "HOSTED_DIAGNOSTIC", "ACTION_SCHEMA", "FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER", "GENERAL_REPAIR_CHALLENGE"].includes(mode)) throw Error("text_epoch_mode_invalid");
   const generalStage: GeneralReasoningStage | null = mode === "GENERAL_REPAIR_DEVELOPMENT" ? "DEVELOPMENT"
-    : mode === "GENERAL_REPAIR_TRANSFER" ? "TRANSFER" : null;
+    : mode === "GENERAL_REPAIR_TRANSFER" ? "TRANSFER" : mode === "GENERAL_REPAIR_CHALLENGE" ? "CHALLENGE" : null;
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
   const evaluationModel = textEvaluationModel(process.env.NYX_TEXT_EVALUATION_MODEL);
@@ -38,7 +38,7 @@ export async function runTextBenchmarkEpoch() {
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
   const capacityScheduling = process.env.NYX_TEXT_CAPACITY_SCHEDULING;
   if (capacityScheduling !== undefined && (capacityScheduling !== "BEFORE_TASK_LEASE"
-    || !["FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
+    || !["FULL", "FULL_AIME", "FULL_BBEH", "FULL_GPQA", "GENERAL_REPAIR_DEVELOPMENT", "GENERAL_REPAIR_TRANSFER", "GENERAL_REPAIR_CHALLENGE"].includes(mode))) throw Error("text_capacity_scheduling_invalid");
   const preflight = mode === "DELIVERY_PREFLIGHT";
   const contractDiagnostic = mode === "CONTRACT_DIAGNOSTIC";
   const contractCandidate = configuration === "SESSION_NATIVE_PHASE_CONTRACT" || configuration === "SESSION_SUPER_PHASE_CONTRACT"

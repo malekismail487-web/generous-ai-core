@@ -14,7 +14,7 @@ import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPop
   textDeliveryPreflightSelection, textDeliveryPreflightReady, textSharedRecoverySelection,
   textSessionActionContract, textSessionContractSelection, TEXT_SESSION_CONTRACT_DIAGNOSTICS, compareTextContractPair,
   textContractDiagnosticReady, compareGeneralReasoningPair } from "./omega/benchmarks/nyxTextBenchmark";
-import { generalReasoningTasks, ringCounts } from "./omega/benchmarks/generalReasoningTasks";
+import { generalReasoningTasks, ringCounts, ternaryRotationCounts, generatorChallengeValue } from "./omega/benchmarks/generalReasoningTasks";
 import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 
 let passed = 0; let failed = 0;
@@ -1036,6 +1036,33 @@ check("countercheck ablation preserves inference ceilings and never treats unmat
   assert(!compareGeneralReasoningPair([pair[0], {...pair[1], usage: {...pair[1].usage, reportedTokens: 99999}}]).matchedRealizedCompute);
   assert(!compareGeneralReasoningPair([pair[0], {...pair[1], usage: {...pair[1].usage, unknownUsageCalls: 1}}]).stable);
   assert(!compareGeneralReasoningPair([pair[0], pair[0]]).boundPair);
+});
+check("frozen harder challenge has twelve fresh distinct objectives and unchanged strict grading", () => {
+  const old = [...generalReasoningTasks("DEVELOPMENT"), ...generalReasoningTasks("TRANSFER")];
+  const challenge = generalReasoningTasks("CHALLENGE");
+  assert.equal(challenge.length, 12); assert.deepEqual(challenge, generalReasoningTasks("CHALLENGE"));
+  assert.equal(new Set([...old, ...challenge].map(x => x.question)).size, 24);
+  // Strip option ordering before checking duplicate objectives.
+  assert.equal(new Set(challenge.map(x => x.question.split("\nChoose exactly")[0])).size, 12);
+  for (const domain of ["BAYES", "CAUSAL", "SYMMETRY", "PROGRAM_STATE"])
+    assert.equal(challenge.filter(x => x.domain === domain).length, 3);
+  for (const task of challenge) {
+    assert.equal(task.family, "DEVELOPMENT_DIAGNOSTIC");
+    assert(/^[1-4]$/.test(task.answer)); assert(task.question.length < 8000);
+    assert.equal(task.question.split("\n").filter(line => /^[1-4]\. /.test(line)).length, 4);
+    assert(gradeAime(`The answer is: ${task.answer}`, task.answer));
+    assert(!gradeAime(`The answer is: ${task.answer} or another option`, task.answer));
+  }
+});
+check("non-free rotations cannot be scored by naive division and oracle generation is bounded", () => {
+  for (const [n, counts, occurrences] of [[12, [4, 4, 4], 2], [12, [4, 4, 4], 0], [15, [5, 5, 5], 0]] as const) {
+    const result = ternaryRotationCounts(n, counts, occurrences);
+    assert(result.rotations > 1); assert.notEqual(result.rotations, result.labelled / n);
+  }
+  for (const args of [[16, [5, 5, 6], 0], [12, [4, 4], 0], [12, [4, 4, 4], -1]] as const)
+    assert.throws(() => ternaryRotationCounts(args[0], args[1], args[2]));
+  assert.throws(() => generatorChallengeValue([1, 2, 3, 4], 6));
+  assert.throws(() => generatorChallengeValue([2, 3, 4, 5], 100000));
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

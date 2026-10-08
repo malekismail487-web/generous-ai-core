@@ -8,6 +8,10 @@ import json
 import re
 import sys
 from decimal import Decimal, ROUND_HALF_UP
+from fractions import Fraction
+from itertools import product
+from functools import lru_cache
+from math import gcd
 
 
 def number(text):
@@ -20,6 +24,8 @@ def rounded(value):
 
 def expected(task):
     question = task["question"]
+    if task['taskId'].startswith('GENERAL-CHALLENGE-'):
+        return challenge_expected(task)
     if task["domain"] == "BAYES":
         values = re.findall(r"(\d+)%", question.split("\nChoose exactly", 1)[0])
         assert len(values) == 5
@@ -67,8 +73,128 @@ def expected(task):
     raise AssertionError("unknown domain")
 
 
+def probability(one, value):
+    return Fraction(one if value else 100 - one, 100)
+
+
+def fraction_rounded(value):
+    return rounded(Decimal(value.numerator) / Decimal(value.denominator))
+
+
+def cyclic_fixed_words(counts, occurrences):
+    """Labelled proper cyclic words, DP over counts/boundary state, no canonicalization."""
+    length = sum(counts)
+    if length < 3:
+        return 0  # An oriented 012 occurrence requires at least three distinct symbols.
+    total = 0
+    for first, second in product(range(3), repeat=2):
+        if first == second:
+            continue
+        remaining = list(counts)
+        remaining[first] -= 1
+        remaining[second] -= 1
+        if min(remaining) < 0:
+            continue
+        @lru_cache(None)
+        def append(left, previous, last, seen):
+            if seen > occurrences:
+                return 0
+            if sum(left) == 0:
+                if last == first:
+                    return 0
+                wrap = int((previous, last, first) == (0, 1, 2)) + int((last, first, second) == (0, 1, 2))
+                return int(seen + wrap == occurrences)
+            answer = 0
+            for value in range(3):
+                if value == last or left[value] == 0:
+                    continue
+                rest = list(left)
+                rest[value] -= 1
+                answer += append(tuple(rest), last, value, seen + int((previous, last, value) == (0, 1, 2)))
+            return answer
+        total += append(tuple(remaining), first, second, 0)
+    return total
+
+
+def challenge_expected(task):
+    question = task['question']
+    if task['domain'] != 'PROGRAM_STATE':
+        data = json.loads(question.split('DATA: ', 1)[1].split('\n', 1)[0])
+    if task['domain'] == 'BAYES':
+        denominator = numerator = Fraction(0)
+        # Full generative joint enumeration, then condition; no marginal-independence assumption.
+        for d, h, a, b, c, s in product([0, 1], repeat=6):
+            joint = (probability(data['pD'], d) * probability(data['pHGivenD'][d], h)
+                     * probability(data['pAGivenDH'][d][h], a) * probability(data['pBGivenDH'][d][h], b)
+                     * probability(data['pCGivenH'][h], c) * probability(data['pSelectedGivenD'][d], s))
+            if (s, a, b, c) == (1, 1, 0, 1):
+                denominator += joint
+                if d:
+                    numerator += joint
+        return fraction_rounded(100 * numerator / denominator) + '%'
+    if task['domain'] == 'CAUSAL':
+        estimates = []
+        for treatment in [0, 1]:
+            selected = successful = Fraction(0)
+            # Truncated factorization: the intervention removes P(T|U).
+            for u, m, y, s in product([0, 1], repeat=4):
+                weight = (probability(data['pU'], u) * probability(data['pMGivenTU'][treatment][u], m)
+                          * probability(data['pYGivenUTM'][u][treatment][m], y) * probability(data['pSGivenTY'][treatment][y], s))
+                if s:
+                    selected += weight
+                    if y:
+                        successful += weight
+            estimates.append(successful / selected)
+        return fraction_rounded(100 * (estimates[1] - estimates[0])) + ' percentage points'
+    if task['domain'] == 'SYMMETRY':
+        length, counts, occurrences = data['length'], data['counts'], data['occurrences']
+        fixed_sum = 0
+        for rotation in range(length):
+            period = gcd(length, rotation)
+            repeats = length // period
+            if any(x % repeats for x in counts) or occurrences % repeats:
+                continue
+            fixed_sum += cyclic_fixed_words(tuple(x // repeats for x in counts), occurrences // repeats)
+        assert fixed_sum % length == 0
+        return str(fixed_sum // length)
+    if task['domain'] == 'PROGRAM_STATE':
+        code = question.split('\n\n', 1)[1].split('\nChoose exactly', 1)[0]
+        initial = json.loads(re.match(r'a = (\[[0-9,]+\])\n', code).group(1))
+        iterations = int(re.search(r'for i in range\((\d+)\)', code).group(1))
+        assert len(initial) == 4 and all(isinstance(x, int) and 2 <= x <= 18 for x in initial) and 6 <= iterations <= 8
+        template = '''a = {initial}
+b = a
+c = a[:]
+def stream():
+    for i in range({iterations}):
+        yield a[i % len(a)] + c[i % 4]
+        b.append(c[(i + 1) % 4] - b[i])
+        if i % 2 == 0:
+            c[i % 4] += b[-1]
+g = stream()
+p = next(g)
+f = [lambda j=j, ref=b: ref[j % len(ref)] + c[j % 4] for j in range(4)]
+a = a[:]
+a[1] += p
+q = [next(g) for _ in range(3)]
+c[0] += sum(q)
+r = sum(fn() for fn in f)
+a.extend(q)
+s = list(g)
+print(r + sum(a) + 2 * sum(b) + 3 * sum(c) + sum(s))'''.format(initial=json.dumps(initial, separators=(',', ':')), iterations=iterations)
+        assert code == template, 'unrecognized development code'
+        outputs = []
+        exec(compile(code, 'trusted-generator-fixture', 'exec'), {'__builtins__': {}, 'range': range,
+             'next': next, 'list': list, 'len': len, 'sum': sum, 'print': outputs.append})
+        assert len(outputs) == 1
+        return str(outputs[0])
+    raise AssertionError('unknown challenge domain')
+
+
 tasks = json.load(sys.stdin)
-assert len(tasks) == 12 and len({t["taskId"] for t in tasks}) == 12
+allowed = {f'GENERAL-{stage}-{i}' for stage, size in [('DEVELOPMENT', 4), ('TRANSFER', 8), ('CHALLENGE', 12)] for i in range(1, size + 1)}
+assert len(tasks) in [12, 24] and len({t['taskId'] for t in tasks}) == len(tasks)
+assert {t['taskId'] for t in tasks}.issubset(allowed)
 for task in tasks:
     options = re.findall(r"^[1-4]\. (.+)$", task["question"], flags=re.MULTILINE)
     assert len(options) == 4 and len(set(options)) == 4

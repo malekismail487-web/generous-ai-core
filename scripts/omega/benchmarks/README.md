@@ -945,3 +945,32 @@ and low-entropy answer-derived hashes. Original GPQA/AIME/Ultra evidence remains
 preserved. No new official benchmark was launched and the temporary push trigger
 was removed after dispatch. Next capability evaluation needs a more discriminating
 fresh task population, not tuning against the now-exposed transfer questions.
+
+### Frozen harder general-reasoning evaluation
+
+`GENERAL_REPAIR_CHALLENGE` freezes twelve new objectives, three per domain:
+latent-dependent Bayesian observations and selection; causal interventions with
+mediators and outcome-dependent reporting; constrained ternary cyclic words under
+non-free rotations; and Python closures/aliasing with suspended generators.
+The original saturated development/transfer tasks are not rerun or relabelled
+fresh. No cognitive code, model configuration, authority, answer grading, lease,
+call limit, token ceiling or counterchecking text changes for this comparison.
+
+Each challenge receives paired, counterbalanced first attempts from the existing
+Super phase-contract control and optional counterchecking variant. The existing
+runner records realized compute, provider stability and its 10% per-pair matching
+rule; incomplete/unknown usage is not silently matched. The fixed twelve-task
+selection is run once, not expanded in response to scores. No task-specific
+repairs, transfer feedback, grader weakening or automatic promotion.
+
+All host-side answers are cross-checked before inference in separate Python:
+Fraction-based joint enumeration, truncated causal factorization, Burnside
+fixed-period counting with memoized DP, and actual allowlisted Python generator
+execution. These remain implementer-authored E3 oracles with partially correlated
+assumptions, not independent replication or an official frontier benchmark.
+Live model observations are E4; raw private model reasoning is not retained.
+
+Ω coverage: evidence-driven difficulty escalation, generalization without answer
+memorization, validated detectors, honest compute accounting and no self-certification.
+Broad cognitive promotion, additional brain layers and production authority remain
+deferred. No operational authority conflict or supersession. PARTIAL / JUST-IN-TIME.

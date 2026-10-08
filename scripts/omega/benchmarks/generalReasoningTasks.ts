@@ -4,7 +4,7 @@ import type { PrivateTextTask } from "./nyxTextBenchmark";
  * No question, answer, failure index or response from GPQA is used here.
  * Oracles stay host-side; the existing R1 question-file scope is unchanged. */
 export type GeneralReasoningDomain = "BAYES" | "CAUSAL" | "SYMMETRY" | "PROGRAM_STATE";
-export type GeneralReasoningStage = "DEVELOPMENT" | "TRANSFER";
+export type GeneralReasoningStage = "DEVELOPMENT" | "TRANSFER" | "CHALLENGE";
 export interface GeneralReasoningTask extends PrivateTextTask { domain: GeneralReasoningDomain }
 
 function random(seed: number) {
@@ -110,7 +110,143 @@ export function programTask(seed: number, id: string): GeneralReasoningTask {
     + `    x[(i + 1) % len(x)] = z[i % 4] + y[i]\nprint(sum(x) + 2 * sum(z))`, correct, alternatives);
 }
 
+// Harder evaluation only. These mechanisms generate questions/oracles; they are
+// NOT cognition supplied to NYX, and never contain an official benchmark answer.
+function challengeBayes(seed: number, id: string): GeneralReasoningTask {
+  const draw = random(seed), rate = () => 8 + draw(85);
+  const data = {pD: 3 + draw(16), pHGivenD: [rate(), rate()],
+    pAGivenDH: [[rate(), rate()], [rate(), rate()]], pBGivenDH: [[rate(), rate()], [rate(), rate()]],
+    pCGivenH: [rate(), rate()], pSelectedGivenD: [rate(), rate()]};
+  let defect = 0, total = 0;
+  for (let d = 0; d < 2; d++) for (let h = 0; h < 2; h++) {
+    const weight = (d ? data.pD : 100 - data.pD) * (h ? data.pHGivenD[d] : 100 - data.pHGivenD[d])
+      * data.pAGivenDH[d][h] * (100 - data.pBGivenDH[d][h]) * data.pCGivenH[h] * data.pSelectedGivenD[d];
+    total += weight; if (d) defect += weight;
+  }
+  const correct = percent(defect, total);
+  const alternatives = [percent(total - defect, total), percent(data.pD, 100),
+    ...[3.417, -2.631, 5.173].map(delta => `${Math.max(0.001, Math.min(99.999, 100 * defect / total + delta)).toFixed(3)}%`)];
+  return choice(seed, id, "BAYES", `All variables are binary. D means defect and H is an unobserved environment. `
+    + `A, B, C and S are mutually independent CONDITIONAL ON (D,H), not necessarily conditional on D alone. `
+    + `C depends only on H and selection S only on D. Every table entry is a percentage probability of value 1; `
+    + `array indices are the binary parent values in the order named. No other dependencies exist.\nDATA: ${JSON.stringify(data)}\n`
+    + `A sampled component is selected (S=1) and has A=1, B=0, C=1. What is P(D=1 | S=1,A=1,B=0,C=1), `
+    + `as a percentage rounded to three decimal places? Marginalize the shared latent H; do not assume independent tests after marginalization.`,
+  correct, [...new Set(alternatives)].filter(x => x !== correct));
+}
+
+function challengeCausal(seed: number, id: string): GeneralReasoningTask {
+  const draw = random(seed), rate = () => 10 + draw(81);
+  const data = {pU: 15 + draw(71), pTGivenU: [rate(), rate()], pMGivenTU: [[rate(), rate()], [rate(), rate()]],
+    pYGivenUTM: Array.from({length: 2}, () => Array.from({length: 2}, () => [rate(), rate()])),
+    pSGivenTY: [[rate(), rate()], [rate(), rate()]]};
+  const estimate = (t: number, observational = false, selected = true) => {
+    let yes = 0, all = 0;
+    for (let u = 0; u < 2; u++) for (let m = 0; m < 2; m++) for (let y = 0; y < 2; y++) {
+      const pu = (u ? data.pU : 100 - data.pU) / 100, pm = data.pMGivenTU[t][u] / 100;
+      const py = data.pYGivenUTM[u][t][m] / 100;
+      const pt = data.pTGivenU[u] / 100;
+      const weight = pu * (m ? pm : 1 - pm) * (y ? py : 1 - py)
+        * (selected ? data.pSGivenTY[t][y] / 100 : 1) * (observational ? t ? pt : 1 - pt : 1);
+      all += weight; if (y) yes += weight;
+    }
+    return yes / all;
+  };
+  const describe = (delta: number) => `${(100 * delta).toFixed(3)} percentage points`;
+  const difference = estimate(1) - estimate(0), correct = describe(difference);
+  return choice(seed, id, "CAUSAL", `Binary structural causal model: U precedes treatment T; mediator M depends on (T,U); `
+    + `outcome Y depends on (U,T,M); reporting S depends on (T,Y). Exogenous disturbances are mutually independent. `
+    + `Every table entry is a percentage probability of value 1. Array indices follow the parent order named; `
+    + `pU is the population probability U=1. Equations and rates remain invariant under intervention.\nDATA: ${JSON.stringify(data)}\n`
+    + `Define q(t)=P(Y=1 | do(T=t),S=1), conditioning on reporting separately in each intervention world. `
+    + `What is 100*(q(1)-q(0)), rounded to three decimal places? This is NOT observational conditioning on T, `
+    + `nor the unselected population effect.`, correct,
+  [...new Set([describe(estimate(1, true) - estimate(0, true)), describe(estimate(1, false, false) - estimate(0, false, false)),
+    describe(-difference), describe(difference + 0.03719), describe(difference - 0.04913)])].filter(x => x !== correct));
+}
+
+/** Enumerate constrained words and canonicalize rotations. Python cross-checks
+ * via a different algorithm: fixed-period Burnside counting with memoized DP. */
+export function ternaryRotationCounts(length: number, counts: readonly number[], occurrences: number) {
+  if (!Number.isInteger(length) || length < 6 || length > 15 || counts.length !== 3
+    || counts.some(x => !Number.isInteger(x) || x < 1) || counts.reduce((a, b) => a + b, 0) !== length
+    || !Number.isInteger(occurrences) || occurrences < 0 || occurrences > length) throw Error("ternary_challenge_bounds_invalid");
+  const remaining = [...counts], word: number[] = [], representatives = new Set<string>(); let labelled = 0;
+  const visit = () => {
+    if (word.length === length) {
+      if (word[0] === word[length - 1]) return;
+      let matches = 0;
+      for (let i = 0; i < length; i++) if (word[i] === 0 && word[(i + 1) % length] === 1 && word[(i + 2) % length] === 2) matches++;
+      if (matches !== occurrences) return;
+      labelled++; const value = word.join("");
+      representatives.add(Array.from({length}, (_, shift) => value.slice(shift) + value.slice(0, shift)).sort()[0]);
+      return;
+    }
+    for (let value = 0; value < 3; value++) if (remaining[value] && word.at(-1) !== value) {
+      remaining[value]--; word.push(value); visit(); word.pop(); remaining[value]++;
+    }
+  };
+  visit(); return {labelled, rotations: representatives.size};
+}
+function challengeSymmetry(seed: number, id: string): GeneralReasoningTask {
+  // Distinct parameters, fixed before any live result; non-free rotation actions.
+  const cases = [{length: 12, counts: [4, 4, 4], occurrences: 2},
+    {length: 12, counts: [4, 4, 4], occurrences: 0}, {length: 15, counts: [5, 5, 5], occurrences: 0}];
+  const data = cases[seed % cases.length], result = ternaryRotationCounts(data.length, data.counts, data.occurrences);
+  const correct = String(result.rotations);
+  return choice(seed, id, "SYMMETRY", `A circular word uses labelled symbols 0,1,2 with the counts in DATA. `
+    + `Adjacent symbols must differ, INCLUDING the last/first boundary. The oriented cyclic length-3 pattern 012 `
+    + `must occur exactly occurrences times, including wraparound starts. Words equivalent by ROTATION are identified; `
+    + `reflection or permuting symbol names is NOT an equivalence. Rotations need not act freely.\nDATA: ${JSON.stringify(data)}\n`
+    + `How many equivalence classes satisfy all constraints?`, correct,
+  [...new Set([result.labelled, Math.floor(result.labelled / data.length), Math.floor(result.rotations / 2),
+    result.rotations + 7, result.rotations + 11, result.rotations + 17].map(String))].filter(x => x !== correct));
+}
+
+export function generatorChallengeValue(initial: readonly number[], iterations: number) {
+  if (initial.length !== 4 || initial.some(x => !Number.isSafeInteger(x) || x < 2 || x > 18)
+    || !Number.isSafeInteger(iterations) || iterations < 6 || iterations > 8) throw Error("generator_challenge_bounds_invalid");
+  let a = [...initial]; const b = a, c = [...a]; let i = 0, suspended = false;
+  const next = (): number | null => {
+    if (suspended) {
+      b.push(c[(i + 1) % 4] - b[i]);
+      if (i % 2 === 0) c[i % 4] += b.at(-1)!;
+      i++; suspended = false;
+    }
+    if (i >= iterations) return null;
+    suspended = true; return a[i % a.length] + c[i % 4];
+  };
+  const p = next()!;
+  // Default ref captures b, while c is looked up later. Rebinding a does not
+  // rebind b and the suspended generator observes a's new binding on resume.
+  const functions = Array.from({length: 4}, (_, j) => () => b[j % b.length] + c[j % 4]);
+  a = [...a]; a[1] += p;
+  const q = [next()!, next()!, next()!]; c[0] += q.reduce((x, y) => x + y, 0);
+  const r = functions.reduce((total, f) => total + f(), 0); a.push(...q);
+  const tail: number[] = []; for (let value = next(); value !== null; value = next()) tail.push(value);
+  const sum = (x: number[]) => x.reduce((total, value) => total + value, 0);
+  return r + sum(a) + 2 * sum(b) + 3 * sum(c) + sum(tail);
+}
+function challengeProgram(seed: number, id: string): GeneralReasoningTask {
+  const draw = random(seed), initial = Array.from({length: 4}, () => 2 + draw(17)), iterations = 6 + draw(3);
+  const value = generatorChallengeValue(initial, iterations);
+  const code = `a = ${JSON.stringify(initial)}\nb = a\nc = a[:]\ndef stream():\n    for i in range(${iterations}):\n`
+    + `        yield a[i % len(a)] + c[i % 4]\n        b.append(c[(i + 1) % 4] - b[i])\n`
+    + `        if i % 2 == 0:\n            c[i % 4] += b[-1]\ng = stream()\np = next(g)\n`
+    + `f = [lambda j=j, ref=b: ref[j % len(ref)] + c[j % 4] for j in range(4)]\na = a[:]\na[1] += p\n`
+    + `q = [next(g) for _ in range(3)]\nc[0] += sum(q)\nr = sum(fn() for fn in f)\na.extend(q)\ns = list(g)\n`
+    + `print(r + sum(a) + 2 * sum(b) + 3 * sum(c) + sum(s))`;
+  return choice(seed, id, "PROGRAM_STATE", `Under standard Python 3 semantics, what integer is printed? `
+    + `All arithmetic is exact. Account for generator suspension/resumption, global rebinding, captured default references `
+    + `and mutations after the final yield.\n\n${code}`, String(value), [value + 1, value - 13, value + 29].map(String));
+}
+
 export function generalReasoningTasks(stage: GeneralReasoningStage): readonly GeneralReasoningTask[] {
+  if (stage === "CHALLENGE") {
+    const constructors = [challengeBayes, challengeCausal, challengeSymmetry, challengeProgram];
+    const seeds = [81013, 82003, 83003, 84011, 85009, 86011, 87001, 88001, 89003, 90001, 91008, 92009];
+    return Object.freeze(seeds.map((seed, index) => constructors[index % 4](seed, `GENERAL-CHALLENGE-${index + 1}`)));
+  }
   if (stage !== "DEVELOPMENT" && stage !== "TRANSFER") throw Error("general_reasoning_stage_invalid");
   const constructors = [bayesTask, causalTask, symmetryTask, programTask];
   const seeds = stage === "DEVELOPMENT" ? [101, 509, 907, 1301] : [7919, 15401, 23549, 30869, 40009, 50021, 60013, 70001];
