@@ -98,7 +98,7 @@ export async function runComputationTransfer(){
       const response=await pairProvider.complete(textBoundedTaskRequest(textConfiguredRequest(request,"SESSION_SUPER_PHASE_CONTRACT","DIRECT"),activeDeadline));
       uniqueEvidence.set(response.evidence.evidenceId,response.evidence);return response;});
     for(const arm of order){
-      const ready=await liveNvidiaCapacity.readiness({deadlineEpochMs:epochDeadline,maxWaitMs:180000});
+      const ready=await liveNvidiaCapacity.waitUntilReady(Math.min(epochDeadline,Date.now()+180000),new AbortController().signal);
       if(ready.state!=="READY"||Date.now()>=epochDeadline){blocked.push({taskId:task.taskId,reason:"CAPACITY_OR_EPOCH_UNAVAILABLE"});break outer;}
       const prefixMs=shared.prefixElapsedMs(),began=Date.now(),remaining=POLICY.maxTaskMs-prefixMs;
       if(remaining<1000){blocked.push({taskId:task.taskId,reason:"SHARED_PREFIX_EXHAUSTED_ORIGINAL_LEASE"});break outer;}

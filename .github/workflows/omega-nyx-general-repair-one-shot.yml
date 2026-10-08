@@ -1,6 +1,9 @@
 name: Omega NYX shared computation transfer comparison
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-computation-transfer.ts]
 permissions:
   contents: read
 concurrency:
@@ -26,6 +29,7 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - name: Verify provider fences, session disposal, paired accounting and independent procedural oracles
         run: |
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-computation-transfer.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts

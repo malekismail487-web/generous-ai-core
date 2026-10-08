@@ -1061,3 +1061,13 @@ promotion or near-100% GPQA claim follows from a small numerical pilot.
 independent detector separation, common-proposal ablation and honest compute.
 Scientific-knowledge improvements, GPQA promotion, new brain layers and production
 authority are deferred. Corpus coverage remains PARTIAL / JUST-IN-TIME.
+
+The first execution at `96fcf78b` (run `37757683231`) stopped before inference:
+the evaluator called nonexistent `liveNvidiaCapacity.readiness` rather than the
+existing `waitUntilReady(deadline, signal)`. Selected 24 task-arms, attempted /
+graded / correct 0, unexecuted 24; no cognitive result or artifact was produced.
+This is an evaluator integration failure, not a model failure. The normal app
+TypeScript ratchet includes `src`, not this script. The corrected workflow now
+also type-checks this evaluator and its imports with pinned TypeScript before
+live inference. Task population, prompts, oracles, model, budgets and acceptance
+checks are unchanged for the corrected execution.
