@@ -1,9 +1,6 @@
 name: Omega NYX decision-required contract transfer
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-decision-contract-one-shot.yml]
 permissions:
   contents: read
 concurrency:
