@@ -1472,3 +1472,12 @@ substrate identity, compute accounting, provenance and negative-capability
 preservation. Defers cognitive promotion, protected/full benchmark claims,
 production authority, recursion and biological expansion. No inherited safety
 constraint or original scored outcome is superseded. PARTIAL / JUST-IN-TIME.
+
+Frozen candidate `7b3c0f894254ab3bcc5871a817a3520a7ce8bedb` was published after
+109 suites / 11,418 checks, TypeScript 5.8.3 zero diagnostics, full CI script
+typecheck, build, package consistency/smoke, inventory checks and secret scan
+(1,284 tracked text files, zero findings). Its
+[single live configuration run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37821316792)
+was confirmed started. The temporary push trigger is removed in the follow-up
+checkpoint; manual dispatch remains available but no replay is authorized by
+this record. Launch/preflight evidence is not terminal benchmark evidence.
