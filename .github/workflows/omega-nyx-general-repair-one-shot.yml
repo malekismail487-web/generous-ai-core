@@ -26,12 +26,14 @@ jobs:
       - run: bun install --frozen-lockfile --ignore-scripts
       - name: Verify provider fences, session disposal, paired accounting and independent procedural oracles
         run: |
-          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-computation-transfer.ts
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-computation-transfer.ts scripts/omega/benchmarks/native-replay-crosscheck.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {generalReasoningTasks} from './scripts/omega/benchmarks/generalReasoningTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','CHALLENGE'].flatMap(generalReasoningTasks)));" | python -B scripts/omega/benchmarks/check-general-reasoning-oracles.py
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {computationTasks} from './scripts/omega/benchmarks/computationTransferTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','DIAGNOSTIC','BOUNDS_DIAGNOSTIC'].flatMap(computationTasks)));" | python -B scripts/omega/benchmarks/check-computation-oracles.py
+          python -B scripts/omega/benchmarks/test-native-derivation-replay.py
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/benchmarks/native-replay-crosscheck.ts | python -B scripts/omega/benchmarks/replay-native-derivations.py
           node scripts/typescript/typecheck-ratchet.mjs
           node scripts/security/scan-secrets.mjs
           node scripts/omega/run-tests.mjs
@@ -47,6 +49,18 @@ jobs:
           base="$RUNNER_TEMP/nyx-computation-transfer"
           mkdir -p "$base"
           RUNNER_TEMP="$base" node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-computation-transfer.ts
+      - name: Offline replay of captured public derivations; no inference or grader feedback
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$RUNNER_TEMP/nyx-computation-transfer"
+          report="$base/nyx-computation-report-${GITHUB_SHA}.json"
+          if [[ -f "$report" ]]; then
+            python -B scripts/omega/benchmarks/replay-native-derivations.py --report < "$report" | tee "$base/nyx-native-replay-${GITHUB_SHA}.json"
+          else
+            echo 'NATIVE_REPLAY: NOT_EXECUTED_NO_TERMINAL_REPORT'
+          fi
       - name: Preserve sanitized reports, not raw inference, keys or official benchmark reference data
         if: always()
         uses: actions/upload-artifact@v4

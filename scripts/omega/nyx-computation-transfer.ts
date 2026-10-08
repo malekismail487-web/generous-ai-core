@@ -6,7 +6,9 @@ import {NyxChatSession,type NyxChatTurnResult} from "../../src/lib/codelab/cli/n
 import {parseNyxChatAction} from "../../src/lib/codelab/cli/nyxChatProtocol";
 import {ReadOnlyRepositoryExecutor} from "../../src/lib/codelab/executor/readOnlyExecutor";
 import {BoundedReasoningSession} from "../../src/lib/codelab/research/boundedReasoningWorkbench";
-import {theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
+import {theoryDigest,immutableTheoryValue} from "../../src/lib/codelab/research/theoryContracts";
+import {validQuantitativeProblem,type QuantitativeProblem} from "../../src/lib/codelab/research/exactQuantitativeDerivation";
+import {lowerQuantitativeEquations,EQUATION_COMPILER_POLICY} from "../../src/lib/codelab/research/quantitativeEquationCompiler";
 import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment,type NvidiaNimEvidence} from "../../src/lib/codelab/model/nvidiaNimProvider";
 import {liveNvidiaCapacity} from "../../src/lib/codelab/model/nvidiaCapacity";
 import {createSharedFirstProposal} from "./nyx-quantitative-coupled-transfer-fixtures";
@@ -37,6 +39,51 @@ export function computationOutcome(result:NyxChatTurnResult|null,evidence:readon
  * completion callback once; the shared-prefix replay never invokes that callback. */
 export function computationPhysicalUsage(executions:readonly NvidiaNimEvidence[],elapsedMs:number){
   return textInferenceUsage(executions,elapsedMs);
+}
+/** Development-only public tool-action replay, never private inference or a task oracle.
+ * The capture does not execute anything or feed a checker result back into cognition. */
+export function captureComputationReplay(problem:QuantitativeProblem,proposal:string|null,observation:string|null){
+  const dataOnly=(v:unknown,seen=new Set<object>(),budget={nodes:0},depth=0):boolean=>{
+    if(++budget.nodes>6000||depth>12)return false;
+    if(v===null||typeof v==="boolean"||typeof v==="string")return true;
+    if(typeof v==="number")return Number.isFinite(v);
+    if(!v||typeof v!=="object"||seen.has(v)||!Array.isArray(v)&&Object.getPrototypeOf(v)!==Object.prototype
+      &&Object.getPrototypeOf(v)!==null)return false;
+    seen.add(v);
+    if(Reflect.ownKeys(v).some(k=>typeof k!=="string"))return false;
+    for(const [key,d] of Object.entries(Object.getOwnPropertyDescriptors(v))){
+      if(key==="length"&&Array.isArray(v))continue;
+      if(!d.enumerable||!("value" in d)||!dataOnly(d.value,seen,budget,depth+1))return false;
+    }
+    seen.delete(v);return true;
+  };
+  if(!dataOnly(problem)||!validQuantitativeProblem(problem)||typeof proposal!=="string"||typeof observation!=="string"
+    ||Buffer.byteLength(proposal)>50000||Buffer.byteLength(observation)>50000)return null;
+  try{
+    const action=parseNyxChatAction(proposal).action;
+    if(action?.kind!=="DERIVE_QUANTITIES"||action.problemDigest!==theoryDigest(problem))return null;
+    const lowered=lowerQuantitativeEquations(problem,action.program);
+    const o=JSON.parse(observation),a=o?.analysis;
+    const request={schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:action.problemDigest,program:action.program};
+    if(o?.omegaObservation!=="CONSTRUCTED"||a?.status!=="CONSTRUCTED"||a.inputDigest!==action.problemDigest
+      ||a.requestDigest!==theoryDigest(request)||a.executedProgramDigest!==theoryDigest(lowered)
+      ||a.loweringVersion!==EQUATION_COMPILER_POLICY.version||a.grantsAuthority!==false
+      ||a.acceptanceRequiresIndependentVerifier!==true||a.evidenceClass!=="E3")return null;
+    const {resultDigest,...originalAnalysis}=a;
+    if(resultDigest!==theoryDigest(originalAnalysis))return null;
+    const outputs=a.payload?.outputs;
+    if(!Array.isArray(outputs)||outputs.length!==action.program.outputs.length||outputs.some((v,i)=>!v
+      ||v.label!==action.program.outputs[i].label||typeof v.value!=="string"||v.value.length>2500
+      ||!(/^-?(?:0|[1-9][0-9]*)(?:\/[1-9][0-9]*)?$/).test(v.value)))return null;
+    const body={schemaVersion:1,kind:"PUBLIC_NATIVE_DERIVATION_REPLAY",problem,program:action.program,
+      problemDigest:action.problemDigest,programDigest:theoryDigest(action.program),
+      executedProgramDigest:a.executedProgramDigest,loweringVersion:a.loweringVersion,analysisDigest:resultDigest,
+      observedOutputs:outputs.map(v=>({label:v.label as string,value:v.value as string})),
+      scope:"SYNTHETIC_DEVELOPMENT_TOOL_ACTION_NOT_PRIVATE_REASONING_OR_MODEL_VALIDITY",
+      grantsAuthority:false,mathematicalModelIndependentlyVerified:false};
+    if(Buffer.byteLength(JSON.stringify(body))>50000)return null;
+    return immutableTheoryValue({...body,capsuleDigest:theoryDigest(body)});
+  }catch{return null;}
 }
 export function computationPairMatched(rows:readonly {allocatedTokens:number;allocatedHttpAttempts:number;unknownUsageCalls:number;
   providerFailures:number;logicalCalls:number;toolWorkUnits:number}[]){
@@ -69,7 +116,8 @@ export async function runComputationTransfer(){
     toolWorkUnits:number;toolElapsedMs:number;elapsedMs:number;allocatedElapsedMs:number;prefixReplayed:boolean;
     inputDigest:string;programDigest:string|null;computedModelCorrect:boolean|null;sharedIntentDigest:string|null;
     logicalUsage:ReturnType<typeof textInferenceUsage>;physicalAccounting:unknown;events:unknown;
-    evidence:unknown;compilerFindings:string[];sourceRepositoryMutated:false;broaderAuthorityGranted:false};
+    evidence:unknown;compilerFindings:string[];nativeReplay:ReturnType<typeof captureComputationReplay>;nativeReplayCaptureMs:number;
+    sourceRepositoryMutated:false;broaderAuthorityGranted:false};
   const rows:Row[]=[],blocked:{taskId:string;reason:string}[]=[],physicalExecutions:NvidiaNimEvidence[]=[];
   const publicTask=(task:ComputationTask)=>({taskId:task.taskId,stage:task.stage,domain:task.domain,
     problem:task.problem,question:task.question});
@@ -88,12 +136,14 @@ export async function runComputationTransfer(){
       actualUniqueModelUsage:computationPhysicalUsage(physicalExecutions,Date.now()-started),rows,pairs,blocked,
       nativeToolUsage:{workUnits:rows.reduce((n,r)=>n+r.toolWorkUnits,0),elapsedMs:rows.reduce((n,r)=>n+r.toolElapsedMs,0),
         scope:"RETURNED_NATIVE_ANALYSIS_ACCOUNTING_SEPARATE_FROM_MODEL_USAGE"},
+      nativeReplayCaptureElapsedMs:rows.reduce((n,r)=>n+r.nativeReplayCaptureMs,0),
       intervention:boundsComparison?"NATIVE_COLLECTION_BOUND_GENERATION_SCHEMA":"EXACT_EXECUTION_OF_SHARED_PROPOSAL",
       firstProposalProtocol:boundsComparison?"INDEPENDENT_INFERENCE_SCHEMA_IS_THE_INTERVENTION":"SHARED_LIVE_PUBLIC_PROPOSAL",
       sourceUnchanged,firstAttemptsOnly:true,semanticRepairs:0,feedbackFromGraderToCognition:false,officialBenchmark:false,
       modelDefaultChanged:false,productionAuthority:false,networkScope:"CONFIGURED_NVIDIA_ENDPOINT_ONLY",
       toolScope:"PREBOUND_FINITE_EXACT_ARITHMETIC_ONLY_NO_FILES_SHELL_OR_NETWORK",
       priorGpqaScorePreserved:true,gpqaQuestionsOrAnswersLoaded:false,rawPrivateReasoningStored:false,
+      nativeReplayScope:"PUBLIC_NATIVE_TOOL_ACTION_AND_OUTPUT_ONLY_SYNTHETIC_DEVELOPMENT_NO_ORACLE_OR_PRIVATE_INFERENCE",
       oracleIndependence:"E3_IMPLEMENTER_AUTHORED_WITH_SEPARATE_PYTHON_FRACTION_CROSSCHECK_NOT_INDEPENDENT_REPLICATION",
       inferenceEvidence:boundsComparison?"E4_LIVE_NVIDIA_INDEPENDENT_PROPOSALS_NO_REPLAY":"E4_LIVE_NVIDIA_PLUS_EXPLICITLY_LABELED_SHARED_PROPOSAL_REPLAY",
       interpretation:boundsComparison?"DEVELOPMENT_SCHEMA_RELIABILITY_ABLATION_NOT_COGNITIVE_PROMOTION_OR_GPQA_SCORE":"SHARED_DERIVATION_CAUSAL_ABLATION_NOT_REPLACEMENT_FOR_CURRENT_NYX_OR_GPQA_SCORE",
@@ -131,6 +181,7 @@ export async function runComputationTransfer(){
       const branch=(boundsComparison?createSharedFirstProposal(completePhysical):shared).branch(),evidence:NvidiaNimEvidence[]=[],compilerFindings:string[]=[];let toolWorkUnits=0,toolElapsedMs=0;
       if(boundsComparison){prefixEvidence=null;programDigest=null;computedModelCorrect=null;}
       let result:NyxChatTurnResult|null=null,session:NyxChatSession|null=null;
+      let publicProposal:string|null=null,nativeReplay:ReturnType<typeof captureComputationReplay>=null,nativeReplayCaptureMs=0;
       try{
         session=NyxChatSession.create({sessionId:task.taskId,reader,candidateWriter:null,editablePaths:[],maxCandidatesPerTurn:0,
           maxModelCallsPerTurn:POLICY.maxCallsPerArm,maxTurnMs:activeDeadline-Date.now(),maxOutputTokens:POLICY.maxOutputTokens,
@@ -139,6 +190,9 @@ export async function runComputationTransfer(){
           model:{complete:async request=>{
             // Observe only admitted public tool output, never hidden model reasoning or verifier answers.
             const last=request.messages.at(-1)?.content;
+            if(publicProposal!==null&&last){const beganCapture=performance.now();
+              nativeReplay=captureComputationReplay(task.problem,publicProposal,last);
+              nativeReplayCaptureMs+=performance.now()-beganCapture;}
             if(last){try{const o=JSON.parse(last);if(o.omegaObservation==="REJECTED"&&typeof o.compilerFinding==="string")compilerFindings.push(o.compilerFinding);}catch{/* Objective text is not an observation. */}}
             if(arm!=="PROPOSAL_ONLY"&&last){try{const observation=JSON.parse(last);
               // Failed/budget-exhausted native analyses still spend resources.
@@ -153,6 +207,7 @@ export async function runComputationTransfer(){
             }catch{/* Bounded task text is not a tool observation. */}}
             const response=await branch.complete(request);evidence.push(response.evidence);
             if(evidence.length===1){prefixEvidence=response.evidence;
+              publicProposal=response.content;
               const parsed=response.content===null?null:parseNyxChatAction(response.content).action;
               programDigest=parsed?.kind==="DERIVE_QUANTITIES"?theoryDigest(parsed.program):null;}
             return response;
@@ -166,7 +221,7 @@ export async function runComputationTransfer(){
         allocatedTokens:usage.reportedTokens-(prefix?.reportedTokens??0)/2,
         allocatedHttpAttempts:usage.httpAttempts-(prefix?.httpAttempts??0)/2,unknownUsageCalls:usage.unknownUsageCalls,providerFailures:usage.providerFailures,
         elapsedMs:Date.now()-began,allocatedElapsedMs:Date.now()-began+prefixMs,
-        toolWorkUnits,toolElapsedMs,compilerFindings,prefixReplayed:branch.accounting().receipt?.replayed??false,
+        toolWorkUnits,toolElapsedMs,compilerFindings,nativeReplay,nativeReplayCaptureMs,prefixReplayed:branch.accounting().receipt?.replayed??false,
         inputDigest:theoryDigest(publicTask(task)),programDigest,computedModelCorrect:arm!=="PROPOSAL_ONLY"?computedModelCorrect:null,
         sharedIntentDigest:branch.accounting().receipt?.intentDigest??null,logicalUsage:usage,
         physicalAccounting:{...branch.accounting(),receipt:undefined},

@@ -1196,3 +1196,57 @@ leases and honest compute. Defers cognitive promotion, fresh/full-population
 recertification and production changes. The exposed-cohort mode is explicitly
 separate from full-population measurement, resolving that architectural conflict
 without weakening its completeness invariant. Coverage: PARTIAL / JUST-IN-TIME.
+
+### Offline native-derivation replay — diagnostic gap repair
+
+Prior numerical pilots stored only program digests. A wrong computed quantity
+followed by a correct final choice therefore could not be attributed to a model
+formulation, lowering defect or execution defect. This supporting change does
+not add cognition, rerun exposed tasks or retrospectively identify those causes.
+
+Future synthetic computation-development runs retain a bounded **public native
+tool-action capsule**, not raw inference or private reasoning. Capture checks
+the original problem, request, lowered-program and analysis digests before
+copying only prebound constants, phase equations and returned quantities. No
+question, choice, reference answer, free-form response or private inference field
+is copied. Null means no admissible constructed replay was captured, not success.
+Capture overhead is reported separately and still consumes the original task
+lease. The model receives exactly the same observations as before; replay does
+not run inside cognition or alter acceptance.
+
+`replay-native-derivations.py` directly interprets phase equations with Python
+`Fraction`, without importing the production lowering/interpreter. It enforces
+finite input, iteration, operation, integer, wall-clock and work limits, and
+rejects malformed, stale, duplicate-key or unsupported data. It distinguishes
+execution agreement, disagreement and insufficient evidence. Agreement means
+the supplied model was executed consistently, **not that it models the task
+correctly**. A disagreement implicates lowering/execution collectively; further
+isolation is still needed. Hashes are content bindings, not authentication.
+
+Reproducible E3 checks cross-checked **200 generated programs / 2,000 outputs**:
+all seven operations, dependent expressions, phase-local names, repeated cycles,
+simultaneous state copies and constant/register-name collisions. Nine Python
+test methods and five aggregate TypeScript checks cover hostile inputs, changed
+outputs, resource/domain failures, oracle exclusion and capture bindings. These
+are implementer-authored, separate-language checks, not independent replication
+or a model-reasoning/GPQA score. No additional model calls were made.
+
+The existing synthetic-computation workflow replays captured derivations offline
+after inference, including when its final grading step failed. Missing constructed
+captures, no captured execution, replay disagreement and resource/domain failure
+cannot pass this check. Unexecuted rows remain explicit; successful replay is not
+full-task coverage. The checker has no path back to the model or task grader.
+
+```powershell
+python -B scripts/omega/benchmarks/test-native-derivation-replay.py
+node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/benchmarks/native-replay-crosscheck.ts | python -B scripts/omega/benchmarks/replay-native-derivations.py
+```
+
+Ω coverage: directly implements detector validation, replayable provenance and
+failure localization; supports generator/detector separation and honest resource
+accounting. Defers model-formulation repair and fresh cognitive transfer. The
+public-IR exception is limited to synthetic development because digests alone
+proved insufficient; private reasoning and official benchmark data remain
+excluded. No authority, acceptance, model, lease or rollback policy is superseded.
+Coverage remains PARTIAL / JUST-IN-TIME. The frozen GPQA recovery candidate and
+its quiet completion watch remain unchanged.

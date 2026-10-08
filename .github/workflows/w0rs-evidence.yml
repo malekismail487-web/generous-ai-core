@@ -38,6 +38,7 @@ jobs:
           scripts/omegaNvidiaNimProvider.test.ts scripts/omegaResearchParty.test.ts
           scripts/omegaNyxTextBenchmark.test.ts scripts/omega/nvidia-nim-live-smoke.ts
           scripts/omega/nyx-text-benchmark-epoch.ts
+          scripts/omega/benchmarks/native-replay-crosscheck.ts
           scripts/omegaResearchExecutableTransfer.test.ts scripts/omegaNyxAdmissionGuidance.test.ts
           scripts/omegaNyxChatCli.test.ts scripts/omegaNyxLocalWebConsole.test.ts
           scripts/omegaLuminaLiveBoundary.test.ts
@@ -52,6 +53,13 @@ jobs:
           scripts/omegaPublicFailureWitness.test.ts scripts/omega/nyx-public-witness-cycle.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Independently replay native arithmetic without model calls or benchmark answers
+        run: |
+          python -B scripts/omega/benchmarks/test-native-derivation-replay.py
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/benchmarks/native-replay-crosscheck.ts | python -B scripts/omega/benchmarks/replay-native-derivations.py
       - name: Build production bundle without deployment
         run: npm run build
       - name: Verify packaged NYX matches source and launches without credentials

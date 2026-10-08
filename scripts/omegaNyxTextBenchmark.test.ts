@@ -19,7 +19,9 @@ import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPop
 import { generalReasoningTasks, ringCounts, ternaryRotationCounts, generatorChallengeValue } from "./omega/benchmarks/generalReasoningTasks";
 import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 import {computationTasks,computationExpected,COMPUTATION_TRANSFER_POLICY} from "./omega/benchmarks/computationTransferTasks";
-import {computationOutcome,computationPairMatched,computationPhysicalUsage} from "./omega/nyx-computation-transfer";
+import {computationOutcome,computationPairMatched,computationPhysicalUsage,captureComputationReplay} from "./omega/nyx-computation-transfer";
+import {nativeReplayCrosscheckFixtures} from "./omega/benchmarks/native-replay-crosscheck";
+import {BoundedReasoningSession} from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import type {NyxChatTurnResult} from "../src/lib/codelab/cli/nyxChatSession";
 import {theoryDigest} from "../src/lib/codelab/research/theoryContracts";
 
@@ -1131,6 +1133,65 @@ check("collection-bound ablation freezes new development tasks rather than recyc
   const all=["DEVELOPMENT","TRANSFER","DIAGNOSTIC","BOUNDS_DIAGNOSTIC"].flatMap(s=>computationTasks(s as Parameters<typeof computationTasks>[0]));
   assert.equal(all.length,20);assert.equal(new Set(all.map(t=>t.taskId)).size,20);
   assert.equal(new Set(all.map(t=>t.question)).size,20);
+});
+function replayCaptureInput(){
+  const capsule=nativeReplayCrosscheckFixtures(1)[0],problem=capsule.problem,program=capsule.program;
+  const tool=BoundedReasoningSession.create(problem,{maxRequests:1,maxWorkUnits:100000,maxElapsedMs:2000,
+    expiresAtEpochMs:Date.now()+10000});
+  try{
+    const analysis=tool.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:theoryDigest(problem),program});
+    return {problem,program,proposal:JSON.stringify({kind:"DERIVE_QUANTITIES",problemDigest:theoryDigest(problem),program}),
+      analysis,observation:JSON.stringify({omegaObservation:analysis.status,analysis})};
+  }finally{tool.revoke();}
+}
+check("offline replay fixtures exercise all operations dependent expressions state copies and collisions without model calls",()=>{
+  const capsules=nativeReplayCrosscheckFixtures();assert.equal(capsules.length,200);
+  assert.equal(capsules.reduce((n,c)=>n+c.observedOutputs.length,0),2000);
+  for(const capsule of capsules){
+    const {capsuleDigest,...body}=capsule;
+    assert.equal(theoryDigest(body),capsuleDigest);assert(Object.isFrozen(capsule.program.cycles));
+    assert.equal(capsule.grantsAuthority,false);assert.equal(capsule.mathematicalModelIndependentlyVerified,false);
+    assert.equal(Object.keys(capsule).includes("answer"),false);
+    assert.equal(Object.keys(capsule).includes("question"),false);
+  }
+  for(const count of [0,201,-1,NaN,1.5])assert.throws(()=>nativeReplayCrosscheckFixtures(count));
+});
+check("native replay capture binds problem public proposal lowered program and observed analysis",()=>{
+  const f=replayCaptureInput(),capsule=captureComputationReplay(f.problem,f.proposal,f.observation)!;
+  assert(capsule);assert.equal(capsule.programDigest,theoryDigest(f.program));
+  assert.equal(capsule.analysisDigest,f.analysis.resultDigest);
+  assert.equal(capsule.executedProgramDigest,f.analysis.executedProgramDigest);
+  const stripped=JSON.stringify(capsule);
+  assert(!stripped.includes("privateReasoning")&&!stripped.includes("expectedQuantity")&&!stripped.includes("answer"));
+});
+check("capture rejects stale malformed unsupported oversized and unexecuted observations without widening authority",()=>{
+  const f=replayCaptureInput();
+  for(const proposal of [null,"bad json",JSON.stringify({kind:"REPLY",message:"not a tool action"}),
+    JSON.stringify({kind:"DERIVE_QUANTITIES",problemDigest:"0".repeat(64),program:f.program}),"x".repeat(50001)])
+    assert.equal(captureComputationReplay(f.problem,proposal,f.observation),null);
+  for(const observation of [null,"bad json","x".repeat(50001),JSON.stringify({omegaObservation:"PROPOSED_NOT_EXECUTED",analysis:null}),
+    JSON.stringify({omegaObservation:"CONSTRUCTED",analysis:{...f.analysis,inputDigest:"0".repeat(64)}}),
+    JSON.stringify({omegaObservation:"CONSTRUCTED",analysis:{...f.analysis,requestDigest:"0".repeat(64)}}),
+    JSON.stringify({omegaObservation:"CONSTRUCTED",analysis:{...f.analysis,resultDigest:"0".repeat(64)}}),
+    JSON.stringify({omegaObservation:"CONSTRUCTED",analysis:{...f.analysis,executedProgramDigest:"0".repeat(64)}})])
+    assert.equal(captureComputationReplay(f.problem,f.proposal,observation),null);
+});
+check("capture never evaluates host accessors or stores unrelated private observation fields",()=>{
+  const f=replayCaptureInput();let invoked=false;
+  const host={...f.problem};Object.defineProperty(host,"constants",{enumerable:true,get(){invoked=true;return f.problem.constants;}});
+  assert.equal(captureComputationReplay(host,f.proposal,f.observation),null);assert.equal(invoked,false);
+  const capsule=captureComputationReplay(f.problem,f.proposal,JSON.stringify({omegaObservation:"CONSTRUCTED",analysis:f.analysis,
+    privateReasoning:"UNRELATED_SENTINEL_NOT_FOR_STORAGE",answer:"NOT_FOR_CAPTURE",rawResponse:"NOT_FOR_CAPTURE"}));
+  assert(capsule);assert(!JSON.stringify(capsule).includes("SENTINEL")&&!JSON.stringify(capsule).includes("NOT_FOR_CAPTURE"));
+});
+check("replay capture deliberately preserves disagreeing arithmetic rather than consulting an answer oracle",()=>{
+  const f=replayCaptureInput(),{resultDigest:discard,...body}=f.analysis;
+  const changed={...body,payload:{...body.payload,outputs:[...((body.payload!.outputs) as {label:string;value:string}[])]}};
+  changed.payload.outputs[0]={...changed.payload.outputs[0],value:"999"};
+  const analysis={...changed,resultDigest:theoryDigest(changed)};
+  const capsule=captureComputationReplay(f.problem,f.proposal,JSON.stringify({omegaObservation:"CONSTRUCTED",analysis}));
+  assert(capsule);assert.equal(capsule.observedOutputs[0].value,"999");
+  assert.equal(capsule.mathematicalModelIndependentlyVerified,false);
 });
 function recoveryFixture(){
   const tasks:PrivateTextTask[]=Array.from({length:198},(_,i)=>({family:"GPQA_DIAMOND",taskId:`SYNTHETIC-${i}`,
