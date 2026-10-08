@@ -909,3 +909,39 @@ repair and explicit context lifetime; supports generator/detector separation and
 honest compute accounting. Broader cognitive claims, official-benchmark reruns,
 brain expansion, recursion and production authority are deferred. No conflicting
 authority policy is superseded. Coverage remains PARTIAL / JUST-IN-TIME.
+
+#### Terminal result — frozen candidate `6ad3c455`
+
+[Run 37742048422](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37742048422)
+completed. Control and countercheck each scored **4/4 development and 8/8 fresh
+transfer**: all 24 task-arm first attempts graded correctly, zero ungraded or
+unexecuted. This is a saturated small procedural test, not an official benchmark
+score and **not a measured reasoning improvement**. The countercheck procedure
+remains opt-in/unpromoted; it does not establish that the 46 GPQA wrong choices
+are fixed. Default Ultra configuration remains unchanged.
+
+Development used 11,470 control / 13,799 candidate reported tokens. Transfer used
+23,424 control / 22,840 candidate reported tokens, **plus one control dispatch of
+unknown usage** after transient provider unavailability. Existing bounded recovery
+completed that task: 48 logical calls, 49 physical calls total, one provider
+failure/retry, no timeouts, truncations, schema/format/authorization/infrastructure
+failures and no answer repair. Do not call this zero-provider-error delivery.
+Only 2/4 development and 3/8 transfer pairs meet the 10% realized-compute rule;
+7/8 transfer pairs were provider-stable. No controlled broad promotion follows.
+
+The general timeout policy passed controlled fetch/body reproduction and preserved
+caller expiry, cancellation and dispatch bounds. No live response exceeded the
+old 120-second cutoff, so this run cannot establish elimination of the historical
+live timeout class. The two live stages took 592,854ms combined. All disposable
+cleanup and source-integrity checks passed. Linux production build passed in
+15.21s; local Windows Vite was blocked by Device Guard, whose policy was unchanged.
+Both local and Linux aggregate checks passed all 108 suites / 11,158 checks;
+TypeScript 5.8.3 remained zero and the secret scan found zero issues.
+
+The [sanitized receipt](../../../docs/omega/evidence/nyx-general-repair-6ad3c455.json)
+binds the verified archive SHA256, both canonical original reports, all 24 terminal
+rows and final progress checkpoints. It omits raw questions, answers, reasoning
+and low-entropy answer-derived hashes. Original GPQA/AIME/Ultra evidence remains
+preserved. No new official benchmark was launched and the temporary push trigger
+was removed after dispatch. Next capability evaluation needs a more discriminating
+fresh task population, not tuning against the now-exposed transfer questions.
