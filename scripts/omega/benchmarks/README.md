@@ -1583,3 +1583,34 @@ evidence-over-confidence and no self-certification; supports bounded repair
 and action provenance; defers cognition/brain expansion and production
 promotion. No architectural conflict identified. Coverage remains
 `PARTIAL / JUST-IN-TIME`; no total corpus coverage or authority increase.
+
+### Decision-required contract — terminal fresh-transfer evidence
+
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37853689629)
+at `69dea278e2156a6894ddaf46529123a8f8376197` completed all four tasks in
+both arms with zero provider failures, retries or unknown-usage calls. Hosted
+Super accepted the new grammar. Schema-rejected interactions fell **6 -> 1**;
+final functional acceptance improved **1/4 -> 4/4**, and full quality acceptance
+**0/4 -> 2/4**, both newly accepted tasks on the first model call. However,
+validation quality acceptance remained **0/2 -> 0/2**: this is an observed
+interface repair, not a general cognitive or broad coding-quality promotion.
+
+Baseline used eight calls / 35,428 reported tokens; treatment used six calls /
+31,652 tokens, but more verification/scoring work and longer aggregate latency.
+**0/4** pairs met strict realized-compute parity; no all-axis compute dominance
+was observed. Equal caps are not equal work. The arithmetic validation proposals
+passed every functional case but exceeded the unchanged declaration limit
+(6 vs 4). The Unicode repair passed every functional case but exceeded it
+(7 vs 4). One arithmetic repair also emitted an overlong diagnosis. Private
+scores were never repair feedback. Original and repaired outcomes are retained.
+
+Artifact SHA256:
+`7028a51436cbf979a73c0939f4270b9e26ebb0fb15fe324e7644e65680e7138b`.
+The [receipt](../../../docs/omega/evidence/nyx-decision-contract-transfer-69dea278.json)
+records frozen/log/artifact agreement, all 15 source hashes, task/oracle identities,
+resource accounting, acceptance and cleanup. Candidate CI passed 109 suites /
+11,515 checks, TypeScript zero, build, packaged launch, native replay and security
+checks. Automatic launch was removed; no production or default Ultra change.
+Next: investigate structural quality-feedback interpretation using existing
+measured/declaration-site guidance and fresh controlled tasks, not task-specific
+patches, looser quality gates or another cognitive layer.

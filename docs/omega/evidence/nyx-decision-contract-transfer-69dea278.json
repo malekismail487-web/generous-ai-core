@@ -1,0 +1,870 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-DECISION-CONTRACT-TRANSFER-001",
+  "candidate": "69dea278e2156a6894ddaf46529123a8f8376197",
+  "runId": 37853689629,
+  "jobId": 113572656295,
+  "artifactId": 11582179064,
+  "artifactDigest": "7028a51436cbf979a73c0939f4270b9e26ebb0fb15fe324e7644e65680e7138b",
+  "reportDigest": "699ad21cef2814e9dce7eed3417414457fd018f98bd90133166ca0240bcdbc4a",
+  "freezeDigest": "5e2b54f3ffa03c7aefd41d0b201f29845b66b21a9388620df5d275e889c472e4",
+  "selection": [
+    {
+      "id": "ATOMIC-STOCK-RESERVATION",
+      "tier": "DEVELOPMENT",
+      "domain": "TRANSACTIONAL_ALLOCATION",
+      "inputDigest": "52f922dcfc59450035f7e63836f7308168535e7093224bf62f1c27a08c60a98e",
+      "oracleDigest": "3b6561d41962c2a36d8123aa69b63c073388b64311fc48f02c2b3d06433607d9",
+      "fixtureDigest": "faca2cb5ce8939dda6ad5f34f6d6b858ad040352b04e49399d84c0abf695972c"
+    },
+    {
+      "id": "NONDETERMINISTIC-STATE-TRACE",
+      "tier": "DEVELOPMENT",
+      "domain": "FINITE_STATE_INTERPRETATION",
+      "inputDigest": "2573a9e1047bebf63f4700352ee94bab8c32aa3759e1793b35d482a3858e178e",
+      "oracleDigest": "aba1be7fa325d979774ad855563ea94424d286afcff6f55ab8daa2a1bdc21444",
+      "fixtureDigest": "2d41ee4c54e8f98accf43f1db966633cc587d9000c45226ff10d24a47e56e03d"
+    },
+    {
+      "id": "SIGNED-RATIONAL-ACCUMULATION",
+      "tier": "VALIDATION",
+      "domain": "EXACT_ARITHMETIC",
+      "inputDigest": "f4366a3be3050db9c402a79fac5e45cbf571a1b79d19279a401ff90e143ab15d",
+      "oracleDigest": "b837aab1afe7f183ea84f213bfe5e5df8fb239a41ec3bbc4d7248dcfc1530495",
+      "fixtureDigest": "a3c00bd320dc44716ee167986720235d011f9ebd06d3006c47a2cbd7dc76ea47"
+    },
+    {
+      "id": "UNICODE-EDIT-METRIC",
+      "tier": "VALIDATION",
+      "domain": "DYNAMIC_PROGRAMMING",
+      "inputDigest": "34e4b0cfa3b70877f57c50aad0202382e9b989aba2e1aeabe799c7f911436e63",
+      "oracleDigest": "1de16aba9314aa1aa4fecdd5c5e6a58417d8e3e44da6e06e8ea593a54ff93a93",
+      "fixtureDigest": "17d0ed18b453fe585bb6cd0facb4cade68055bfffe503166b58d313367331820"
+    }
+  ],
+  "modelConfiguration": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 2,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 1350000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "physicalCallsPerTaskIncludingRetries": 2,
+    "reasoningControl": "SUPER_HOSTED_NATIVE",
+    "reasoningEffort": "none",
+    "generationPolicy": "nyx-decision-required-schema/1",
+    "changedVariable": "DECISION_REQUIRED_PROVIDER_FIELDS_ONLY",
+    "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "realizedMatchScope": "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
+    "hostDiagnosticCost": "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "observed": {
+    "selectedTasks": 4,
+    "attemptedObservations": 8,
+    "unexecutedObservations": 0,
+    "aggregates": [
+      {
+        "variant": "LEGACY_OPTIONAL_FIELDS",
+        "accepted": 0,
+        "functionallyAccepted": 1,
+        "qualityAccepted": 0,
+        "firstCallAccepted": 0,
+        "repairedAccepted": 0,
+        "reportedTokens": 35428,
+        "unknownUsageCalls": 0,
+        "selected": 4,
+        "attempted": 4,
+        "logicalCalls": 8,
+        "physicalCalls": 8,
+        "schemaRejectedInteractions": 6,
+        "providerFailures": 0,
+        "retries": 0,
+        "verifierCalls": 6,
+        "verifierWorkUnits": 51,
+        "privateScorerWorkUnits": 14,
+        "wallClockMs": 42660,
+        "developmentAccepted": 0,
+        "validationAccepted": 0
+      },
+      {
+        "variant": "DECISION_REQUIRED_FIELDS",
+        "accepted": 2,
+        "functionallyAccepted": 4,
+        "qualityAccepted": 2,
+        "firstCallAccepted": 2,
+        "repairedAccepted": 0,
+        "reportedTokens": 31652,
+        "unknownUsageCalls": 0,
+        "selected": 4,
+        "attempted": 4,
+        "logicalCalls": 6,
+        "physicalCalls": 6,
+        "schemaRejectedInteractions": 1,
+        "providerFailures": 0,
+        "retries": 0,
+        "verifierCalls": 9,
+        "verifierWorkUnits": 76,
+        "privateScorerWorkUnits": 33,
+        "wallClockMs": 71277,
+        "developmentAccepted": 2,
+        "validationAccepted": 0
+      }
+    ],
+    "pairs": [
+      {
+        "id": "ATOMIC-STOCK-RESERVATION",
+        "tier": "DEVELOPMENT",
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "treatmentNoMoreMeasuredCompute": false,
+        "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+        "outcomes": [
+          {
+            "variant": "LEGACY_OPTIONAL_FIELDS",
+            "accepted": false,
+            "failureClass": "SCHEMA_FAILURE"
+          },
+          {
+            "variant": "DECISION_REQUIRED_FIELDS",
+            "accepted": true,
+            "failureClass": null
+          }
+        ]
+      },
+      {
+        "id": "NONDETERMINISTIC-STATE-TRACE",
+        "tier": "DEVELOPMENT",
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "treatmentNoMoreMeasuredCompute": false,
+        "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+        "outcomes": [
+          {
+            "variant": "DECISION_REQUIRED_FIELDS",
+            "accepted": true,
+            "failureClass": null
+          },
+          {
+            "variant": "LEGACY_OPTIONAL_FIELDS",
+            "accepted": false,
+            "failureClass": "SCHEMA_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "SIGNED-RATIONAL-ACCUMULATION",
+        "tier": "VALIDATION",
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "treatmentNoMoreMeasuredCompute": false,
+        "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+        "outcomes": [
+          {
+            "variant": "LEGACY_OPTIONAL_FIELDS",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          },
+          {
+            "variant": "DECISION_REQUIRED_FIELDS",
+            "accepted": false,
+            "failureClass": "SCHEMA_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "UNICODE-EDIT-METRIC",
+        "tier": "VALIDATION",
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "treatmentNoMoreMeasuredCompute": false,
+        "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+        "outcomes": [
+          {
+            "variant": "DECISION_REQUIRED_FIELDS",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          },
+          {
+            "variant": "LEGACY_OPTIONAL_FIELDS",
+            "accepted": false,
+            "failureClass": "SCHEMA_FAILURE"
+          }
+        ]
+      }
+    ],
+    "matchedRealizedComputePairs": 0,
+    "rows": [
+      {
+        "id": "ATOMIC-STOCK-RESERVATION",
+        "tier": "DEVELOPMENT",
+        "variant": "LEGACY_OPTIONAL_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "failureClass": "SCHEMA_FAILURE",
+        "schemaRejectedInteractions": 2,
+        "diagnostics": [
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          },
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.counterexamples",
+            "observed": "invalid_item"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.counterexamples",
+            "observed": "array_length_0"
+          }
+        ],
+        "iterations": [],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 9417,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 7,
+          "wallClockMs": 11225,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 0,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        }
+      },
+      {
+        "id": "ATOMIC-STOCK-RESERVATION",
+        "tier": "DEVELOPMENT",
+        "variant": "DECISION_REQUIRED_FIELDS",
+        "firstCallAccepted": true,
+        "repairedAccepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "accepted": true,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "schemaRejectedInteractions": 0,
+        "diagnostics": [],
+        "iterations": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 5,
+              "total": 5,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 5
+          }
+        ],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 4322,
+          "unknownUsageCalls": 0,
+          "toolCalls": 2,
+          "toolWorkUnits": 14,
+          "wallClockMs": 8466,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 5,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 2,
+          "provisionedLifecycles": 2
+        }
+      },
+      {
+        "id": "NONDETERMINISTIC-STATE-TRACE",
+        "tier": "DEVELOPMENT",
+        "variant": "DECISION_REQUIRED_FIELDS",
+        "firstCallAccepted": true,
+        "repairedAccepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": true,
+        "accepted": true,
+        "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+        "loopReason": "bounded_repair_functionally_verified",
+        "failureClass": null,
+        "schemaRejectedInteractions": 0,
+        "diagnostics": [],
+        "iterations": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "ADMITTED",
+            "qualityFindings": [],
+            "score": {
+              "accepted": true,
+              "correct": 5,
+              "total": 5,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": true,
+            "accepted": true,
+            "privateScorerWorkUnits": 5
+          }
+        ],
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 4275,
+          "unknownUsageCalls": 0,
+          "toolCalls": 2,
+          "toolWorkUnits": 14,
+          "wallClockMs": 3889,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 5,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 2,
+          "provisionedLifecycles": 2
+        }
+      },
+      {
+        "id": "NONDETERMINISTIC-STATE-TRACE",
+        "tier": "DEVELOPMENT",
+        "variant": "LEGACY_OPTIONAL_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "failureClass": "SCHEMA_FAILURE",
+        "schemaRejectedInteractions": 2,
+        "diagnostics": [
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          },
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          }
+        ],
+        "iterations": [],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8993,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 7,
+          "wallClockMs": 11950,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 0,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        }
+      },
+      {
+        "id": "SIGNED-RATIONAL-ACCUMULATION",
+        "tier": "VALIDATION",
+        "variant": "LEGACY_OPTIONAL_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "failureClass": "QUALITY_REJECTION",
+        "schemaRejectedInteractions": 0,
+        "diagnostics": [],
+        "iterations": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 6,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 7,
+              "total": 7,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 7
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 6,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 7,
+              "total": 7,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 7
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8474,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 27,
+          "wallClockMs": 7443,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 14,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        }
+      },
+      {
+        "id": "SIGNED-RATIONAL-ACCUMULATION",
+        "tier": "VALIDATION",
+        "variant": "DECISION_REQUIRED_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "failureClass": "SCHEMA_FAILURE",
+        "schemaRejectedInteractions": 1,
+        "diagnostics": [
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.diagnosis",
+            "observed": "invalid_length"
+          }
+        ],
+        "iterations": [
+          {
+            "iteration": 1,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 6,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 7,
+              "total": 7,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 7
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 14521,
+          "unknownUsageCalls": 0,
+          "toolCalls": 2,
+          "toolWorkUnits": 18,
+          "wallClockMs": 48445,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 7,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 2,
+          "provisionedLifecycles": 2
+        }
+      },
+      {
+        "id": "UNICODE-EDIT-METRIC",
+        "tier": "VALIDATION",
+        "variant": "DECISION_REQUIRED_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": true,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_iteration_budget_exhausted",
+        "failureClass": "QUALITY_REJECTION",
+        "schemaRejectedInteractions": 0,
+        "diagnostics": [],
+        "iterations": [
+          {
+            "iteration": 1,
+            "publicAccepted": false,
+            "quality": null,
+            "qualityFindings": [],
+            "score": {
+              "accepted": false,
+              "correct": 6,
+              "total": 8,
+              "failure": "HIDDEN_CASE_FAILURE"
+            },
+            "functionalAccepted": false,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 8
+          },
+          {
+            "iteration": 2,
+            "publicAccepted": true,
+            "quality": "REJECTED",
+            "qualityFindings": [
+              {
+                "dimension": "UNNECESSARY_COMPLEXITY",
+                "code": "DECLARATION_DELTA",
+                "paths": [
+                  "src/transform.mjs"
+                ],
+                "measurement": {
+                  "observed": 7,
+                  "limit": 4
+                }
+              }
+            ],
+            "score": {
+              "accepted": true,
+              "correct": 8,
+              "total": 8,
+              "failure": null
+            },
+            "functionalAccepted": true,
+            "qualityAccepted": false,
+            "accepted": false,
+            "privateScorerWorkUnits": 8
+          }
+        ],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8534,
+          "unknownUsageCalls": 0,
+          "toolCalls": 3,
+          "toolWorkUnits": 30,
+          "wallClockMs": 10477,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 16,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 3,
+          "provisionedLifecycles": 3
+        }
+      },
+      {
+        "id": "UNICODE-EDIT-METRIC",
+        "tier": "VALIDATION",
+        "variant": "LEGACY_OPTIONAL_FIELDS",
+        "firstCallAccepted": false,
+        "repairedAccepted": false,
+        "functionalAccepted": false,
+        "qualityAccepted": false,
+        "accepted": false,
+        "loopOutcome": "EXHAUSTED",
+        "loopReason": "repair_cognition_correction_budget_exhausted",
+        "failureClass": "SCHEMA_FAILURE",
+        "schemaRejectedInteractions": 2,
+        "diagnostics": [
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          },
+          {
+            "category": "MISSING_REQUIRED_FIELD",
+            "path": "$.evidenceRefs",
+            "observed": "missing"
+          },
+          {
+            "category": "SEMANTIC_REPAIR_INVALID",
+            "path": "$.evidenceRefs",
+            "observed": "empty_array"
+          }
+        ],
+        "iterations": [],
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8544,
+          "unknownUsageCalls": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 10,
+          "wallClockMs": 12042,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "privateScorerWorkUnits": 0,
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 1,
+          "provisionedLifecycles": 1
+        }
+      }
+    ],
+    "finalFailureClasses": {
+      "legacy": {
+        "SCHEMA_FAILURE": 3,
+        "QUALITY_REJECTION": 1
+      },
+      "required": {
+        "SCHEMA_FAILURE": 1,
+        "QUALITY_REJECTION": 1
+      }
+    },
+    "delivery": {
+      "providerFailures": 0,
+      "retries": 0,
+      "unknownUsageCalls": 0,
+      "truncations": 0,
+      "syntaxFailures": 0
+    },
+    "stopReason": "ALL_FROZEN_ARM_TASK_OBSERVATIONS_COMPLETED_WITHIN_FINITE_LIMITS",
+    "sourceUnchanged": true,
+    "cleanupVerified": true
+  },
+  "verification": {
+    "artifactZipSha256Verified": true,
+    "exactSingleReportArchiveMemberVerified": true,
+    "terminalLogReportAgreement": true,
+    "allEightTaskLogsAgree": true,
+    "freezeIdentityVerified": true,
+    "frozenSourceHashesVerified": 15,
+    "sourceDigests": {
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "22c74c72e683095fb20be6a06c7cdeca8884be95ad9abd6f723424c52314c5a5",
+      "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+      "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "776c9b03c213e08281e5a0404c01f4722dceb87239d2a6a0e51e63a70e597ae7",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "d61636b510107af9d524d5ac592853ace7083638e0dc13c876876536f0b463db",
+      "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+      "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2",
+      "scripts/omega/benchmarks/measuredQualityTransferTasks.ts": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3",
+      "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "7ca801d5fe2799009606cecb2e39465ae60eaa793e3ad6d2ed9b261fb0139e9d",
+      "scripts/omega/benchmarks/qualitySiteTransferTasks.ts": "084344f447220904a054667745a0d7f0392fe44ed19af4230f9f213d472b9f10",
+      "src/lib/codelab/assurance/engineeringQualityOracle.ts": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+      "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts": "e88e230324e9eededf55a110b58062bcbf80c45ae743e6c47f731c77337ab9a7",
+      "scripts/omega/benchmarks/decisionContractTransferTasks.ts": "4b340cdf7691704c14e670285bb631a7e6e6e8284d284d180bfeb511ab3690fd",
+      "scripts/omega/nyx-source-representation-cycle.ts": "32b8e9e0d868371fac1659a2435594b59028298d1e5ae28256deb9e55145bdda",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536"
+    },
+    "taskInputOracleFixtureDigestsVerified": true,
+    "strictComputeParityRecomputed": true,
+    "allCallToolIterationBoundsVerified": true,
+    "hiddenExpectedOutputsNotGivenToModel": true,
+    "rawReasoningOrSourcePersisted": false,
+    "verificationNotes": [
+      "Private exact scores are recorded only evaluator-side and never become repair feedback.",
+      "Unicode initial proposal failed public examples and 2/8 private cases; its repaired proposal passed all functional cases but failed the unchanged quality gate.",
+      "Required grammar retained the same local parser, semantic rules, quality checks, scoped execution and default Ultra. Super is explicitly labeled.",
+      "All four first proposals in the required arm reached local execution; the remaining interface rejection was an overlong repair diagnosis, not missing required fields."
+    ]
+  },
+  "verificationAtCandidate": {
+    "ciRunId": 37853689528,
+    "ciJobId": 113572655950,
+    "conclusion": "SUCCESS",
+    "aggregate": {
+      "discoveredSuites": 109,
+      "executedSuites": 109,
+      "passedSuites": 109,
+      "failedSuites": 0,
+      "passedChecks": 11515,
+      "failedChecks": 0,
+      "semanticTestDefinitions": 4327
+    },
+    "manifestDigest": "f6c2a2a22e000d372120a17b3cf002383fbcb243c3c4b6f01424b5837527c2c8",
+    "typescript": "5.8.3",
+    "typeScriptDiagnostics": 0,
+    "productionBuild": "PASS_NO_DEPLOYMENT",
+    "packageSmoke": "PASS_NO_IMPLICIT_CREDENTIAL",
+    "secretScan": {
+      "textFiles": 1288,
+      "findings": 0
+    },
+    "nativeReplay": {
+      "capsules": 200,
+      "outputsCompared": 2000,
+      "allExecutionAgrees": true,
+      "mathematicalModelVerified": false
+    }
+  },
+  "assessment": {
+    "state": "INTERFACE_IMPROVEMENT_OBSERVED_GENERAL_CAPABILITY_PROMOTION_NOT_ESTABLISHED",
+    "qualityAcceptedGain": {
+      "development": "0/2 -> 2/2",
+      "validation": "0/2 -> 0/2",
+      "allFourTasks": "0/4 -> 2/4"
+    },
+    "functionalAcceptance": "1/4 -> 4/4",
+    "firstCallFullyAccepted": "0/4 -> 2/4",
+    "repairedFullyAccepted": "0/4 -> 0/4",
+    "schemaRejectedInteractions": "6 -> 1",
+    "compute": "8 -> 6 physical calls and 35428 -> 31652 reported tokens, but more verifier/scorer work and longer total treatment latency. No pair meets the strict realized-compute match; no no-more-compute acceptance claim.",
+    "remainingMechanism": "Fresh validation proposals are functionally correct but exceed DECLARATION_DELTA (6 or 7 vs limit 4). Repairs did not make the necessary structural correction; one repair instead produced an invalid-length diagnosis.",
+    "nextGeneralInvestigation": "Reuse the already-implemented measured/declaration-site quality guidance in a separate fresh controlled comparison, after reproducing structural-repair feedback interpretation on development intents. Do not special-case these four tasks or relax the oracle.",
+    "limitations": [
+      "Four small same-session-authored tasks, one provider-stable epoch, not an official benchmark or statistical generalization.",
+      "Both validation tasks remain quality-rejected; broad coding-quality or >=80% benchmark confidence is not supported.",
+      "Identical limits are not matched actual compute. No dominance across all measured compute axes.",
+      "Hostile-code sandboxing and candidate network isolation are not proven by this existing harness.",
+      "Default Ultra and all earlier Ultra/Super/GPQA/AIME/ARC/BBEH outcomes remain unchanged."
+    ],
+    "broadPromotion": false,
+    "grantsAuthority": false,
+    "newCognitiveLayer": false,
+    "goalAchieved": false
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "GENERATOR_REQUIRES_DETECTOR",
+      "DETECTOR_REQUIRES_VALIDATION",
+      "EVIDENCE_OVER_CONFIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "NO_AUTHORITY_WITHOUT_SCOPE"
+    ],
+    "supporting": [
+      "BOUNDED_REPAIR",
+      "ACTION_PROVENANCE",
+      "ORIGINAL_STATE_QUALITY_COMPARISON",
+      "FRESH_TRANSFER_WITH_UNCHANGED_ORACLE"
+    ],
+    "deferred": [
+      "COGNITIVE_OR_CONNECTOME_EXPANSION",
+      "PRODUCTION_PROMOTION",
+      "ALL_BENCHMARK_80_PERCENT_CLAIM"
+    ],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL / JUST-IN-TIME"
+  }
+}
