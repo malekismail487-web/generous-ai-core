@@ -38,20 +38,25 @@ export function quantitativeModelFormulationSchema(problemDigest:string,labels:r
     assumptions:{type:"array",items:{type:"string"}}});
 }
 /** Hosted schema contains only supported structural keywords. Local limits remain stricter. */
+export function quantitativeProgramSchema(labels:readonly string[],constantIds:readonly string[]) {
+  const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
+  const array=(items:unknown)=>({type:"array",items});
+  const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
+  const {state:slots,expressions}=equationNames(constantIds);
+  const registerId={type:"string",enum:slots};const source={type:"string",enum:[...constantIds,...slots]};
+  const expressionSource={type:"string",enum:[...constantIds,...slots,...expressions]};
+  return object({schemaVersion:constant(2),initialState:array(object({slot:registerId,source:{type:"string",enum:constantIds}})),
+    cycles:array(object({iterations:{type:"integer"},phases:array(object({
+      expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
+      updates:array(object({slot:registerId,source:expressionSource}))}))})),
+    outputs:array(object({label:{type:"string",enum:labels},source}))});
+}
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
   constantIds:readonly string[]=[],artifactDigest:string|null=null) {
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const {state:slots,expressions}=equationNames(constantIds);
-  const registerId={type:"string",enum:slots};const source={type:"string",enum:[...constantIds,...slots]};
-  const expressionSource={type:"string",enum:[...constantIds,...slots,...expressions]};
-  const program=object({schemaVersion:constant(2),initialState:array(object({slot:registerId,source:{type:"string",enum:constantIds}})),
-    cycles:array(object({iterations:{type:"integer"},phases:array(object({
-      expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
-      updates:array(object({slot:registerId,source:expressionSource}))}))})),
-    outputs:array(object({label:{type:"string",enum:labels},source}))});
-  const tool=object({problemDigest:constant(problemDigest),program});
+  const tool=object({problemDigest:constant(problemDigest),program:quantitativeProgramSchema(labels,constantIds)});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
   const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});

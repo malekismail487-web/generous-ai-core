@@ -16,6 +16,9 @@ import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPop
   textContractDiagnosticReady, compareGeneralReasoningPair } from "./omega/benchmarks/nyxTextBenchmark";
 import { generalReasoningTasks, ringCounts, ternaryRotationCounts, generatorChallengeValue } from "./omega/benchmarks/generalReasoningTasks";
 import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
+import {computationTasks,computationExpected,COMPUTATION_TRANSFER_POLICY} from "./omega/benchmarks/computationTransferTasks";
+import {computationOutcome,computationPairMatched} from "./omega/nyx-computation-transfer";
+import type {NyxChatTurnResult} from "../src/lib/codelab/cli/nyxChatSession";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -1063,6 +1066,45 @@ check("non-free rotations cannot be scored by naive division and oracle generati
     assert.throws(() => ternaryRotationCounts(args[0], args[1], args[2]));
   assert.throws(() => generatorChallengeValue([1, 2, 3, 4], 6));
   assert.throws(() => generatorChallengeValue([2, 3, 4, 5], 100000));
+});
+check("computation corpus is frozen with disjoint development and transfer identities",()=>{
+  const dev=computationTasks("DEVELOPMENT"),transfer=computationTasks("TRANSFER");
+  assert.equal(dev.length,4);assert.equal(transfer.length,8);
+  assert.deepEqual(dev,computationTasks("DEVELOPMENT"));assert.deepEqual(transfer,computationTasks("TRANSFER"));
+  assert.equal(new Set([...dev,...transfer].map(t=>t.taskId)).size,12);
+  for(const task of [...dev,...transfer]){
+    assert(Object.isFrozen(task.problem.constants));assert(task.question.length<8000);
+    assert.equal(computationExpected(task.domain,task.problem),task.expectedQuantity);
+    assert.equal(task.question.split("\n")[Number(task.answer)],`${task.answer}. ${task.expectedQuantity}`);
+    assert(task.problem.constants.length<=32);
+  }
+  assert.equal(COMPUTATION_TRANSFER_POLICY.model,"nvidia/nemotron-3-super-120b-a12b");
+  assert.equal(TEXT_BENCHMARK_POLICY.model,"nvidia/nemotron-3-ultra-550b-a55b");
+  for(const domain of new Set(transfer.map(t=>t.domain))){
+    const replicates=transfer.filter(t=>t.domain===domain).map(t=>t.replicate%2);
+    assert.deepEqual(replicates,[1,0]);
+  }
+});
+check("computation matching measures model compute honestly and never declares tool computation free",()=>{
+  const row={allocatedTokens:1000,allocatedHttpAttempts:1.5,unknownUsageCalls:0,providerFailures:0,logicalCalls:2,toolWorkUnits:0};
+  const matched=computationPairMatched([row,{...row,toolWorkUnits:200}]);
+  assert(matched.matchedModelCompute);assert.equal(matched.totalComputeMatched,false);
+  for(const override of [{allocatedTokens:1200},{unknownUsageCalls:1},{providerFailures:1},{logicalCalls:1},
+    {allocatedTokens:NaN},{allocatedTokens:0},{allocatedHttpAttempts:0}])
+    assert(!computationPairMatched([row,{...row,...override}]).matchedModelCompute);
+});
+check("computation comparison separates wrong choices, incomplete delivery, schema and authority failures",()=>{
+  const reply={outcome:"REPLIED",message:"The answer is: 2",events:[]} as unknown as NyxChatTurnResult;
+  assert.deepEqual(computationOutcome(reply,[],"1"),{state:"WRONG_VALID_CHOICE",correct:false});
+  assert.deepEqual(computationOutcome(reply,[],"2"),{state:"PASS",correct:true});
+  assert.equal(computationOutcome({...reply,message:"2"},[],"2").state,"ANSWER_FORMAT_FAILURE");
+  assert.equal(computationOutcome(null,[],"2").correct,null);
+  for(const [field,expected] of [[{finishReason:"length",failureCategory:"PROVIDER_RESPONSE_SCHEMA_ERROR"},"TRUNCATION"],
+    [{finishReason:null,failureCategory:"PROVIDER_TIMEOUT"},"PROVIDER_FAILURE"]] as const)
+    assert.equal(computationOutcome(reply,[field as unknown as NvidiaNimEvidence],"2").state,expected);
+  for(const [outcome,state] of [["derivation_ir_invalid","SCHEMA_OR_NATIVE_IR_FAILURE"],
+    ["derivation_capability_unavailable","AUTHORIZATION_FAILURE"],["derivation_resource_exhausted","RESOURCE_EXHAUSTION"]])
+    assert.equal(computationOutcome({...reply,events:[{eventType:"DENIAL",outcome} as never]},[],"2").state,state);
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

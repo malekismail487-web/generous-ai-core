@@ -1,23 +1,38 @@
 import { createHash } from "node:crypto";
 import type { NvidiaNimJsonSchemaResponseFormat } from "../model/nvidiaNimProvider";
+import { validQuantitativeProblem, type QuantitativeProblem } from "../research/exactQuantitativeDerivation";
+import { quantitativeProgramSchema } from "../research/nyxQuantitativeReasoning";
+import type { QuantitativeEquations } from "../research/quantitativeEquationCompiler";
+import { theoryDigest } from "../research/theoryContracts";
 
 /** Host-owned workflow restriction, not a capability token or an authorization grant. */
 export type NyxChatActionContract =
   | { readonly kind: "REPLY_ONLY" }
-  | { readonly kind: "READ_THEN_REPLY"; readonly path: string };
+  | { readonly kind: "READ_THEN_REPLY"; readonly path: string }
+  | { readonly kind: "DERIVE_THEN_REPLY"; readonly problem: QuantitativeProblem; readonly outputLabels: readonly string[] };
 
 export function nyxChatActionContractValid(value: unknown): value is NyxChatActionContract {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const contract = value as Record<string, unknown>;
   return contract.kind === "REPLY_ONLY" && exactKeys(contract, ["kind"])
     || contract.kind === "READ_THEN_REPLY" && exactKeys(contract, ["kind", "path"])
-      && nyxSafeRelativePath(contract.path);
+      && nyxSafeRelativePath(contract.path)
+    || contract.kind === "DERIVE_THEN_REPLY" && exactKeys(contract, ["kind", "problem", "outputLabels"])
+      && validQuantitativeProblem(contract.problem as QuantitativeProblem)
+      && Array.isArray(contract.outputLabels) && contract.outputLabels.length > 0 && contract.outputLabels.length <= 16
+      && contract.outputLabels.every(label => typeof label === "string" && /^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(label))
+      && new Set(contract.outputLabels).size === contract.outputLabels.length;
 }
 
 /** Generation guidance only; the strict parser, phase check and R1 executor remain independent. */
 export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean): NvidiaNimJsonSchemaResponseFormat {
   if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") throw Error("nyx_chat_action_contract_invalid");
   const readRequired = contract.kind === "READ_THEN_REPLY" && !observed;
+  if (contract.kind === "DERIVE_THEN_REPLY" && !observed) return {
+    type: "JSON_SCHEMA", name: "nyx_required_public_derivation", schema: {type:"object",additionalProperties:false,
+      required:["kind","problemDigest","program"],properties:{kind:{type:"string",enum:["DERIVE_QUANTITIES"]},
+        problemDigest:{type:"string",enum:[theoryDigest(contract.problem)]},
+        program:quantitativeProgramSchema(contract.outputLabels,contract.problem.constants.map(c=>c.id))}}};
   return { type: "JSON_SCHEMA", name: readRequired ? "nyx_required_file_read" : "nyx_contract_reply",
     schema: { type: "object", properties: readRequired
       ? { kind: { type: "string", enum: ["READ_FILE"] }, path: { type: "string", enum: [contract.path] } }
@@ -27,12 +42,15 @@ export function nyxChatContractFormat(contract: NyxChatActionContract, observed:
 
 export function nyxChatContractAllows(contract: NyxChatActionContract, observed: boolean, action: NyxChatAction): boolean {
   if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") return false;
+  if (contract.kind === "DERIVE_THEN_REPLY" && !observed)
+    return action.kind === "DERIVE_QUANTITIES" && action.problemDigest === theoryDigest(contract.problem);
   return contract.kind === "READ_THEN_REPLY" && !observed
     ? action.kind === "READ_FILE" && action.path === contract.path : action.kind === "REPLY";
 }
 
 export type NyxChatAction =
   | { readonly kind: "REPLY"; readonly message: string }
+  | { readonly kind: "DERIVE_QUANTITIES"; readonly problemDigest: string; readonly program: QuantitativeEquations }
   | { readonly kind: "READ_FILE" | "LIST_DIRECTORY"; readonly path: string }
   | { readonly kind: "PROPOSE_EDIT"; readonly path: string; readonly expectedBaseHash: string;
       readonly replacement: string; readonly rationale: string }
@@ -83,6 +101,13 @@ export function parseNyxChatAction(raw: string, maxReplacementBytes = 32_768): N
   try { parsed = JSON.parse(raw); } catch { return { action: null, reason: "model_output_not_json" }; }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { action: null, reason: "model_output_not_object" };
   const value = parsed as Record<string, unknown>;
+  // Recognition is not execution: the bounded workbench independently validates native IR,
+  // immutable scope, expiry, revocation and resource policy before computation.
+  if (value.kind === "DERIVE_QUANTITIES" && exactKeys(value,["kind","problemDigest","program"])
+    && typeof value.problemDigest === "string" && /^[a-f0-9]{64}$/.test(value.problemDigest)
+    && value.program && typeof value.program === "object" && !Array.isArray(value.program)
+    && (value.program as Record<string,unknown>).schemaVersion === 2)
+    return {action:{kind:"DERIVE_QUANTITIES",problemDigest:value.problemDigest,program:value.program as QuantitativeEquations},reason:"accepted"};
   if (value.kind === "REPLY" && exactKeys(value, ["kind", "message"])
     && typeof value.message === "string" && value.message.trim() && value.message.length <= 8_000) {
     return { action: { kind: "REPLY", message: value.message }, reason: "accepted" };

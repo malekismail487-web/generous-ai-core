@@ -2,6 +2,9 @@ import type { ReadOnlyRepositoryExecutor } from "../executor/readOnlyExecutor";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimMessage } from "../model/nvidiaNimProvider";
 import { nyxCanonical, nyxContainsSecretLike, nyxSafeRelativePath, nyxSha256, parseNyxChatAction,
   nyxChatActionContractValid, nyxChatContractFormat, nyxChatContractAllows, type NyxChatAction, type NyxChatActionContract } from "./nyxChatProtocol";
+import { BoundedReasoningSession } from "../research/boundedReasoningWorkbench";
+import { immutableTheoryValue, theoryDigest } from "../research/theoryContracts";
+import { lowerQuantitativeEquations } from "../research/quantitativeEquationCompiler";
 
 export interface NyxChatModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
@@ -63,7 +66,7 @@ export interface NyxComputerHost {
 
 export interface NyxChatEvent {
   readonly sequence: number;
-  readonly eventType: "MODEL" | "READ" | "CANDIDATE" | "COMPUTER" | "DENIAL" | "REPLY";
+  readonly eventType: "MODEL" | "READ" | "CANDIDATE" | "COMPUTER" | "ANALYSIS" | "DENIAL" | "REPLY";
   readonly requestDigest: string;
   readonly resultDigest: string;
   readonly evidenceClass: "E3" | "E4";
@@ -95,6 +98,9 @@ export interface NyxChatSessionConfig {
   readonly maxOutputTokens: number;
   /** Opt-in finite read/answer workflow. Omission preserves the historical generic chat contract. */
   readonly actionContract?: NyxChatActionContract;
+  /** Host-owned prebound pure-computation capability. Omission means proposal-only,
+   * never an implicit execution grant. Not enabled by normal CLI/UI hosts. */
+  readonly derivationSession?: BoundedReasoningSession;
   /** Experimental procedure within the same model call; never independent verification or more authority. */
   readonly reasoningPolicy?: "CONSTRAINT_COUNTERCHECK";
 }
@@ -120,7 +126,7 @@ export class NyxChatSession {
 
   private constructor(config: NyxChatSessionConfig) {
     this.#config = Object.freeze({ ...config, editablePaths: Object.freeze([...config.editablePaths]),
-      ...(config.actionContract ? {actionContract: Object.freeze({...config.actionContract})} : {}) });
+      ...(config.actionContract ? {actionContract: immutableTheoryValue(config.actionContract)} : {}) });
   }
 
   static create(config: NyxChatSessionConfig): NyxChatSession {
@@ -134,7 +140,10 @@ export class NyxChatSession {
       || new Set(config.editablePaths).size !== config.editablePaths.length
       || config.reasoningPolicy !== undefined && config.reasoningPolicy !== "CONSTRAINT_COUNTERCHECK"
       || config.actionContract !== undefined && (!nyxChatActionContractValid(config.actionContract)
-        || config.actionContract.kind === "READ_THEN_REPLY" && config.maxModelCallsPerTurn < 2)) {
+        || config.actionContract.kind !== "REPLY_ONLY" && config.maxModelCallsPerTurn < 2)
+      || config.derivationSession !== undefined && (!(config.derivationSession instanceof BoundedReasoningSession)
+        || config.actionContract?.kind !== "DERIVE_THEN_REPLY"
+        || config.derivationSession.problemDigest !== theoryDigest(config.actionContract.problem))) {
       throw new Error("nyx_chat_session_policy_invalid");
     }
     return new NyxChatSession(config);
@@ -153,6 +162,7 @@ export class NyxChatSession {
     if (this.#turnActive) throw new Error("nyx_chat_cannot_dispose_active_turn");
     const clearedHistoryEntries = this.#history.length, clearedObservedFiles = this.#observed.size;
     this.#history.length = 0; this.#observed.clear(); this.#disposed = true;
+    this.#config.derivationSession?.revoke();
     return Object.freeze({disposed: true as const, clearedHistoryEntries, clearedObservedFiles,
       providerErasureClaimed: false as const, modelWeightUnlearningClaimed: false as const});
   }
@@ -171,7 +181,19 @@ export class NyxChatSession {
     const systemContract = this.#config.actionContract ? PHASE_CONTRACT
       : containerTools ? SYSTEM_CONTRACT.replace("never request arbitrary shell text,", "never request host shell text,")
       : SYSTEM_CONTRACT;
-    const systemMessage = this.#config.actionContract ? systemContract
+    const derivation = this.#config.actionContract?.kind === "DERIVE_THEN_REPLY" ? this.#config.actionContract : null;
+    // Identical public planning instructions in proposal-only and executed arms. The host-owned
+    // session, never the text/schema, determines whether the proposal can actually be computed.
+    const derivationContract = derivation ? `\nBefore replying, propose one native exact-rational derivation of the requested quantities. `
+      + `Constants: ${nyxCanonical(derivation.problem.constants)}. Output labels: ${nyxCanonical(derivation.outputLabels)}. `
+      + `Emit DERIVE_QUANTITIES as the current schema requires. All r0..r15 state slots start at zero. `
+      + `initialState can override slots from named constants. Each cycle repeats its ordered phases iterations times. `
+      + `In a phase, evaluate e0..e15 expressions in dependency order using constants, state slots or earlier expressions in that phase; `
+      + `then commit distinct slot updates simultaneously. Use ordered phases for sequential updates. `
+      + `Outputs name state slots or constants. ADD/SUB/MUL/DIV/MIN/MAX/BINOMIAL only; no literal sources or code. `
+      + `Omega may return evaluated quantities or retain the proposal without execution. Neither is acceptance of your mathematical model. `
+      + `Then reply using the actual observation and original objective. No other tools are available.` : "";
+    const systemMessage = this.#config.actionContract ? systemContract + derivationContract
       : `${systemContract}\nEditable paths: ${JSON.stringify(this.#config.editablePaths)}. Candidate execution: ${this.#config.candidateWriter ? "available in isolation" : "unavailable"}. ${computerTools} ${desktopTools}${containerTools}`;
     const messages: NvidiaNimMessage[] = [{ role: "system", content: systemMessage }];
     for (const item of this.#history.slice(-4)) {
@@ -260,6 +282,9 @@ export class NyxChatSession {
       }
       const observationStart = events.length;
       const observation = await this.#executeAction(action, requestId, candidateCount, event);
+      if (derivation && action.kind === "DERIVE_QUANTITIES" && events.slice(observationStart).some(item =>
+        item.eventType === "ANALYSIS" && ["CONSTRUCTED", "PROPOSED_NOT_EXECUTED"].includes(item.outcome)))
+        contractFileObserved = true;
       if (actionContract?.kind === "READ_THEN_REPLY" && action.kind === "READ_FILE"
         && action.path === actionContract.path && events.slice(observationStart).some(item =>
           item.eventType === "READ" && item.outcome === "OBSERVED"
@@ -285,6 +310,36 @@ export class NyxChatSession {
   async #executeAction(action: Exclude<NyxChatAction, { kind: "REPLY" }>, requestId: string, candidateCount: number,
     event: (type: NyxChatEvent["eventType"], request: unknown, result: unknown,
       evidenceClass: NyxChatEvent["evidenceClass"], evidenceId: string, outcome: string) => void): Promise<{ message: string; candidate: NyxCandidateResult | null }> {
+    if (action.kind === "DERIVE_QUANTITIES") {
+      const contract = this.#config.actionContract;
+      const reject = (reason: string) => {
+        event("DENIAL", action, {reason}, "E3", `${requestId}-DENIAL`, reason);
+        return {message:JSON.stringify({omegaObservation:"REJECTED",reason,grantsAuthority:false}),candidate:null};
+      };
+      if (contract?.kind !== "DERIVE_THEN_REPLY" || action.problemDigest !== theoryDigest(contract.problem))
+        return reject("derivation_scope_unavailable");
+      try {
+        // Both arms validate the SAME native language, even when no arithmetic is authorized.
+        // This compiler checks bindings/shape only; the independent mathematical oracle stays outside.
+        lowerQuantitativeEquations(contract.problem,action.program);
+        if (action.program.outputs.length !== contract.outputLabels.length
+          || action.program.outputs.some(output=>!contract.outputLabels.includes(output.label)))
+          return reject("derivation_output_scope_invalid");
+        const session = this.#config.derivationSession;
+        const result = session ? session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
+          problemDigest:action.problemDigest,program:action.program}) : null;
+        const observation = result ?? {status:"PROPOSED_NOT_EXECUTED",payload:null,workUnits:0,
+          evidenceClass:"E3",acceptanceRequiresIndependentVerifier:true,grantsAuthority:false};
+        event("ANALYSIS", action, observation, "E3", `${requestId}-ANALYSIS`, observation.status);
+        return {message:JSON.stringify({omegaObservation:observation.status,analysis:observation,
+          mathematicalModelIndependentlyVerified:false,grantsAuthority:false}),candidate:null};
+      } catch (error) {
+        const message=error instanceof Error?error.message:"";
+        return reject(message==="reasoning_session_unavailable"?"derivation_capability_unavailable"
+          :message==="reasoning_session_budget_exhausted"?"derivation_resource_exhausted"
+          :/^quantitative_(?:program|equations)_invalid:/.test(message)?"derivation_ir_invalid":"derivation_computation_rejected");
+      }
+    }
     if (action.kind === "READ_FILE" || action.kind === "LIST_DIRECTORY") {
       const prior = this.#observed.get(action.path);
       if (action.kind === "READ_FILE" && prior?.origin === "ISOLATED_CANDIDATE") {

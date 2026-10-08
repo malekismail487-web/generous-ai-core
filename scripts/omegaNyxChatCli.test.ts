@@ -12,6 +12,8 @@ import { nyxContainsSecretLike, nyxSha256, parseNyxChatAction, nyxChatActionCont
 import type { NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReasoningWorkbench";
+import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 
 const SOURCE = "export function value() { return 1; }\n";
 const REPLACEMENT = "export function value() { return 2; }\n";
@@ -28,6 +30,74 @@ function omegaTest(name: string, run: () => Promise<void> | void): void {
   });
 }
 after(() => console.log(`Omega NYX chat CLI tests - passed: ${passed}, failed: ${failed}`));
+
+const arithmeticProblem = {kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"zero",value:"0"},{id:"x",value:"4"}]} as const;
+const arithmeticProgram = {schemaVersion:2,initialState:[{slot:"r0",source:"x"}],cycles:[{iterations:1,phases:[{
+  expressions:[{id:"e0",op:"ADD",left:"r0",right:"r0"}],updates:[{slot:"r0",source:"e0"}]}]}],outputs:[{label:"quantity",source:"r0"}]} as const;
+const arithmeticAction = {kind:"DERIVE_QUANTITIES",problemDigest:theoryDigest(arithmeticProblem),program:arithmeticProgram};
+
+async function arithmeticFixture(execute:boolean,options:{revoked?:boolean;work?:number;action?:unknown;generic?:boolean}={}) {
+  const root=await fixture(),r1=await reader(root),requests:NvidiaNimCompletionRequest[]=[];
+  const tool=execute?BoundedReasoningSession.create(arithmeticProblem,{maxWorkUnits:options.work??10000,maxElapsedMs:1000,
+    maxRequests:1,expiresAtEpochMs:Date.now()+20000}):undefined;
+  if(options.revoked)tool?.revoke();
+  const mock=provider([JSON.stringify(options.action??arithmeticAction),JSON.stringify({kind:"REPLY",message:"The answer is: 1"})]);
+  const session=NyxChatSession.create({sessionId:"NYX-ARITHMETIC-TEST",reader:r1,candidateWriter:null,editablePaths:[],
+    maxCandidatesPerTurn:0,maxModelCallsPerTurn:2,maxTurnMs:20000,maxOutputTokens:1024,
+    ...(!options.generic?{actionContract:{kind:"DERIVE_THEN_REPLY" as const,problem:arithmeticProblem,outputLabels:["quantity"]},derivationSession:tool}:{}),
+    model:{complete:request=>{requests.push(structuredClone(request));return mock.complete(request);}}});
+  try {const result=await session.turn("Compute the doubled input. Reply with one option index.");
+    assert.equal(await readFile(join(root,"src","value.mjs"),"utf8"),SOURCE);
+    return {result,requests,tool};
+  } finally {session.dispose();r1.terminate(Date.now(),"TEST_FINISHED");await rm(root,{recursive:true,force:true});}
+}
+
+omegaTest("public derivation protocol is strict and does not itself authorize arithmetic",()=>{
+  const contract={kind:"DERIVE_THEN_REPLY",problem:arithmeticProblem,outputLabels:["quantity"]} as const;
+  assert(nyxChatActionContractValid(contract));
+  assert.equal(nyxChatContractFormat(contract,false).name,"nyx_required_public_derivation");
+  assert.equal(nyxChatContractFormat(contract,true).name,"nyx_contract_reply");
+  const action=parseNyxChatAction(JSON.stringify(arithmeticAction)).action!;
+  assert(nyxChatContractAllows(contract,false,action));assert(!nyxChatContractAllows(contract,true,action));
+  assert(!nyxChatContractAllows({kind:"REPLY_ONLY"},false,action));
+  for(const value of [{...contract,outputLabels:[]},{...contract,outputLabels:["x","x"]},
+    {...contract,problem:{kind:"SHELL",constants:[]}},{...contract,grant:true}])assert(!nyxChatActionContractValid(value));
+  for(const value of [{...arithmeticAction,operation:"shell"},{...arithmeticAction,problem:arithmeticProblem},
+    {...arithmeticAction,problemDigest:"stale"},{...arithmeticAction,program:"executable text"}])
+    assert.equal(parseNyxChatAction(JSON.stringify(value)).action,null);
+});
+omegaTest("existing bounded workbench actually computes and returns non-authoritative evidence",async()=>{
+  const {result,requests,tool}=await arithmeticFixture(true);
+  assert.equal(result.outcome,"REPLIED");assert.equal(result.modelCalls,2);
+  assert(result.events.some(e=>e.eventType==="ANALYSIS"&&e.outcome==="CONSTRUCTED"));
+  const observation=JSON.parse(requests[1].messages.at(-1)!.content);
+  assert.deepEqual(observation.analysis.payload.outputs,[{label:"quantity",value:"8"}]);
+  assert.equal(observation.mathematicalModelIndependentlyVerified,false);
+  assert.equal(observation.grantsAuthority,false);assert.equal(tool!.descriptor().available,false);
+  assert.equal(result.sourceRepositoryMutated,false);assert.equal(result.broaderAuthorityGranted,false);
+});
+omegaTest("proposal-only ablation shares first cognitive intent but never executes arithmetic",async()=>{
+  const a=await arithmeticFixture(false),b=await arithmeticFixture(true);
+  assert.deepEqual(a.requests[0].messages,b.requests[0].messages);
+  assert.deepEqual(a.requests[0].responseFormat,b.requests[0].responseFormat);
+  const observation=JSON.parse(a.requests[1].messages.at(-1)!.content);
+  assert.equal(observation.analysis.status,"PROPOSED_NOT_EXECUTED");assert.equal(observation.analysis.payload,null);
+  assert.equal(observation.analysis.workUnits,0);assert.equal(a.result.outcome,"REPLIED");
+});
+omegaTest("recognizable arithmetic action cannot gain authority in normal chat",async()=>{
+  const {result}=await arithmeticFixture(false,{generic:true});
+  assert(!result.events.some(e=>e.eventType==="ANALYSIS"));assert(result.events.some(e=>e.eventType==="DENIAL"));
+});
+omegaTest("revocation, exhaustion, malformed native IR and stale binding fail closed",async()=>{
+  for(const options of [{revoked:true},{work:1},{action:{...arithmeticAction,program:{...arithmeticProgram,cycles:[]}}},
+    {action:{...arithmeticAction,problemDigest:"a".repeat(64)}},
+    {action:{...arithmeticAction,program:{...arithmeticProgram,shell:"not executable"}}}]){
+    const {result}=await arithmeticFixture(true,options);
+    assert.notEqual(result.outcome,"REPLIED");
+    assert(!result.events.some(e=>e.eventType==="ANALYSIS"&&e.outcome==="CONSTRUCTED"));
+    assert.equal(result.modelCalls,2);assert.equal(result.sourceRepositoryMutated,false);
+  }
+});
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), "nyx-chat-test-source-"));

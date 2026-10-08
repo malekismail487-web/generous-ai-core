@@ -1,5 +1,8 @@
-name: Omega NYX frozen reasoning challenge comparison
+name: Omega NYX shared computation transfer comparison
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-general-repair-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -30,31 +33,25 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {generalReasoningTasks} from './scripts/omega/benchmarks/generalReasoningTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','CHALLENGE'].flatMap(generalReasoningTasks)));" | python -B scripts/omega/benchmarks/check-general-reasoning-oracles.py
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {computationTasks} from './scripts/omega/benchmarks/computationTransferTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER'].flatMap(computationTasks)));" | python -B scripts/omega/benchmarks/check-computation-oracles.py
           node scripts/typescript/typecheck-ratchet.mjs
           node scripts/security/scan-secrets.mjs
           node scripts/omega/run-tests.mjs
           npm run build
-      - name: Twelve frozen fresh challenge tasks; paired first attempts without tuning or answer repair
+      - name: Twelve fresh objectives; shared public derivation, proposal-only versus bounded exact execution
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_TEXT_CONFIGURATION: SESSION_SUPER_PHASE_CONTRACT
-          NYX_TEXT_DELIVERY: SCOPED_FILE
-          NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
-          NYX_TEXT_TRANSIENT_RECOVERY: WITHIN_SHARED_BUDGET
-          NYX_TEXT_CAPACITY_SCHEDULING: BEFORE_TASK_LEASE
-          NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-super-120b-a12b
-          NYX_TEXT_EPOCH_MODE: GENERAL_REPAIR_CHALLENGE
         shell: bash
         run: |
           set -euo pipefail
-          base="$RUNNER_TEMP/nyx-general-challenge"
+          base="$RUNNER_TEMP/nyx-computation-transfer"
           mkdir -p "$base"
-          RUNNER_TEMP="$base" node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-text-benchmark-epoch.ts
+          RUNNER_TEMP="$base" node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-computation-transfer.ts
       - name: Preserve sanitized reports, not raw inference, keys or official benchmark reference data
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-general-challenge-${{ github.sha }}
-          path: ${{ runner.temp }}/nyx-general-challenge/*.json
+          name: nyx-computation-transfer-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-computation-transfer/*.json
           if-no-files-found: error

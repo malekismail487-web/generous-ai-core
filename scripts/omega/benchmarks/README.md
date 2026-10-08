@@ -1015,3 +1015,49 @@ then fresh transfer and simpler controls. That hypothesis is not yet verified.
 Do not tune against these exposed challenge answers or infer the 46 earlier GPQA
 wrong choices are fixed. Default Ultra, authority and prior evidence are unchanged;
 no additional official benchmark or live rerun was launched after completion.
+
+### Shared-derivation computation transfer
+
+`nyx-computation-transfer.ts` reuses `NyxChatSession`, the native equation schema,
+`BoundedReasoningSession`, strict choice parsing, provider leases and the existing
+shared-first-proposal evaluator. It does not create a second reasoning engine.
+The opt-in `DERIVE_THEN_REPLY` contract permits a public native-IR proposal, then
+a final reply. Only an explicitly injected, scope-bound computation session can
+execute it. Normal CLI/UI and the existing GPQA adapter do not enable this path.
+The existing text-benchmark envelope explicitly rejects the new tool capability.
+
+Four development and eight fresh transfer objectives are frozen before inference:
+latent-dependent Bayesian selection, selected causal interventions, coupled
+state accumulation and conditional finite-population sampling. Separate Python
+Fraction/full-joint/iterative oracles cross-check all twelve before execution.
+These are implementer-authored numerical-modeling tasks, not official GPQA and
+not evidence of improved scientific factual knowledge. No GPQA questions,
+references, failure indices or private model reasoning are loaded for this work.
+
+Both arms receive the SAME first live public derivation. Proposal-only validates
+the native language but receives no computed quantities; exact execution returns
+the existing bounded workbench's result. A second model call interprets the
+observation and chooses an answer. The independent strict oracle grades only
+after the turn; no acceptance feedback or answer repair enters cognition.
+Transfer has both arm orders within every domain. The shared proposal is a
+replayed proposal, never a replayed operation or a fresh live observation.
+
+Limits: Super model unchanged, two logical calls per arm, 8192 output tokens per
+call, original 180-second task lease, six total shared HTTP attempts per pair,
+one prebound computation with 100,000 work units / 2000ms maximum. The second
+branch subtracts the shared prefix's elapsed time; neither lease nor dispatch
+budget is renewed. Only the fixed NVIDIA endpoint is authorized. No files,
+source writes, shell, deployment, credentials or general network tools.
+
+Unique provider evidence is counted once physically. Prefix tokens/requests are
+allocated half to each arm, separately from logical reuse and actual dispatch.
+Report 10% per-pair MODEL-compute matching, unknown usage, retries and latency;
+tool work/time is additional measured compute, not silently free or matched.
+Keep model-formulation errors, wrong choices, schema/native-IR failures,
+authorization failures, truncations and provider failures separate. No automatic
+promotion or near-100% GPQA claim follows from a small numerical pilot.
+
+Ω coverage: reuse validated computation, explicit scoped authority, generator /
+independent detector separation, common-proposal ablation and honest compute.
+Scientific-knowledge improvements, GPQA promotion, new brain layers and production
+authority are deferred. Corpus coverage remains PARTIAL / JUST-IN-TIME.

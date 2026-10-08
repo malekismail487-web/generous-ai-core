@@ -427,7 +427,7 @@ export function textOutcome(result: NyxChatTurnResult | null, evidence: readonly
   if (result.events.some(item => item.eventType === "DENIAL"
     && ["model_output_credential_pattern", "SENSITIVE_CONTENT_BLOCKED"].includes(item.outcome))) return "SECURITY_POLICY_REJECTION";
   if (result.events.some(item => item.eventType === "DENIAL" || item.eventType === "READ" && item.outcome !== "OBSERVED"
-    || item.eventType === "COMPUTER" || item.eventType === "CANDIDATE"))
+    || item.eventType === "COMPUTER" || item.eventType === "CANDIDATE" || item.eventType === "ANALYSIS"))
     return "PROTOCOL_OR_AUTHORIZATION_FAILURE";
   if (result.outcome === "BUDGET_EXHAUSTED") return "RESOURCE_EXHAUSTION";
   if (result.outcome === "REJECTED" && result.message === "Required whole-question observation not performed.")
@@ -441,7 +441,7 @@ export function textOutcome(result: NyxChatTurnResult | null, evidence: readonly
 export async function invokeExistingNyxText(config: NyxChatSessionConfig, question: string,
   delivery: "DIRECT" | "SCOPED_FILE" = "DIRECT") {
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_benchmark_delivery_invalid");
-  if (config.candidateWriter || config.computerHost || config.editablePaths.length
+  if (config.candidateWriter || config.computerHost || config.derivationSession || config.actionContract?.kind === "DERIVE_THEN_REPLY" || config.editablePaths.length
     || config.maxCandidatesPerTurn !== 0 || config.maxModelCallsPerTurn !== (delivery === "DIRECT" ? 1 : 2))
     throw Error("text_benchmark_authority_envelope_invalid");
   if (delivery === "SCOPED_FILE" && (config.reader.token.resourceScopes.length !== 1
