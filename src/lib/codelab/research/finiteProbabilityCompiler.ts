@@ -6,7 +6,7 @@ import { EXACT_DERIVATION_POLICY, quantitativeProgramFinding, validQuantitativeP
  * Interventions assume the stated Markovian DAG with independent exogenous noise.
  * This cannot infer missing causes, identify an unknown graph, or certify those assumptions.
  */
-export const FINITE_PROBABILITY_POLICY = Object.freeze({ version: "nyx-finite-probability-lowering/2",
+export const FINITE_PROBABILITY_POLICY = Object.freeze({ version: "nyx-finite-probability-lowering/3",
   maxVariables: 8, maxParents: 3, maxQueries: 4, maxOutputs: 4, maxInputBytes: 30000,
   maxCompilationWork: 30000, grantsAuthority: false });
 export interface ProbabilityAssignment { readonly variable: string; readonly value: boolean }
@@ -113,18 +113,32 @@ export function lowerFiniteProbability(problem: QuantitativeProblem, value: unkn
     const ref: Ref = { kind: "expression", index: nodes.length }; nodes.push({ op, left, right }); intern.set(key, ref); return ref;
   };
   const model = value as unknown as FiniteProbabilityModel;
+  const variableById = new Map(model.variables.map(node => [node.id, node]));
   const queryValues = new Map<string, Ref>();
   for (const query of model.queries) {
     if (!keys(query, ["id", "event", "given", "interventions"])) return fail("QUERY_SHAPE");
     if (!id(query.id)) return fail("QUERY_ID");
     if (queryValues.has(query.id)) return fail("QUERY_DUPLICATE");
     const event = assignments(query.event, 1), given = assignments(query.given), interventions = assignments(query.interventions);
+    // Only ancestors of the event/evidence can affect this marginal. In the
+    // intervened DAG an assigned node has no incoming mechanism. All original
+    // variables/tables were still validated above; pruning never admits bad data.
+    // This is exact marginalization of normalized factors, not approximation.
+    const relevant = new Set<string>();
+    const include = (name: string) => {
+      if (relevant.has(name)) return;
+      charge(); relevant.add(name);
+      if (!interventions.has(name)) variableById.get(name)!.parents.forEach(include);
+    };
+    event.forEach((_, name) => include(name)); given.forEach((_, name) => include(name));
+    const variables = model.variables.filter(node => relevant.has(node.id));
     let numerator = c(zero), denominator = c(zero);
-    for (let mask = 0; mask < 2 ** model.variables.length; mask++) {
-      charge(); const world = new Map(model.variables.map((v, i) => [v.id, !!(mask & 2 ** i)]));
-      if ([...given, ...interventions].some(([v, b]) => world.get(v) !== b)) continue;
+    for (let mask = 0; mask < 2 ** variables.length; mask++) {
+      charge(); const world = new Map(variables.map((v, i) => [v.id, !!(mask & 2 ** i)]));
+      if ([...given].some(([v, b]) => world.get(v) !== b)
+        || [...interventions].some(([v, b]) => relevant.has(v) && world.get(v) !== b)) continue;
       let weight = c(one);
-      for (const variable of model.variables) {
+      for (const variable of variables) {
         charge(); if (interventions.has(variable.id)) continue; // Remove its mechanism, NOT observational conditioning.
         const row = variable.parents.reduce((n, p) => 2 * n + Number(world.get(p)), 0);
         const p = c(variable.probabilityTrue[row]);

@@ -1,0 +1,1766 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-PROBABILITY-TRANSFER-D1955688-RECEIPT",
+  "source": {
+    "candidate": "d1955688c974c1d1d3af634d766a30c1ec920baa",
+    "runId": 37815945575,
+    "jobId": 113444493206,
+    "runAttempt": 1,
+    "runConclusion": "failure",
+    "runStartedAt": "2026-10-08T17:21:39Z",
+    "runUpdatedAt": "2026-10-08T17:32:35Z",
+    "artifactId": 11568160460,
+    "artifactName": "nyx-probability-transfer-d1955688c974c1d1d3af634d766a30c1ec920baa",
+    "archiveSha256": "5a054c207ba0085af2555f13be3366a3a5f03affdc5dc2e43751b3bf52c780ee",
+    "archiveSizeBytes": 19149,
+    "reportFileSha256": "9d6133e7046d318e4119013172ed5e375a4a9cfeba53640aa4d7fcc20a46073d",
+    "progressFileSha256": "5f73e5559e20eb51badf22860267eec4109e29dcc2470746aed949bac4a0dc6a",
+    "archiveVerified": true,
+    "reportAgreesWithTerminalLog": true,
+    "allEightRowsAgreeWithTerminalLog": true,
+    "progressRowsAndSelectionAgree": true,
+    "publicCorpusAndAllInputBindingsVerified": true,
+    "baselineReplay": {
+      "capsules": 3,
+      "allExecutionAgrees": true,
+      "modelCalls": 0
+    },
+    "sourceFiles": [
+      {
+        "path": "src/lib/codelab/research/finiteProbabilityCompiler.ts",
+        "sha256": "45a3fef26c0c604bd524759ffacb525457e578e8f12e9bef46f4aed58f37a116"
+      },
+      {
+        "path": "src/lib/codelab/research/boundedReasoningWorkbench.ts",
+        "sha256": "57e4887630def4ec1fe3cd422e9f6a709497686628b0017e017fd640fa7f4e7c"
+      },
+      {
+        "path": "src/lib/codelab/cli/nyxChatSession.ts",
+        "sha256": "8fac7ca3d54df9e1d2a061099dc5b763673c0a7af08f1b3d8ea7d012984cc0f0"
+      },
+      {
+        "path": "src/lib/codelab/cli/nyxChatProtocol.ts",
+        "sha256": "7895e0e39a7d65ba7d678c89ddeb435b41b90edda2b50ac605e83cbb0daafd2d"
+      },
+      {
+        "path": "scripts/omega/nyx-computation-transfer.ts",
+        "sha256": "cd5f320ddbec58a398509d50ab503786d9c5fd396cdc0fa26d13e2b4c02b9527"
+      },
+      {
+        "path": "scripts/omega/benchmarks/probabilityTransferTasks.ts",
+        "sha256": "c27183ff1fe30a42a28f0b47bcf5dda6a327ab8079f2340a8657518ccba6ca0c"
+      },
+      {
+        "path": ".github/workflows/omega-nyx-probability-model-one-shot.yml",
+        "sha256": "eac3709e8ade6bacb93f113e8cf826c814f1d7b1457674356f6830a965fe21b9"
+      }
+    ],
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37815945575"
+  },
+  "projectionPolicy": {
+    "kind": "ALLOWLISTED_ORIGINAL_REPORT_PROJECTION",
+    "omitted": [
+      "Native public model/action capsules and their program digests",
+      "Shared intent digests"
+    ],
+    "rawQuestionsStored": false,
+    "referenceAnswersStored": false,
+    "rawPrivateReasoningStored": false,
+    "credentialsStored": false
+  },
+  "originalReportProjection": {
+    "schemaVersion": 1,
+    "identity": "NYX-COMPUTATION-TRANSFER-001",
+    "candidate": "d1955688c974c1d1d3af634d766a30c1ec920baa",
+    "executionIdentity": "github-actions-37815945575",
+    "environment": "linux-x64-v24.21.0",
+    "policy": {
+      "version": 3,
+      "maxCallsPerArm": 2,
+      "maxOutputTokens": 8192,
+      "maxTaskMs": 180000,
+      "maxWorkUnits": 100000,
+      "maxToolMs": 2000,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "maxHttpAttemptsPerPair": 6,
+      "purpose": "FINITE_PROBABILISTIC_MODEL_FORMULATION_ABLATION_NOT_OFFICIAL_BENCHMARK",
+      "matchedModelComputeTolerance": 0.1,
+      "corpusDigest": "57f5d201640dfdf23f5a3de61680fd1f52c447cd3cffbde7c046aa84451d8e8c"
+    },
+    "stage": "PROBABILITY_TRANSFER",
+    "populationDigest": "f15dc0f836e1562b855271403fdad4523f264f6cc827ec98197075b2abba27ff",
+    "selectedTasks": [
+      {
+        "taskId": "PROBABILITY-TRANSFER-COLLIDER_DIAGNOSIS",
+        "stage": "TRANSFER",
+        "domain": "COLLIDER_DIAGNOSIS",
+        "inputDigest": "2d7b2630c44ab497bc3b77b023914b2defa250a3ff647fb71c331faf5c9c831c"
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-CONFOUNDED_ACTION",
+        "stage": "TRANSFER",
+        "domain": "CONFOUNDED_ACTION",
+        "inputDigest": "eaff882fec54c7751da58b58cb78bdd8e7b2c05dca7b2bbc1e867650e9547f1d"
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-SELECTED_CHAIN",
+        "stage": "TRANSFER",
+        "domain": "SELECTED_CHAIN",
+        "inputDigest": "23c0d017d8928d51306c3bbe6b18c7094ae0107f96c684740c06f987205b92ae"
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-RELIABILITY_MIXTURE",
+        "stage": "TRANSFER",
+        "domain": "RELIABILITY_MIXTURE",
+        "inputDigest": "fcd600a20f97e2c36191c90407fcebcab5123eaaa952dd65d9f266579ebca012"
+      }
+    ],
+    "selectedTaskArms": 8,
+    "attempted": 8,
+    "graded": 6,
+    "correct": 5,
+    "ungraded": 2,
+    "unexecuted": 0,
+    "actualUniqueModelUsage": {
+      "logicalCalls": 16,
+      "physicalCalls": 16,
+      "httpAttempts": 16,
+      "reportedTokens": 89177,
+      "unknownUsageCalls": 0,
+      "toolCalls": 0,
+      "toolWorkUnits": 0,
+      "wallClockMs": 610445,
+      "providerFailures": 0,
+      "retries": 0
+    },
+    "rows": [
+      {
+        "taskId": "PROBABILITY-TRANSFER-COLLIDER_DIAGNOSIS",
+        "stage": "TRANSFER",
+        "domain": "COLLIDER_DIAGNOSIS",
+        "arm": "FINITE_PROBABILITY",
+        "state": "PASS",
+        "correct": true,
+        "logicalCalls": 2,
+        "allocatedTokens": 6630,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 32249,
+        "allocatedElapsedMs": 32249,
+        "toolWorkUnits": 587,
+        "toolElapsedMs": 3,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 1.6260509999992792,
+        "prefixReplayed": false,
+        "inputDigest": "2d7b2630c44ab497bc3b77b023914b2defa250a3ff647fb71c331faf5c9c831c",
+        "computedModelCorrect": true,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 6630,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 32248,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 6630,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-8d7fc9a607fc7bf5f2ef82a80845fe73",
+            "requestDigest": "8d7fc9a607fc7bf5f2ef82a80845fe73b1e8b110da5151633c05e0f820f813cb",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1660,
+              "completionTokens": 3226,
+              "totalTokens": 4886
+            },
+            "reasoningOutputBytes": 7978,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480320266,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 1,
+                "remainingAttempts": 5,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-292def0560de9a826fba4abdc109ef67",
+            "requestDigest": "292def0560de9a826fba4abdc109ef6791d862e69698a2ec1ac040e0ab76bc3e",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1675,
+              "completionTokens": 69,
+              "totalTokens": 1744
+            },
+            "reasoningOutputBytes": 158,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480320266,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 2,
+                "remainingAttempts": 4,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-COLLIDER_DIAGNOSIS",
+        "stage": "TRANSFER",
+        "domain": "COLLIDER_DIAGNOSIS",
+        "arm": "BOUNDED_SCHEMA",
+        "state": "PASS",
+        "correct": true,
+        "logicalCalls": 2,
+        "allocatedTokens": 8480,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 53671,
+        "allocatedElapsedMs": 53671,
+        "toolWorkUnits": 396,
+        "toolElapsedMs": 1,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 1.068488000004436,
+        "prefixReplayed": false,
+        "inputDigest": "2d7b2630c44ab497bc3b77b023914b2defa250a3ff647fb71c331faf5c9c831c",
+        "computedModelCorrect": true,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8480,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 53671,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 8480,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-c1acb54b6a6e28f7abe13c3d7dac420b",
+            "requestDigest": "c1acb54b6a6e28f7abe13c3d7dac420bdb7b4a6076d7081eb9362b0126c553d2",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2083,
+              "completionTokens": 4467,
+              "totalTokens": 6550
+            },
+            "reasoningOutputBytes": 9969,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480352536,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 3,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-e36b3394f425abcab0006266a5a1aaee",
+            "requestDigest": "e36b3394f425abcab0006266a5a1aaeea5a680e215e2e1eabd26f7c092343fef",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1851,
+              "completionTokens": 79,
+              "totalTokens": 1930
+            },
+            "reasoningOutputBytes": 189,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480352536,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 4,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-CONFOUNDED_ACTION",
+        "stage": "TRANSFER",
+        "domain": "CONFOUNDED_ACTION",
+        "arm": "BOUNDED_SCHEMA",
+        "state": "PASS",
+        "correct": true,
+        "logicalCalls": 2,
+        "allocatedTokens": 8320,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 44661,
+        "allocatedElapsedMs": 44661,
+        "toolWorkUnits": 305,
+        "toolElapsedMs": 1,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 0.8737580000015441,
+        "prefixReplayed": false,
+        "inputDigest": "eaff882fec54c7751da58b58cb78bdd8e7b2c05dca7b2bbc1e867650e9547f1d",
+        "computedModelCorrect": true,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 8320,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 44661,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 8320,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-c0eebfa6b2a65e6edf8ba7113e0524c1",
+            "requestDigest": "c0eebfa6b2a65e6edf8ba7113e0524c1f1c4a0b6873c86bbc8203bf26b374457",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2121,
+              "completionTokens": 4261,
+              "totalTokens": 6382
+            },
+            "reasoningOutputBytes": 10443,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480406594,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 1,
+                "remainingAttempts": 5,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-9e0caa169c813d35938c8ae69d71cef3",
+            "requestDigest": "9e0caa169c813d35938c8ae69d71cef3bc97ca7d7b0c0a030a96520714f15b9a",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1838,
+              "completionTokens": 100,
+              "totalTokens": 1938
+            },
+            "reasoningOutputBytes": 271,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480406594,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 2,
+                "remainingAttempts": 4,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-CONFOUNDED_ACTION",
+        "stage": "TRANSFER",
+        "domain": "CONFOUNDED_ACTION",
+        "arm": "FINITE_PROBABILITY",
+        "state": "RESOURCE_EXHAUSTION",
+        "correct": null,
+        "logicalCalls": 2,
+        "allocatedTokens": 9286,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 58482,
+        "allocatedElapsedMs": 58482,
+        "toolWorkUnits": 643,
+        "toolElapsedMs": null,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": "derivation_ir_invalid",
+        "compilerFindings": [
+          "STEP_BOUND"
+        ],
+        "nativeReplayCaptureMs": 1.010911000019405,
+        "prefixReplayed": false,
+        "inputDigest": "eaff882fec54c7751da58b58cb78bdd8e7b2c05dca7b2bbc1e867650e9547f1d",
+        "computedModelCorrect": null,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 9286,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 58482,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 9286,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "DENIAL",
+            "outcome": "derivation_ir_invalid",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "DENIAL",
+            "outcome": "derivation_resource_exhausted",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-b4d62f3709e3af5c33c77ccb934d5eb4",
+            "requestDigest": "b4d62f3709e3af5c33c77ccb934d5eb4f18ca35e3f740e07eec8181e3bb27e65",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1686,
+              "completionTokens": 4541,
+              "totalTokens": 6227
+            },
+            "reasoningOutputBytes": 10794,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480451271,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 3,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-3a86d9c6ddb841b99839db6b2c62edb3",
+            "requestDigest": "3a86d9c6ddb841b99839db6b2c62edb3d0dd2131079ce021a15254b3c634b4e0",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2111,
+              "completionTokens": 948,
+              "totalTokens": 3059
+            },
+            "reasoningOutputBytes": 2479,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480451271,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 4,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-SELECTED_CHAIN",
+        "stage": "TRANSFER",
+        "domain": "SELECTED_CHAIN",
+        "arm": "FINITE_PROBABILITY",
+        "state": "PASS",
+        "correct": true,
+        "logicalCalls": 2,
+        "allocatedTokens": 9626,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 61873,
+        "allocatedElapsedMs": 61873,
+        "toolWorkUnits": 962,
+        "toolElapsedMs": 1,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 1.1459439999889582,
+        "prefixReplayed": false,
+        "inputDigest": "23c0d017d8928d51306c3bbe6b18c7094ae0107f96c684740c06f987205b92ae",
+        "computedModelCorrect": true,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 9626,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 61872,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 9626,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-976fa8fa56717b3d03384ef38a2524f6",
+            "requestDigest": "976fa8fa56717b3d03384ef38a2524f63f7e24d975bee834cfc8b84c2bf58f00",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1708,
+              "completionTokens": 5935,
+              "totalTokens": 7643
+            },
+            "reasoningOutputBytes": 12166,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480509770,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 1,
+                "remainingAttempts": 5,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-5d206cfd570fdb1682bfa144bb51fa24",
+            "requestDigest": "5d206cfd570fdb1682bfa144bb51fa246c6fc31cd86c268854ea7c0c9c1b738d",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1787,
+              "completionTokens": 196,
+              "totalTokens": 1983
+            },
+            "reasoningOutputBytes": 460,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480509770,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 2,
+                "remainingAttempts": 4,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-SELECTED_CHAIN",
+        "stage": "TRANSFER",
+        "domain": "SELECTED_CHAIN",
+        "arm": "BOUNDED_SCHEMA",
+        "state": "WRONG_VALID_CHOICE",
+        "correct": false,
+        "logicalCalls": 2,
+        "allocatedTokens": 17494,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 132727,
+        "allocatedElapsedMs": 132727,
+        "toolWorkUnits": 751,
+        "toolElapsedMs": 2,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 1.032989000028465,
+        "prefixReplayed": false,
+        "inputDigest": "23c0d017d8928d51306c3bbe6b18c7094ae0107f96c684740c06f987205b92ae",
+        "computedModelCorrect": false,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 17494,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 132727,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 17494,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-5a19ba4998a9919a5e07204c774c5484",
+            "requestDigest": "5a19ba4998a9919a5e07204c774c54843947a2e09fe1bf4fe89e08dd238a8a7f",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2143,
+              "completionTokens": 6975,
+              "totalTokens": 9118
+            },
+            "reasoningOutputBytes": 12407,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480571659,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 3,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-def0bdbb81c6fd9dcb0731c6f680c437",
+            "requestDigest": "def0bdbb81c6fd9dcb0731c6f680c4373a49eb830f0bb7145586fc6d8e868d2e",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2212,
+              "completionTokens": 6164,
+              "totalTokens": 8376
+            },
+            "reasoningOutputBytes": 12049,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480571659,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 4,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-RELIABILITY_MIXTURE",
+        "stage": "TRANSFER",
+        "domain": "RELIABILITY_MIXTURE",
+        "arm": "BOUNDED_SCHEMA",
+        "state": "SCHEMA_OR_NATIVE_IR_FAILURE",
+        "correct": null,
+        "logicalCalls": 2,
+        "allocatedTokens": 21655,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 167264,
+        "allocatedElapsedMs": 167264,
+        "toolWorkUnits": 924,
+        "toolElapsedMs": null,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": "derivation_ir_invalid",
+        "compilerFindings": [
+          "LOWERED_STEP_BOUND"
+        ],
+        "nativeReplayCaptureMs": 0.4508899999782443,
+        "prefixReplayed": false,
+        "inputDigest": "fcd600a20f97e2c36191c90407fcebcab5123eaaa952dd65d9f266579ebca012",
+        "computedModelCorrect": null,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 21655,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 167264,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 21655,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "DENIAL",
+            "outcome": "derivation_ir_invalid",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-c08827ad43b5396cbf051c37327717e6",
+            "requestDigest": "c08827ad43b5396cbf051c37327717e65dcbb5c511b2f53eb6cc809b32ecfba6",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 2107,
+              "completionTokens": 7962,
+              "totalTokens": 10069
+            },
+            "reasoningOutputBytes": 15445,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480704402,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 1,
+                "remainingAttempts": 5,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-7c38f1af4096c75fc1363edecb7da89c",
+            "requestDigest": "7c38f1af4096c75fc1363edecb7da89c52461aae521cc9e14043bf278ed2e40c",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 3972,
+              "completionTokens": 7614,
+              "totalTokens": 11586
+            },
+            "reasoningOutputBytes": 15291,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480704402,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 2,
+                "remainingAttempts": 4,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-RELIABILITY_MIXTURE",
+        "stage": "TRANSFER",
+        "domain": "RELIABILITY_MIXTURE",
+        "arm": "FINITE_PROBABILITY",
+        "state": "PASS",
+        "correct": true,
+        "logicalCalls": 2,
+        "allocatedTokens": 7686,
+        "allocatedHttpAttempts": 2,
+        "unknownUsageCalls": 0,
+        "providerFailures": 0,
+        "elapsedMs": 58999,
+        "allocatedElapsedMs": 58999,
+        "toolWorkUnits": 1155,
+        "toolElapsedMs": 2,
+        "nativeRequests": 1,
+        "firstDeniedActionOutcome": null,
+        "compilerFindings": [],
+        "nativeReplayCaptureMs": 0.8319509999128059,
+        "prefixReplayed": false,
+        "inputDigest": "fcd600a20f97e2c36191c90407fcebcab5123eaaa952dd65d9f266579ebca012",
+        "computedModelCorrect": true,
+        "logicalUsage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 7686,
+          "unknownUsageCalls": 0,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 58999,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "physicalAccounting": {
+          "physicalCalls": 2,
+          "physicalTokens": 7686,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 2
+        },
+        "events": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "ANALYSIS",
+            "outcome": "CONSTRUCTED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 4,
+            "eventType": "REPLY",
+            "outcome": "REPLIED",
+            "evidenceClass": "E3"
+          }
+        ],
+        "evidence": [
+          {
+            "evidenceId": "NVIDIA-NIM-77dff7e6961feba891964489defd91a7",
+            "requestDigest": "77dff7e6961feba891964489defd91a7c52197e51c9f145b974fddf88004f4e2",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1672,
+              "completionTokens": 4204,
+              "totalTokens": 5876
+            },
+            "reasoningOutputBytes": 9514,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480871682,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 3,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "evidenceId": "NVIDIA-NIM-2cfc4bdfeb19a61076eaebb2c8cc9868",
+            "requestDigest": "2cfc4bdfeb19a61076eaebb2c8cc9868561d80f8f1c1cc3e5420d32e9a6ab47a",
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "usage": {
+              "promptTokens": 1677,
+              "completionTokens": 133,
+              "totalTokens": 1810
+            },
+            "reasoningOutputBytes": 265,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1791480871682,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 6,
+                "dispatched": 4,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      }
+    ],
+    "pairs": [
+      {
+        "taskId": "PROBABILITY-TRANSFER-COLLIDER_DIAGNOSIS",
+        "stage": "TRANSFER",
+        "domain": "COLLIDER_DIAGNOSIS",
+        "providerStable": true,
+        "matchedModelCompute": false,
+        "totalComputeMatched": false,
+        "toolWorkUnits": [
+          587,
+          396
+        ],
+        "interpretation": "TOOL_COMPUTE_IS_THE_TREATMENT_NOT_FREE_OR_MATCHED",
+        "sharedProposalMatched": false,
+        "executionTreatmentDelivered": true,
+        "outcomes": [
+          {
+            "arm": "FINITE_PROBABILITY",
+            "state": "PASS",
+            "correct": true
+          },
+          {
+            "arm": "BOUNDED_SCHEMA",
+            "state": "PASS",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-CONFOUNDED_ACTION",
+        "stage": "TRANSFER",
+        "domain": "CONFOUNDED_ACTION",
+        "providerStable": true,
+        "matchedModelCompute": false,
+        "totalComputeMatched": false,
+        "toolWorkUnits": [
+          305,
+          643
+        ],
+        "interpretation": "TOOL_COMPUTE_IS_THE_TREATMENT_NOT_FREE_OR_MATCHED",
+        "sharedProposalMatched": false,
+        "executionTreatmentDelivered": true,
+        "outcomes": [
+          {
+            "arm": "BOUNDED_SCHEMA",
+            "state": "PASS",
+            "correct": true
+          },
+          {
+            "arm": "FINITE_PROBABILITY",
+            "state": "RESOURCE_EXHAUSTION",
+            "correct": null
+          }
+        ]
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-SELECTED_CHAIN",
+        "stage": "TRANSFER",
+        "domain": "SELECTED_CHAIN",
+        "providerStable": true,
+        "matchedModelCompute": false,
+        "totalComputeMatched": false,
+        "toolWorkUnits": [
+          962,
+          751
+        ],
+        "interpretation": "TOOL_COMPUTE_IS_THE_TREATMENT_NOT_FREE_OR_MATCHED",
+        "sharedProposalMatched": false,
+        "executionTreatmentDelivered": true,
+        "outcomes": [
+          {
+            "arm": "FINITE_PROBABILITY",
+            "state": "PASS",
+            "correct": true
+          },
+          {
+            "arm": "BOUNDED_SCHEMA",
+            "state": "WRONG_VALID_CHOICE",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "taskId": "PROBABILITY-TRANSFER-RELIABILITY_MIXTURE",
+        "stage": "TRANSFER",
+        "domain": "RELIABILITY_MIXTURE",
+        "providerStable": true,
+        "matchedModelCompute": false,
+        "totalComputeMatched": false,
+        "toolWorkUnits": [
+          924,
+          1155
+        ],
+        "interpretation": "TOOL_COMPUTE_IS_THE_TREATMENT_NOT_FREE_OR_MATCHED",
+        "sharedProposalMatched": false,
+        "executionTreatmentDelivered": true,
+        "outcomes": [
+          {
+            "arm": "BOUNDED_SCHEMA",
+            "state": "SCHEMA_OR_NATIVE_IR_FAILURE",
+            "correct": null
+          },
+          {
+            "arm": "FINITE_PROBABILITY",
+            "state": "PASS",
+            "correct": true
+          }
+        ]
+      }
+    ],
+    "blocked": [],
+    "nativeToolUsage": {
+      "workUnits": 5723,
+      "requests": 8,
+      "elapsedMs": null,
+      "knownElapsedMs": 10,
+      "unknownElapsedRows": 2,
+      "scope": "HOST_SESSION_COUNTERS_INCLUDE_REJECTED_COMPILATION_UNRETURNED_ELAPSED_UNKNOWN"
+    },
+    "nativeReplayCaptureElapsedMs": 8.040981999933138,
+    "intervention": "DECLARATIVE_PROBABILISTIC_MODEL_VS_BOUNDED_PHASE_IR",
+    "firstProposalProtocol": "INDEPENDENT_INFERENCE_REPRESENTATION_IS_THE_INTERVENTION",
+    "representationAcceptance": {
+      "scope": "CORRECT_FINAL_CHOICE_AND_CORRECT_NATIVE_QUANTITY_REQUIRED",
+      "byArm": [
+        {
+          "arm": "BOUNDED_SCHEMA",
+          "selected": 4,
+          "attempted": 4,
+          "correctChoices": 2,
+          "correctQuantities": 2,
+          "jointlyAccepted": 2
+        },
+        {
+          "arm": "FINITE_PROBABILITY",
+          "selected": 4,
+          "attempted": 4,
+          "correctChoices": 3,
+          "correctQuantities": 3,
+          "jointlyAccepted": 3
+        }
+      ]
+    },
+    "sourceUnchanged": true,
+    "firstAttemptsOnly": true,
+    "semanticRepairs": 0,
+    "feedbackFromGraderToCognition": false,
+    "officialBenchmark": false,
+    "modelDefaultChanged": false,
+    "productionAuthority": false,
+    "networkScope": "CONFIGURED_NVIDIA_ENDPOINT_ONLY",
+    "toolScope": "PREBOUND_FINITE_EXACT_ARITHMETIC_ONLY_NO_FILES_SHELL_OR_NETWORK",
+    "priorGpqaScorePreserved": true,
+    "gpqaQuestionsOrAnswersLoaded": false,
+    "rawPrivateReasoningStored": false,
+    "nativeReplayScope": "PUBLIC_NATIVE_TOOL_ACTION_AND_OUTPUT_ONLY_SYNTHETIC_DEVELOPMENT_NO_ORACLE_OR_PRIVATE_INFERENCE",
+    "oracleIndependence": "E3_IMPLEMENTER_AUTHORED_WITH_SEPARATE_PYTHON_FRACTION_CROSSCHECK_NOT_INDEPENDENT_REPLICATION",
+    "inferenceEvidence": "E4_LIVE_NVIDIA_INDEPENDENT_PROPOSALS_NO_REPLAY",
+    "interpretation": "SYNTHETIC_MODELING_REPRESENTATION_ABLATION_NOT_GPQA_OR_BROAD_COGNITIVE_PROMOTION",
+    "computeAccounting": "PHYSICAL_COMPLETION_CALLBACKS_COUNTED_ONCE_PREFIX_REPLAY_NOT_DISPATCHED_REQUEST_DIGEST_IS_NOT_EXECUTION_ID_TOOL_COST_ADDITIONAL",
+    "calibration": "NOT_SUPPORTED_BY_FINAL_CHOICE_PROTOCOL",
+    "broadPromotion": false,
+    "automaticPromotion": false,
+    "stopReason": "SELECTION_EXHAUSTED",
+    "epochElapsedMs": 610445
+  },
+  "analysis": {
+    "candidatePromoted": false,
+    "baselineJointlyAccepted": 2,
+    "candidateJointlyAccepted": 3,
+    "developmentBaselineJointlyAccepted": 4,
+    "developmentCandidateJointlyAccepted": 3,
+    "providerStablePairs": 4,
+    "matchedRealizedModelComputePairs": 0,
+    "failureClasses": {
+      "FINITE_PROBABILITY:STEP_BOUND": 1,
+      "BOUNDED_SCHEMA:LOWERED_STEP_BOUND": 1,
+      "BOUNDED_SCHEMA:WRONG_NATIVE_QUANTITY_AND_VALID_CHOICE": 1
+    },
+    "causalOrder": [
+      {
+        "arm": "FINITE_PROBABILITY",
+        "first": "derivation_ir_invalid",
+        "compiler": "STEP_BOUND",
+        "later": "derivation_resource_exhausted",
+        "note": "One native request had already been consumed; the original terminal classification is preserved."
+      },
+      {
+        "arm": "BOUNDED_SCHEMA",
+        "first": "derivation_ir_invalid",
+        "compiler": "LOWERED_STEP_BOUND",
+        "note": "An overlong lowered program is not a wrong hidden answer."
+      }
+    ],
+    "stepFailureProposalsRetained": false,
+    "exactRejectedModelStructure": "UNKNOWN_NOT_RECONSTRUCTED_FROM_DIGEST",
+    "independentExecutionReplay": {
+      "probabilityModels": 3,
+      "phaseIrPrograms": 3,
+      "allAgreement": true,
+      "establishesModelValidity": false,
+      "evidenceClass": "E3_SEPARATE_LANGUAGE_NOT_INDEPENDENT_REPLICATION"
+    },
+    "nativeAccounting": {
+      "rejectedWorkIncluded": true,
+      "requests": 8,
+      "workUnits": 5723,
+      "totalElapsedMs": null,
+      "knownElapsedMs": 10,
+      "unknownElapsedRows": 2
+    },
+    "falseAcceptanceAudit": "NOT_EXECUTED",
+    "calibration": "NOT_MEASURED",
+    "interpretation": "The candidate's narrow 3/4 versus 2/4 transfer advantage is not a matched-compute cognitive gain. Candidate acceptance did not improve over development. Preserve both epochs and investigate general bounded inference cost, not frozen answers.",
+    "nextCorrectionHypothesis": "Query-relevance pruning can eliminate irrelevant DAG factors before exact enumeration without raising the 64-step/32-register/resource/authority limits; reproduce on separate development models before promotion.",
+    "officialBenchmarkClaim": false,
+    "crossBenchmark80PercentEstablished": false,
+    "authorityDelta": "NONE"
+  },
+  "postEpochCorrection": {
+    "implementationBase": "273644c72e4c8877b3631dd7c6a425abdf2dd282",
+    "mechanism": "EXACT_ANCESTRAL_QUERY_RELEVANCE_IN_INTERVENED_DAG",
+    "priorPolicy": "nyx-finite-probability-lowering/2",
+    "currentPolicy": "nyx-finite-probability-lowering/3",
+    "reproduction": "An eight-variable model with seven query-irrelevant variables hit STEP_BOUND in the pinned predecessor; the corrected compiler uses three steps.",
+    "preservedLimits": {
+      "steps": 64,
+      "registers": 32,
+      "maxVariables": 8,
+      "maxParents": 3,
+      "maxQueries": 4,
+      "maxOutputs": 4,
+      "maxCompilationWork": 30000,
+      "resourceLeaseAndRequestBudgets": "UNCHANGED",
+      "authorityDelta": "NONE"
+    },
+    "developmentComparison": {
+      "seed": "0x76a92d31",
+      "selectedModels": 200,
+      "priorCompilerAdmitted": 112,
+      "currentCompilerAdmitted": 198,
+      "newlyAdmitted": 86,
+      "admissionRegressions": 0,
+      "independentOracleCases": 409,
+      "allOracleAgreement": true,
+      "admissionDoesNotImplyDefinedProbability": true,
+      "modelCalls": 0
+    },
+    "additionalDifferential": {
+      "seed": "0x6c892a13",
+      "attempted": 600,
+      "accepted": 583,
+      "rejected": {
+        "STEP_BOUND": 17
+      },
+      "statuses": {
+        "CONSTRUCTED": 365,
+        "INSUFFICIENT_EVIDENCE": 218
+      },
+      "executionFailures": 0,
+      "oracles": [
+        {
+          "cases": 250,
+          "agreement": true,
+          "scope": "E3_SEPARATE_LANGUAGE_NOT_INDEPENDENT_REPLICATION"
+        },
+        {
+          "cases": 250,
+          "agreement": true,
+          "scope": "E3_SEPARATE_LANGUAGE_NOT_INDEPENDENT_REPLICATION"
+        },
+        {
+          "cases": 83,
+          "agreement": true,
+          "scope": "E3_SEPARATE_LANGUAGE_NOT_INDEPENDENT_REPLICATION"
+        }
+      ],
+      "scope": "DEVELOPMENT_DIFFERENTIAL_CHECK_NOT_COGNITIVE_GAIN",
+      "acceptedMeans": "COMPILER_ADMITTED_NOT_BENCHMARK_SCORE",
+      "reproduction": "node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/benchmarks/check-probability-relevance.mjs"
+    },
+    "verification": {
+      "suites": 109,
+      "checks": 11344,
+      "failedSuites": 0,
+      "failedChecks": 0,
+      "finiteProbabilityChecks": 160,
+      "arcIntegrationChecks": 236,
+      "chatChecks": 42,
+      "textBenchmarkChecks": 238,
+      "typescriptVersion": "5.8.3",
+      "typescriptBaseline": 0,
+      "typescriptCurrent": 0,
+      "typescriptNew": 0,
+      "explicitScriptTypecheck": "PASS",
+      "productionBuild": "PASS",
+      "existingBuildWarnings": "UNCHANGED",
+      "secretScanTrackedTextFiles": 1283,
+      "secretScanFindings": 0
+    },
+    "liveFailureSpecificResolution": "UNPROVEN_REJECTED_PROPOSALS_NOT_RETAINED_OR_RERUN",
+    "modelFormulationCorrection": "NOT_CLAIMED",
+    "liveModelCognitiveGain": "NOT_ESTABLISHED",
+    "promotion": false,
+    "sourceRepositoryExecutionAuthorityExpanded": false,
+    "defaultUltraChanged": false,
+    "researchBasis": "https://people.csail.mit.edu/dsontag/courses/inference14/slides/lecture6.pdf",
+    "planCoverage": {
+      "direct": [
+        "QUERY_RELEVANT_EXACT_INFERENCE",
+        "SAFETY_LIMITS_PRESERVED",
+        "GENERAL_REPRODUCTION_NOT_ANSWER_MEMORIZATION"
+      ],
+      "supporting": [
+        "VALIDATED_INDEPENDENT_DETECTOR",
+        "EVIDENCE_OVER_CONFIDENCE"
+      ],
+      "deferred": [
+        "LIVE_COGNITIVE_PROMOTION",
+        "PRODUCTION_DEPLOYMENT"
+      ],
+      "conflicts": [],
+      "status": "PARTIAL_JUST_IN_TIME"
+    }
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "FROZEN_TOPOLOGY_TRANSFER",
+      "PRESERVE_FIRST_ATTEMPT_NEGATIVE_EVIDENCE",
+      "HONEST_REALIZED_COMPUTE_ACCOUNTING"
+    ],
+    "supporting": [
+      "EVIDENCE_OVER_CONFIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "GENERATOR_REQUIRES_VALIDATED_DETECTOR"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "OFFICIAL_BENCHMARK_RETESTING",
+      "PRODUCTION_AUTHORITY"
+    ],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}

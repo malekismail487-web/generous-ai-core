@@ -1369,3 +1369,61 @@ no exposed official benchmark question or answer enters the mechanism.
 and honest resource accounting; supports bounded leases and fresh transfer.
 Defers promotion, official benchmark retesting and production authority. No
 authority or acceptance rule is superseded. Coverage: PARTIAL / JUST-IN-TIME.
+
+### Topology-changing probability transfer and bounded relevance repair
+
+Frozen candidate `d1955688`, [run 37815945575](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37815945575),
+completed all eight selected task-arms: six graded, five correct, two ungraded,
+none unexecuted. Declarative probability jointly accepted **3/4**; phase IR
+accepted **2/4**, under the unchanged final-choice AND native-quantity oracle.
+All four pairs were provider-stable, but **zero** met the frozen 10% realized
+model-compute tolerance. There is no cognitive promotion or official benchmark
+score. The candidate also remained 3/4 from development to transfer.
+
+The baseline produced one wrong native quantity/valid choice and one
+`LOWERED_STEP_BOUND` rejection. Probability produced one `STEP_BOUND` rejection,
+followed by native-request exhaustion; both causal order and original terminal
+classification remain preserved. Rejected proposal structures were not retained;
+their precise algebra cannot be inferred from digests. Three admitted probability
+models and three phase-IR programs replay exactly. That verifies execution, not
+the scientific validity of the proposed models.
+
+The run spent 16 logical/physical calls and **89,177 reported model tokens**,
+with zero provider failures, retries or unknown-usage calls. Native counters
+include all eight consumed requests and **5,723 work units**, including rejected
+compilation. Native elapsed time totals remain unknown: 10 ms was returned and
+two rejected analyses returned no time. Artifact, logs, progress, input bindings
+and source hashes agree; the [receipt](../../../docs/omega/evidence/nyx-probability-transfer-d1955688.json)
+preserves the original result separately from subsequent changes.
+
+Compiler version `nyx-finite-probability-lowering/3` now prunes variables outside
+the ancestors of each query's event/evidence in the intervened DAG. This is exact
+normalized-factor marginalization, not approximation or relaxed acceptance
+([Sontag, lecture 6, slides 4–6](https://people.csail.mit.edu/dsontag/courses/inference14/slides/lecture6.pdf)).
+All original variables/tables are validated first. Intervention conflicts,
+impossible evidence, unused query guards, expiry/revocation and the original
+64-step/32-register/work/request limits remain enforced.
+
+On 200 separate fixed-seed development models, the pinned predecessor admitted
+112 declarations; the new compiler admitted 198, with 86 newly admitted and
+zero admission regressions. Admission is not necessarily a defined probability:
+undefined conditioning still fails closed. All 409 admitted/special cases agree
+with the unpruned separate-language Fraction oracle. A separate 600-model stress
+check admitted 583: 365 constructed exact results, 218 correctly undefined cases;
+17 still hit the unchanged step bound, zero unexpected execution failures.
+These are E3 native execution/coverage gains, **not live-model cognitive gains**
+or independent replication. The rejected live proposals have not been repaired
+or rerun, and the frozen tasks/oracle are unchanged.
+
+Reproduce the additional multi-query/intervention check from the repository root:
+
+```powershell
+node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/benchmarks/check-probability-relevance.mjs
+```
+
+Ω coverage: directly implements query-relevant exact inference and preserves
+negative transfer evidence; supports generator/detector separation and unchanged
+leases/authority. Defers live reasoning promotion and production deployment.
+No security/acceptance rule is superseded. Coverage: PARTIAL / JUST-IN-TIME.
+The ≥80% cross-benchmark goal remains unachieved. The next evaluation priority
+is the existing actual-benchmark path, not another speculative cognitive layer.

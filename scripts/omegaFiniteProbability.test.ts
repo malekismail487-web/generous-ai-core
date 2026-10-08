@@ -106,7 +106,21 @@ const circular: Record<string, unknown> = { ...model }; circular.extra = circula
 check(rejects(() => lowerFiniteProbability(problem, circular), "NON_DATA"), "cycles fail closed");
 const large = { ...model, variables: Array.from({ length: 8 }, (_, i) => ({ id: `V${i}`, parents: [], probabilityTrue: ["base"] })),
   queries: [{ id: "q", event: [event("V0")], given: [], interventions: [] }] };
-check(rejects(() => lowerFiniteProbability(problem, large), "STEP_BOUND"), "exponential inference never widens the existing 64-step envelope");
+check(solve(problem, large).payload?.outputs?.[0]?.value === "1/5"
+  && lowerFiniteProbability(problem, large).program.blocks.flatMap(b => b.steps).length === 3,
+  "irrelevant variables marginalize exactly instead of consuming the unchanged step envelope");
+const dense = { ...large, queries: [{ ...large.queries[0], event: large.variables.map(v => event(v.id)) }] };
+check(rejects(() => lowerFiniteProbability(problem, dense), "STEP_BOUND"), "relevant exponential inference still cannot widen the 64-step envelope");
+const cut = { ...large, variables: large.variables.map((node, index) => ({ ...node,
+  parents: index ? [`V${index - 1}`] : [], probabilityTrue: index ? ["low", "high"] : ["base"] })),
+  queries: [{ id: "q", event: [event("V7")], given: [], interventions: [event("V7")] }] };
+check(solve(problem, cut).payload?.outputs?.[0]?.value === "1", "intervention removes incoming ancestry, not the event's fixed identity");
+const unusedInvalid = { ...model, queries: [...model.queries, { id: "unused", event: [event("A")],
+  given: [event("B")], interventions: [event("B", false)] }] };
+check(solve(problem, unusedInvalid).status === "INSUFFICIENT_EVIDENCE", "pruning cannot erase an unused query's undefined conditioning");
+check(rejects(() => lowerFiniteProbability(problem, { ...large, variables: [...large.variables.slice(0, -1),
+  { ...large.variables.at(-1)!, probabilityTrue: ["invented"] }] }), "PROBABILITY"),
+  "irrelevant variables remain fully validated before pruning");
 const colliding = { ...problem, constants: [...problem.constants, { id: "prob0", value: "7/10" }] };
 check(solve(colliding).payload?.outputs?.[0]?.value === "2/3", "register allocation cannot shadow immutable constants");
 const Ajv = createRequire(import.meta.url)("ajv");
@@ -138,6 +152,46 @@ for (let i = 0; i < 200; i++) {
   const result = solve(p, m);
   cases.push({ problem: p, model: m, status: result.status, outputs: result.payload?.outputs });
 }
+// Separate general development models, not the exposed live transfer proposals.
+// The predecessor source is loaded verbatim in memory: no copied executor or
+// relaxed policy. This comparison measures native compiler coverage, not cognition.
+const ts = createRequire(import.meta.url)("typescript");
+const priorSource = execFileSync("git", ["show", "d1955688c974c1d1d3af634d766a30c1ec920baa:src/lib/codelab/research/finiteProbabilityCompiler.ts"], { encoding: "utf8" });
+const priorJavaScript = ts.transpileModule(priorSource.replace('"./exactQuantitativeDerivation"',
+  JSON.stringify(new URL("../src/lib/codelab/research/exactQuantitativeDerivation.ts", import.meta.url).href)),
+  { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+const prior = await import(`data:text/javascript;base64,${Buffer.from(priorJavaScript).toString("base64")}`);
+check(prior.FINITE_PROBABILITY_POLICY.version === "nyx-finite-probability-lowering/2", "coverage comparison pins exact reviewed predecessor");
+check(rejects(() => prior.lowerFiniteProbability(problem, large), "STEP_BOUND"), "reproduce irrelevant-factor step rejection in predecessor");
+let relevanceSeed = 0x76a92d31;
+const draw = (bound: number) => { relevanceSeed = (Math.imul(relevanceSeed, 1664525) + 1013904223) >>> 0; return (relevanceSeed >>> 8) % bound; };
+let priorAdmitted = 0, currentAdmitted = 0, improved = 0, regressed = 0, rejected = 0;
+for (let i = 0; i < 200; i++) {
+  const p: QuantitativeProblem = { kind: "EXACT_QUANTITATIVE_DERIVATION", constants: [
+    { id: "zero", value: "0" }, { id: "one", value: "1" },
+    ...Array.from({ length: 7 }, (_, j) => ({ id: `p${j}`, value: `${draw(11)}/10` }))] };
+  const count = 1 + draw(8);
+  const variables = Array.from({ length: count }, (_, j) => { const parents = j && draw(2) ? [`N${draw(j)}`] : [];
+    return { id: `N${j}`, parents, probabilityTrue: Array.from({ length: 2 ** parents.length }, () => `p${draw(7)}`) }; });
+  const m: FiniteProbabilityModel = { schemaVersion: 3, semantics: "MARKOVIAN_BINARY_DAG", variables,
+    queries: [{ id: "q", event: [event(`N${draw(count)}`, !!draw(2))],
+      given: draw(3) ? [] : [event(`N${draw(count)}`, !!draw(2))],
+      interventions: draw(3) ? [] : [event(`N${draw(count)}`, !!draw(2))] }], outputs: model.outputs };
+  let previous = false, current = false;
+  try { prior.lowerFiniteProbability(p, m); previous = true; }
+  catch (error) { check(["STEP_BOUND", "REGISTER_BOUND"].includes(prior.finiteProbabilityDiagnostic(error)), "predecessor rejection stays explicitly bounded"); }
+  try { lowerFiniteProbability(p, m); current = true; }
+  catch (error) { check(["STEP_BOUND", "REGISTER_BOUND"].includes(finiteProbabilityDiagnostic(error)!), "current rejection stays explicitly bounded"); }
+  priorAdmitted += Number(previous); currentAdmitted += Number(current);
+  improved += Number(!previous && current); regressed += Number(previous && !current); rejected += Number(!current);
+  if (current) { const result = solve(p, m);
+    cases.push({ problem: p, model: m, status: result.status, outputs: result.payload?.outputs }); }
+}
+for (const m of [large, cut, unusedInvalid]) { const result = solve(problem, m);
+  cases.push({ problem, model: m, status: result.status, outputs: result.payload?.outputs }); }
+check(improved > 0 && regressed === 0, "query relevance increases admissible exact model coverage without relaxing execution bounds");
+console.log(`NYX_PROBABILITY_RELEVANCE_DEVELOPMENT ${JSON.stringify({ seed: "0x76a92d31", selected: 200,
+  priorAdmitted, currentAdmitted, improved, regressed, rejected, modelCalls: 0, authorityDelta: "NONE", cognitiveGainClaim: false })}`);
 const development = probabilityTransferTasks("DEVELOPMENT"), transfer = probabilityTransferTasks("TRANSFER");
 check(development.length === 4 && transfer.length === 4 && development.every((t, i) =>
   theoryDigest(t.referenceModel.variables.map(v => v.parents)) !== theoryDigest(transfer[i].referenceModel.variables.map(v => v.parents))),
@@ -152,7 +206,7 @@ const python = process.env.OMEGA_PYTHON ?? (process.platform === "win32"
 try {
   const oracle = JSON.parse(execFileSync(python, ["-B", "scripts/omega/benchmarks/check-finite-probability.py"],
     { input: JSON.stringify(cases), encoding: "utf8", timeout: 20000 }));
-  check(oracle.agreement === true && oracle.cases === 208, "200 generated models and eight frozen objectives agree with separate-language full-joint oracle");
+  check(oracle.agreement === true && oracle.cases === cases.length, "all admitted development models and eight frozen objectives agree with unpruned separate-language full-joint oracle");
 } catch { check(false, "independent oracle must actually execute and agree"); }
 
 const root = await mkdtemp(join(tmpdir(), "nyx-probability-test-"));
