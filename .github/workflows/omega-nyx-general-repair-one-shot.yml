@@ -1,9 +1,6 @@
 name: Omega NYX native derivation diagnostic
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-computation-transfer.ts]
 permissions:
   contents: read
 concurrency:
