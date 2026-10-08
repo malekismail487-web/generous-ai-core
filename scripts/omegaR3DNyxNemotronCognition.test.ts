@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import Ajv from "ajv";
+import { nyxDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -502,6 +504,75 @@ async function evaluate(content: string, requestOverride: Partial<NyxRepairCogni
 }
 function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCategory): boolean {
   return result.schemaDiagnostics.some((item) => item.category === category);
+}
+
+{
+  // Independent JSON Schema validation, using the lockfile-pinned existing ESLint dependency.
+  // These synthetic development intents contain no ARC task content or oracle answers.
+  const validator = new Ajv({ allErrors: true, strictKeywords: true });
+  const scenarios = [
+    { request: request(), value: JSON.parse(intent()) },
+    { request: request(), value: { decision: "NO_ACTION", diagnosis: "Required external policy is unavailable.",
+      uncertainties: ["The policy cannot be inferred from these files."] } },
+    { request: request({availableEvidence: [{evidenceRef: "AVAILABLE:policy",kind: "FILE",relativePath: "src/policy.ts",
+      description: "Authoritative policy constants"}]}), value: {decision: "REQUEST_EVIDENCE",diagnosis: "Read the policy first.",
+      uncertainties: ["Which constant is authoritative?"],requestedEvidenceRefs: ["AVAILABLE:policy"]} },
+  ];
+  for (const scenario of scenarios) {
+    const contract = buildNyxRepairIntentContract(scenario.request);
+    const schema = nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields);
+    const legacy = validator.compile(contract.providerSchema);
+    const aligned = validator.compile(schema);
+    check(aligned(scenario.value), `${scenario.value.decision} valid development intent satisfies its generation branch`);
+    const required = contract.requiredFields[scenario.value.decision as keyof typeof contract.requiredFields];
+    for (const field of required) {
+      const missing = {...scenario.value}; delete missing[field];
+      check(!aligned(missing), `${scenario.value.decision} generation cannot omit required ${field}`);
+      if (!["decision", "diagnosis"].includes(field))
+        check(legacy(missing), `reproduce optional-wire/local-required mismatch for ${scenario.value.decision}.${field}`);
+    }
+    check(Object.isFrozen(schema) && Object.isFrozen(schema.anyOf) && schema.anyOf.every(Object.isFrozen),
+      `${scenario.value.decision} host-derived generation branches are immutable`);
+  }
+  const contract = buildNyxRepairIntentContract(request({maxChanges: 1,maxCounterexamples: 1}));
+  const aligned = validator.compile(nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields));
+  check(!aligned(JSON.parse(intent({evidenceRefs: ["FILE:src/unobserved.ts"]}))),
+    "decision-complete grammar retains exact admitted evidence enumeration");
+  check(!aligned(JSON.parse(intent({changes: [{target: "../escape.ts",replacement: repaired}]}))),
+    "decision-complete grammar retains authorized target enumeration");
+  check(!aligned(JSON.parse(intent({counterexamples: ["one", "two"]}))),
+    "decision-complete grammar retains original hosted array bounds");
+  check(!aligned(JSON.parse(intent({shell: "not an authorized action"}))),
+    "decision-complete grammar retains closed object fields");
+  let wire: Record<string, unknown> = {};
+  const make = (content: string) => NyxNemotronEngineeringCognition.create({cognitionId: "DECISION-REQUIRED-DEVELOPMENT",
+    provider: provider(async (url,init) => {wire=JSON.parse(String(init?.body));return transportFor(content)(url,init);}),
+    maxPromptBytes: 50000,maxOutputTokens: 1024,providerIntentShape: "DECISION_REQUIRED_FIELDS"});
+  const accepted = await make(intent()).proposeRepair(request());
+  check(accepted.decision === "PROPOSED" && !accepted.omegaAuthorityGranted
+    && Array.isArray((wire.response_format as any).json_schema.schema.anyOf),
+    "shared cognition forwards explicit decision-complete grammar without execution authority");
+  const missing = JSON.parse(intent()); delete missing.evidenceRefs;
+  const rejected = await make(JSON.stringify(missing)).proposeRepair(request());
+  check(rejected.decision === "COGNITION_ERROR" && has(rejected,"MISSING_REQUIRED_FIELD") && !rejected.hypothesis,
+    "nonconforming provider still fails unchanged local validation; citations are never filled automatically");
+  const empty = await make(intent({evidenceRefs: []})).proposeRepair(request());
+  check(empty.decision === "COGNITION_ERROR" && has(empty,"SEMANTIC_REPAIR_INVALID"),
+    "generation field presence is not a substitute for local evidence semantics");
+  const unsafe = await make(intent({changes: [{target: "src/math.ts",replacement: "export const add = ( ;"}]})).proposeRepair(request());
+  check(unsafe.decision === "COGNITION_ERROR" && has(unsafe,"SOURCE_QUALITY_INVALID"),
+    "decision-complete generation cannot bypass source syntax admission");
+  for (const value of [null,"UNKNOWN",true,{},[]]) {
+    let rejected = false;
+    try { NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-DECISION-POLICY",provider:provider(transportFor(intent())),
+      maxPromptBytes:50000,maxOutputTokens:1024,providerIntentShape:value as never}); } catch { rejected=true; }
+    check(rejected,"invalid generation policy rejected before inference");
+  }
+  for (const actions of [["__proto__"],["PROPOSE_EDIT","PROPOSE_EDIT"],[]]) {
+    let rejected=false;
+    try { nyxDecisionRequiredProviderSchema(contract.providerSchema,actions,contract.requiredFields); } catch { rejected=true; }
+    check(rejected,"unknown, duplicated, or empty generation decisions fail closed");
+  }
 }
 
 function schemaKeys(value: unknown): string[] {

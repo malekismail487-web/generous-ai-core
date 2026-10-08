@@ -14,6 +14,7 @@ import { ARRAY_BOUND_TRANSFER_TASKS } from "./omega/benchmarks/arrayBoundTransfe
 import { SOURCE_LITERAL_TRANSFER_TASKS } from "./omega/benchmarks/sourceLiteralTransferTasks";
 import { MEASURED_QUALITY_TRANSFER_TASKS } from "./omega/benchmarks/measuredQualityTransferTasks";
 import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTransferTasks";
+import { DECISION_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/decisionContractTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -439,7 +440,54 @@ representationReferences["BALANCED-PARENTHESIS-SPANS"] = `export function transf
   }
   return pairs.sort((a,b) => a.open-b.open);
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS]) {
+representationReferences["ATOMIC-STOCK-RESERVATION"] = `export function transform(input) {
+  const remaining = {...input.stock};
+  const accepted = [];
+  for (const order of input.orders) {
+    if (Object.entries(order.items).every(([sku, amount]) => amount <= (remaining[sku] ?? 0))) {
+      accepted.push(order.id);
+      for (const [sku, amount] of Object.entries(order.items)) {
+        if (Object.hasOwn(remaining, sku)) remaining[sku] -= amount;
+      }
+    }
+  }
+  return {accepted, remaining};
+}`;
+representationReferences["NONDETERMINISTIC-STATE-TRACE"] = `export function transform(input) {
+  const trace = [[...new Set(input.start)].sort()];
+  for (const symbol of input.symbols) {
+    trace.push([...new Set(input.transitions.filter(edge => edge.symbol === symbol
+      && trace.at(-1).includes(edge.from)).map(edge => edge.to))].sort());
+  }
+  return trace;
+}`;
+representationReferences["SIGNED-RATIONAL-ACCUMULATION"] = `export function transform(input) {
+  const sum = [0, 1];
+  for (const [numerator, denominator] of input) {
+    sum[0] = sum[0] * denominator + numerator * sum[1];
+    sum[1] *= denominator;
+    let a = Math.abs(sum[0]);
+    let b = Math.abs(sum[1]);
+    while (b) {const remainder = a % b; a = b; b = remainder;}
+    sum[0] /= a; sum[1] /= a;
+    if (sum[1] < 0) {sum[0] = -sum[0]; sum[1] = -sum[1];}
+  }
+  return sum[0] === 0 ? [0, 1] : sum;
+}`;
+representationReferences["UNICODE-EDIT-METRIC"] = `export function transform(input) {
+  const state = {left:Array.from(input.left), right:Array.from(input.right), previous:[]};
+  state.previous = Array.from({length:state.right.length + 1}, (_, index) => index);
+  for (let i = 1; i <= state.left.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= state.right.length; j++) {
+      current[j] = Math.min(current[j-1] + 1, state.previous[j] + 1,
+        state.previous[j-1] + (state.left[i-1] === state.right[j-1] ? 0 : 1));
+    }
+    state.previous = current;
+  }
+  return state.previous[state.right.length];
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

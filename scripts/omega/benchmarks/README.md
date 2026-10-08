@@ -1547,3 +1547,39 @@ uses much larger output/time budgets and repeated samples. Those settings are
 research context, not evidence of a NYX improvement, a comparable score, or
 permission to change this frozen run. Default Ultra, acceptance oracles,
 authority and historical benchmark outcomes remain unchanged.
+
+### Decision-required generation contract — bounded fresh transfer
+
+The opt-in `DECISION_REQUIRED_FIELDS` grammar derives one complete generation
+branch per existing allowed decision from NYX's existing required-field map.
+It does not fill evidence references, fabricate hypotheses, alter local parsing,
+relax semantic/source/quality checks, or authorize execution. Omission keeps the
+historical grammar and default Ultra configuration unchanged. Independent AJV
+development checks reproduce the optional-wire/local-required mismatch and
+verify branch obligations, target/evidence enumeration, bounds and rejection.
+
+The one-shot experiment composes the existing R3 repository session, repair
+loop and private exact scorer on four newly authored tasks: transactional
+allocation, finite-state interpretation, exact arithmetic and Unicode dynamic
+programming. Two development and two validation tasks are frozen before any
+inference. Test-only reference solutions establish oracle/executor viability;
+they are never model inputs. This is not an official benchmark or independent
+institutional replication. The original ARC questions are not retested here.
+
+Both arms use separately labeled Super native `none`, temperature 0, 8,192
+output-token caps, two logical AND two physical calls including retries, two
+candidate iterations, three verifier executions, 155-second task leases and
+the same 12,000-byte mutation envelope. Only the generation schema changes.
+Report first-call/repaired acceptance, schema diagnostics, hidden-case and
+quality failures, known/unknown usage, actual calls/tokens/verifier work,
+latency and cleanup. Equal caps are not actual parity: retain the existing
+10% realized-compute test and separately report any acceptance gain requiring
+no more measured compute on any accounted axis. No raw generated source or
+private model reasoning is persisted. Live benefit is unverified until the
+frozen run completes; no capability promotion follows from E3 grammar tests.
+
+Ω plan coverage: directly implements generator/detector contract alignment,
+evidence-over-confidence and no self-certification; supports bounded repair
+and action provenance; defers cognition/brain expansion and production
+promotion. No architectural conflict identified. Coverage remains
+`PARTIAL / JUST-IN-TIME`; no total corpus coverage or authority increase.

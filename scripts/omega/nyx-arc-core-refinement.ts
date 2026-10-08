@@ -1,7 +1,7 @@
 /** Exact source refinement, not a replacement of any historical scored-source identity. */
 export const NYX_ARC_CORE_REFINEMENT = Object.freeze({
   predecessor: "513845addbe6146a4ad1b08a68176bff1b5f8b24",
-  purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_AND_OPT_IN_DELIVERY_AND_MEASURED_QUALITY_GUIDANCE",
+  purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_OPT_IN_DELIVERY_QUALITY_AND_DECISION_REQUIRED_GENERATION",
   historicalScoresComparable: false, acceptanceOracleChanged: false, authorityIncrease: false,
   defaultInferencePolicyChanged: false,
 });
@@ -167,8 +167,19 @@ const cognitionSuperConfigurationRefinement: readonly (readonly [string, string]
     "      ...(this.#config.comparisonReasoningControl ? { reasoningControl: this.#config.comparisonReasoningControl } : {}),\n      ...(this.#config.comparisonReasoningBudgetTokens !== undefined\n        ? { reasoningBudgetTokens: this.#config.comparisonReasoningBudgetTokens } : {}),\n"
   ]
 ];
+const cognitionDecisionRequiredRefinement: readonly (readonly [string, string])[] = [
+  ["", "import { nyxDecisionRequiredProviderSchema } from \"./nyxDecisionRequiredSchema\";\n"],
+  ["", "  /** Evaluation opt-in. Omission preserves the historical wire grammar and primary configuration. */\n  readonly providerIntentShape?: \"DECISION_REQUIRED_FIELDS\";\n"],
+  ["", "    if (config.providerIntentShape !== undefined && config.providerIntentShape !== \"DECISION_REQUIRED_FIELDS\") {\n      throw new Error(\"nyx_provider_intent_shape_invalid\");\n    }\n"],
+  ["      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: contract.providerSchema },\n",
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS\"\n        ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema },\n"],
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionDecisionRequiredRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_decision_required_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of cognitionSuperConfigurationRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_cognition_super_configuration_hunk_mismatch");
     current = current.split(after).join(before);
