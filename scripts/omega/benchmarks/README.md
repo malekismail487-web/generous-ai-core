@@ -822,6 +822,44 @@ or a randomized matched-realized-compute comparison. Remaining wrong answers
 are not reclassified as transport faults. BBEH was skipped, as requested.
 
 Full GPQA run `37680476853` is a separate frozen 198-task campaign at candidate
-`da4bb54650aa30971c51c471a263b52aed578ab4`; no final result is available yet.
+`da4bb54650aa30971c51c471a263b52aed578ab4`; its terminal evidence follows below.
 Both one-shot push triggers are retired after their single dispatch, preserving
 manual execution without replay on later evidence commits.
+
+### GPQA Diamond terminal evidence — incomplete grading
+
+Run `37680476853` exhausted all **198 selected / attempted first attempts**:
+**148 correct, 46 well-formed wrong choices, 194 graded, four ungraded provider
+timeouts, zero unexecuted**. There were zero answer-format, truncation, schema or
+authorization failures. The four timeouts occurred in answer generation after a
+successful authorized question read; their usage is unknown, not zero. No HTTP
+429 or 503 responses were recorded. The strict workflow correctly exited nonzero
+because grading was incomplete, not because source integrity or cleanup failed.
+
+The graded-subset accuracy is **148/194 (76.29%)**, descriptive only: it is not a
+complete GPQA score, an accuracy-improvement claim or a controlled vendor-model
+comparison. The 46 wrong choices are observed reasoning/knowledge failures, not
+serialization failures; this evidence capture does not establish their causes.
+Calibration is unsupported by the reply protocol. Public-data contamination is
+unknown; the adapter is custom closed-book NYX, not the author's inference harness.
+
+The campaign used 396 logical/physical/HTTP calls, **682,753 reported tokens plus
+four calls of unknown usage**, 198 question-file reads, zero retries and zero
+repairs. Campaign time was 5,059,474ms (about 84.3 minutes), including 240,704ms
+of pre-task capacity waiting. Default Ultra configuration and all authority/lease
+boundaries are unchanged; this is the separately labelled Super evaluation.
+
+The downloaded artifact SHA256 matches GitHub metadata and the terminal upload
+log. Its original report matches all 198 terminal rows and the progress checkpoint;
+the canonical original-report digest also matches. Source integrity passed;
+each recorded row follows the runner's fail-closed disposable cleanup check.
+The [sanitized evidence receipt](../../../docs/omega/evidence/nyx-super-full-gpqa-da4bb546.json)
+retains request attribution, per-task outcomes and resource use but omits
+low-entropy reference/prediction/response hashes. It is explicitly a projection,
+not a byte-identical original; the verified archive and canonical digest bind
+the unmodified original. No raw questions, answers, reasoning or secrets are added.
+
+The AIME 16/30 complete result, historical AIME failures, original Ultra and earlier
+Super evidence are preserved. BBEH remains cancelled and its watch paused. This
+completion watch captures evidence only and pauses after publication; it does not
+launch benchmarks, repair reserved questions or promote cognition.
