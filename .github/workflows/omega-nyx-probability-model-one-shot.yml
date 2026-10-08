@@ -1,9 +1,6 @@
 name: Omega NYX finite probabilistic model transfer comparison
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-probability-model-one-shot.yml]
 permissions:
   contents: read
 concurrency:
