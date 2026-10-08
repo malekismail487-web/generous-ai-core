@@ -46,6 +46,7 @@ jobs:
           scripts/omegaQuantitativeConstraintFeedback.test.ts
           scripts/omegaBenchmarkCapabilityHarness.test.ts scripts/omega/benchmark-cli.ts
           scripts/omegaArcNyxIntegration.test.ts scripts/omega/nyx-arc-live-eval.ts
+          scripts/omegaBenchmarkPopulation.test.ts scripts/omegaFiniteProbability.test.ts
           scripts/omega/nyx-arc-benchmark-epoch.ts
           scripts/omega/nyx-docker-storage-preflight.ts scripts/omegaStoragePrerequisite.test.ts
           scripts/omega/nyx-source-representation-cycle.ts

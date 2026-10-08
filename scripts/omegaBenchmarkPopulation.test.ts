@@ -1,5 +1,6 @@
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { selectArcEpoch } from "./omega/nyx-arc-benchmark-epoch";
+import { selectArcEpoch, ARC_PUBLIC_EPOCH_SELECTION, ARC_ARRAY_BOUND_TRANSFER_SELECTION,
+  ARC_SUPER_CONFIGURATION_SELECTION } from "./omega/nyx-arc-benchmark-epoch";
 import { runCampaign, type AdapterOutput, type TaskRun } from "./omega/benchmarks/campaign";
 import { zeroUsage, type ArmSpec, type CampaignSpec } from "./omega/benchmarks/contracts";
 import { prepareTask } from "./omega/benchmarks/tasks";
@@ -18,6 +19,16 @@ check(throws(() => selectArcEpoch("FULL_PUBLIC", [...names.slice(1), names[1]]))
 check(throws(() => selectArcEpoch("FULL_PUBLIC", [...names.slice(1), "../escape.json"])), "malformed identity rejected");
 check(throws(() => selectArcEpoch("BASELINE", names)), "historical subset cannot silently change identity");
 check(throws(() => selectArcEpoch("UNKNOWN" as never, names)), "unknown population mode rejected");
+const frozenNames = [...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds,
+  ...ARC_SUPER_CONFIGURATION_SELECTION.taskIds, ...Array.from({length: 102}, (_, i) => `f${i.toString(16).padStart(7, "0")}`)]
+  .map(id => `${id}.json`);
+const configurationSelection = selectArcEpoch("SUPER_CONFIGURATION_TRANSFER", frozenNames.reverse());
+check(configurationSelection.taskIds.join() === ARC_SUPER_CONFIGURATION_SELECTION.taskIds.join(),
+  "configuration comparison freezes next eight names without task-content filtering");
+check(Object.isFrozen(configurationSelection.taskIds)
+  && configurationSelection.taskIds.every(id => ![...ARC_PUBLIC_EPOCH_SELECTION.taskIds, ...ARC_ARRAY_BOUND_TRANSFER_SELECTION.taskIds].includes(id)),
+  "fresh configuration identities are immutable and disjoint from ten previously exposed tasks");
+check(throws(() => selectArcEpoch("SUPER_CONFIGURATION_TRANSFER", names)), "configuration transfer cannot substitute easier task identities");
 
 // Independently authored protocol fixtures, never actual ARC task answers or cognitive evidence.
 const tasks = Array.from({length: 6}, (_, i) => {

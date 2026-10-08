@@ -149,8 +149,30 @@ const noRetryWindowRefinement: readonly (readonly [string, string])[] = [
 ];
 
 /** Invert only the declared exact hunks. Hash/compare the WHOLE result with the frozen predecessor. */
+const cognitionSuperConfigurationRefinement: readonly (readonly [string, string])[] = [
+  [
+    "",
+    "  /** Explicit evaluation-only substrate opt-in; the primary/default substrate remains Ultra. */\n  readonly comparisonReasoningControl?: \"SUPER_HOSTED_NATIVE\";\n  readonly comparisonReasoningBudgetTokens?: number;\n"
+  ],
+  [
+    "",
+    "    if (config.comparisonReasoningControl !== undefined\n      && (config.comparisonReasoningControl !== \"SUPER_HOSTED_NATIVE\"\n        || profile.model !== \"nvidia/nemotron-3-super-120b-a12b\" || config.comparisonInferencePolicy === undefined)) {\n      throw new Error(\"nyx_comparison_reasoning_control_invalid\");\n    }\n    if (config.comparisonReasoningBudgetTokens !== undefined\n      && (config.comparisonReasoningControl !== \"SUPER_HOSTED_NATIVE\" || config.comparisonInferencePolicy !== \"REASONING_JSON\"\n        || !Number.isSafeInteger(config.comparisonReasoningBudgetTokens) || config.comparisonReasoningBudgetTokens < 0\n        || config.comparisonReasoningBudgetTokens >= config.maxOutputTokens)) {\n      throw new Error(\"nyx_comparison_reasoning_budget_invalid\");\n    }\n"
+  ],
+  [
+    "    if (!/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error(\"nyx_primary_substrate_must_be_nemotron_3_ultra\");\n",
+    "    if (config.comparisonReasoningControl !== \"SUPER_HOSTED_NATIVE\"\n      && !/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error(\"nyx_primary_substrate_must_be_nemotron_3_ultra\");\n"
+  ],
+  [
+    "",
+    "      ...(this.#config.comparisonReasoningControl ? { reasoningControl: this.#config.comparisonReasoningControl } : {}),\n      ...(this.#config.comparisonReasoningBudgetTokens !== undefined\n        ? { reasoningBudgetTokens: this.#config.comparisonReasoningBudgetTokens } : {}),\n"
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionSuperConfigurationRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_super_configuration_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") for (const [before, after] of noRetryWindowRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_no_retry_window_refinement_hunk_mismatch");
     current = current.split(after).join(before);

@@ -1427,3 +1427,48 @@ leases/authority. Defers live reasoning promotion and production deployment.
 No security/acceptance rule is superseded. Coverage: PARTIAL / JUST-IN-TIME.
 The ≥80% cross-benchmark goal remains unachieved. The next evaluation priority
 is the existing actual-benchmark path, not another speculative cognitive layer.
+
+### Actual ARC Super configuration transfer — frozen protocol
+
+`NYX-ARC-SUPER-CONFIGURATION-FRESH-TRANSFER-001` reuses the existing engineering
+cognition, R3 bounded repair loop, disposable repository session and independent
+exact-grid scorer. It adds no cognition/execution stack. The primary/default
+Ultra configuration and historical results are unchanged. Super requires an
+explicit host-owned evaluation opt-in; unknown controls, wrong models and
+unbounded/incompatible reasoning budgets fail before dispatch.
+
+The next eight lexicographic public evaluation identities after the ten already
+exercised tasks are frozen in `ARC_SUPER_CONFIGURATION_SELECTION`, at official
+revision `f3283f727488ad98fe575ea6a5ac981e4a188e49`. Selection uses paths only,
+not content or correctness. The treatment is native hosted `none` versus native
+hosted `high` with a finite 4,096-token reasoning budget, using the same Super
+model. These controls follow the
+[NVIDIA Super API contract](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer).
+Both arms keep the same prompts, source-lines schema and array bounds, total
+8,192 output-token cap per call, two physical calls per task including retries,
+155-second task lease, tool/mutation envelope, public-example repair feedback,
+quality checks and withheld-output oracle. The experiment configuration digest
+binds common settings **and the explicitly different per-arm treatment**; it
+does not claim that arm inference configurations are identical.
+
+Equal caps do not establish equal realized compute. Reports retain physical and
+logical calls, reported/unknown tokens, tool work, latency, first candidates,
+repairs, provider/serialization/syntax/quality/functional outcomes and strict
+10% realized-compute pairing. Two consecutive provider failures stop dispatch
+without erasing unexecuted tasks. Public evaluation is not a sealed/protected
+leaderboard, and unknown pretraining exposure remains. No accuracy, cognitive
+promotion, >=80% confidence or full-benchmark score is claimed before evidence.
+
+The preceding CI failure was a test-only TypeScript union-narrowing error at
+`omegaNyxTextBenchmark.test.ts`: a quantitative replay fixture accessed `cycles`
+without asserting that its union member contained that field. The assertion now
+narrows the type and independently checks the expected fixture shape. It does
+not change model inference or any acceptance criterion. Generated package and
+repository inventories are refreshed for source consistency, not a release.
+
+Ω coverage: directly implements controlled inference-configuration comparison
+and fresh transfer evaluation; supports generator/detector separation, explicit
+substrate identity, compute accounting, provenance and negative-capability
+preservation. Defers cognitive promotion, protected/full benchmark claims,
+production authority, recursion and biological expansion. No inherited safety
+constraint or original scored outcome is superseded. PARTIAL / JUST-IN-TIME.

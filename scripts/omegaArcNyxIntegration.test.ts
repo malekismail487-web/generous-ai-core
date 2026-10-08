@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxNemotronEngineeringCognition } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
-import { createArcAdapter, arcRepositoryFiles, extractArcArtifact, classifyArcLoopFailure } from "./omega/benchmarks/nyxArcAdapter";
+import { createArcAdapter, arcRepositoryFiles, extractArcArtifact, classifyArcLoopFailure, arcInferenceConfiguration } from "./omega/benchmarks/nyxArcAdapter";
 import { contentHash, R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { runCampaign } from "./omega/benchmarks/campaign";
 import { prepareTask } from "./omega/benchmarks/tasks";
@@ -64,6 +64,74 @@ const intent = (source: string) => JSON.stringify({ decision: "PROPOSE_EDIT", di
   changes: [{ target: "src/transform.mjs", replacement: { lines: source.split("\n"), lineEnding: "LF" } }], confidence: 0.8 });
 const request = (signal = new AbortController().signal) => ({ input, inputDigest: theoryDigest(input), attempt: 1,
   feedback: null, remaining: limits, signal });
+
+// Synthetic fixtures exercise the actual shared cognition, authorization, execution and cleanup path.
+// They do not establish model reasoning quality or actual ARC accuracy.
+for (const configuration of ["SUPER_HOSTED_NONE", "SUPER_HOSTED_BOUNDED"] as const) {
+  for (const arm of ["RAW_MODEL", "MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX", "CANDIDATE_NYX"] as const) {
+    const armSpec = {...spec(arm), model: "nvidia/nemotron-3-super-120b-a12b"};
+    const bodies: any[] = []; const traces: any[] = [];
+    const p = NvidiaNimProvider.create({providerId: "SUPER-ARC-PROTOCOL-ONLY", model: armSpec.model,
+      authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-only", read: () => "synthetic-not-a-real-credential"},
+      maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 1000,
+      transport: async (_url, init) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return arm === "RAW_MODEL" ? reply(JSON.stringify({predictions: [{attempt_1: [[9, 0]], attempt_2: [[9, 0]]}]}))
+          : reply(intent(correct));
+      }});
+    const output = await createArcAdapter({spec: armSpec, provider: p, candidateCommit: "a".repeat(40), maxOutputTokens: 8192,
+      inferenceConfiguration: configuration, preserveProviderArrayBounds: true,
+      onIntegrationEvidence: value => traces.push(value)}).invoke(request());
+    check(output.failure === null && bodies.length === 1, `${configuration}/${arm} composes with existing execution, not a parallel stack`);
+    check(bodies[0].reasoning_effort === (configuration === "SUPER_HOSTED_NONE" ? "none" : "high")
+      && !bodies[0].chat_template_kwargs, `${configuration}/${arm} sends documented native hosted controls`);
+    check(bodies[0].reasoning_budget === (configuration === "SUPER_HOSTED_BOUNDED" ? 4096 : undefined)
+      && bodies[0].max_tokens === 8192, `${configuration}/${arm} preserves total cap and finite output reserve`);
+    check(output.usage.reportedTokens === 400 && output.usage.physicalCalls === 1, `${configuration}/${arm} usage remains real provider evidence`);
+    if (arm !== "RAW_MODEL") {
+      check(traces[0].inferenceConfiguration === configuration && traces[0].reasoningControl === "SUPER_HOSTED_NATIVE"
+        && traces[0].reasoningBudgetTokens === (configuration === "SUPER_HOSTED_BOUNDED" ? 4096 : null),
+        `${configuration}/${arm} treatment explicitly reported`);
+      check(traces[0].cleanupVerified && traces[0].sourceUnchanged && traces[0].productionAuthority === false,
+        `${configuration}/${arm} confinement and owned cleanup preserved`);
+    }
+    rejects(() => NyxNemotronEngineeringCognition.create({cognitionId: "NO-SILENT-SUBSTRATE-SWITCH", provider: p,
+      maxPromptBytes: 48000, maxOutputTokens: 8192}), `${configuration}/${arm} Super still requires explicit substrate opt-in`);
+  }
+}
+for (const configuration of ["SUPER_HOSTED_NONE", "SUPER_HOSTED_BOUNDED"] as const)
+  rejects(() => arcInferenceConfiguration(configuration, 8192, spec("CURRENT_NYX").model), `${configuration} rejects wrong model`);
+for (const invalid of ["UNKNOWN", "", null, 1])
+  rejects(() => arcInferenceConfiguration(invalid as never, 8192, "nvidia/nemotron-3-super-120b-a12b"), "unknown inference configuration fails closed");
+rejects(() => arcInferenceConfiguration("SUPER_HOSTED_BOUNDED", 1, "nvidia/nemotron-3-super-120b-a12b"), "reasoning needs output reserve");
+const superTestProvider = NvidiaNimProvider.create({providerId: "SUPER-VALIDATION-ONLY", model: "nvidia/nemotron-3-super-120b-a12b",
+  authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-only", read: () => undefined},
+  maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 1000, transport: async () => {throw Error("must-not-dispatch");}});
+const superCognitionConfig = {cognitionId: "SUPER-VALIDATION-ONLY", provider: superTestProvider, maxPromptBytes: 48000,
+  maxOutputTokens: 8192, comparisonInferencePolicy: "REASONING_JSON" as const, comparisonReasoningControl: "SUPER_HOSTED_NATIVE" as const};
+for (const budget of [-1, 8192, 1.5, NaN, Infinity])
+  rejects(() => NyxNemotronEngineeringCognition.create({...superCognitionConfig, comparisonReasoningBudgetTokens: budget}), "invalid reasoning budget rejected before dispatch");
+rejects(() => NyxNemotronEngineeringCognition.create({...superCognitionConfig, comparisonInferencePolicy: "CONSTRAINED_JSON",
+  comparisonReasoningBudgetTokens: 4096}), "no-thinking cannot silently spend reasoning budget");
+rejects(() => NyxNemotronEngineeringCognition.create({...superCognitionConfig, comparisonReasoningControl: undefined,
+  comparisonReasoningBudgetTokens: 4096}), "budget cannot implicitly select a different substrate");
+rejects(() => NyxNemotronEngineeringCognition.create({...superCognitionConfig, comparisonInferencePolicy: undefined}), "native control requires explicit inference policy");
+rejects(() => NyxNemotronEngineeringCognition.create({...superCognitionConfig, comparisonReasoningControl: "UNKNOWN" as never}), "unknown native control rejected");
+rejects(() => createArcAdapter({spec: spec("CURRENT_NYX"), provider: provider(async () => reply(intent(correct))),
+  candidateCommit: "a".repeat(40), maxOutputTokens: 8192, inferenceConfiguration: null as never}), "malformed explicit null cannot silently select default inference");
+{
+  const traces: any[] = [];
+  const unauthorized = JSON.parse(intent(correct)); unauthorized.changes[0].target = "tools/verify.mjs";
+  const p = NvidiaNimProvider.create({providerId: "SUPER-NEGATIVE-AUTHORITY-TEST", model: superCognitionConfig.provider.profile().model,
+    authorityMode: "TEST_DOUBLE_ONLY", credentialSource: {sourceIdentity: "test-only", read: () => "synthetic-not-a-real-credential"},
+    maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 1000, transport: async () => reply(JSON.stringify(unauthorized))});
+  const output = await createArcAdapter({spec: {...spec("CURRENT_NYX"), model: p.profile().model}, provider: p,
+    candidateCommit: "a".repeat(40), maxOutputTokens: 8192, inferenceConfiguration: "SUPER_HOSTED_BOUNDED",
+    onIntegrationEvidence: value => traces.push(value)}).invoke(request());
+  check(output.failure === "AUTHORIZATION_FAILURE" && output.artifact === null && output.internalCandidateAttempts === 0,
+    "reasoning-enabled Super cannot modify verifier or turn model intent into authority");
+  check(traces[0].cleanupVerified && traces[0].sourceUnchanged, "rejected Super authority request still cleans its owned lifecycle");
+}
 
 {
   let time = Date.now(), dispatches = 0;

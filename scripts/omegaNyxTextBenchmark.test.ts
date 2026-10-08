@@ -1149,7 +1149,8 @@ check("offline replay fixtures exercise all operations dependent expressions sta
   assert.equal(capsules.reduce((n,c)=>n+c.observedOutputs.length,0),2000);
   for(const capsule of capsules){
     const {capsuleDigest,...body}=capsule;
-    assert.equal(theoryDigest(body),capsuleDigest);assert(Object.isFrozen(capsule.program.cycles));
+    assert.equal(theoryDigest(body),capsuleDigest);
+    assert("cycles" in capsule.program);assert(Object.isFrozen(capsule.program.cycles));
     assert.equal(capsule.grantsAuthority,false);assert.equal(capsule.mathematicalModelIndependentlyVerified,false);
     assert.equal(Object.keys(capsule).includes("answer"),false);
     assert.equal(Object.keys(capsule).includes("question"),false);

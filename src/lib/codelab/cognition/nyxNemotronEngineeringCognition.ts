@@ -446,6 +446,9 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly experimentVariant?: NyxCognitionExperimentVariant;
   /** Explicit comparison control. Omission preserves each established variant's inference policy. */
   readonly comparisonInferencePolicy?: "CONSTRAINED_JSON" | "REASONING_JSON";
+  /** Explicit evaluation-only substrate opt-in; the primary/default substrate remains Ultra. */
+  readonly comparisonReasoningControl?: "SUPER_HOSTED_NATIVE";
+  readonly comparisonReasoningBudgetTokens?: number;
   /** Host-only legacy ablation. E4 probes established omitted hosted arrays stop at 32 items. */
   readonly preserveProviderArrayBounds?: boolean;
   /** Host-only delivery control. Local intent, syntax, scope and quality checks remain mandatory. */
@@ -647,6 +650,17 @@ export class NyxNemotronEngineeringCognition {
       && !["CONSTRAINED_JSON", "REASONING_JSON"].includes(config.comparisonInferencePolicy)) {
       throw new Error("nyx_comparison_inference_policy_invalid");
     }
+    if (config.comparisonReasoningControl !== undefined
+      && (config.comparisonReasoningControl !== "SUPER_HOSTED_NATIVE"
+        || profile.model !== "nvidia/nemotron-3-super-120b-a12b" || config.comparisonInferencePolicy === undefined)) {
+      throw new Error("nyx_comparison_reasoning_control_invalid");
+    }
+    if (config.comparisonReasoningBudgetTokens !== undefined
+      && (config.comparisonReasoningControl !== "SUPER_HOSTED_NATIVE" || config.comparisonInferencePolicy !== "REASONING_JSON"
+        || !Number.isSafeInteger(config.comparisonReasoningBudgetTokens) || config.comparisonReasoningBudgetTokens < 0
+        || config.comparisonReasoningBudgetTokens >= config.maxOutputTokens)) {
+      throw new Error("nyx_comparison_reasoning_budget_invalid");
+    }
     if (config.preserveProviderArrayBounds !== undefined && typeof config.preserveProviderArrayBounds !== "boolean") {
       throw new Error("nyx_provider_array_bounds_policy_invalid");
     }
@@ -672,7 +686,8 @@ export class NyxNemotronEngineeringCognition {
     }
     if (!config.cognitionId.trim() || !Number.isInteger(config.maxPromptBytes) || config.maxPromptBytes < 1
       || !Number.isInteger(config.maxOutputTokens) || config.maxOutputTokens < 1) throw new Error("nyx_cognition_configuration_invalid");
-    if (!/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_primary_substrate_must_be_nemotron_3_ultra");
+    if (config.comparisonReasoningControl !== "SUPER_HOSTED_NATIVE"
+      && !/nemotron[-_/ ]?3[-_/ ]?ultra/i.test(profile.model)) throw new Error("nyx_primary_substrate_must_be_nemotron_3_ultra");
     return new NyxNemotronEngineeringCognition(config, profile.model);
   }
 
@@ -787,6 +802,9 @@ export class NyxNemotronEngineeringCognition {
       ...(this.#config.structuredOutputMode === "STRICT_LOCAL" ? { structuredOutputMode: "STRICT_LOCAL" as const } : {}),
       inferencePolicy: this.#config.comparisonInferencePolicy
         ?? (this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON"),
+      ...(this.#config.comparisonReasoningControl ? { reasoningControl: this.#config.comparisonReasoningControl } : {}),
+      ...(this.#config.comparisonReasoningBudgetTokens !== undefined
+        ? { reasoningBudgetTokens: this.#config.comparisonReasoningBudgetTokens } : {}),
       observedAtEpochMs: request.observedAtEpochMs, deadlineEpochMs: request.deadlineEpochMs, signal: request.signal });
     if (completion.evidence.statusCode === 200 && completion.finishReason === "length") {
       return this.#result("COGNITION_ERROR", "nyx_cognition_output_truncated", request, null, null,

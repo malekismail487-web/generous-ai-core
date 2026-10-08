@@ -2262,6 +2262,12 @@
       ]
     },
     {
+      "name": "NYX_ARC_SUPER_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-arc-benchmark-epoch.ts"
+      ]
+    },
+    {
       "name": "NYX_ARRAY_BOUND_COMPARISON",
       "files": [
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
@@ -2599,6 +2605,13 @@
       "name": "OMEGA_PREVIOUS_TEST_MANIFEST_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
+      ]
+    },
+    {
+      "name": "OMEGA_PYTHON",
+      "files": [
+        "scripts/omega/benchmarks/check-probability-relevance.mjs",
+        "scripts/omegaFiniteProbability.test.ts"
       ]
     },
     {
