@@ -1,8 +1,5 @@
 name: Omega NYX shared computation transfer comparison
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-general-repair-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read
