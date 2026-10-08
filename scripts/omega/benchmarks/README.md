@@ -1444,7 +1444,7 @@ not content or correctness. The treatment is native hosted `none` versus native
 hosted `high` with a finite 4,096-token reasoning budget, using the same Super
 model. These controls follow the
 [NVIDIA Super API contract](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer).
-Both arms keep the same prompts, source-lines schema and array bounds, total
+Both arms keep the same prompt construction/public task data, source-lines schema and array bounds, total
 8,192 output-token cap per call, two physical calls per task including retries,
 155-second task lease, tool/mutation envelope, public-example repair feedback,
 quality checks and withheld-output oracle. The experiment configuration digest
@@ -1481,3 +1481,24 @@ typecheck, build, package consistency/smoke, inventory checks and secret scan
 was confirmed started. The temporary push trigger is removed in the follow-up
 checkpoint; manual dispatch remains available but no replay is authorized by
 this record. Launch/preflight evidence is not terminal benchmark evidence.
+
+### Compute-parity accounting correction (separate from the frozen ARC run)
+
+A synthetic two-control reproduction had exact known, equal model/tool/scorer
+usage and a matching per-task pair, but `matchedRealizedCompute=false`: the
+global calculation incorrectly included an unconfigured reference arm. The
+corrected coordinator measures only explicitly configured non-raw controls,
+requires at least two, retains every unused arm's blocked record, and still
+rejects missing/partial/unknown/provider-unstable observations. It additionally
+requires each task to satisfy the unchanged 10% tolerance: equal grand totals
+cannot hide opposite per-task imbalances. Raw-model-only and single-control
+runs cannot claim equivalent-tool parity. These are accounting checks, not
+model capability evidence or permission to promote an unsuccessful candidate.
+
+The correction is not applied to frozen candidate `7b3c0f89` or its original
+report. Original outcomes and flags remain historical evidence; any later
+interpretation must distinguish recorded flags from independently recomputed
+pair accounting. Functional/private oracles, model calls, task selection,
+budgets, authority, default Ultra and quality thresholds are unchanged.
+Verification: 109 suites / 11,433 checks, zero failures; population accounting
+39 checks and capability harness 162 checks; TypeScript 5.8.3 remains zero.

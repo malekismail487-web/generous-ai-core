@@ -85,5 +85,39 @@ check(await rejects(() => run(async () => baseOutput, () => { throw Error("check
   "progress-custody failure is not silently hidden behind a completed report");
 for (const limit of [0, 11, 1.5, NaN]) check(await rejects(() => run(async () => baseOutput, undefined, limit)),
   `invalid provider circuit threshold ${limit} rejected`);
+
+// Independent resource-accounting fixtures, not ARC/model capability evidence.
+const configured = async (arms: ArmSpec["arm"][], output: (arm: ArmSpec["arm"], inputDigest: string) => AdapterOutput = () => baseOutput) =>
+  runCampaign(spec, tasks, arms.map(name => ({spec: {...arm, arm: name, sourceDigest: theoryDigest(name)},
+    invoke: async (request: {inputDigest: string}) => output(name, request.inputDigest)})), null, undefined, () => 1001);
+const pair = await configured(["CURRENT_NYX", "CANDIDATE_NYX"]);
+check(pair.matchedRealizedCompute, "two declared measured controls can match without a fictional third control");
+check(pair.runs.filter(r => r.arm === "MODEL_EQUIVALENT_TOOLS").every(r => r.state === "BLOCKED_ENVIRONMENT"),
+  "unused arm remains visible rather than erased from population accounting");
+check(pair.computeMatchScope === "CONFIGURED_NON_RAW_ARMS_GLOBAL_AND_EACH_TASK_MINIMUM_TWO_CONTROLS"
+  && !pair.broadPromotion && !pair.grantsAuthority, "compute parity is not success, cognitive promotion or authority");
+check(!(await configured(["CURRENT_NYX"])).matchedRealizedCompute, "one declared control is not a comparison");
+check(!(await configured(["RAW_MODEL", "CURRENT_NYX"])).matchedRealizedCompute, "raw model cannot substitute for a second equivalent-tool control");
+check((await configured(["MODEL_EQUIVALENT_TOOLS", "CURRENT_NYX", "CANDIDATE_NYX"])).matchedRealizedCompute,
+  "three declared controls preserve the original matching requirement");
+const imbalanced = await configured(["CURRENT_NYX", "CANDIDATE_NYX"], (name, inputDigest) => {
+  const index = tasks.findIndex(task => task.manifest.inputDigest === inputDigest);
+  const high = (index % 2 === 0) === (name === "CURRENT_NYX");
+  return {...baseOutput, usage: {...baseOutput.usage, reportedTokens: high ? 100 : 10}};
+});
+check(imbalanced.summaries.find(s => s.arm === "CURRENT_NYX")!.usage.reportedTokens
+  === imbalanced.summaries.find(s => s.arm === "CANDIDATE_NYX")!.usage.reportedTokens && !imbalanced.matchedRealizedCompute,
+  "equal aggregate tokens cannot conceal opposite per-task compute imbalances");
+for (const [label, patch] of [
+  ["unknown tokens", {unknownUsageCalls: 1}], ["provider failure", {providerFailures: 1}],
+  ["retry", {retries: 1}], ["no inference", {logicalCalls: 0, physicalCalls: 0, httpAttempts: 0}],
+  ["unequal physical calls", {logicalCalls: 2, physicalCalls: 2, httpAttempts: 2}],
+  ["unequal tool work", {toolWorkUnits: 10}], ["over-tolerance tokens", {reportedTokens: 12}]
+] as const) check(!(await configured(["CURRENT_NYX", "CANDIDATE_NYX"], name => name === "CURRENT_NYX" ? baseOutput
+  : {...baseOutput, usage: {...baseOutput.usage, ...patch}})).matchedRealizedCompute, `${label} still prevents compute parity`);
+const missing = await runCampaign(spec, tasks, ["CURRENT_NYX", "CANDIDATE_NYX"].map(name => ({spec: {...arm,
+  arm: name as ArmSpec["arm"], sourceDigest: theoryDigest(name), supportedCapabilities: name === "CANDIDATE_NYX" ? [] : arm.supportedCapabilities},
+  invoke: async () => baseOutput})), null, undefined, () => 1001);
+check(!missing.matchedRealizedCompute, "declared but unavailable control cannot be quietly omitted");
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

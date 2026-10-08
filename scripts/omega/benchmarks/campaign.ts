@@ -240,18 +240,27 @@ export async function runCampaign(rawSpec: CampaignSpec, tasks: readonly Prepare
       summary.benchmarkScorePercent = total ? 100 * graded.reduce((sum, e) => sum + e!.correct, 0) / total : null;
     }
   }
-  const controls = summaries.filter(s => s.arm !== "RAW_MODEL");
-  const matched = controls.every(s => s.complete && s.usage.unknownUsageCalls === 0 && s.providerStable
+  const configuredControls = new Set(armSpecs.filter(arm => arm.arm !== "RAW_MODEL").map(arm => arm.arm));
+  const controls = summaries.filter(s => configuredControls.has(s.arm));
+  const withinTolerance = (values: readonly number[]) =>
+    Math.max(...values) - Math.min(...values) <= Math.max(...values, 1) * spec.realizedComputeTolerance;
+  const computeKeys = ["physicalCalls", "reportedTokens", "toolWorkUnits"] as const;
+  const matched = controls.length >= 2 && controls.every(s => s.complete && s.usage.unknownUsageCalls === 0 && s.providerStable
     && s.unknownVerifierUsage === 0 && s.verifierUsage.unknownUsageCalls === 0)
-    && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key => {
-      const values = controls.map(s => s.usage[key as keyof Usage] + s.verifierUsage[key as keyof Usage]);
-      return Math.max(...values) - Math.min(...values) <= Math.max(...values, 1) * spec.realizedComputeTolerance;
+    && computeKeys.every(key => withinTolerance(controls.map(s => s.usage[key] + s.verifierUsage[key])))
+    // Equal campaign totals must not hide opposite per-task budget imbalances.
+    && tasks.every(task => {
+      const byArm = controls.map(control => runs.find(run => run.taskDigest === task.manifest.taskDigest && run.arm === control.arm)!.attempts);
+      if (byArm.some(attempts => attempts.some(attempt => !attempt.usage || attempt.usage.physicalCalls < 1))) return false;
+      return computeKeys.every(key => withinTolerance(byArm.map(attempts =>
+        attempts.reduce((sum, attempt) => sum + attempt.usage![key] + (attempt.verifierUsage?.[key] ?? 0), 0))));
     });
   const body = { schemaVersion: 1, campaign: spec, campaignDigest: theoryDigest(spec), arms: armSpecs,
     providerFailureCircuit: { stopAfter, consecutiveProviderFailures,
       open: stopAfter !== null && consecutiveProviderFailures >= stopAfter },
     tasks: tasks.map(t => t.manifest), runs, summaries, matchedRealizedCompute: matched,
     comparisonScope: "EQUAL_TOOL_ENVELOPE_NON_RAW_ARMS_ONLY",
+    computeMatchScope: "CONFIGURED_NON_RAW_ARMS_GLOBAL_AND_EACH_TASK_MINIMUM_TWO_CONTROLS",
     capabilityGaps: runs.flatMap(run => run.attempts.filter(a => a.failure).map(a => ({
       gapId: `NYX-GAP-${theoryDigest({ task: run.taskDigest, arm: run.arm, attempt: a.attempt }).slice(0, 20)}`,
       failureClass: a.failure, evidenceDigest: theoryDigest(a),
