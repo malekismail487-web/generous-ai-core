@@ -974,3 +974,44 @@ Live model observations are E4; raw private model reasoning is not retained.
 memorization, validated detectors, honest compute accounting and no self-certification.
 Broad cognitive promotion, additional brain layers and production authority remain
 deferred. No operational authority conflict or supersession. PARTIAL / JUST-IN-TIME.
+
+#### Terminal harder comparison — frozen candidate `a88115fd`
+
+[Run 37745114456](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37745114456)
+completed all twelve paired objectives: **control 9/12; countercheck 8/12**.
+All 24 task-arm first attempts were graded: 17 correct, seven wrong valid choices,
+zero ungraded or unexecuted. No provider, timeout, truncation, answer-format,
+schema, authorization or infrastructure failures occurred. These are real
+wrong-answer outcomes under this closed-book envelope, not unreached tests.
+
+Domain scores (control / countercheck): Bayesian conditioning 3/3 / 3/3;
+causal intervention 3/3 / 2/3; cyclic symmetry 1/3 / 2/3; program state 2/3 / 1/3.
+Two objectives favored control, one favored countercheck, seven were both correct
+and two both wrong. All twelve pairs were provider-stable, but only nine met the
+10% realized-compute rule; that diagnostic subset tied **6/9 each**. Countercheck
+is **NOT_PROMOTED**. Neither the net score nor the matched subset establishes a
+cognitive gain; these are not official benchmark scores or a coding-quality test.
+
+Control used 78,729 reported tokens and countercheck 80,983: 48 logical/physical
+calls total, zero unknown-usage calls, transport retries or semantic repairs.
+Epoch duration was 1,367,875ms; cumulative task latency was 695,884ms control /
+671,917ms countercheck. All source-integrity and disposable-cleanup checks passed.
+Both local and Linux aggregate checks passed 108 suites / 11,160 checks; TypeScript
+5.8.3 remained zero, the candidate secret scan found zero issues, and Linux build
+passed in 13.91s. Windows Device Guard policy was not changed.
+
+The [sanitized receipt](../../../docs/omega/evidence/nyx-general-challenge-a88115fd.json)
+reconciles the verified artifact SHA256, canonical original report, progress and
+all 24 terminal rows without storing questions, answers or private reasoning.
+Single draws, small population, implementer-authored oracles and order/domain
+confounding limit interpretation: global alternation made BAYES/SYMMETRY
+control-first and CAUSAL/PROGRAM_STATE countercheck-first. Future replication
+should counterbalance within each domain; do not retroactively alter this run.
+
+The useful new evidence is the location of failures, not a promoted reasoning
+layer. Exact counting and suspended-generator state tracking merit a separate
+general development experiment with independently authorized computation tools,
+then fresh transfer and simpler controls. That hypothesis is not yet verified.
+Do not tune against these exposed challenge answers or infer the 46 earlier GPQA
+wrong choices are fixed. Default Ultra, authority and prior evidence are unchanged;
+no additional official benchmark or live rerun was launched after completion.

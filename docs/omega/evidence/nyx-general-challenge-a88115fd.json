@@ -1,0 +1,3839 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-GENERAL-CHALLENGE-A88115FD-RECEIPT",
+  "source": {
+    "candidate": "a88115fdd272e1bc358cc1cd575df04bfb3b91df",
+    "runId": 37745114456,
+    "jobId": 113204639218,
+    "runAttempt": 1,
+    "runConclusion": "success",
+    "runStartedAt": "2026-10-08T07:42:36Z",
+    "runUpdatedAt": "2026-10-08T08:08:47Z",
+    "artifactId": 11536074619,
+    "artifactName": "nyx-general-challenge-a88115fdd272e1bc358cc1cd575df04bfb3b91df",
+    "archiveSha256": "25205327ebd88790ceddcc117f14ce79c1b089f02589a3b1116450e21a860a95",
+    "archiveSizeBytes": 24852,
+    "archiveVerified": true,
+    "originalReportReconciledWithJobLog": true,
+    "terminalTaskRowsReconciledWithOriginalReport": 24,
+    "progressReconciledWithFinalReport": true,
+    "canonicalOriginalReportSha256": "5725919882f4347806a28d47ba3860316823f3e6f1485c22289687b109c6f7a4",
+    "canonicalOriginalProgressSha256": "01737227b484aecb4e319c670355533024df9fb65b19a051cdb58e5dc174f1a2",
+    "canonicalDefinition": "SHA256 of Python json.dumps(sort_keys=True,separators=(',',':'),ensure_ascii=False), UTF-8.",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/37745114456",
+    "candidateBlobs": {
+      ".github/workflows/omega-nyx-general-repair-one-shot.yml": "3d6087bcdc76038b147589227f49579e27202cdf",
+      "scripts/omega/benchmarks/check-general-reasoning-oracles.py": "04d6806a0cbd0d4f734d7f4de894f53ac64f7b74",
+      "scripts/omega/benchmarks/generalReasoningTasks.ts": "bffb9c08cb298112feaf527308e6e675a368db24",
+      "scripts/omega/benchmarks/nyxTextBenchmark.ts": "4ca97c09710d77c67de8659966ce70c47c9e2e8c",
+      "scripts/omega/nyx-text-benchmark-epoch.ts": "50ebb9918bd132a3f6a3c294c3157bfc352440e9",
+      "scripts/omegaNyxTextBenchmark.test.ts": "318813b2c7f5703e27e387efe5848421c502c7e8",
+      "src/lib/codelab/cli/nyxChatSession.ts": "06ac1d1ab1a674508b026d53bb6f671bb479d996",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "17fc572e5bbee1bac1f35194c3d31bdcc5d9ecf6"
+    }
+  },
+  "projectionPolicy": {
+    "kind": "ALLOWLISTED_ORIGINAL_REPORT_PROJECTION_NOT_BYTE_IDENTICAL_ORIGINAL",
+    "omitted": [
+      "Per-task privateOracleDigest",
+      "Per-task predictionDigest",
+      "Model responseDigest",
+      "Event digests",
+      "Answer-derived capability gaps",
+      "Unused profile fields",
+      "Repetitive queue rows"
+    ],
+    "rawQuestionsStored": false,
+    "rawAnswersStored": false,
+    "rawModelReasoningStored": false,
+    "credentialsStored": false
+  },
+  "evaluation": {
+    "hypothesis": "An in-call constraint and counterexample check may reduce valid wrong answers without extra model calls or tools.",
+    "sameModel": "nvidia/nemotron-3-super-120b-a12b",
+    "cognitiveSubstrate": "SAME_NEMOTRON_INFERENCE_NOT_NEW_ENGINE",
+    "source": "Twelve fresh implementer-authored procedural challenge objectives, three per domain, each answered once by both existing arms. No official GPQA/AIME questions or references used.",
+    "domains": [
+      "BAYES",
+      "CAUSAL",
+      "SYMMETRY",
+      "PROGRAM_STATE"
+    ],
+    "officialBenchmark": false,
+    "independentReplication": false,
+    "oracleCrossCheck": "All 24 old/new objectives cross-checked before live inference; challenge uses separate Python Fraction full-joint enumeration, truncated causal factorization, Burnside fixed-period DP and allowlisted actual Python generator semantics.",
+    "oracleNegativeChecks": {
+      "arbitraryAddedStatementRejected": true,
+      "modifiedProgramTemplateRejected": true,
+      "modelGeneratedCodeExecuted": false
+    },
+    "cognitionOrPromptChangedForChallenge": false,
+    "intermediateTuning": false,
+    "answerSpecificRepairs": false,
+    "firstAttemptOutcomesPreserved": true,
+    "identicalModelConfigurationAuthorityToolsGraderAndCeilings": true,
+    "realizedComputeTolerance": 0.1,
+    "allPairsComputeMatched": false,
+    "taskLeaseMs": 180000,
+    "maxLogicalCallsPerTask": 2,
+    "maxSharedPhysicalCallsPerTask": 4,
+    "maxOutputTokensPerCall": 8192,
+    "answerReasoningEffort": "high",
+    "answerReasoningBudget": 6144,
+    "toolEnvelope": [
+      "READ_ONLY_DISPOSABLE_QUESTION_FILE"
+    ],
+    "calculatorShellSearchAvailable": false,
+    "arms": {
+      "SESSION_SUPER_PHASE_CONTRACT": {
+        "selected": 12,
+        "attempted": 12,
+        "graded": 12,
+        "correct": 9,
+        "wrongValidChoices": 3,
+        "ungraded": 0,
+        "unexecuted": 0,
+        "httpAttempts": 24,
+        "logicalCalls": 24,
+        "physicalCalls": 24,
+        "providerFailures": 0,
+        "reportedTokens": 78729,
+        "retries": 0,
+        "toolCalls": 12,
+        "toolWorkUnits": 10332,
+        "unknownUsageCalls": 0,
+        "wallClockMs": 695884,
+        "meanTaskMs": 57990.333333333336,
+        "medianTaskMs": 57729.5,
+        "failureStates": {
+          "PASS": 9,
+          "REASONING_FAILURE": 3
+        },
+        "repairAttempts": 0
+      },
+      "SESSION_SUPER_COUNTERCHECK": {
+        "selected": 12,
+        "attempted": 12,
+        "graded": 12,
+        "correct": 8,
+        "wrongValidChoices": 4,
+        "ungraded": 0,
+        "unexecuted": 0,
+        "httpAttempts": 24,
+        "logicalCalls": 24,
+        "physicalCalls": 24,
+        "providerFailures": 0,
+        "reportedTokens": 80983,
+        "retries": 0,
+        "toolCalls": 12,
+        "toolWorkUnits": 10332,
+        "unknownUsageCalls": 0,
+        "wallClockMs": 671917,
+        "meanTaskMs": 55993.083333333336,
+        "medianTaskMs": 52248,
+        "failureStates": {
+          "PASS": 8,
+          "REASONING_FAILURE": 4
+        },
+        "repairAttempts": 0
+      }
+    },
+    "domainResults": {
+      "BAYES": {
+        "SESSION_SUPER_PHASE_CONTRACT": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 3,
+          "wrongValidChoices": 0,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 15742
+        },
+        "SESSION_SUPER_COUNTERCHECK": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 3,
+          "wrongValidChoices": 0,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 15108
+        }
+      },
+      "CAUSAL": {
+        "SESSION_SUPER_PHASE_CONTRACT": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 3,
+          "wrongValidChoices": 0,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 20223
+        },
+        "SESSION_SUPER_COUNTERCHECK": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 2,
+          "wrongValidChoices": 1,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 22113
+        }
+      },
+      "SYMMETRY": {
+        "SESSION_SUPER_PHASE_CONTRACT": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 1,
+          "wrongValidChoices": 2,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 21378
+        },
+        "SESSION_SUPER_COUNTERCHECK": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 2,
+          "wrongValidChoices": 1,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 21674
+        }
+      },
+      "PROGRAM_STATE": {
+        "SESSION_SUPER_PHASE_CONTRACT": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 2,
+          "wrongValidChoices": 1,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 21386
+        },
+        "SESSION_SUPER_COUNTERCHECK": {
+          "selected": 3,
+          "attempted": 3,
+          "graded": 3,
+          "correct": 1,
+          "wrongValidChoices": 2,
+          "ungraded": 0,
+          "unexecuted": 0,
+          "reportedTokens": 22088
+        }
+      }
+    },
+    "pairedOutcomes": {
+      "pairs": 12,
+      "controlOnlyCorrect": 2,
+      "countercheckOnlyCorrect": 1,
+      "bothCorrect": 7,
+      "bothWrong": 2
+    },
+    "providerStablePairs": 12,
+    "computeMatchedPairs": {
+      "pairs": 9,
+      "controlOnlyCorrect": 1,
+      "countercheckOnlyCorrect": 1,
+      "bothCorrect": 5,
+      "bothWrong": 2
+    },
+    "computeMatchedSubsetScores": {
+      "control": {
+        "correct": 6,
+        "graded": 9
+      },
+      "countercheck": {
+        "correct": 6,
+        "graded": 9
+      },
+      "selection": "POST_HOC_RESOURCE_MATCHING_DIAGNOSTIC_NOT_RANDOMIZED_FULL_POPULATION"
+    },
+    "totals": {
+      "selected": 24,
+      "attempted": 24,
+      "graded": 24,
+      "correct": 17,
+      "wrongValidChoices": 7,
+      "ungraded": 0,
+      "unexecuted": 0,
+      "logicalCalls": 48,
+      "physicalCalls": 48,
+      "httpAttempts": 48,
+      "reportedTokens": 159712,
+      "unknownUsageCalls": 0,
+      "toolCalls": 24,
+      "toolWorkUnits": 20664,
+      "wallClockMs": 1367801,
+      "providerFailures": 0,
+      "retries": 0
+    },
+    "epochWallClockMs": 1367875,
+    "repairAttempts": 0,
+    "verifierTriggeredRevisions": 0,
+    "semanticAnswerRetries": 0,
+    "failureClasses": {
+      "reasoningOrKnowledgeWrongValidChoice": 7,
+      "answerFormat": 0,
+      "truncation": 0,
+      "provider": 0,
+      "schema": 0,
+      "authorization": 0,
+      "infrastructure": 0
+    },
+    "finerWrongAnswerCause": "NOT_ESTABLISHED_WITHOUT_ADDITIONAL_GENERAL_DEVELOPMENT_EXPERIMENTS",
+    "calibration": "NOT_SUPPORTED_BY_CURRENT_REPLY_PROTOCOL",
+    "independentEvidenceHandling": "NOT_MEASURED_BY_THIS_EXACT_CHOICE_TASK_PROTOCOL",
+    "engineeringQuality": "NOT_MEASURED_NO_CODE_CANDIDATES_CREATED",
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "cleanupBasis": "Runner rejects before recording results unless each disposable repository close reports sourceUnchanged and cleanupVerified.",
+    "stopReason": "SELECTION_EXHAUSTED",
+    "pairs": [
+      {
+        "taskId": "GENERAL-CHALLENGE-1",
+        "inputDigest": "40d53fcc6e95d795e143490404a13f85cab73b053f1ff07829393dd22d5e6a46",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-2",
+        "inputDigest": "9004b1083d36192257cfc8ac756690c1f785529d6bea593d76fff68b26571973",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "REASONING_FAILURE",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-3",
+        "inputDigest": "2bba158d079cc3d7a3cb0c9e0f2b13866b0ff62dbd40b6c3e905fce9101f4b4b",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "REASONING_FAILURE",
+          "REASONING_FAILURE"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-4",
+        "inputDigest": "91598698502af7b62d669e8e26b2209c04d8cd59243cb1ef336d4b3ac5ece567",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "REASONING_FAILURE",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-5",
+        "inputDigest": "a0e37b05bbd19292237e253c1218e875bb8f498985458a731e52a8a722ffba17",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-6",
+        "inputDigest": "d1eb038248e353861d19faabb4587aab0b33a58c36e0a5b111df041223d567ef",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-7",
+        "inputDigest": "e6b9113a00bc4d7f6544aca90716e1622c677b0578f60ff13e565e5e72c06f22",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-8",
+        "inputDigest": "d2e13f85dc43ba9a284759494a5d3d49f6aa1cc06e679a26d7815f6e05e2cd54",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "REASONING_FAILURE",
+          "REASONING_FAILURE"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-9",
+        "inputDigest": "ccf46b4fa60aca3a8d9a51eac49998a47f2cc255813bafd29423b1e4004e7b7e",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": false,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-10",
+        "inputDigest": "21b2e6ebc3b700c40a382ae8395d3bd45d7a3d15e51f1e2df9fe405cc9e81fbc",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-11",
+        "inputDigest": "991a1365cea7b78804cab47a3cc49ce6d7d0745ac937cafe8dd78963c2a98149",
+        "configurations": [
+          "SESSION_SUPER_PHASE_CONTRACT",
+          "SESSION_SUPER_COUNTERCHECK"
+        ],
+        "outcomes": [
+          "REASONING_FAILURE",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-12",
+        "inputDigest": "3802676a85a8d199127bf73355b6ea5278d9c6e95a6f39066cc59bb31b510d54",
+        "configurations": [
+          "SESSION_SUPER_COUNTERCHECK",
+          "SESSION_SUPER_PHASE_CONTRACT"
+        ],
+        "outcomes": [
+          "PASS",
+          "PASS"
+        ],
+        "boundPair": true,
+        "providerStable": true,
+        "matchedRealizedCompute": true,
+        "cognitivePromotion": false
+      }
+    ]
+  },
+  "decision": {
+    "countercheck": "NOT_PROMOTED",
+    "cognitiveGainDemonstrated": false,
+    "broadCodingQualityClaim": false,
+    "rationale": "Control 9/12 versus countercheck 8/12; provider-stable 12/12 pairs, compute-matched 9/12 pairs tie at 6/9 each. No measured net advantage supports promotion.",
+    "architectureChanged": false,
+    "nextRecommendation": "Do not strengthen counterchecking merely by adding prompt text. Test a general exact-computation/state-tracking hypothesis on separate development tasks, then fresh frozen transfer tasks with matched simpler controls; use only independently authorized existing tools.",
+    "futureToolAssistanceWouldBeDifferentExperiment": true,
+    "doNotTuneAgainstExposedChallengeAnswers": true,
+    "defaultUltraConfigurationChanged": false,
+    "authorityDelta": "NONE",
+    "limitations": [
+      "Single draw per arm on only twelve objectives; multiple-choice success can include guessing, and no statistical superiority is established.",
+      "Fresh procedural objectives, not a sealed independently authored benchmark; oracle methods differ but assumptions remain partially correlated.",
+      "Arm order alternates globally but is confounded with domain: BAYES/SYMMETRY control-first, CAUSAL/PROGRAM_STATE countercheck-first. Future replication should counterbalance within each domain.",
+      "Only nine pairs meet the predeclared per-pair 10% realized-compute tolerance; the matched subset is a diagnostic, not the full randomized population.",
+      "Closed-book question-file-read-only scope; exact counting and program-state failures do not establish failure of a separately tool-enabled engineering loop.",
+      "Raw private model reasoning was not retained; incorrect final choices do not reveal a precise internal failure mechanism.",
+      "Zero delivery failures in this finite run does not prove future provider stability or elimination of every historical timeout.",
+      "Earlier GPQA wrong choices remain unproven fixed; earlier saturated procedural scores are not directly comparable to these harder objectives."
+    ]
+  },
+  "regression": {
+    "localAggregate": {
+      "suites": 108,
+      "passedChecks": 11160,
+      "failedFiles": 0
+    },
+    "linuxCandidateAggregate": {
+      "suites": 108,
+      "passedChecks": 11160,
+      "failedFiles": 0
+    },
+    "targetedTextBenchmark": {
+      "passedChecks": 222,
+      "failedChecks": 0
+    },
+    "typescript": {
+      "version": "5.8.3",
+      "baseline": 0,
+      "current": 0,
+      "new": 0
+    },
+    "secretScanAtCandidate": {
+      "textFiles": 1264,
+      "findings": 0
+    },
+    "linuxProductionBuild": {
+      "result": "PASS",
+      "durationSeconds": 13.91
+    },
+    "windowsProductionBuild": {
+      "result": "BLOCKED_ENVIRONMENT",
+      "reason": "DEVICE_GUARD_POLICY_NOT_CHANGED"
+    },
+    "cognitionAndProviderSourceUnchangedFromPriorAcceptedCheckpoint": true,
+    "oneShotPushTriggerRemovedAt": "c6fb6bf7add977b635f22bd36c68be5f9f755489",
+    "laterEvidenceCommitsDoNotDispatchThisWorkflow": true,
+    "sourceRepositoryWritesByModel": false,
+    "generalShellAuthority": false,
+    "generalNetworkAuthority": false,
+    "credentialForwarding": false,
+    "productionAuthority": false,
+    "liveUnauthorizedActionChallenge": "NOT_EXERCISED_ALL_REQUESTS_AUTHORIZED",
+    "authorityRegressionChecks": "EXISTING_LOCAL_AND_LINUX_AGGREGATE"
+  },
+  "memory": {
+    "newSessionPerTask": true,
+    "persistentBenchmarkMemoryUsed": false,
+    "localReferencesDisposedInFinally": true,
+    "disposableQuestionFilesCleaned": true,
+    "forensicZeroizationClaimed": false,
+    "providerRetentionDeletionClaimed": false,
+    "modelWeightUnlearningClaimed": false,
+    "earlierQuestionsNotRelabeledBlind": true
+  },
+  "historicalEvidence": {
+    "previousGeneralRepairReceipt": "nyx-general-repair-6ad3c455.json",
+    "gpqa": {
+      "selected": 198,
+      "attempted": 198,
+      "graded": 194,
+      "correct": 148,
+      "wrongValidChoices": 46,
+      "ungradedProviderTimeouts": 4
+    },
+    "aimeCompleted": {
+      "selected": 30,
+      "attempted": 30,
+      "graded": 30,
+      "correct": 16,
+      "wrongIntegers": 14
+    },
+    "originalUltraAndSuperEvidencePreserved": true
+  },
+  "omegaPlanCoverage": {
+    "directlyImplemented": [
+      "Evidence over confidence",
+      "Generator requires validated detector",
+      "Fresh generalization evaluation without answer-specific tuning",
+      "Honest compute accounting"
+    ],
+    "supporting": [
+      "No self-certification",
+      "Capability is not authority",
+      "Explicit observation provenance",
+      "Bounded context lifetime"
+    ],
+    "deferred": [
+      "Official benchmark rerun",
+      "Additional brain layers",
+      "Recursion",
+      "Device integration",
+      "Production promotion"
+    ],
+    "conflicts": [
+      "No authority-policy conflict; domain/order confounding is an evaluation limitation, not silently superseded evidence."
+    ],
+    "coverageStatus": "PARTIAL / JUST-IN-TIME"
+  },
+  "reportProjection": {
+    "identity": "NYX-PUBLIC-TEXT-BENCHMARK-EPOCH-001",
+    "candidate": "a88115fdd272e1bc358cc1cd575df04bfb3b91df",
+    "mode": "GENERAL_REPAIR_CHALLENGE",
+    "executionIdentity": "github-actions-37745114456",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "credentialForwarding": false,
+      "delivery": "SCOPED_FILE",
+      "firstAttemptOnly": true,
+      "fixtureCleanupRequired": true,
+      "generalNetwork": false,
+      "inputTruncationAllowed": false,
+      "maxArtifactBytes": 50000,
+      "maxCallsPerTurn": 2,
+      "maxInputCharacters": 8000,
+      "maxOutputCharacters": 8000,
+      "maxOutputTokens": 8192,
+      "maxTaskMs": 180000,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "referenceAnswersVisibleToCognition": false,
+      "sourceWrites": false,
+      "tools": [
+        "READ_ONLY_DISPOSABLE_QUESTION_FILE"
+      ],
+      "version": "nyx-existing-chat-text-benchmark/1"
+    },
+    "populationDigest": "6c9a9071b1ec5e245cf900e3b6a5a49000c80cd4894981fc113d771096e5bb6d",
+    "selectionDigest": "6454f29a17a554cc7f0dc7ee6132f6a36a0e9e3af86e1a68994849db7afb462d",
+    "selectedTaskIds": [
+      "GENERAL-CHALLENGE-1-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-1-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-2-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-2-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-3-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-3-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-4-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-4-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-5-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-5-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-6-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-6-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-7-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-7-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-8-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-8-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-9-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-9-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-10-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-10-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-11-SESSION_SUPER_PHASE_CONTRACT",
+      "GENERAL-CHALLENGE-11-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-12-SESSION_SUPER_COUNTERCHECK",
+      "GENERAL-CHALLENGE-12-SESSION_SUPER_PHASE_CONTRACT"
+    ],
+    "modelSelection": {
+      "automaticFallback": false,
+      "defaultModel": "nvidia/nemotron-3-ultra-550b-a55b",
+      "evaluationOnlyOverride": true,
+      "model": "nvidia/nemotron-3-super-120b-a12b"
+    },
+    "configuration": "COUNTERBALANCED_SUPER_BASELINE_VS_CONSTRAINT_COUNTERCHECK",
+    "transientUnavailableRecovery": "WITHIN_SHARED_BUDGET",
+    "capacityScheduling": "BEFORE_TASK_LEASE",
+    "sharedDeliveryRecovery": {
+      "additionalReasoningTurns": false,
+      "identicalAcrossArms": true,
+      "logicalCallsPerTask": 2,
+      "originalTaskLeaseMs": 180000,
+      "physicalCallsPerTask": 4,
+      "productionDefaultsChanged": false,
+      "profile": "BOUNDED_RECOVERY",
+      "unknownRetryComputePreserved": true
+    },
+    "inference": "E4_LIVE_NVIDIA",
+    "verification": "E3_DEVELOPMENT_EXACT_INTEGER_NOT_BENCHMARK",
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "firstAttemptOnly": true,
+    "broadPromotion": false,
+    "results": [
+      {
+        "taskId": "GENERAL-CHALLENGE-1-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "40d53fcc6e95d795e143490404a13f85cab73b053f1ff07829393dd22d5e6a46",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 4627,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 925,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 29733
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "a2b0ca2d671e242c24ad31bbe01c22a68ed39fc2e7b5375c158c6a9449143b44",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445733941,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "36c0561d7a15a10e4801c980ecf17a82f918233aa4e588859ce3714c25246ccf",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 5885,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 971,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445733941,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-1-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "40d53fcc6e95d795e143490404a13f85cab73b053f1ff07829393dd22d5e6a46",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 6284,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 925,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 39153
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "2ed649e69fb7ff297aabe5184453123e25993b2466dc7e67772f87cee9366c59",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445763678,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "e1d732fe9e7083084da87994f604c6d5334ae3bf3ddaec03a5f5438fe60795b8",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 7868,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1032,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445763678,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-2-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "9004b1083d36192257cfc8ac756690c1f785529d6bea593d76fff68b26571973",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7370,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1027,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 44779
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "bbacbe63cc4c416c3726d8f50c872bd02ed947df131bee3ff8785389b7a93605",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445802833,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "bc419e1358daf42fdc6fc04a3bc66ddaa30c9c7f08978b83b4209dc5efea88d9",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 10426,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1186,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445802833,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-2-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "9004b1083d36192257cfc8ac756690c1f785529d6bea593d76fff68b26571973",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 5678,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1027,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 122099
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "18fff207aad350bf2b8f6036ec78f63cf6ef9a3c471b02ed12cc8efb7c871aca",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445847614,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "6c10fb53ee8e0264c2c1f6014469e2e492a582f7eda3aaf6cc20eaea79723062",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 8293,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 806,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445847614,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-3-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "2bba158d079cc3d7a3cb0c9e0f2b13866b0ff62dbd40b6c3e905fce9101f4b4b",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7128,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 641,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 59836
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "773644801f8dd560bf403bafdc8bd48f5fc19e07fb8608a5eba489a8f1e97f84",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445969715,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "161fc7d057d3be3779394358e6f3d0a0d4191cdb6eaf8e807d01accb4af75291",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 21404,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1160,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791445969715,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-3-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "2bba158d079cc3d7a3cb0c9e0f2b13866b0ff62dbd40b6c3e905fce9101f4b4b",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7226,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 641,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 53014
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "ab874f1db6cf9a1c0893274a87f07ee17a706865420358df6f1e6cd630720397",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446029553,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "933651f8c52b4076baa5615e1804a38f7fc0245f6512ea37de7a5e77e17ecc80",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 18989,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1165,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446029553,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-4-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "91598698502af7b62d669e8e26b2209c04d8cd59243cb1ef336d4b3ac5ece567",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7365,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 856,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 59519
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "6c4243d205e7974832c38c8179b38f52e1f08a6623dc41f84f91f34be3aa82e8",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446082569,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "8246d17e9a1f7bad9af7de9c7103f379f91c4cd5de72990f0725da9a538840a5",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 17741,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1166,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446082569,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-4-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "91598698502af7b62d669e8e26b2209c04d8cd59243cb1ef336d4b3ac5ece567",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 6863,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 856,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 47373
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "b3dacce4ca72954909872cd390a3b75718888b4947a421d8e56c81e45ad3f6ff",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446142091,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "ddd8e8b78209f208b8277f3943f11eb0c2cd007f9fc62892022a46861a0794c1",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 14638,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 951,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446142091,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-5-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "a0e37b05bbd19292237e253c1218e875bb8f498985458a731e52a8a722ffba17",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 3854,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 923,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 18400
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "b2ffc58ba5bb9243aeb8b31d621253a74143fc85ae279369e258ba2f526d2903",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446189466,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "fbafb9c0dcea3b48709ae459ef7af508c21eafe2f073d82e2bf5e10de2b9d0dc",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 4492,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1038,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446189466,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-5-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "a0e37b05bbd19292237e253c1218e875bb8f498985458a731e52a8a722ffba17",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 4059,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 923,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 20716
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "e526f77fe14467242ca56e65929096118851ba0ccf9c6afe8f943e1a53a37e33",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446207869,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "b531e0db56b1a54e9194e59f9190ced498a53180098fb38dde0044e09b74d707",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 4739,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1167,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446207869,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-6-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "d1eb038248e353861d19faabb4587aab0b33a58c36e0a5b111df041223d567ef",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7368,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1023,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 51064
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "ef20109defc5a4e6cd683d9aa8460fb015681cc46a5f7f74fc03a4de9d994011",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446228587,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "03dbb788ced110b4b2b2a55e5736c63b7fefda5a96aefd13a94ac3509bd27da1",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 10258,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 846,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446228587,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-6-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "d1eb038248e353861d19faabb4587aab0b33a58c36e0a5b111df041223d567ef",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7269,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1023,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 43007
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "a1ce71e3bb2b763aed294149a6163fb2e974e32127254afd81aef721d63bbd18",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446279654,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "22a505279c07a83e2fbf78792fdb7c75a1542e1e3aec3699b094b3c65d20e4e5",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 9911,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 823,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446279654,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-7-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "e6b9113a00bc4d7f6544aca90716e1622c677b0578f60ff13e565e5e72c06f22",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7128,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 640,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 65258
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "32f48bf00f6632c0aed97919fa0a56113cf77b02c11cb8c9c8e8bfda6a0d6476",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446322663,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "addfaf125c0aa271ad4cde0fb308b3864942222f95c1bd6e96f0aa7a1b9c37e2",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 22837,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1180,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446322663,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-7-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "e6b9113a00bc4d7f6544aca90716e1622c677b0578f60ff13e565e5e72c06f22",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7227,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 640,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 54626
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "86cad5528ea32a19048a27509c70e01153b6c4f1d09cf520f62e234af44bdfe3",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446387923,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "66bed3ffa4e6cd40aedc1cf7245009d844f11e46b04ae0483574505b70cebf91",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 22542,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1151,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446387923,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-8-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "d2e13f85dc43ba9a284759494a5d3d49f6aa1cc06e679a26d7815f6e05e2cd54",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7357,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 850,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 91207
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "94c9b7c63c7adae62ae5fbbb6862689b2d306dc7acab2d657d26d1372171f19c",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446442553,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "d0f75e4e06a883576ae3f086c23ed5d726c64ee488f34ea30feaf3eaf4eb3e35",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 16652,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1157,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446442553,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-8-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "d2e13f85dc43ba9a284759494a5d3d49f6aa1cc06e679a26d7815f6e05e2cd54",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7256,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 850,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 55623
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "3f544b7ef7ee964c329ab137e0710bcb5c3a48ff886fda90d7767619455844cf",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446533764,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "afad4b7ab3223ec618ad15874efafd840d8ea499730bf767250738887a143e1f",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 18653,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1149,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446533764,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-9-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "ccf46b4fa60aca3a8d9a51eac49998a47f2cc255813bafd29423b1e4004e7b7e",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7261,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 923,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 63678
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "c4e17abf2fbfd95ae038bff4870b3e1dde43354af50872db00547fba05ab08cf",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446589389,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "96ad70378203cba011aa7536a86e9f87cb715d496cc1c4b9e63a148331263eea",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 10984,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1072,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446589389,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-9-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "ccf46b4fa60aca3a8d9a51eac49998a47f2cc255813bafd29423b1e4004e7b7e",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 4765,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 923,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 35490
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "dac70f56d147a74e8bf398f130c2dddd50dbbf6fcc33ee9c65ac6ed7ffcd43f2",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446653069,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "70701c8e9dd1bbe0c0747c3bc1b7a0416de02d9cfa46e1bbeaffae7b4f4dd724",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 6138,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1130,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446653069,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-10-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "21b2e6ebc3b700c40a382ae8395d3bd45d7a3d15e51f1e2df9fe405cc9e81fbc",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7375,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1028,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 56660
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "c82096ba081e77ee2509720ac4d034648d288674aaceb203c7e724e5d99bb2b5",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446688561,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "64284d276eb4d2e14d0ec6c1ff771fb82d985e6df3e235105389b0f6fde82b28",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 9855,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1082,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446688561,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-10-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "21b2e6ebc3b700c40a382ae8395d3bd45d7a3d15e51f1e2df9fe405cc9e81fbc",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7276,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 1028,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 60808
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "1d0c0bba13ffb310d6052cdb4347072609ad7646883d6ca365e6c67931146bf8",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446745223,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "73449affd5002afd7381a5c5b0f09c17a70e895d38d913f1012852f8a245eb4f",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 11200,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1146,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446745223,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-11-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "991a1365cea7b78804cab47a3cc49ce6d7d0745ac937cafe8dd78963c2a98149",
+        "state": "REASONING_FAILURE",
+        "correct": false,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7122,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 640,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 79107
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "8742fcda90341262e46200d1eb1bd54cf6ebf73e307acec53a6a642e882f50ca",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446806033,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "2a7ca1cd8b60d4b0c5c3139e004706927d564ff8e06b0bf0db24a26fdaba238f",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 22079,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 758,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446806033,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-11-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "991a1365cea7b78804cab47a3cc49ce6d7d0745ac937cafe8dd78963c2a98149",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7221,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 640,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 114207
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "b3eadf9ac4a782c26782625339271cbaa72c23cc6f20fdbdbcefde02a5f07637",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446885143,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "7cb80277d5b3a43a7c27d94bb0dace0b95add9dcf121facdbe91843ccee43c4a",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 22523,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1170,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446885143,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-12-SESSION_SUPER_COUNTERCHECK",
+        "configuration": "SESSION_SUPER_COUNTERCHECK",
+        "inputDigest": "3802676a85a8d199127bf73355b6ea5278d9c6e95a6f39066cc59bb31b510d54",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7366,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 856,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 51482
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "cc5972ec077a766840e92b5ef8a630ff831e8b0e5d2255f5794f445b8b9fcc50",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446999353,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "dd684a5e57294a3fb7a86c3cf5513c96d3edba30196890deb62eb64da7644886",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 15038,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1144,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791446999353,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      },
+      {
+        "taskId": "GENERAL-CHALLENGE-12-SESSION_SUPER_PHASE_CONTRACT",
+        "configuration": "SESSION_SUPER_PHASE_CONTRACT",
+        "inputDigest": "3802676a85a8d199127bf73355b6ea5278d9c6e95a6f39066cc59bb31b510d54",
+        "state": "PASS",
+        "correct": true,
+        "usage": {
+          "httpAttempts": 2,
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "providerFailures": 0,
+          "reportedTokens": 7267,
+          "retries": 0,
+          "toolCalls": 1,
+          "toolWorkUnits": 856,
+          "unknownUsageCalls": 0,
+          "wallClockMs": 50962
+        },
+        "localRejectedCalls": 0,
+        "requestRejections": [],
+        "eventOutcomes": [
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 1
+          },
+          {
+            "eventType": "READ",
+            "evidenceClass": "E3",
+            "outcome": "OBSERVED",
+            "sequence": 2
+          },
+          {
+            "eventType": "MODEL",
+            "evidenceClass": "E4",
+            "outcome": "COMPLETED",
+            "sequence": 3
+          },
+          {
+            "eventType": "REPLY",
+            "evidenceClass": "E3",
+            "outcome": "REPLIED",
+            "sequence": 4
+          }
+        ],
+        "modelEvidence": [
+          {
+            "requestDigest": "eba9a10ebebb1a3fcba116c1a34f356bd7f4e7f37187d80f6536615194c5c4da",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 0,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791447050838,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 1,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 3,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          },
+          {
+            "requestDigest": "a4dc6677c275bb1433d3884942193da222ce52b01fc520a828c1b8eab228fc4e",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": 17357,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "state": "DELIVERED",
+              "httpAttempts": 1,
+              "timedOutAttempts": 0,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "capacityWaitMs": 1160,
+              "attemptTimeout": {
+                "authorityRenewed": false,
+                "callerDeadlineEpochMs": 1791447050838,
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "finalAttemptUsed": true,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+              },
+              "httpAttemptBudget": {
+                "dispatchDenied": false,
+                "dispatched": 2,
+                "exhausted": false,
+                "limit": 4,
+                "remainingAttempts": 2,
+                "renewed": false,
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              },
+              "authorityRenewed": false
+            }
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      }
+    ]
+  }
+}
