@@ -6,6 +6,7 @@ import { BoundedReasoningSession } from "../research/boundedReasoningWorkbench";
 import { immutableTheoryValue, theoryDigest } from "../research/theoryContracts";
 import { lowerQuantitativeEquations, quantitativeEquationDiagnostic, EQUATION_COMPILER_POLICY } from "../research/quantitativeEquationCompiler";
 import { EXACT_DERIVATION_POLICY } from "../research/exactQuantitativeDerivation";
+import { lowerFiniteProbability, finiteProbabilityDiagnostic } from "../research/finiteProbabilityCompiler";
 
 export interface NyxChatModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
@@ -104,6 +105,9 @@ export interface NyxChatSessionConfig {
   readonly derivationSession?: BoundedReasoningSession;
   /** Evaluation-only generation restriction. Never an execution or acceptance grant. */
   readonly derivationSchemaProfile?: "COLLECTION_BOUNDS";
+  /** Experimental model representation; normal hosts/defaults remain unchanged.
+   * Both representations use the SAME prebound arithmetic session and resource policy. */
+  readonly derivationRepresentation?: "FINITE_PROBABILITY_MODEL";
   /** Experimental procedure within the same model call; never independent verification or more authority. */
   readonly reasoningPolicy?: "CONSTRAINT_COUNTERCHECK";
 }
@@ -144,6 +148,8 @@ export class NyxChatSession {
       || config.reasoningPolicy !== undefined && config.reasoningPolicy !== "CONSTRAINT_COUNTERCHECK"
       || config.derivationSchemaProfile !== undefined && (config.derivationSchemaProfile!=="COLLECTION_BOUNDS"
         || config.actionContract?.kind!=="DERIVE_THEN_REPLY")
+      || config.derivationRepresentation !== undefined && (config.derivationRepresentation!=="FINITE_PROBABILITY_MODEL"
+        || config.actionContract?.kind!=="DERIVE_THEN_REPLY" || config.derivationSchemaProfile!==undefined)
       || config.actionContract !== undefined && (!nyxChatActionContractValid(config.actionContract)
         || config.actionContract.kind !== "REPLY_ONLY" && config.maxModelCallsPerTurn < 2)
       || config.derivationSession !== undefined && (!(config.derivationSession instanceof BoundedReasoningSession)
@@ -189,7 +195,20 @@ export class NyxChatSession {
     const derivation = this.#config.actionContract?.kind === "DERIVE_THEN_REPLY" ? this.#config.actionContract : null;
     // Identical public planning instructions in proposal-only and executed arms. The host-owned
     // session, never the text/schema, determines whether the proposal can actually be computed.
-    const derivationContract = derivation ? `\nBefore replying, propose one native exact-rational derivation of the requested quantities. `
+    const probabilityRepresentation = this.#config.derivationRepresentation === "FINITE_PROBABILITY_MODEL";
+    const derivationContract = derivation && probabilityRepresentation ? `\nBefore replying, represent the supplied probability problem as a finite binary DAG. `
+      + `Constants: ${nyxCanonical(derivation.problem.constants)}. Output labels: ${nyxCanonical(derivation.outputLabels)}. `
+      + `Emit DERIVE_QUANTITIES with a schemaVersion 3 program. List variables in topological order, at most 8 variables and 3 parents each. `
+      + `probabilityTrue lists named constants for P(variable=true|parents), in the listed parent order, false before true, first parent most significant. `
+      + `Use one table entry for a root and exactly 2^parentCount entries otherwise. No invented numerical values or implicit independence. `
+      + `Queries specify event, given observations, and interventions as arrays of {variable,value:boolean}. `
+      + `The compiler sums over all remaining variables. Interventions remove the intervened variable's mechanism; given observations do not. `
+      + `Causal interpretation assumes the supplied Markovian DAG with independent exogenous noise; do not invent missing causal assumptions. `
+      + `Up to 4 queries and outputs. An IDENTITY output uses the same query ID in left and right; SUB computes left minus right. `
+      + `All queries must be defined even if an output cancels them. Compilation must fit the unchanged 64 primitive-step and 32-register bounds. `
+      + `Omega may return evaluated quantities or retain the proposal without execution. Execution is conditional on YOUR model, not independent validation of it. `
+      + `Then reply using the actual observation and original objective. No other tools are available.`
+      : derivation ? `\nBefore replying, propose one native exact-rational derivation of the requested quantities. `
       + `Constants: ${nyxCanonical(derivation.problem.constants)}. Output labels: ${nyxCanonical(derivation.outputLabels)}. `
       + `Emit DERIVE_QUANTITIES as the current schema requires. All r0..r15 state slots start at zero. `
       + `initialState can override slots from named constants. Each cycle repeats its ordered phases iterations times. `
@@ -236,7 +255,7 @@ export class NyxChatSession {
       const requestId = `${this.#config.sessionId}-T${this.#turnNumber}-M${modelCalls + 1}`;
       const actionContract = this.#config.actionContract;
       const responseFormat = actionContract ? nyxChatContractFormat(actionContract, contractFileObserved,
-        this.#config.derivationSchemaProfile==="COLLECTION_BOUNDS") : "JSON_OBJECT";
+        this.#config.derivationSchemaProfile==="COLLECTION_BOUNDS",probabilityRepresentation) : "JSON_OBJECT";
       const countercheck = this.#config.reasoningPolicy && (!actionContract || actionContract.kind === "REPLY_ONLY"
         || contractFileObserved) ? `\n${CONSTRAINT_COUNTERCHECK}` : "";
       if (actionContract) messages[0] = {role: "system", content: `${systemMessage}${countercheck}\nCurrent response schema: ${nyxCanonical(responseFormat)}. Remaining model calls including this one: ${this.#config.maxModelCallsPerTurn - modelCalls}.`};
@@ -329,9 +348,14 @@ export class NyxChatSession {
       try {
         // Both arms validate the SAME native language, even when no arithmetic is authorized.
         // This compiler checks bindings/shape only; the independent mathematical oracle stays outside.
-        lowerQuantitativeEquations(contract.problem,action.program);
-        if (action.program.outputs.length !== contract.outputLabels.length
-          || action.program.outputs.some(output=>!contract.outputLabels.includes(output.label)))
+        const probabilityRepresentation=this.#config.derivationRepresentation==="FINITE_PROBABILITY_MODEL";
+        if(action.program.schemaVersion!==(probabilityRepresentation?3:2))return reject("derivation_representation_not_authorized");
+        // Execution validates/compiles under the same session work and time limits.
+        // Proposal-only mode also validates, but cannot execute or invent a tool result.
+        if(!probabilityRepresentation)lowerQuantitativeEquations(contract.problem,action.program);
+        else if(!this.#config.derivationSession)lowerFiniteProbability(contract.problem,action.program);
+        if (!Array.isArray(action.program.outputs) || action.program.outputs.length !== contract.outputLabels.length
+          || action.program.outputs.some(output=>!output || !contract.outputLabels.includes(output.label)))
           return reject("derivation_output_scope_invalid");
         const session = this.#config.derivationSession;
         const result = session ? session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
@@ -345,7 +369,8 @@ export class NyxChatSession {
         const message=error instanceof Error?error.message:"";
         return reject(message==="reasoning_session_unavailable"?"derivation_capability_unavailable"
           :message==="reasoning_session_budget_exhausted"?"derivation_resource_exhausted"
-          :/^quantitative_(?:program|equations)_invalid:/.test(message)?"derivation_ir_invalid":"derivation_computation_rejected",quantitativeEquationDiagnostic(error));
+          :/^quantitative_(?:program|equations)_invalid:|^finite_probability_invalid:/.test(message)?"derivation_ir_invalid":"derivation_computation_rejected",
+          finiteProbabilityDiagnostic(error)??quantitativeEquationDiagnostic(error));
       }
     }
     if (action.kind === "READ_FILE" || action.kind === "LIST_DIRECTORY") {

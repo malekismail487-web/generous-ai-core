@@ -3,10 +3,11 @@ import type { FiniteRefutation, ColoringRefutationNode } from "./finiteRefutatio
 import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, quantitativeProgramFinding, EXACT_DERIVATION_POLICY,
   type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
 import { lowerQuantitativeEquations,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
+import { lowerFiniteProbability, FINITE_PROBABILITY_POLICY, type FiniteProbabilityModel } from "./finiteProbabilityCompiler";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/5",
+  version: "nyx-bounded-reasoning-workbench/6",
   grantsAuthority: false,
   maxInputBytes: 128_000,
   planCoverage: Object.freeze({ status: "PARTIAL_JUST_IN_TIME",
@@ -56,7 +57,7 @@ export interface ReasoningToolRequest {
   readonly problemDigest: string;
 }
 export interface QuantitativeToolRequest extends ReasoningToolRequest {
-  readonly program: QuantitativeProgram | QuantitativeEquations;
+  readonly program: QuantitativeProgram | QuantitativeEquations | FiniteProbabilityModel;
 }
 export interface ReasoningToolResult {
   readonly version: string;
@@ -370,7 +371,8 @@ export class BoundedReasoningSession {
         && this.#requests < this.#limits.maxRequests && this.#workUnits < this.#limits.maxWorkUnits,
       grantsAuthority: false, outputIsNotAcceptance: true,
       ...(this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" ? { programRequired: true,
-        programPolicy: EXACT_DERIVATION_POLICY, equationPolicy:EQUATION_COMPILER_POLICY } : {}) });
+        programPolicy: EXACT_DERIVATION_POLICY, equationPolicy:EQUATION_COMPILER_POLICY,
+        probabilityPolicy:FINITE_PROBABILITY_POLICY } : {}) });
   }
   revoke(): void { this.#revoked = true; }
   analyze(request: unknown): ReasoningToolResult {
@@ -386,7 +388,8 @@ export class BoundedReasoningSession {
     if(request.operation!=="ANALYZE_FINITE_PROBLEM")throw new Error("reasoning_request_invalid:OPERATION");
     if(request.problemDigest!==this.problemDigest)throw new Error("reasoning_request_invalid:PROBLEM_BINDING");
     let executedProgram:QuantitativeProgram|null=null;
-    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION") {
+    const probabilityModel = quantitative && (request.program as Partial<FiniteProbabilityModel>)?.schemaVersion === 3;
+    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel) {
       executedProgram=(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2
         ?lowerQuantitativeEquations(this.#problem,request.program):request.program as QuantitativeProgram;
       const finding=quantitativeProgramFinding(this.#problem,executedProgram);
@@ -399,6 +402,8 @@ export class BoundedReasoningSession {
       this.#limits.expiresAtEpochMs, this.#now,operationStarted);
     let construction: Construction | null = null;
     try {
+      if (probabilityModel && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
+        executedProgram=lowerFiniteProbability(this.#problem,request.program,()=>budget.tick()).program;
       if(executedProgram&&(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2)
         for(let at=0;at<executedProgram.registers.length+executedProgram.blocks.reduce((n,b)=>n+b.steps.length,0);at++)budget.tick();
       if (this.#problem.kind === "COLORING") construction = colorGraph(this.#problem, budget);
@@ -406,13 +411,14 @@ export class BoundedReasoningSession {
       else if (this.#problem.kind === "EXPERIMENT_SELECTION") construction = selectExperiments(this.#problem, budget);
       else if (this.#problem.kind === "HYPOTHESIS_ELIMINATION") construction = eliminate(this.#problem, budget);
       else if (executedProgram && validQuantitativeProgram(this.#problem, executedProgram)) construction = deriveQuantities(this.#problem, executedProgram, budget);
-    } catch (error) { if (!(error instanceof SearchBudgetExceeded)) throw error; }
+    } catch (error) { if (!(error instanceof SearchBudgetExceeded)) { this.#workUnits += budget.units; throw error; } }
     this.#workUnits += budget.units;
     const result = { version: NYX_REASONING_WORKBENCH.version, inputDigest: this.problemDigest,
       requestDigest: theoryDigest(request), status: construction?.status ?? "BUDGET_EXHAUSTED" as const,
       payload: construction?.payload ?? null, workUnits: budget.units, elapsedMs: Math.max(0, this.#now() - budget.started),
       ...(executedProgram?{executedProgramDigest:theoryDigest(executedProgram),
-        loweringVersion:(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2?EQUATION_COMPILER_POLICY.version:null}:{}),
+        loweringVersion:probabilityModel?FINITE_PROBABILITY_POLICY.version
+          :(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2?EQUATION_COMPILER_POLICY.version:null}:{}),
       evidenceClass: "E3" as const, acceptanceRequiresIndependentVerifier: true as const, grantsAuthority: false as const };
     return immutableTheoryValue({ ...result, resultDigest: theoryDigest(result) });
   }

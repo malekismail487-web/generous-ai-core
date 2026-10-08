@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/94",
+  "suiteVersion": "omega-institutional-suite/95",
   "criticalSuites": [
     "OMEGA-STORAGE-PREREQUISITE",
     "OMEGA-BENCHMARK-POPULATION",
@@ -14,6 +14,7 @@
     "OMEGA-FINITE-REFUTATION",
     "OMEGA-NYX-WORKBENCH-TRANSFER",
     "OMEGA-BOUNDED-REASONING-WORKBENCH",
+    "OMEGA-FINITE-PROBABILITY",
     "OMEGA-QUANTITATIVE-CONSTRAINT-FEEDBACK",
     "OMEGA-DIGITAL-NEURON-STABILITY",
     "OMEGA-DIGITAL-NEURON-MICROCIRCUIT",
@@ -85,6 +86,7 @@
     { "suiteId": "OMEGA-FINITE-REFUTATION", "file": "scripts/omegaFiniteRefutation.test.ts" },
     { "suiteId": "OMEGA-NYX-WORKBENCH-TRANSFER", "file": "scripts/omegaNyxWorkbenchTransfer.test.ts" },
     { "suiteId": "OMEGA-BOUNDED-REASONING-WORKBENCH", "file": "scripts/omegaBoundedReasoningWorkbench.test.ts" },
+    { "suiteId": "OMEGA-FINITE-PROBABILITY", "file": "scripts/omegaFiniteProbability.test.ts" },
     { "suiteId": "OMEGA-QUANTITATIVE-CONSTRAINT-FEEDBACK", "file": "scripts/omegaQuantitativeConstraintFeedback.test.ts" },
     { "suiteId": "OMEGA-BIOLOGICAL-CIRCUIT-IR", "file": "scripts/omegaBiologicalCircuitIR.test.ts" },
     { "suiteId": "OMEGA-DIGITAL-NEURON-STABILITY", "file": "scripts/omegaDigitalNeuronStability.test.ts" },

@@ -1286,3 +1286,47 @@ and BBEH cancellation are preserved. The completion watch is paused after captur
 Ω coverage: evidence-linked claims, immutable first-attempt/recovery separation,
 finite leases and honest compute; defers fresh transfer, full recertification and
 production authority. Coverage remains PARTIAL / JUST-IN-TIME.
+
+### Experimental finite-probability formulation — unpromoted
+
+Numerical pilot disagreement exposed a model-formulation failure surface that
+more delivery retries cannot fix. The candidate represents binary dependency
+tables, observed events and interventions explicitly, then lowers enumerated
+sum/product expressions into the **existing** exact-rational executor. It adds
+neither a model nor a parallel execution stack. Normal NYX/default Ultra remain
+unchanged. Native work, time, request, integer, 64-step and 32-register limits,
+revocation, scope binding and independent acceptance still apply. Compiler work
+is charged to the same session. Undefined conditioning cannot be optimized away.
+
+The mathematical basis is marginalization of factored distributions
+([Kschischang, Frey and Loeliger](https://www.isiweb.ee.ethz.ch/papers/arch/aloe-2001-1.pdf))
+and explicit intervention by truncated factorization
+([Pearl](https://ftp.cs.ucla.edu/pub/stat_ser/r350.pdf)). This implementation uses
+bounded exact enumeration, not loopy belief propagation or a biological brain.
+Scientific validity of the model/causal assumptions is **not** established by
+executing it. No improvement on GPQA or broad scientific reasoning is yet proven.
+
+Development and frozen transfer each contain four synthetic objectives in
+collider diagnosis, confounded actions, selected causal chains and reliability
+mixtures. Transfer changes graph topology as well as numerical parameters.
+They are implementation-authored E3 research, not official benchmarks or an
+independent replication. A separate Python Fraction full-joint oracle checks
+200 generated models and all eight reference objectives before live inference.
+
+The existing computation runner compares bounded phase IR with the declarative
+model using the same Super configuration, objective, two-call ceiling, 8,192
+output tokens/call, 180-second task lease, tool authority and unchanged grader.
+Both arms use independent inference; model tokens/calls, provider disruption,
+compiler failures and additional native work remain explicit. Only pairs meeting
+the existing 10% realized-model-compute tolerance qualify as compute-matched;
+equal ceilings alone do not. A correct final choice and a correct computed
+quantity are measured separately and jointly. Public synthetic model/action
+capsules permit independent execution replay without storing private reasoning
+or reference answers. No best-of accumulation or grader feedback enters cognition.
+
+Ω coverage: directly implements structured model formulation, generator/detector
+separation, evidence-bound execution and fresh comparison; supports resource
+leases and causal-assumption visibility. Defers cognitive promotion, official
+benchmark retesting, general causal discovery and production deployment. Resolves
+the representation/executor boundary by reusing one native execution capability.
+Coverage remains PARTIAL / JUST-IN-TIME. The ≥80% cross-benchmark goal is not met.

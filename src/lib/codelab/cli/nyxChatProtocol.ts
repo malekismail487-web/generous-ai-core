@@ -3,6 +3,7 @@ import type { NvidiaNimJsonSchemaResponseFormat } from "../model/nvidiaNimProvid
 import { validQuantitativeProblem, type QuantitativeProblem } from "../research/exactQuantitativeDerivation";
 import { quantitativeProgramSchema } from "../research/nyxQuantitativeReasoning";
 import type { QuantitativeEquations } from "../research/quantitativeEquationCompiler";
+import { finiteProbabilitySchema, type FiniteProbabilityModel } from "../research/finiteProbabilityCompiler";
 import { theoryDigest } from "../research/theoryContracts";
 
 /** Host-owned workflow restriction, not a capability token or an authorization grant. */
@@ -25,14 +26,17 @@ export function nyxChatActionContractValid(value: unknown): value is NyxChatActi
 }
 
 /** Generation guidance only; the strict parser, phase check and R1 executor remain independent. */
-export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean,boundedNativeCollections=false): NvidiaNimJsonSchemaResponseFormat {
-  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean" || typeof boundedNativeCollections!=="boolean") throw Error("nyx_chat_action_contract_invalid");
+export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean,boundedNativeCollections=false,
+  probabilityRepresentation=false): NvidiaNimJsonSchemaResponseFormat {
+  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean" || typeof boundedNativeCollections!=="boolean"
+    || typeof probabilityRepresentation!=="boolean" || probabilityRepresentation && contract.kind!=="DERIVE_THEN_REPLY") throw Error("nyx_chat_action_contract_invalid");
   const readRequired = contract.kind === "READ_THEN_REPLY" && !observed;
   if (contract.kind === "DERIVE_THEN_REPLY" && !observed) return {
     type: "JSON_SCHEMA", name: "nyx_required_public_derivation", schema: {type:"object",additionalProperties:false,
       required:["kind","problemDigest","program"],properties:{kind:{type:"string",enum:["DERIVE_QUANTITIES"]},
         problemDigest:{type:"string",enum:[theoryDigest(contract.problem)]},
-        program:quantitativeProgramSchema(contract.outputLabels,contract.problem.constants.map(c=>c.id),boundedNativeCollections)}}};
+        program:probabilityRepresentation?finiteProbabilitySchema(contract.outputLabels,contract.problem.constants.map(c=>c.id))
+          :quantitativeProgramSchema(contract.outputLabels,contract.problem.constants.map(c=>c.id),boundedNativeCollections)}}};
   return { type: "JSON_SCHEMA", name: readRequired ? "nyx_required_file_read" : "nyx_contract_reply",
     schema: { type: "object", properties: readRequired
       ? { kind: { type: "string", enum: ["READ_FILE"] }, path: { type: "string", enum: [contract.path] } }
@@ -50,7 +54,7 @@ export function nyxChatContractAllows(contract: NyxChatActionContract, observed:
 
 export type NyxChatAction =
   | { readonly kind: "REPLY"; readonly message: string }
-  | { readonly kind: "DERIVE_QUANTITIES"; readonly problemDigest: string; readonly program: QuantitativeEquations }
+  | { readonly kind: "DERIVE_QUANTITIES"; readonly problemDigest: string; readonly program: QuantitativeEquations | FiniteProbabilityModel }
   | { readonly kind: "READ_FILE" | "LIST_DIRECTORY"; readonly path: string }
   | { readonly kind: "PROPOSE_EDIT"; readonly path: string; readonly expectedBaseHash: string;
       readonly replacement: string; readonly rationale: string }
@@ -106,8 +110,9 @@ export function parseNyxChatAction(raw: string, maxReplacementBytes = 32_768): N
   if (value.kind === "DERIVE_QUANTITIES" && exactKeys(value,["kind","problemDigest","program"])
     && typeof value.problemDigest === "string" && /^[a-f0-9]{64}$/.test(value.problemDigest)
     && value.program && typeof value.program === "object" && !Array.isArray(value.program)
-    && (value.program as Record<string,unknown>).schemaVersion === 2)
-    return {action:{kind:"DERIVE_QUANTITIES",problemDigest:value.problemDigest,program:value.program as QuantitativeEquations},reason:"accepted"};
+    && [2,3].includes(Number((value.program as Record<string,unknown>).schemaVersion))
+    && typeof (value.program as Record<string,unknown>).schemaVersion === "number")
+    return {action:{kind:"DERIVE_QUANTITIES",problemDigest:value.problemDigest,program:value.program as QuantitativeEquations | FiniteProbabilityModel},reason:"accepted"};
   if (value.kind === "REPLY" && exactKeys(value, ["kind", "message"])
     && typeof value.message === "string" && value.message.trim() && value.message.length <= 8_000) {
     return { action: { kind: "REPLY", message: value.message }, reason: "accepted" };

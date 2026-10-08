@@ -1,0 +1,53 @@
+name: Omega NYX finite probabilistic model development comparison
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  probability-development:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-probability-development-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Validate both representations and separate-language oracles before inference
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaFiniteProbability.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-computation-transfer.ts
+          node scripts/typescript/typecheck-ratchet.mjs
+          node scripts/security/scan-secrets.mjs
+      - name: Compare frozen development objectives once with no oracle feedback to cognition
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          OMEGA_COMPUTATION_STAGE: PROBABILITY_DEVELOPMENT
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-computation-transfer.ts
+      - name: Independently replay constructed public probability models
+        if: always()
+        run: python -B scripts/omega/benchmarks/check-finite-probability.py --report "$RUNNER_TEMP/nyx-computation-report-$GITHUB_SHA.json"
+      - name: Preserve sanitized evidence only, never raw private inference or secret
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-probability-development-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-computation-*-${{ github.sha }}.json
+          if-no-files-found: error
