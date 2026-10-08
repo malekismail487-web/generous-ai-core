@@ -1,9 +1,6 @@
 name: Omega NYX ARC source-linked quality transfer
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-arc-decision-quality-one-shot.yml]
 permissions:
   contents: read
 concurrency:
