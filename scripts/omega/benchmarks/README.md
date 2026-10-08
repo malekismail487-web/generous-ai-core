@@ -1502,3 +1502,48 @@ pair accounting. Functional/private oracles, model calls, task selection,
 budgets, authority, default Ultra and quality thresholds are unchanged.
 Verification: 109 suites / 11,433 checks, zero failures; population accounting
 39 checks and capability harness 162 checks; TypeScript 5.8.3 remains zero.
+### ARC Super configuration comparison — terminal evidence
+
+The [frozen run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37821316792)
+completed all eight selected tasks in both configured arms: **16 attempted
+observations, zero independently graded, zero accepted**. No hidden-case score
+or cognitive improvement is established. The unused raw/reference records are
+not additional requested model work.
+
+Native `none` ended with five schema failures and three public-functional
+failures. Native bounded `high` ended with six public-functional failures and
+two resource-exhausted observations. All eight current observations and seven
+of eight candidate observations encountered a schema rejection during their
+bounded interaction; missing required evidence references were recurrent.
+Four current and six candidate proposals reached public execution; none passed.
+Thus unreached hidden tests are not hidden-case reasoning failures.
+
+Current used 16 physical/logical calls and 166,993 reported tokens with no
+provider failures or unknown usage. Candidate used 16 physical / 15 logical
+calls, 175,915 reported tokens, three unknown-usage calls, three provider
+failures and one retry. Only **1/8 pairs** met the existing strict realized
+compute check; equal caps did not produce a matched campaign. Wall time was
+1,079,058 ms. All source/cleanup checks passed.
+
+Artifact SHA256:
+`d7cae9ffc2540f33dd846b44a2190d445aeb9bf9875192637da00f24efc31051`.
+The [receipt](../../../docs/omega/evidence/nyx-arc-super-configuration-7b3c0f89.json)
+records artifact/log/progress agreement, frozen source/configuration identities,
+original outcomes and the original false global parity flag without rewriting
+the report. The later accounting fix does not make these pairs matched.
+
+Code inspection identified a general generation/local-contract mismatch:
+the hosted schema requires only `decision` and `diagnosis`, while
+`PROPOSE_EDIT` locally requires causal hypothesis, evidence references,
+invariant, expected result, counterexamples and changes. Prompt instructions
+alone did not reliably supply the missing obligations. The next correction
+must reproduce this on separate development intents and align generation
+requirements without inventing citations or relaxing local validation.
+
+NVIDIA's [model guidance](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b)
+recommends temperature 1.0 / top-p 0.95. Its
+[reproduction configuration](https://github.com/NVIDIA-NeMo/Evaluator/blob/main/packages/nemo-evaluator-launcher/examples/nemotron/nemotron-3-super/local_nemotron-3-super-120b-a12b.yaml)
+uses much larger output/time budgets and repeated samples. Those settings are
+research context, not evidence of a NYX improvement, a comparable score, or
+permission to change this frozen run. Default Ultra, acceptance oracles,
+authority and historical benchmark outcomes remain unchanged.

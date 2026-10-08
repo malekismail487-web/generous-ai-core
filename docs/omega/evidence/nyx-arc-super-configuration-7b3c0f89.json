@@ -1,0 +1,413 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ARC-SUPER-CONFIGURATION-RESULT-001",
+  "candidate": "7b3c0f894254ab3bcc5871a817a3520a7ce8bedb",
+  "runId": 37821316792,
+  "jobId": 113462774476,
+  "artifactId": 11569534746,
+  "artifactDigest": "d7cae9ffc2540f33dd846b44a2190d445aeb9bf9875192637da00f24efc31051",
+  "reportDigest": "7e8d3cfb1ba79297e2214fe7eb88f7c779204448e40140aaf30cde97dc2d3047",
+  "campaignReportDigest": "c89e614f9f6c24120a683859f15950f970b6ef82c3327c28c4460a38f8545a9c",
+  "campaignDigest": "1f71cf98c097427734995aefd7425c8382c50d39bad56dbeeb771bb2509bd711",
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "population": 120,
+    "selection": "NEXT_EIGHT_LEXICOGRAPHIC_PATHS_AFTER_TEN_EXPOSED_TASKS_CONFIGURATION_ONLY",
+    "taskIds": [
+      "20270e3b",
+      "20a9e565",
+      "21897d95",
+      "221dfab4",
+      "247ef758",
+      "269e22fb",
+      "271d71e2",
+      "28a6681f"
+    ],
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "modelConfiguration": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "EXPLICIT_CONFIGURATION_BY_ARM",
+    "maxOutputTokens": 8192,
+    "maxProviderPromptBytes": 64000,
+    "timeoutMs": 65000,
+    "configurationByArm": {
+      "CURRENT_NYX": "SUPER_HOSTED_NONE",
+      "CANDIDATE_NYX": "SUPER_HOSTED_BOUNDED"
+    },
+    "reasoningBudgetTokens": 4096,
+    "outputReserveTokens": 4096,
+    "binding": "WHOLE_EXPERIMENT_COMMON_SETTINGS_AND_DECLARED_TREATMENT_NOT_IDENTICAL_ARM_CONFIGURATION"
+  },
+  "limits": {
+    "maxCallsPerTask": 2,
+    "maxReportedTokensPerTask": 100000,
+    "maxToolCallsPerTask": 3,
+    "maxToolWorkUnitsPerTask": 600,
+    "maxAttemptsPerTask": 1,
+    "maxArtifactBytes": 50000,
+    "maxWallClockMsPerTask": 155000,
+    "maxWallClockMs": 2500000
+  },
+  "observed": {
+    "requestedTasks": 8,
+    "configuredArmTaskObservations": 16,
+    "perArm": [
+      {
+        "arm": "CURRENT_NYX",
+        "configuration": "SUPER_HOSTED_NONE",
+        "selected": 8,
+        "attempted": 8,
+        "graded": 0,
+        "correct": 0,
+        "ungraded": 8,
+        "unexecuted": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "finalFailureCounts": {
+          "SCHEMA_FAILURE": 5,
+          "FUNCTIONAL_FAILURE": 3
+        },
+        "schemaAffectedObservations": 8,
+        "publicCandidateExecutions": 4,
+        "publicPassingCandidates": 0,
+        "usage": {
+          "logicalCalls": 16,
+          "physicalCalls": 16,
+          "httpAttempts": 16,
+          "reportedTokens": 166993,
+          "unknownUsageCalls": 0,
+          "toolCalls": 12,
+          "toolWorkUnits": 62,
+          "wallClockMs": 188892,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        }
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "configuration": "SUPER_HOSTED_BOUNDED",
+        "selected": 8,
+        "attempted": 8,
+        "graded": 0,
+        "correct": 0,
+        "ungraded": 8,
+        "unexecuted": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "finalFailureCounts": {
+          "FUNCTIONAL_FAILURE": 6,
+          "RESOURCE_EXHAUSTION": 2
+        },
+        "schemaAffectedObservations": 7,
+        "publicCandidateExecutions": 6,
+        "publicPassingCandidates": 0,
+        "usage": {
+          "logicalCalls": 15,
+          "physicalCalls": 16,
+          "httpAttempts": 16,
+          "reportedTokens": 175915,
+          "unknownUsageCalls": 3,
+          "toolCalls": 14,
+          "toolWorkUnits": 72,
+          "wallClockMs": 890139,
+          "providerFailures": 3,
+          "retries": 1
+        },
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        }
+      }
+    ],
+    "taskOutcomes": [
+      {
+        "taskDigest": "285a5470141c9eb5d213f1ef3cee0270de8c9191795596551fa44e6d5c4c639e",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 12403,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 20387,
+            "unknownUsageCalls": 0
+          }
+        ]
+      },
+      {
+        "taskDigest": "61069422a06ea7883442edc9a185ed02d85b6c22cf506d07655c17e6b3cbc1de",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 38042,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 35434,
+            "unknownUsageCalls": 0
+          }
+        ]
+      },
+      {
+        "taskDigest": "b5d490ea91b36470b66f17a84530327f3bb2af8dca5154a27fd90634ce62e026",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 20456,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "RESOURCE_EXHAUSTION",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 14191,
+            "unknownUsageCalls": 1
+          }
+        ]
+      },
+      {
+        "taskDigest": "d5068c4513aef2e47d23732900650161f10c298f76150f45cd9bac3b3936bbf2",
+        "outcomes": [
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 33271,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 25649,
+            "unknownUsageCalls": 0
+          }
+        ]
+      },
+      {
+        "taskDigest": "0f4cc43e8791c28e37e9927cb05c23116c9d14e02d6d355dd4a8c27f2da84263",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 16270,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 23687,
+            "unknownUsageCalls": 0
+          }
+        ]
+      },
+      {
+        "taskDigest": "5d004113990d1d3d219028cc1aba46fabaf411223284e7196f99768172ef5b1a",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 21122,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 28299,
+            "unknownUsageCalls": 0
+          }
+        ]
+      },
+      {
+        "taskDigest": "3ee37b1eebf2e283e4c369c3c7c9e6ffde52e2fe2dea553a2a3acbea924cd6f5",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 16096,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "RESOURCE_EXHAUSTION",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 0,
+            "unknownUsageCalls": 2
+          }
+        ]
+      },
+      {
+        "taskDigest": "67d7919afaa83b1dc022857f33354f4c7854505f87ea7883efe0ba474989ab9d",
+        "outcomes": [
+          {
+            "arm": "CANDIDATE_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 1,
+            "physicalCalls": 2,
+            "reportedTokens": 20646,
+            "unknownUsageCalls": 0
+          },
+          {
+            "arm": "CURRENT_NYX",
+            "state": "EXECUTED",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "publicCandidateExecutions": 0,
+            "physicalCalls": 2,
+            "reportedTokens": 16955,
+            "unknownUsageCalls": 0
+          }
+        ]
+      }
+    ],
+    "wallClockMs": 1079058,
+    "originalMatchedRealizedCompute": false,
+    "strictMatchedPairs": 1,
+    "pairedTasks": 8,
+    "providerFailureCircuit": {
+      "stopAfter": 2,
+      "consecutiveProviderFailures": 0,
+      "open": false
+    },
+    "stopReason": "FROZEN_POPULATION_ATTEMPTED_WITHIN_LIMITS",
+    "sourceUnchanged": true,
+    "cleanupVerified": true
+  },
+  "verification": {
+    "artifactSha256MatchesGitHub": true,
+    "terminalLogSummaryMatchesArtifact": true,
+    "terminalTracesMatchArtifact": true,
+    "progressMatchesFinal": true,
+    "candidateSourceHashesVerified": true,
+    "modelConfigurationBindingVerified": true,
+    "verifierSourceMatchesFrozenCandidate": true,
+    "taskPopulationBindingVerified": true,
+    "exactInputSourceReconstruction": "NOT_REPEATED_RAW_TASKS_NOT_INSPECTED_THIS_CAPTURE"
+  },
+  "verificationAtCandidate": {
+    "ciRunId": 37821316625,
+    "ciJobId": 113462773701,
+    "ciResult": "SUCCESS",
+    "suites": 109,
+    "passedChecks": 11418,
+    "failedSuites": 0,
+    "typescriptVersion": "5.8.3",
+    "typescriptCurrent": 0
+  },
+  "assessment": {
+    "classification": "NO_VERIFIED_ACCEPTANCE_GAIN_SCHEMA_AND_PUBLIC_FUNCTIONAL_BOTTLENECKS",
+    "officialBenchmarkScore": null,
+    "fullBenchmarkScoreClaim": false,
+    "hiddenCaseReasoningFailureEstablished": false,
+    "publicFunctionalFailuresEstablished": true,
+    "providerStableCurrent": true,
+    "providerStableCandidate": false,
+    "cognitiveGain": false,
+    "broadPromotion": false,
+    "qualityAcceptedCandidate": false,
+    "firstAttemptAndRepairPreserved": true,
+    "originalReportNotRewritten": true,
+    "accountingCorrectionRetroactivelyApplied": false,
+    "missingConditionalFields": "HOSTED_SCHEMA_ONLY_REQUIRES_DECISION_AND_DIAGNOSIS_WHILE_LOCAL_ACTION_CONTRACT_REQUIRES_MORE",
+    "nextGeneralCorrection": "REPRODUCE_AND_ALIGN_DECISION_SPECIFIC_GENERATION_REQUIREMENTS_WITH_UNCHANGED_LOCAL_VALIDATION",
+    "samplingResearch": "VENDOR_RECOMMENDED_SAMPLING_DIFFERS_NOT_CAUSALLY_TESTED",
+    "candidateNetworkIsolation": "NOT_PROVEN",
+    "hostileCodeSandbox": false,
+    "authorityDelta": "NONE",
+    "defaultUltraChanged": false
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "FROZEN_CONFIGURATION_COMPARISON",
+      "PRESERVE_NEGATIVE_AND_UNGRADED_EVIDENCE"
+    ],
+    "supporting": [
+      "NO_SELF_CERTIFICATION",
+      "UNCHANGED_ACCEPTANCE",
+      "HONEST_REALIZED_COMPUTE",
+      "EVIDENCE_OVER_CONFIDENCE"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "PROTECTED_OR_FULL_BENCHMARK_CLAIM",
+      "PRODUCTION_AUTHORITY",
+      "RECURSION",
+      "BIOLOGICAL_EXPANSION"
+    ],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}
