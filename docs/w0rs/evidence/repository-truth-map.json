@@ -2057,6 +2057,7 @@
       "files": [
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-computation-transfer.ts",
         "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-docker-storage-preflight.ts",
         "scripts/omega/nyx-public-witness-cycle.ts",
@@ -2071,6 +2072,7 @@
         "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-computation-transfer.ts",
         "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-docker-storage-preflight.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
@@ -2215,6 +2217,7 @@
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-cli-live-eval.ts",
         "scripts/omega/nyx-cli.ts",
+        "scripts/omega/nyx-computation-transfer.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
         "scripts/omega/nyx-harbor-entrypoint.ts",
@@ -2500,6 +2503,7 @@
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-cli-live-eval.ts",
         "scripts/omega/nyx-cli.ts",
+        "scripts/omega/nyx-computation-transfer.ts",
         "scripts/omega/nyx-contract-compliance.ts",
         "scripts/omega/nyx-desktop-model-live-eval.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
@@ -2529,6 +2533,12 @@
       "name": "OMEGA_ALLOW_STORAGE_QUOTA_PREFLIGHT",
       "files": [
         "scripts/omega/nyx-docker-storage-preflight.ts"
+      ]
+    },
+    {
+      "name": "OMEGA_COMPUTATION_STAGE",
+      "files": [
+        "scripts/omega/nyx-computation-transfer.ts"
       ]
     },
     {
@@ -2627,6 +2637,7 @@
         "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
+        "scripts/omega/nyx-computation-transfer.ts",
         "scripts/omega/nyx-container-preflight.ts",
         "scripts/omega/nyx-docker-storage-preflight.ts",
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts",
