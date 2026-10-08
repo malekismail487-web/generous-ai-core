@@ -25,14 +25,14 @@ export function nyxChatActionContractValid(value: unknown): value is NyxChatActi
 }
 
 /** Generation guidance only; the strict parser, phase check and R1 executor remain independent. */
-export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean): NvidiaNimJsonSchemaResponseFormat {
-  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") throw Error("nyx_chat_action_contract_invalid");
+export function nyxChatContractFormat(contract: NyxChatActionContract, observed: boolean,boundedNativeCollections=false): NvidiaNimJsonSchemaResponseFormat {
+  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean" || typeof boundedNativeCollections!=="boolean") throw Error("nyx_chat_action_contract_invalid");
   const readRequired = contract.kind === "READ_THEN_REPLY" && !observed;
   if (contract.kind === "DERIVE_THEN_REPLY" && !observed) return {
     type: "JSON_SCHEMA", name: "nyx_required_public_derivation", schema: {type:"object",additionalProperties:false,
       required:["kind","problemDigest","program"],properties:{kind:{type:"string",enum:["DERIVE_QUANTITIES"]},
         problemDigest:{type:"string",enum:[theoryDigest(contract.problem)]},
-        program:quantitativeProgramSchema(contract.outputLabels,contract.problem.constants.map(c=>c.id))}}};
+        program:quantitativeProgramSchema(contract.outputLabels,contract.problem.constants.map(c=>c.id),boundedNativeCollections)}}};
   return { type: "JSON_SCHEMA", name: readRequired ? "nyx_required_file_read" : "nyx_contract_reply",
     schema: { type: "object", properties: readRequired
       ? { kind: { type: "string", enum: ["READ_FILE"] }, path: { type: "string", enum: [contract.path] } }

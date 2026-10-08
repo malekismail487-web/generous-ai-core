@@ -13,7 +13,7 @@ import {createSharedFirstProposal} from "./nyx-quantitative-coupled-transfer-fix
 import {textConfiguredRequest,textBoundedTaskRequest,textInferenceUsage,aimeFinalInteger} from "./benchmarks/nyxTextBenchmark";
 import {computationTasks,COMPUTATION_TRANSFER_POLICY as POLICY,type ComputationTask} from "./benchmarks/computationTransferTasks";
 
-export type ComputationArm="PROPOSAL_ONLY"|"EXACT_EXECUTION";
+export type ComputationArm="PROPOSAL_ONLY"|"EXACT_EXECUTION"|"LEGACY_SCHEMA"|"BOUNDED_SCHEMA";
 export function computationOutcome(result:NyxChatTurnResult|null,evidence:readonly NvidiaNimEvidence[],answer:string){
   if(!result)return {state:"INFRASTRUCTURE_FAILURE",correct:null};
   if(evidence.some(e=>e.finishReason==="length"))return {state:"TRUNCATION",correct:null};
@@ -56,8 +56,9 @@ export async function runComputationTransfer(){
   const candidate=process.env.GITHUB_SHA||git("rev-parse","HEAD");
   if(candidate!==git("rev-parse","HEAD")||!/^[a-f0-9]{40}$/.test(candidate)||git("status","--porcelain"))throw Error("clean_candidate_required");
   const stage=process.env.OMEGA_COMPUTATION_STAGE??"FULL";
-  if(!["FULL","DIAGNOSTIC"].includes(stage))throw Error("computation_stage_invalid");
-  const tasks=stage==="DIAGNOSTIC"?computationTasks("DIAGNOSTIC"):[...computationTasks("DEVELOPMENT"),...computationTasks("TRANSFER")];
+  if(!["FULL","DIAGNOSTIC","COLLECTION_BOUNDS"].includes(stage))throw Error("computation_stage_invalid");
+  const boundsComparison=stage==="COLLECTION_BOUNDS";
+  const tasks=boundsComparison?computationTasks("BOUNDS_DIAGNOSTIC"):stage==="DIAGNOSTIC"?computationTasks("DIAGNOSTIC"):[...computationTasks("DEVELOPMENT"),...computationTasks("TRANSFER")];
   const sourceBefore=git("ls-files","-s");const started=Date.now();const epochDeadline=started+tasks.length*2*POLICY.maxTaskMs+60000;
   const provider=NvidiaNimProvider.create({providerId:"NYX-SHARED-COMPUTATION-TRANSFER",model:POLICY.model,
     authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",credentialSource:nvidiaNimCredentialFromEnvironment(process.env),
@@ -76,7 +77,7 @@ export async function runComputationTransfer(){
     const pairs=tasks.map(t=>{const pair=rows.filter(r=>r.taskId===t.taskId);return {taskId:t.taskId,stage:t.stage,domain:t.domain,
       ...computationPairMatched(pair),sharedProposalMatched:pair.length===2&&pair[0].programDigest===pair[1].programDigest
         &&pair[0].sharedIntentDigest===pair[1].sharedIntentDigest&&pair[0].sharedIntentDigest!==null&&pair[0].programDigest!==null,
-      executionTreatmentDelivered:pair.some(r=>r.arm==="EXACT_EXECUTION"&&r.computedModelCorrect!==null),
+      executionTreatmentDelivered:pair.some(r=>r.arm!=="PROPOSAL_ONLY"&&r.computedModelCorrect!==null),
       outcomes:pair.map(r=>({arm:r.arm,state:r.state,correct:r.correct}))};});
     const sourceUnchanged=sourceBefore===git("ls-files","-s")&&!git("status","--porcelain");
     const report={schemaVersion:1,identity:"NYX-COMPUTATION-TRANSFER-001",candidate,executionIdentity:process.env.GITHUB_RUN_ID?`github-actions-${process.env.GITHUB_RUN_ID}`:"LOCAL",
@@ -85,13 +86,17 @@ export async function runComputationTransfer(){
       selectedTaskArms:tasks.length*2,attempted:rows.length,graded:rows.filter(r=>r.correct!==null).length,
       correct:rows.filter(r=>r.correct===true).length,ungraded:rows.filter(r=>r.correct===null).length,unexecuted:tasks.length*2-rows.length,
       actualUniqueModelUsage:computationPhysicalUsage(physicalExecutions,Date.now()-started),rows,pairs,blocked,
+      nativeToolUsage:{workUnits:rows.reduce((n,r)=>n+r.toolWorkUnits,0),elapsedMs:rows.reduce((n,r)=>n+r.toolElapsedMs,0),
+        scope:"RETURNED_NATIVE_ANALYSIS_ACCOUNTING_SEPARATE_FROM_MODEL_USAGE"},
+      intervention:boundsComparison?"NATIVE_COLLECTION_BOUND_GENERATION_SCHEMA":"EXACT_EXECUTION_OF_SHARED_PROPOSAL",
+      firstProposalProtocol:boundsComparison?"INDEPENDENT_INFERENCE_SCHEMA_IS_THE_INTERVENTION":"SHARED_LIVE_PUBLIC_PROPOSAL",
       sourceUnchanged,firstAttemptsOnly:true,semanticRepairs:0,feedbackFromGraderToCognition:false,officialBenchmark:false,
       modelDefaultChanged:false,productionAuthority:false,networkScope:"CONFIGURED_NVIDIA_ENDPOINT_ONLY",
       toolScope:"PREBOUND_FINITE_EXACT_ARITHMETIC_ONLY_NO_FILES_SHELL_OR_NETWORK",
       priorGpqaScorePreserved:true,gpqaQuestionsOrAnswersLoaded:false,rawPrivateReasoningStored:false,
       oracleIndependence:"E3_IMPLEMENTER_AUTHORED_WITH_SEPARATE_PYTHON_FRACTION_CROSSCHECK_NOT_INDEPENDENT_REPLICATION",
-      inferenceEvidence:"E4_LIVE_NVIDIA_PLUS_EXPLICITLY_LABELED_SHARED_PROPOSAL_REPLAY",
-      interpretation:"SHARED_DERIVATION_CAUSAL_ABLATION_NOT_REPLACEMENT_FOR_CURRENT_NYX_OR_GPQA_SCORE",
+      inferenceEvidence:boundsComparison?"E4_LIVE_NVIDIA_INDEPENDENT_PROPOSALS_NO_REPLAY":"E4_LIVE_NVIDIA_PLUS_EXPLICITLY_LABELED_SHARED_PROPOSAL_REPLAY",
+      interpretation:boundsComparison?"DEVELOPMENT_SCHEMA_RELIABILITY_ABLATION_NOT_COGNITIVE_PROMOTION_OR_GPQA_SCORE":"SHARED_DERIVATION_CAUSAL_ABLATION_NOT_REPLACEMENT_FOR_CURRENT_NYX_OR_GPQA_SCORE",
       computeAccounting:"PHYSICAL_COMPLETION_CALLBACKS_COUNTED_ONCE_PREFIX_REPLAY_NOT_DISPATCHED_REQUEST_DIGEST_IS_NOT_EXECUTION_ID_TOOL_COST_ADDITIONAL",
       calibration:"NOT_SUPPORTED_BY_FINAL_CHOICE_PROTOCOL",broadPromotion:false,automaticPromotion:false,
       stopReason:rows.length===tasks.length*2?"SELECTION_EXHAUSTED":blocked.at(-1)?.reason??"FROZEN_EPOCH_BUDGET",
@@ -101,37 +106,47 @@ export async function runComputationTransfer(){
   };
   outer:for(const [index,task] of tasks.entries()){
     // Two transfer replicates per domain: each domain has both arm orders. No domain/order confounding.
-    const order:ComputationArm[]=(task.stage==="TRANSFER"?task.replicate%2===0:index%2===1)?["EXACT_EXECUTION","PROPOSAL_ONLY"]:["PROPOSAL_ONLY","EXACT_EXECUTION"];
+    const order:ComputationArm[]=boundsComparison?(index%2===0?["LEGACY_SCHEMA","BOUNDED_SCHEMA"]:["BOUNDED_SCHEMA","LEGACY_SCHEMA"])
+      :(task.stage==="TRANSFER"?task.replicate%2===0:index%2===1)?["EXACT_EXECUTION","PROPOSAL_ONLY"]:["PROPOSAL_ONLY","EXACT_EXECUTION"];
     const pairProvider=provider.withHttpAttemptBudget(POLICY.maxHttpAttemptsPerPair,"WITHIN_SHARED_BUDGET");
     let activeDeadline=0;let prefixEvidence:NvidiaNimEvidence|null=null,programDigest:string|null=null,computedModelCorrect:boolean|null=null;
-    const shared=createSharedFirstProposal(async request=>{
+    const completePhysical=async (request:Parameters<typeof pairProvider.complete>[0])=>{
       const response=await pairProvider.complete(textBoundedTaskRequest(textConfiguredRequest(request,"SESSION_SUPER_PHASE_CONTRACT","DIRECT"),activeDeadline));
-      physicalExecutions.push(response.evidence);return response;});
+      physicalExecutions.push(response.evidence);return response;};
+    const shared=createSharedFirstProposal(completePhysical);
     for(const arm of order){
       const ready=await liveNvidiaCapacity.waitUntilReady(Math.min(epochDeadline,Date.now()+180000),new AbortController().signal);
       if(ready.state!=="READY"||Date.now()>=epochDeadline){blocked.push({taskId:task.taskId,reason:"CAPACITY_OR_EPOCH_UNAVAILABLE"});break outer;}
-      const prefixMs=shared.prefixElapsedMs(),began=Date.now(),remaining=POLICY.maxTaskMs-prefixMs;
+      const prefixMs=boundsComparison?0:shared.prefixElapsedMs(),began=Date.now(),remaining=POLICY.maxTaskMs-prefixMs;
       if(remaining<1000){blocked.push({taskId:task.taskId,reason:"SHARED_PREFIX_EXHAUSTED_ORIGINAL_LEASE"});break outer;}
       activeDeadline=Math.min(epochDeadline,began+remaining);
       const reader=await ReadOnlyRepositoryExecutor.create({executorId:`COMPUTE-${task.taskId}`,tokenId:`COMPUTE-TOKEN-${task.taskId}`,
         repositoryRoot:resolve("."),resourceScopes:["scripts/omega/benchmarks"],issuedAtEpochMs:began-1,expiresAtEpochMs:activeDeadline,
         constraints:{maxFileBytes:1,maxDirectoryEntries:1,allowedExtensions:[".txt"]},issuer:"NYX-COMPUTATION-TRANSFER",auditIdentity:task.taskId});
       reader.terminate(began,"NO_REPOSITORY_AUTHORITY_IN_COMPUTATION_PILOT");
-      const tool=arm==="EXACT_EXECUTION"?BoundedReasoningSession.create(task.problem,{maxWorkUnits:POLICY.maxWorkUnits,
+      const tool=arm!=="PROPOSAL_ONLY"?BoundedReasoningSession.create(task.problem,{maxWorkUnits:POLICY.maxWorkUnits,
         maxElapsedMs:POLICY.maxToolMs,maxRequests:1,expiresAtEpochMs:activeDeadline}):undefined;
-      const branch=shared.branch(),evidence:NvidiaNimEvidence[]=[],compilerFindings:string[]=[];let toolWorkUnits=0,toolElapsedMs=0;
+      // Different generation schemas require independent proposals. Existing branch accounting
+      // is reused, but no response, operation, prefix time or inference is replayed between these arms.
+      const branch=(boundsComparison?createSharedFirstProposal(completePhysical):shared).branch(),evidence:NvidiaNimEvidence[]=[],compilerFindings:string[]=[];let toolWorkUnits=0,toolElapsedMs=0;
+      if(boundsComparison){prefixEvidence=null;programDigest=null;computedModelCorrect=null;}
       let result:NyxChatTurnResult|null=null,session:NyxChatSession|null=null;
       try{
         session=NyxChatSession.create({sessionId:task.taskId,reader,candidateWriter:null,editablePaths:[],maxCandidatesPerTurn:0,
           maxModelCallsPerTurn:POLICY.maxCallsPerArm,maxTurnMs:activeDeadline-Date.now(),maxOutputTokens:POLICY.maxOutputTokens,
           actionContract:{kind:"DERIVE_THEN_REPLY",problem:task.problem,outputLabels:["quantity"]},derivationSession:tool,
+          ...(arm==="BOUNDED_SCHEMA"?{derivationSchemaProfile:"COLLECTION_BOUNDS" as const}:{}),
           model:{complete:async request=>{
             // Observe only admitted public tool output, never hidden model reasoning or verifier answers.
             const last=request.messages.at(-1)?.content;
             if(last){try{const o=JSON.parse(last);if(o.omegaObservation==="REJECTED"&&typeof o.compilerFinding==="string")compilerFindings.push(o.compilerFinding);}catch{/* Objective text is not an observation. */}}
-            if(arm==="EXACT_EXECUTION"&&last){try{const observation=JSON.parse(last);
-              if(observation.omegaObservation==="CONSTRUCTED"){
+            if(arm!=="PROPOSAL_ONLY"&&last){try{const observation=JSON.parse(last);
+              // Failed/budget-exhausted native analyses still spend resources.
+              if(observation.analysis&&Number.isSafeInteger(observation.analysis.workUnits)&&observation.analysis.workUnits>=0
+                &&Number.isFinite(observation.analysis.elapsedMs)&&observation.analysis.elapsedMs>=0){
                 toolWorkUnits=observation.analysis.workUnits;toolElapsedMs=observation.analysis.elapsedMs;
+              }
+              if(observation.omegaObservation==="CONSTRUCTED"){
                 const quantities=observation.analysis.payload?.outputs;
                 computedModelCorrect=Array.isArray(quantities)&&quantities.length===1&&quantities[0].label==="quantity"&&quantities[0].value===task.expectedQuantity;
               }
@@ -145,14 +160,14 @@ export async function runComputationTransfer(){
         result=await session.turn(task.question);
       }catch{/* Sanitized infrastructure outcome only; do not persist a raw exception or response. */}
       finally{session?.dispose();tool?.revoke();reader.terminate(Date.now(),"COMPUTATION_TASK_FINISHED");}
-      const usage=textInferenceUsage(evidence,Date.now()-began),prefix=prefixEvidence?textInferenceUsage([prefixEvidence],prefixMs):null;
+      const usage=textInferenceUsage(evidence,Date.now()-began),prefix=!boundsComparison&&prefixEvidence?textInferenceUsage([prefixEvidence],prefixMs):null;
       const {state,correct}=computationOutcome(result,evidence,task.answer);
       const row:Row={taskId:task.taskId,stage:task.stage,domain:task.domain,arm,state,correct,logicalCalls:evidence.length,
         allocatedTokens:usage.reportedTokens-(prefix?.reportedTokens??0)/2,
         allocatedHttpAttempts:usage.httpAttempts-(prefix?.httpAttempts??0)/2,unknownUsageCalls:usage.unknownUsageCalls,providerFailures:usage.providerFailures,
         elapsedMs:Date.now()-began,allocatedElapsedMs:Date.now()-began+prefixMs,
         toolWorkUnits,toolElapsedMs,compilerFindings,prefixReplayed:branch.accounting().receipt?.replayed??false,
-        inputDigest:theoryDigest(publicTask(task)),programDigest,computedModelCorrect:arm==="EXACT_EXECUTION"?computedModelCorrect:null,
+        inputDigest:theoryDigest(publicTask(task)),programDigest,computedModelCorrect:arm!=="PROPOSAL_ONLY"?computedModelCorrect:null,
         sharedIntentDigest:branch.accounting().receipt?.intentDigest??null,logicalUsage:usage,
         physicalAccounting:{...branch.accounting(),receipt:undefined},
         events:result?.events.map(e=>({sequence:e.sequence,eventType:e.eventType,outcome:e.outcome,evidenceClass:e.evidenceClass}))??[],

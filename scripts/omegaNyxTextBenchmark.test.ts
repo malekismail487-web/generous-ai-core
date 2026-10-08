@@ -1124,5 +1124,10 @@ check("new native diagnostics do not recycle exposed development or transfer obj
   assert.equal(new Set([...previous,...fresh].map(t=>t.taskId)).size,16);
   assert.equal(new Set([...previous,...fresh].map(t=>t.question)).size,16);
 });
+check("collection-bound ablation freezes new development tasks rather than recycling the diagnostic",()=>{
+  const all=["DEVELOPMENT","TRANSFER","DIAGNOSTIC","BOUNDS_DIAGNOSTIC"].flatMap(s=>computationTasks(s as Parameters<typeof computationTasks>[0]));
+  assert.equal(all.length,20);assert.equal(new Set(all.map(t=>t.taskId)).size,20);
+  assert.equal(new Set(all.map(t=>t.question)).size,20);
+});
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

@@ -1,6 +1,9 @@
-name: Omega NYX native derivation diagnostic
+name: Omega NYX native collection bounds ablation
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-computation-transfer.ts]
 permissions:
   contents: read
 concurrency:
@@ -31,15 +34,15 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxChatCli.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {generalReasoningTasks} from './scripts/omega/benchmarks/generalReasoningTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','CHALLENGE'].flatMap(generalReasoningTasks)));" | python -B scripts/omega/benchmarks/check-general-reasoning-oracles.py
-          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {computationTasks} from './scripts/omega/benchmarks/computationTransferTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','DIAGNOSTIC'].flatMap(computationTasks)));" | python -B scripts/omega/benchmarks/check-computation-oracles.py
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs --input-type=module -e "import {computationTasks} from './scripts/omega/benchmarks/computationTransferTasks.ts';process.stdout.write(JSON.stringify(['DEVELOPMENT','TRANSFER','DIAGNOSTIC','BOUNDS_DIAGNOSTIC'].flatMap(computationTasks)));" | python -B scripts/omega/benchmarks/check-computation-oracles.py
           node scripts/typescript/typecheck-ratchet.mjs
           node scripts/security/scan-secrets.mjs
           node scripts/omega/run-tests.mjs
           npm run build
-      - name: Four new development diagnostics; same two-call native derivation and strict acceptance
+      - name: Four fresh development objectives; legacy versus bounded generation schema; same tools and limits
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
-          OMEGA_COMPUTATION_STAGE: DIAGNOSTIC
+          OMEGA_COMPUTATION_STAGE: COLLECTION_BOUNDS
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         shell: bash
         run: |

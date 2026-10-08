@@ -720,9 +720,10 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
 };
 
 // src/lib/codelab/research/nyxQuantitativeReasoning.ts
-function quantitativeProgramSchema(labels, constantIds) {
+function quantitativeProgramSchema(labels, constantIds, boundedCollections = false) {
+  if (typeof boundedCollections !== "boolean") throw Error("quantitative_generation_profile_invalid");
   const object = (properties) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
-  const array = (items) => ({ type: "array", items });
+  const array = (items, min = 0, max = EQUATION_COMPILER_POLICY.stateSlots) => ({ type: "array", items, ...boundedCollections ? { minItems: min, maxItems: max } : {} });
   const constant = (value) => ({ type: typeof value === "number" ? "integer" : "string", enum: [value] });
   const { state: slots, expressions } = equationNames(constantIds);
   const registerId = { type: "string", enum: slots };
@@ -731,11 +732,11 @@ function quantitativeProgramSchema(labels, constantIds) {
   return object({
     schemaVersion: constant(2),
     initialState: array(object({ slot: registerId, source: { type: "string", enum: constantIds } })),
-    cycles: array(object({ iterations: { type: "integer" }, phases: array(object({
+    cycles: array(object({ iterations: { type: "integer", ...boundedCollections ? { minimum: 1, maximum: EXACT_DERIVATION_POLICY.maxIterations } : {} }, phases: array(object({
       expressions: array(object({ id: { type: "string", enum: expressions }, op: { type: "string", enum: EXACT_DERIVATION_OPERATIONS }, left: expressionSource, right: expressionSource })),
-      updates: array(object({ slot: registerId, source: expressionSource }))
-    })) })),
-    outputs: array(object({ label: { type: "string", enum: labels }, source }))
+      updates: array(object({ slot: registerId, source: expressionSource }), 1)
+    }), 1, EQUATION_COMPILER_POLICY.maxPhasesPerCycle) }), 1, EQUATION_COMPILER_POLICY.maxCycles),
+    outputs: array(object({ label: { type: "string", enum: labels }, source }), 1)
   });
 }
 
@@ -745,8 +746,8 @@ function nyxChatActionContractValid(value) {
   const contract = value;
   return contract.kind === "REPLY_ONLY" && exactKeys(contract, ["kind"]) || contract.kind === "READ_THEN_REPLY" && exactKeys(contract, ["kind", "path"]) && nyxSafeRelativePath(contract.path) || contract.kind === "DERIVE_THEN_REPLY" && exactKeys(contract, ["kind", "problem", "outputLabels"]) && validQuantitativeProblem(contract.problem) && Array.isArray(contract.outputLabels) && contract.outputLabels.length > 0 && contract.outputLabels.length <= 16 && contract.outputLabels.every((label) => typeof label === "string" && /^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(label)) && new Set(contract.outputLabels).size === contract.outputLabels.length;
 }
-function nyxChatContractFormat(contract, observed) {
-  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean") throw Error("nyx_chat_action_contract_invalid");
+function nyxChatContractFormat(contract, observed, boundedNativeCollections = false) {
+  if (!nyxChatActionContractValid(contract) || typeof observed !== "boolean" || typeof boundedNativeCollections !== "boolean") throw Error("nyx_chat_action_contract_invalid");
   const readRequired = contract.kind === "READ_THEN_REPLY" && !observed;
   if (contract.kind === "DERIVE_THEN_REPLY" && !observed) return {
     type: "JSON_SCHEMA",
@@ -758,7 +759,7 @@ function nyxChatContractFormat(contract, observed) {
       properties: {
         kind: { type: "string", enum: ["DERIVE_QUANTITIES"] },
         problemDigest: { type: "string", enum: [theoryDigest(contract.problem)] },
-        program: quantitativeProgramSchema(contract.outputLabels, contract.problem.constants.map((c) => c.id))
+        program: quantitativeProgramSchema(contract.outputLabels, contract.problem.constants.map((c) => c.id), boundedNativeCollections)
       }
     }
   };
@@ -876,7 +877,7 @@ var NyxChatSession = class _NyxChatSession {
     });
   }
   static create(config) {
-    if (!config.sessionId || !Number.isSafeInteger(config.maxModelCallsPerTurn) || config.maxModelCallsPerTurn < 1 || config.maxModelCallsPerTurn > 12 || !Number.isSafeInteger(config.maxCandidatesPerTurn) || config.maxCandidatesPerTurn < 0 || config.maxCandidatesPerTurn > 4 || !Number.isSafeInteger(config.maxTurnMs) || config.maxTurnMs < 1e3 || config.maxTurnMs > 6e5 || !Number.isSafeInteger(config.maxOutputTokens) || config.maxOutputTokens < 128 || config.maxOutputTokens > 16384 || !Array.isArray(config.editablePaths) || config.editablePaths.some((path) => !nyxSafeRelativePath(path)) || new Set(config.editablePaths).size !== config.editablePaths.length || config.reasoningPolicy !== void 0 && config.reasoningPolicy !== "CONSTRAINT_COUNTERCHECK" || config.actionContract !== void 0 && (!nyxChatActionContractValid(config.actionContract) || config.actionContract.kind !== "REPLY_ONLY" && config.maxModelCallsPerTurn < 2) || config.derivationSession !== void 0 && (!(config.derivationSession instanceof BoundedReasoningSession) || config.actionContract?.kind !== "DERIVE_THEN_REPLY" || config.derivationSession.problemDigest !== theoryDigest(config.actionContract.problem))) {
+    if (!config.sessionId || !Number.isSafeInteger(config.maxModelCallsPerTurn) || config.maxModelCallsPerTurn < 1 || config.maxModelCallsPerTurn > 12 || !Number.isSafeInteger(config.maxCandidatesPerTurn) || config.maxCandidatesPerTurn < 0 || config.maxCandidatesPerTurn > 4 || !Number.isSafeInteger(config.maxTurnMs) || config.maxTurnMs < 1e3 || config.maxTurnMs > 6e5 || !Number.isSafeInteger(config.maxOutputTokens) || config.maxOutputTokens < 128 || config.maxOutputTokens > 16384 || !Array.isArray(config.editablePaths) || config.editablePaths.some((path) => !nyxSafeRelativePath(path)) || new Set(config.editablePaths).size !== config.editablePaths.length || config.reasoningPolicy !== void 0 && config.reasoningPolicy !== "CONSTRAINT_COUNTERCHECK" || config.derivationSchemaProfile !== void 0 && (config.derivationSchemaProfile !== "COLLECTION_BOUNDS" || config.actionContract?.kind !== "DERIVE_THEN_REPLY") || config.actionContract !== void 0 && (!nyxChatActionContractValid(config.actionContract) || config.actionContract.kind !== "REPLY_ONLY" && config.maxModelCallsPerTurn < 2) || config.derivationSession !== void 0 && (!(config.derivationSession instanceof BoundedReasoningSession) || config.actionContract?.kind !== "DERIVE_THEN_REPLY" || config.derivationSession.problemDigest !== theoryDigest(config.actionContract.problem))) {
       throw new Error("nyx_chat_session_policy_invalid");
     }
     return new _NyxChatSession(config);
@@ -968,7 +969,11 @@ Unverified model note: ${message}` : message;
     while (modelCalls < this.#config.maxModelCallsPerTurn && Date.now() < deadline) {
       const requestId = `${this.#config.sessionId}-T${this.#turnNumber}-M${modelCalls + 1}`;
       const actionContract = this.#config.actionContract;
-      const responseFormat = actionContract ? nyxChatContractFormat(actionContract, contractFileObserved) : "JSON_OBJECT";
+      const responseFormat = actionContract ? nyxChatContractFormat(
+        actionContract,
+        contractFileObserved,
+        this.#config.derivationSchemaProfile === "COLLECTION_BOUNDS"
+      ) : "JSON_OBJECT";
       const countercheck = this.#config.reasoningPolicy && (!actionContract || actionContract.kind === "REPLY_ONLY" || contractFileObserved) ? `
 ${CONSTRAINT_COUNTERCHECK}` : "";
       if (actionContract) messages[0] = { role: "system", content: `${systemMessage}${countercheck}

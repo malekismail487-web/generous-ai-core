@@ -3,7 +3,7 @@
   "name": "nyx-local",
   "nodeMajorMinimum": 24,
   "files": {
-    "nyx.mjs": "b1ef5974701f7572e18282b07e5d24fb1b01d908e186d35e3248576ce03a85e7",
+    "nyx.mjs": "674df8fa1c88d22968774ee5e379dd40eba772b924171c74daa05e10264c8df0",
     "LICENSE": "b76f79b72d74bf549acaf24f0aa4775561a8734b612d5b04db46793c3d04b93c",
     "nyx-ui/index.html": "1d3b25fb6800bba10d90a717922bfb7bc272425259c6aa5b5339e087ba10e3ea",
     "nyx-ui/logo.svg": "b4e64980aa8ce240fe3f21cc2b92f1da2d2dc819ee56b8b95d638ce5637f5842",

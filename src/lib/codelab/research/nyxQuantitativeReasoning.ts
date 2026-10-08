@@ -1,7 +1,7 @@
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
 import { BoundedReasoningSession,type ReasoningToolResult } from "./boundedReasoningWorkbench";
-import { EXACT_DERIVATION_OPERATIONS,type QuantitativeProblem,type QuantitativeProgram } from "./exactQuantitativeDerivation";
-import { equationNames,type QuantitativeEquations } from "./quantitativeEquationCompiler";
+import { EXACT_DERIVATION_OPERATIONS,EXACT_DERIVATION_POLICY,type QuantitativeProblem,type QuantitativeProgram } from "./exactQuantitativeDerivation";
+import { equationNames,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
 
@@ -37,19 +37,23 @@ export function quantitativeModelFormulationSchema(problemDigest:string,labels:r
     equations:{type:"array",items:object({label:{type:"string",enum:labels},expression:{type:"string"}})},
     assumptions:{type:"array",items:{type:"string"}}});
 }
-/** Hosted schema contains only supported structural keywords. Local limits remain stricter. */
-export function quantitativeProgramSchema(labels:readonly string[],constantIds:readonly string[]) {
+/** Legacy guidance uses structural keywords; stricter collection bounds are opt-in.
+ * Native semantic and whole-program resource validation always remain independent. */
+export function quantitativeProgramSchema(labels:readonly string[],constantIds:readonly string[],boundedCollections=false) {
+  if(typeof boundedCollections!=="boolean")throw Error("quantitative_generation_profile_invalid");
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
-  const array=(items:unknown)=>({type:"array",items});
+  // Opt-in generation constraints mirror, never replace or relax, native validation.
+  // Hosted support is empirical; a provider rejection must not silently fall back.
+  const array=(items:unknown,min=0,max:number=EQUATION_COMPILER_POLICY.stateSlots)=>({type:"array",items,...(boundedCollections?{minItems:min,maxItems:max}:{})});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
   const {state:slots,expressions}=equationNames(constantIds);
   const registerId={type:"string",enum:slots};const source={type:"string",enum:[...constantIds,...slots]};
   const expressionSource={type:"string",enum:[...constantIds,...slots,...expressions]};
   return object({schemaVersion:constant(2),initialState:array(object({slot:registerId,source:{type:"string",enum:constantIds}})),
-    cycles:array(object({iterations:{type:"integer"},phases:array(object({
+    cycles:array(object({iterations:{type:"integer",...(boundedCollections?{minimum:1,maximum:EXACT_DERIVATION_POLICY.maxIterations}:{})},phases:array(object({
       expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
-      updates:array(object({slot:registerId,source:expressionSource}))}))})),
-    outputs:array(object({label:{type:"string",enum:labels},source}))});
+      updates:array(object({slot:registerId,source:expressionSource}),1)}),1,EQUATION_COMPILER_POLICY.maxPhasesPerCycle)}),1,EQUATION_COMPILER_POLICY.maxCycles),
+    outputs:array(object({label:{type:"string",enum:labels},source}),1)});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
   constantIds:readonly string[]=[],artifactDigest:string|null=null) {

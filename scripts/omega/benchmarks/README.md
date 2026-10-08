@@ -1104,3 +1104,33 @@ the model, expand task leases or supply oracle feedback. A four-objective fresh
 development evidence, not a transfer/GPQA score or proof of general improvement.
 The exact rejection causes were NOT recoverable from the pilot's generic
 findings; do not claim the bounds were proven to cause every rejected program.
+
+### Native-generation diagnostic and collection-bound correction
+
+Candidate `37dc44bb`, run `37772516437`, attempted all eight task-arms: six
+graded/correct, two ungraded. Both arms tied at 3/4. The remaining objective's
+first proposal was rejected with `PHASE_BOUND`, followed by another rejection;
+the precise field is not recorded. No provider failures, truncations or unknown
+usage occurred: 12 actual HTTP requests, 88,622 reported tokens, 16 logical calls
+including four prefix replays. Three model-compute-matched pairs exist; the two
+graded matched pairs tie. Of three exact models executed, one was correct and
+two were wrong despite correct final choices. **No cognitive/tool advantage.**
+Receipt `docs/omega/evidence/nyx-native-derivation-37dc44bb.json` preserves the
+original sanitized report, archive digest and exact report/log reconciliation.
+Candidate CI caught stale generated W0 inventories; refreshed inventories at
+`3012bc7c` passed complete CI, 108 suites / 11,172 checks, TS zero and build.
+
+The generation schema omitted cardinality bounds required by the independent
+native compiler. An opt-in `COLLECTION_BOUNDS` profile mirrors these bounds in
+JSON Schema; normal chat, default native generation, parser, compiler and
+acceptance are unchanged. Independent Ajv checks reproduce twelve rejected
+structures that the legacy schema admits; duplicate update semantics remain
+the native compiler's responsibility even with the stronger generation schema.
+NVIDIA documents [JSON-schema structured generation](https://docs.nvidia.com/nim/large-language-models/1.15.0/structured-generation.html),
+but that is not proof the hosted endpoint enforces every keyword. The fresh
+four-objective bounds ablation tests empirical compatibility and coverage.
+Both arms receive identical exact-computation authority, model, calls, tokens,
+leases and grader; only schema cardinality/numeric constraints differ. Proposals
+are independent, not replayed, because the generation schema is the treatment.
+Realized tokens, tool work and unmatched pairs remain explicit. These are fresh
+development parameter variants, not independent replication or a GPQA score.

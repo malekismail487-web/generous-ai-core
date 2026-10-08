@@ -3,6 +3,7 @@ import { lstat, mkdtemp, mkdir, readFile, rm, symlink, unlink, writeFile } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
+import { createRequire } from "node:module";
 import { NyxChatSession, type NyxComputerHost, type NyxChatSessionConfig } from "../src/lib/codelab/cli/nyxChatSession";
 import { NyxIsolatedCandidateWriter } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
 import type { NyxIsolatedCandidateConfig } from "../src/lib/codelab/cli/nyxIsolatedCandidate";
@@ -14,7 +15,7 @@ import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnly
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { quantitativeEquationDiagnostic } from "../src/lib/codelab/research/quantitativeEquationCompiler";
+import { lowerQuantitativeEquations, quantitativeEquationDiagnostic } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 
 const SOURCE = "export function value() { return 1; }\n";
 const REPLACEMENT = "export function value() { return 2; }\n";
@@ -37,7 +38,7 @@ const arithmeticProgram = {schemaVersion:2,initialState:[{slot:"r0",source:"x"}]
   expressions:[{id:"e0",op:"ADD",left:"r0",right:"r0"}],updates:[{slot:"r0",source:"e0"}]}]}],outputs:[{label:"quantity",source:"r0"}]} as const;
 const arithmeticAction = {kind:"DERIVE_QUANTITIES",problemDigest:theoryDigest(arithmeticProblem),program:arithmeticProgram};
 
-async function arithmeticFixture(execute:boolean,options:{revoked?:boolean;work?:number;action?:unknown;generic?:boolean}={}) {
+async function arithmeticFixture(execute:boolean,options:{revoked?:boolean;work?:number;action?:unknown;generic?:boolean;bounded?:boolean}={}) {
   const root=await fixture(),r1=await reader(root),requests:NvidiaNimCompletionRequest[]=[];
   const tool=execute?BoundedReasoningSession.create(arithmeticProblem,{maxWorkUnits:options.work??10000,maxElapsedMs:1000,
     maxRequests:1,expiresAtEpochMs:Date.now()+20000}):undefined;
@@ -46,6 +47,7 @@ async function arithmeticFixture(execute:boolean,options:{revoked?:boolean;work?
   const session=NyxChatSession.create({sessionId:"NYX-ARITHMETIC-TEST",reader:r1,candidateWriter:null,editablePaths:[],
     maxCandidatesPerTurn:0,maxModelCallsPerTurn:2,maxTurnMs:20000,maxOutputTokens:1024,
     ...(!options.generic?{actionContract:{kind:"DERIVE_THEN_REPLY" as const,problem:arithmeticProblem,outputLabels:["quantity"]},derivationSession:tool}:{}),
+    ...(options.bounded?{derivationSchemaProfile:"COLLECTION_BOUNDS" as const}:{}),
     model:{complete:request=>{requests.push(structuredClone(request));return mock.complete(request);}}});
   try {const result=await session.turn("Compute the doubled input. Reply with one option index.");
     assert.equal(await readFile(join(root,"src","value.mjs"),"utf8"),SOURCE);
@@ -113,6 +115,49 @@ omegaTest("native rejection supplies a safe specific compiler finding without au
     new Error("quantitative_equations_invalid:UNKNOWN"),new Error("quantitative_equations_invalid:SHAPE\nprivate")])
     assert.equal(quantitativeEquationDiagnostic(e),null);
   assert.equal(quantitativeEquationDiagnostic(new Error("quantitative_equations_invalid:LOWERED_STEP_BOUND")),"LOWERED_STEP_BOUND");
+});
+
+omegaTest("opt-in generation bounds reject oversized and empty collections using an independent JSON Schema validator",()=>{
+  // Existing frozen ESLint dependency; third-party draft-07 semantics, not the native compiler oracle.
+  const Ajv=createRequire(import.meta.url)("ajv");
+  const contract={kind:"DERIVE_THEN_REPLY",problem:arithmeticProblem,outputLabels:["quantity"]} as const;
+  const legacy=nyxChatContractFormat(contract,false),bounded=nyxChatContractFormat(contract,false,true);
+  assert.deepEqual(legacy,nyxChatContractFormat(contract,false,false));
+  const checkLegacy=new Ajv().compile(legacy.schema),checkBounded=new Ajv().compile(bounded.schema);
+  assert(checkLegacy(arithmeticAction));assert(checkBounded(arithmeticAction));
+  const original=arithmeticProgram.cycles[0].phases[0];
+  const programs=[
+    {...arithmeticProgram,initialState:Array(17).fill(arithmeticProgram.initialState[0])},
+    {...arithmeticProgram,cycles:[]},
+    {...arithmeticProgram,cycles:Array(17).fill(arithmeticProgram.cycles[0])},
+    {...arithmeticProgram,cycles:[{iterations:0,phases:[original]}]},
+    {...arithmeticProgram,cycles:[{iterations:1025,phases:[original]}]},
+    {...arithmeticProgram,cycles:[{iterations:1,phases:[]}]},
+    {...arithmeticProgram,cycles:[{iterations:1,phases:Array(9).fill(original)}]},
+    {...arithmeticProgram,cycles:[{iterations:1,phases:[{...original,expressions:Array(17).fill(original.expressions[0])}]}]},
+    {...arithmeticProgram,cycles:[{iterations:1,phases:[{...original,updates:[]}]}]},
+    {...arithmeticProgram,cycles:[{iterations:1,phases:[{...original,updates:Array(17).fill(original.updates[0])}]}]},
+    {...arithmeticProgram,outputs:[]},
+    {...arithmeticProgram,outputs:Array(17).fill(arithmeticProgram.outputs[0])},
+  ];
+  for(const program of programs){
+    assert(checkLegacy({...arithmeticAction,program}),"legacy schema omitted this native constraint");
+    assert(!checkBounded({...arithmeticAction,program}),"new generation schema closes the structural gap");
+    assert.throws(()=>lowerQuantitativeEquations(arithmeticProblem,program),"native rejection is preserved");
+  }
+  const duplicate={...arithmeticProgram,cycles:[{iterations:1,phases:[{...original,updates:[...original.updates,...original.updates]}]}]};
+  assert(checkBounded({...arithmeticAction,program:duplicate}));
+  assert.throws(()=>lowerQuantitativeEquations(arithmeticProblem,duplicate),"schema never replaces semantic validation");
+  assert.deepEqual(nyxChatContractFormat(contract,true,true),nyxChatContractFormat(contract,true));
+});
+omegaTest("generation profile reaches both wire schema and prompt without changing authority or parser",async()=>{
+  const ordinary=await arithmeticFixture(true),bounded=await arithmeticFixture(true,{bounded:true});
+  assert.notDeepEqual(ordinary.requests[0].responseFormat,bounded.requests[0].responseFormat);
+  assert(bounded.requests[0].messages[0].content.includes('"maxItems":16'));
+  assert.equal(bounded.result.outcome,"REPLIED");assert.equal(bounded.result.modelCalls,2);
+  assert.equal(bounded.result.broaderAuthorityGranted,false);
+  const denied=await arithmeticFixture(false,{bounded:true,action:{...arithmeticAction,program:{...arithmeticProgram,cycles:[]}}});
+  assert.notEqual(denied.result.outcome,"REPLIED");
 });
 
 async function fixture() {

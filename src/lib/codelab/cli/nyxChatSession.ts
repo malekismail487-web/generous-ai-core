@@ -102,6 +102,8 @@ export interface NyxChatSessionConfig {
   /** Host-owned prebound pure-computation capability. Omission means proposal-only,
    * never an implicit execution grant. Not enabled by normal CLI/UI hosts. */
   readonly derivationSession?: BoundedReasoningSession;
+  /** Evaluation-only generation restriction. Never an execution or acceptance grant. */
+  readonly derivationSchemaProfile?: "COLLECTION_BOUNDS";
   /** Experimental procedure within the same model call; never independent verification or more authority. */
   readonly reasoningPolicy?: "CONSTRAINT_COUNTERCHECK";
 }
@@ -140,6 +142,8 @@ export class NyxChatSession {
       || config.editablePaths.some(path => !nyxSafeRelativePath(path))
       || new Set(config.editablePaths).size !== config.editablePaths.length
       || config.reasoningPolicy !== undefined && config.reasoningPolicy !== "CONSTRAINT_COUNTERCHECK"
+      || config.derivationSchemaProfile !== undefined && (config.derivationSchemaProfile!=="COLLECTION_BOUNDS"
+        || config.actionContract?.kind!=="DERIVE_THEN_REPLY")
       || config.actionContract !== undefined && (!nyxChatActionContractValid(config.actionContract)
         || config.actionContract.kind !== "REPLY_ONLY" && config.maxModelCallsPerTurn < 2)
       || config.derivationSession !== undefined && (!(config.derivationSession instanceof BoundedReasoningSession)
@@ -231,7 +235,8 @@ export class NyxChatSession {
     while (modelCalls < this.#config.maxModelCallsPerTurn && Date.now() < deadline) {
       const requestId = `${this.#config.sessionId}-T${this.#turnNumber}-M${modelCalls + 1}`;
       const actionContract = this.#config.actionContract;
-      const responseFormat = actionContract ? nyxChatContractFormat(actionContract, contractFileObserved) : "JSON_OBJECT";
+      const responseFormat = actionContract ? nyxChatContractFormat(actionContract, contractFileObserved,
+        this.#config.derivationSchemaProfile==="COLLECTION_BOUNDS") : "JSON_OBJECT";
       const countercheck = this.#config.reasoningPolicy && (!actionContract || actionContract.kind === "REPLY_ONLY"
         || contractFileObserved) ? `\n${CONSTRAINT_COUNTERCHECK}` : "";
       if (actionContract) messages[0] = {role: "system", content: `${systemMessage}${countercheck}\nCurrent response schema: ${nyxCanonical(responseFormat)}. Remaining model calls including this one: ${this.#config.maxModelCallsPerTurn - modelCalls}.`};

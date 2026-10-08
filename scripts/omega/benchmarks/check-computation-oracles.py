@@ -5,10 +5,8 @@ import sys
 from fractions import Fraction as F
 
 tasks = json.load(sys.stdin)
-counts = {stage: sum(t['stage'] == stage for t in tasks) for stage in ('DEVELOPMENT', 'TRANSFER', 'DIAGNOSTIC')}
-assert counts in ({'DEVELOPMENT': 4, 'TRANSFER': 8, 'DIAGNOSTIC': 0},
-                  {'DEVELOPMENT': 0, 'TRANSFER': 0, 'DIAGNOSTIC': 4},
-                  {'DEVELOPMENT': 4, 'TRANSFER': 8, 'DIAGNOSTIC': 4})
+counts = {stage: sum(t['stage'] == stage for t in tasks) for stage in ('DEVELOPMENT', 'TRANSFER', 'DIAGNOSTIC', 'BOUNDS_DIAGNOSTIC')}
+assert tuple(counts.values()) in ((4, 8, 0, 0), (0, 0, 4, 0), (4, 8, 4, 0), (0, 0, 0, 4), (4, 8, 4, 4))
 assert len({t['taskId'] for t in tasks}) == len(tasks) == sum(counts.values())
 for task in tasks:
     c = {x['id']: F(x['value']) for x in task['problem']['constants']}
