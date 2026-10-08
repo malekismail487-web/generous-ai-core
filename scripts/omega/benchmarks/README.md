@@ -1167,3 +1167,32 @@ execution cross-check, not model reasoning evidence or independent replication;
 it does not retrospectively identify the earlier numerical disagreements.
 No GPQA rerun, official-question ingestion, default change or authority increase
 occurred. The original 198-selected / 194-graded / 148-correct GPQA result stands.
+
+### Exposed GPQA failure-cohort retest
+
+At the operator's explicit request, `GPQA_FAILURE_RECOVERY` selects **all 46
+original wrong choices and all four ungraded timeouts**, using the pinned
+`da4bb546` receipt's outcome/identity projection. The full 198-question source
+and seed-0 choice ordering are hash-checked before selecting the 50 tasks.
+Selection never consults reference choices. Every task receives one new session
+under the original Super read-then-reply configuration, strict A–D grader,
+two logical calls, 8,192 output-token ceiling, 180-second task lease and bounded
+shared delivery allowance. No earlier response, correctness feedback or failure
+identifier is supplied to cognition. Default Ultra and authority are unchanged.
+
+This is **previously exposed, outcome-selected recovery**, not fresh transfer or
+a full GPQA score. Above 90% requires at least 46/50 correct in one completely
+graded epoch. Partial grading, dropped tasks, ever-correct/best-of accumulation
+and combining new successes with historical 148 successes cannot satisfy it.
+Previously passing tasks are not retested, so their current regression status
+is unknown. Original outcomes remain immutable; physical costs and unknown usage
+are retained. A low score does not authorize answer-specific repairs or an
+unchanged replay-until-lucky loop. General corrections still require independent
+development reproduction and fresh transfer with unchanged acceptance checks.
+
+Ω plan coverage: directly implements evidence-linked recovery, original/repaired
+outcome separation and no self-certification; supports source custody, finite
+leases and honest compute. Defers cognitive promotion, fresh/full-population
+recertification and production changes. The exposed-cohort mode is explicitly
+separate from full-population measurement, resolving that architectural conflict
+without weakening its completeness invariant. Coverage: PARTIAL / JUST-IN-TIME.

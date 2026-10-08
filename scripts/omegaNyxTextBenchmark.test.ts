@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import { resolve } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../src/lib/codelab/executor/readOnlyExecutor";
 import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPopulation,
+  textFailureRecoverySelection,textFailureRecoverySummary,type TextFailureBaseline,type PrivateTextTask,
   invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
   TEXT_BENCHMARK_POLICY, textEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
@@ -19,6 +21,7 @@ import { nyxChatContractFormat } from "../src/lib/codelab/cli/nyxChatProtocol";
 import {computationTasks,computationExpected,COMPUTATION_TRANSFER_POLICY} from "./omega/benchmarks/computationTransferTasks";
 import {computationOutcome,computationPairMatched,computationPhysicalUsage} from "./omega/nyx-computation-transfer";
 import type {NyxChatTurnResult} from "../src/lib/codelab/cli/nyxChatSession";
+import {theoryDigest} from "../src/lib/codelab/research/theoryContracts";
 
 let passed = 0; let failed = 0;
 function check(name: string, action: () => unknown) {
@@ -1128,6 +1131,61 @@ check("collection-bound ablation freezes new development tasks rather than recyc
   const all=["DEVELOPMENT","TRANSFER","DIAGNOSTIC","BOUNDS_DIAGNOSTIC"].flatMap(s=>computationTasks(s as Parameters<typeof computationTasks>[0]));
   assert.equal(all.length,20);assert.equal(new Set(all.map(t=>t.taskId)).size,20);
   assert.equal(new Set(all.map(t=>t.question)).size,20);
+});
+function recoveryFixture(){
+  const tasks:PrivateTextTask[]=Array.from({length:198},(_,i)=>({family:"GPQA_DIAMOND",taskId:`SYNTHETIC-${i}`,
+    question:`Independent synthetic development objective ${i}`,get answer():string{throw Error("selection_read_a_reference");}}));
+  const baseline:TextFailureBaseline={candidate:"a".repeat(40),mode:"FULL_GPQA",sourceUnchanged:true,
+    selectedTaskIds:tasks.map(t=>t.taskId),results:tasks.map((t,i)=>({taskId:t.taskId,family:t.family,inputDigest:theoryDigest(t.question),
+      correct:i<148?true:i<194?false:null,state:i<148?"PASS":i<194?"REASONING_FAILURE":"PROVIDER_FAILURE"}))};
+  return {tasks,baseline};
+}
+check("historical recovery selects every wrong or ungraded task without reading references",()=>{
+  const {tasks,baseline}=recoveryFixture(),selected=textFailureRecoverySelection(tasks,baseline);
+  assert.equal(selected.length,50);assert.deepEqual(selected,tasks.slice(148));assert(Object.isFrozen(selected));
+  assert.strictEqual(selected[0],tasks[148]);assert.equal(baseline.results.filter(r=>r.correct===false).length,46);
+  assert.equal(baseline.results.filter(r=>r.correct===null).length,4);
+});
+check("recovery fails closed on missing duplicate stale conflicting or fabricated historical rows",()=>{
+  const {tasks,baseline}=recoveryFixture();
+  for(const altered of [{...baseline,candidate:"stale"},{...baseline,mode:"GPQA_FAILURE_RECOVERY"},
+    {...baseline,sourceUnchanged:false},{...baseline,results:baseline.results.slice(1)},
+    {...baseline,selectedTaskIds:[...baseline.selectedTaskIds].reverse()},
+    {...baseline,selectedTaskIds:baseline.selectedTaskIds.map(()=>tasks[0].taskId)},
+    {...baseline,results:baseline.results.map((r,i)=>i===197?baseline.results[0]:r)},
+    {...baseline,results:baseline.results.map((r,i)=>i===197?{...r,correct:true}:r)},
+    {...baseline,results:baseline.results.map((r,i)=>i===197?{...r,inputDigest:"b".repeat(64)}:r)},
+    {...baseline,results:baseline.results.map((r,i)=>i===197?{...r,family:"AIME_2025"}:r)},
+    {...baseline,results:baseline.results.map((r,i)=>i===197?{...r,state:"PASS"}:r)}])
+    assert.throws(()=>textFailureRecoverySelection(tasks,altered));
+  assert.throws(()=>textFailureRecoverySelection(tasks.slice(1),baseline));
+});
+check("above ninety means 46 of 50 in one complete epoch rather than best-of or partial scoring",()=>{
+  const ids=Array.from({length:50},(_,i)=>`RECOVERY-${i}`);
+  const rows=(correct:number)=>ids.map((taskId,i)=>({taskId,correct:i<correct}));
+  const ninety=textFailureRecoverySummary(ids,rows(45)),above=textFailureRecoverySummary(ids,rows(46));
+  assert.equal(ninety.targetSatisfied,false);assert.equal(ninety.correctFractionOfSelected,0.9);
+  assert.equal(above.targetSatisfied,true);assert.equal(above.minimumCorrectForAbove90Percent,46);
+  assert.equal(above.fullBenchmarkScoreClaim,false);assert.equal(above.originalFirstAttempt,false);
+  assert.equal(above.freshGeneralizationClaim,false);assert.equal(above.bestOfAccumulation,false);
+  assert.equal(above.previouslyPassingRegressionStatus,"NOT_RETESTED");
+  const incomplete=textFailureRecoverySummary(ids,rows(46).slice(0,46));
+  assert.equal(incomplete.correctFractionOfSelected,0.92);assert.equal(incomplete.completeGrading,false);
+  assert.equal(incomplete.targetSatisfied,false);assert.equal(incomplete.unexecuted,4);
+  const ungraded=textFailureRecoverySummary(ids,rows(46).map((r,i)=>i===49?{...r,correct:null}:r));
+  assert.equal(ungraded.graded,49);assert.equal(ungraded.targetSatisfied,false);
+  for(const invalid of [[...rows(46),rows(46)[0]],[{taskId:"not-selected",correct:true}],[{taskId:ids[0],correct:undefined}]])
+    assert.throws(()=>textFailureRecoverySummary(ids,invalid as never));
+  assert.throws(()=>textFailureRecoverySummary([],[]));
+  assert.throws(()=>textFailureRecoverySummary([ids[0],ids[0]],[]));
+});
+check("recovery source pin preserves the original 198-question result without loading question content",()=>{
+  const receipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-super-full-gpqa-da4bb546.json","utf8"));
+  assert.equal(theoryDigest(receipt.originalReportProjection),"de2b7f3c028bd62252d35d86e3bbebce19de85d3e267b3d1811d3c996448a7cd");
+  const rows=receipt.originalReportProjection.results;
+  assert.equal(rows.length,198);assert.equal(rows.filter(r=>r.correct===true).length,148);
+  assert.equal(rows.filter(r=>r.correct===false).length,46);assert.equal(rows.filter(r=>r.correct===null).length,4);
+  assert(rows.every(r=>!("answer" in r)&&!("question" in r)));
 });
 console.log(`Omega NYX text benchmark tests - passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

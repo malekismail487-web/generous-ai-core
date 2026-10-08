@@ -1,6 +1,9 @@
-name: Omega NYX full GPQA Diamond evaluation
+name: Omega NYX exposed GPQA failure recovery
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [scripts/omega/nyx-text-benchmark-epoch.ts]
 permissions:
   contents: read
 # Share the existing live campaign slot: never compete with the active AIME run
@@ -10,8 +13,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   gpqa-diamond:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-gpqa-recovery-once]')
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,6 +33,7 @@ jobs:
       - name: Verify strict grading, projection, isolation and unchanged provider contract
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNyxTextBenchmark.test.ts
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --skipLibCheck --allowImportingTsExtensions scripts/omega/nyx-text-benchmark-epoch.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaNimProvider.test.ts
           python -B scripts/omega/benchmarks/test-prepare-gpqa.py
           node scripts/typescript/typecheck-ratchet.mjs
@@ -38,11 +43,11 @@ jobs:
           git clone --filter=blob:none --no-checkout https://github.com/Idavidrein/gpqa.git "$RUNNER_TEMP/gpqa"
           git -C "$RUNNER_TEMP/gpqa" checkout 56686c06f5e19865c153de0fdb11be3890014df7
           python -B scripts/omega/benchmarks/prepare-text-benchmarks.py prepare-gpqa --gpqa "$RUNNER_TEMP/gpqa" --output "$RUNNER_TEMP/nyx-gpqa-data.json"
-      - name: Execute frozen full GPQA Diamond through existing read-then-reply NYX
+      - name: Retest all 46 original wrong choices and four ungraded timeouts once; no prior answer feedback
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-          NYX_TEXT_EPOCH_MODE: FULL_GPQA
+          NYX_TEXT_EPOCH_MODE: GPQA_FAILURE_RECOVERY
           NYX_TEXT_CONFIGURATION: SESSION_SUPER_PHASE_CONTRACT
           NYX_TEXT_DELIVERY: SCOPED_FILE
           NYX_TEXT_RECOVERY_PROFILE: BOUNDED_RECOVERY
@@ -55,7 +60,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-super-full-gpqa-${{ github.sha }}
+          name: nyx-super-gpqa-failure-recovery-${{ github.sha }}
           path: |
             ${{ runner.temp }}/nyx-text-benchmark-*.json
             ${{ runner.temp }}/nyx-text-progress-*.json

@@ -57,6 +57,57 @@ export function textGpqaPopulation(tasks: readonly PrivateTextTask[]) {
   return Object.freeze([...tasks]);
 }
 
+/** Historical failures are an explicitly exposed recovery cohort, never a fresh
+ * or full-population score. No private answer is consulted during selection. */
+export interface TextFailureBaseline {
+  readonly candidate: string;
+  readonly mode: string;
+  readonly sourceUnchanged: boolean;
+  readonly selectedTaskIds: readonly string[];
+  readonly results: readonly {readonly taskId:string; readonly family:string; readonly inputDigest:string;
+    readonly state:string; readonly correct:boolean|null}[];
+}
+export function textFailureRecoverySelection(tasks:readonly PrivateTextTask[],baseline:TextFailureBaseline) {
+  textGpqaPopulation(tasks);
+  const fail=():never=>{throw Error("gpqa_recovery_baseline_invalid");};
+  if(!/^[a-f0-9]{40}$/.test(baseline.candidate)||baseline.mode!=="FULL_GPQA"||baseline.sourceUnchanged!==true
+    ||!Array.isArray(baseline.results)||baseline.results.length!==tasks.length
+    ||!Array.isArray(baseline.selectedTaskIds)||baseline.selectedTaskIds.length!==tasks.length
+    ||new Set(baseline.results.map(r=>r.taskId)).size!==tasks.length
+    ||new Set(baseline.selectedTaskIds).size!==tasks.length)return fail();
+  const rows=new Map(baseline.results.map(r=>[r.taskId,r]));
+  for(const [index,task] of tasks.entries()) {
+    const row=rows.get(task.taskId);
+    if(baseline.selectedTaskIds[index]!==task.taskId||!row||row.family!=="GPQA_DIAMOND"
+      ||row.inputDigest!==theoryDigest(task.question)
+      ||!(row.correct===true&&row.state==="PASS"||row.correct===false&&row.state==="REASONING_FAILURE"
+        ||row.correct===null&&["PROVIDER_FAILURE","TRUNCATION","SCHEMA_FAILURE","ANSWER_FORMAT_FAILURE",
+          "RESOURCE_EXHAUSTION","PROTOCOL_OR_AUTHORIZATION_FAILURE","INFRASTRUCTURE_FAILURE",
+          "MISSING_REQUIRED_REPOSITORY_ACTION","REPOSITORY_OBSERVATION_BINDING_FAILURE","VERIFIER_FAILURE",
+          "SECURITY_POLICY_REJECTION"].includes(row.state)))return fail();
+  }
+  const selected=tasks.filter(task=>rows.get(task.taskId)!.correct!==true);
+  if(!selected.length)return fail();
+  return Object.freeze(selected);
+}
+/** A fixed denominator and one result per task prohibit best-of/ever-correct
+ * accumulation, premature threshold claims and merging stale prior successes. */
+export function textFailureRecoverySummary(selectedTaskIds:readonly string[],results:readonly {
+  readonly taskId:string; readonly correct:boolean|null}[]) {
+  if(!selectedTaskIds.length||new Set(selectedTaskIds).size!==selectedTaskIds.length
+    ||new Set(results.map(r=>r.taskId)).size!==results.length
+    ||results.some(r=>!selectedTaskIds.includes(r.taskId)||![true,false,null].includes(r.correct)))
+    throw Error("gpqa_recovery_results_invalid");
+  const selected=selectedTaskIds.length,attempted=results.length;
+  const graded=results.filter(r=>r.correct!==null).length,correct=results.filter(r=>r.correct===true).length;
+  const completeGrading=attempted===selected&&graded===selected;
+  return {selected,attempted,graded,correct,wrong:graded-correct,ungraded:attempted-graded,unexecuted:selected-attempted,
+    correctFractionOfSelected:correct/selected,minimumCorrectForAbove90Percent:Math.floor(selected*0.9)+1,
+    completeGrading,targetSatisfied:completeGrading&&correct/selected>0.9,
+    firstAttemptWithinRecoveryEpoch:true,originalFirstAttempt:false,bestOfAccumulation:false,
+    fullBenchmarkScoreClaim:false,freshGeneralizationClaim:false,previouslyPassingRegressionStatus:"NOT_RETESTED"};
+}
+
 /** Whole pinned populations only. Selection cannot inspect questions or private references. */
 export function textWholePopulation(tasks: readonly PrivateTextTask[], family: "AIME_2025" | "BBEH_MINI") {
   if (!["AIME_2025", "BBEH_MINI"].includes(family) || tasks.length !== 490
