@@ -2357,6 +2357,12 @@
       ]
     },
     {
+      "name": "NYX_LENGTH_TRANSFER_TASKS",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_MEASURED_QUALITY_COMPARISON",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"

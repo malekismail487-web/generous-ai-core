@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-regex-free-action-compatibility/1",
+  "candidate": "4edbd7b8559eef429cc2d07e48bd84cbc0d2ff74",
+  "runId": 38004139800,
+  "jobId": 114068919743,
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "frozen": {
+    "version": "nyx-bounded-contract-probe/3",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "reasoningEffort": "none",
+    "generationPolicy": "nyx-length-bounded-decision-schema/1",
+    "maxOutputTokens": 2048,
+    "maxPromptBytes": 48000,
+    "providerTimeoutMs": 65000,
+    "caseWallClockMs": 80000,
+    "globalWallClockMs": 540000,
+    "maxPhysicalCallsIncludingRetries": 6,
+    "physicalCallsPerCase": 1,
+    "maxDiagnosisCharacters": 1500,
+    "maxCounterexamples": 1,
+    "maxChanges": 1,
+    "maxPatchBytes": 4096,
+    "authority": "COGNITION_PROPOSAL_ONLY_NO_CANDIDATE_APPLICATION",
+    "defaultConfigurationChanged": false,
+    "benchmarkTasksUsed": false,
+    "provesUniversalHostedEnforcement": false,
+    "cognitivePromotion": false
+  },
+  "artifact": {
+    "id": 11651095200,
+    "bytes": 5024,
+    "sha256": "29468f9cc87ba89f79ccbde9508a129e10cd06a6b0127e99bb3118d61495b57f",
+    "reportBytes": 27366,
+    "reportSha256": "0dcc3dd7fad353988e646707adaa18fbb0709584afa47d714806b1e1fe657fae"
+  },
+  "verification": {
+    "artifactLogAgreement": true,
+    "sourceDigestsVerified": {
+      "scripts/omega/nyx-bounded-contract-probe.ts": "5f628e5675dd008f494e621bac76957558d2c8d721948fe9987b9f1629e432fe",
+      "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts": "0a0092b282ad48894e3801a96951d041721be686a7a6e7c79c1311f2e0161dc5",
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "deca0b7cb52e9e30021ee2f985819b6e789f7d161efd6402acdc741b14ef48ce",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "9250a3a5e94475274cac49eea81f4ba68d2b07e8664fa2af9a2690a8c318e5ed"
+    },
+    "sourceUnchanged": true,
+    "ci": {
+      "runId": 38004139875,
+      "jobId": 114068920066,
+      "conclusion": "SUCCESS",
+      "candidate": {
+        "commit": "4edbd7b8559eef429cc2d07e48bd84cbc0d2ff74",
+        "worktreeState": "CLEAN"
+      },
+      "aggregate": {
+        "discoveredSuites": 109,
+        "executedSuites": 109,
+        "passedSuites": 109,
+        "failedSuites": 0,
+        "passedChecks": 11746,
+        "failedChecks": 0,
+        "semanticTestDefinitions": 4375
+      },
+      "manifestDigest": "90a78fedfa64c847c9d1f3ec69c0b5191d760d2d5b2be4ebbaad0e555040a091"
+    }
+  },
+  "selected": 6,
+  "attempted": 6,
+  "physicalCalls": 6,
+  "reportedTokens": 19471,
+  "unknownUsageCalls": 0,
+  "results": [
+    {
+      "id": "EDIT",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "PROPOSED",
+      "reason": "nyx_repair_hypothesis_validated",
+      "expectedOutcome": "PROPOSED",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "69921065c9224f6e9e99904edf49445ba5a5d87811457603a6f01691d55850b1",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3399,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 2418,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    },
+    {
+      "id": "EDIT",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "state": "PROPOSED",
+      "reason": "nyx_repair_hypothesis_validated",
+      "expectedOutcome": "PROPOSED",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "39fc9f5aab62c8d436e07ccbd6aff04d8b55fa7b01cd8b6e174e61f9ba9a6ffe",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3361,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 2332,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    },
+    {
+      "id": "UNCERTAIN",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "state": "NO_ACTION",
+      "reason": "nyx_cognition_no_action",
+      "expectedOutcome": "NO_ACTION",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "eb7a7eb7ec81d7ab42d4de84e1902a7659292a8cf6e2bbadb9334df5174fefa6",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3138,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 976,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    },
+    {
+      "id": "UNCERTAIN",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "NO_ACTION",
+      "reason": "nyx_cognition_no_action",
+      "expectedOutcome": "NO_ACTION",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "b3222f69cb8f914c612e6d01ddc8fe685d705a9f0bcfacac7247d97de17362f3",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3136,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 1368,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    },
+    {
+      "id": "EVIDENCE",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "REQUEST_EVIDENCE",
+      "reason": "nyx_cognition_requests_admitted_evidence",
+      "expectedOutcome": "REQUEST_EVIDENCE",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "13e686d31e6e5dfad7008e86290f13ed89977cb01301cb34078fb257f03b160c",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3194,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 2347,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    },
+    {
+      "id": "EVIDENCE",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "state": "REQUEST_EVIDENCE",
+      "reason": "nyx_cognition_requests_admitted_evidence",
+      "expectedOutcome": "REQUEST_EVIDENCE",
+      "observedCompatible": true,
+      "schemaAccepted": true,
+      "responseIntegrity": true,
+      "schemaDigest": "c4bb2774d04b7738198889b298e087cdd2dd253c103c2e93e4cbc8b8381c680c",
+      "diagnostics": [],
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 3243,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "httpDispatches": 1,
+      "accountingComplete": true,
+      "wallClockMs": 1738,
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 1,
+        "provisionedLifecycles": 1
+      },
+      "authorityGranted": false
+    }
+  ],
+  "outcome": "OBSERVED_COMPATIBLE",
+  "scope": "Three repeated development action shapes only; no candidate applied or cognitive gain claimed",
+  "correction": "Explicit regex-free bounded generation policy. Default/historical policies and all local acceptance checks remain unchanged.",
+  "localFailureAndRepair": {
+    "failure": "Historical exact-hunk comparison did not recognize added opt-in configuration",
+    "repair": "Added exact inverse of only the declared new hunks; whole predecessor source comparison remains required",
+    "freshFocusedChecks": {
+      "cognition": 360,
+      "arcIntegration": 439,
+      "admissionGuidance": 59,
+      "failed": 0
+    }
+  },
+  "environment": {
+    "windowsBuild": "BLOCKED_ENVIRONMENT_DEVICE_GUARD_VITE_LAUNCHER",
+    "bypassAttempted": false,
+    "linuxCiBuild": "PASS"
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "Detector validation",
+      "General interface diagnosis before reasoning claims"
+    ],
+    "supporting": [
+      "Evidence over confidence",
+      "No authority increase"
+    ],
+    "deferred": [
+      "Cognitive promotion",
+      "Production authority"
+    ],
+    "conflicts": [
+      "Regex policy failed full-protocol transfer and remains unpromoted"
+    ],
+    "coverageStatus": "PARTIAL / JUST-IN-TIME"
+  },
+  "rawContentPersisted": false,
+  "candidateApplied": false,
+  "benchmarkScore": null,
+  "cognitivePromotion": false,
+  "defaultUltraChanged": false,
+  "authorityIncrease": false
+}

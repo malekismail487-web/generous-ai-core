@@ -17,6 +17,7 @@ import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTrans
 import { DECISION_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/decisionContractTransferTasks";
 import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContractTransferTasks";
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./omega/benchmarks/patternRepairTransferTasks";
+import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -640,7 +641,67 @@ representationReferences["DEADLINE-CAPACITY-SELECTION"] = `export function trans
   }
   return {selected,used:input.capacity-remaining};
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS]) {
+// Test-only references validate fixtures and admission; never passed to inference.
+representationReferences["STRICT-QUOTED-ROWS"] = `export function transform(input) {
+  const s = {rows: [], row: [], position: 0, token: /("(?:[^"]|"")*"|[^",\\r\\n]*)(,|\\r\\n|\\n|$)/gy};
+  while (s.position < input.length) {
+    const match = s.token.exec(input);
+    if (!match) return {error: "MALFORMED"};
+    s.position = s.token.lastIndex;
+    s.row.push(match[1].startsWith('"') ? match[1].slice(1, -1).replace(/""/g, '"') : match[1]);
+    if (match[2] !== ",") { s.rows.push(s.row); s.row = []; }
+  }
+  if (input.endsWith(",")) { s.row.push(""); s.rows.push(s.row); }
+  return {rows: s.rows};
+}`;
+representationReferences["DECIMAL-HALF-EVEN"] = `export function transform(input) {
+  const s = {negative: input.text.startsWith("-"), pieces: input.text.replace(/^-/, "").split("."),
+    factor: 1n, remainder: 0n, digits: ""};
+  s.pieces.push("");
+  let value = BigInt(s.pieces.join(""));
+  if (s.pieces[1].length > input.places) {
+    s.factor = 10n ** BigInt(s.pieces[1].length - input.places);
+    s.remainder = value % s.factor; value /= s.factor;
+    if (s.remainder * 2n > s.factor || s.remainder * 2n === s.factor && value % 2n === 1n) value++;
+  } else value *= 10n ** BigInt(input.places - s.pieces[1].length);
+  s.digits = value.toString().padStart(input.places + 1, "0");
+  return (s.negative && value !== 0n ? "-" : "") + (input.places
+    ? s.digits.slice(0, -input.places) + "." + s.digits.slice(-input.places) : s.digits);
+}`;
+representationReferences["NESTED-CELL-TRANSACTIONS"] = `export function transform(input) {
+  const s = {cells: new Map(input.initial), frames: [], reads: []};
+  const order = (a, b) => (a[0] > b[0]) - (a[0] < b[0]);
+  for (const [index, op] of input.ops.entries()) {
+    if (["set", "delete"].includes(op.op)) { s.cells[op.op](op.key, op.value); continue; }
+    if (op.op === "read") { s.reads.push({exists: s.cells.has(op.key),
+      value: s.cells.has(op.key) ? s.cells.get(op.key) : null}); continue; }
+    if (op.op === "begin") { s.frames.push(new Map(s.cells)); continue; }
+    if (["commit", "rollback"].includes(op.op) && s.frames.length) {
+      s.previous = s.frames.pop();
+      if (op.op === "rollback") s.cells = s.previous;
+      continue;
+    }
+    return {error: index, cells: input.initial.map(row => [...row]).sort(order), reads: [], open: 0};
+  }
+  return {error: null, cells: Array.from(s.cells).sort(order),
+    reads: s.reads, open: s.frames.length};
+}`;
+representationReferences["REACHABLE-EXPRESSION-GRAPH"] = `export function transform(input) {
+  const s = {nodes: new Map(), cache: new Map(), active: new Set()};
+  for (const node of input.nodes) s.nodes.set(node.id, node);
+  function solve(id) {
+    if (s.cache.has(id)) return s.cache.get(id);
+    if (s.active.has(id) || !s.nodes.has(id)) throw new Error("invalid");
+    const n = s.nodes.get(id);
+    s.active.add(id);
+    s.cache.set(id, n.op === "const" ? n.value : n.args.reduce((a, key) =>
+      n.op === "add" ? a + solve(key) : a * solve(key), n.op === "add" ? 0 : 1));
+    s.active.delete(id);
+    return s.cache.get(id);
+  }
+  try { return {values: input.targets.map(solve)}; } catch { return {error: "INVALID"}; }
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

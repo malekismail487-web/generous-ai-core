@@ -1,5 +1,28 @@
 # NYX benchmark capability program
 
+### Explicit regex-free contract and fresh transfer
+
+At frozen `4edbd7b8`, both the prior decision-required grammar and the explicit
+length-only policy passed all three development action shapes (edit, insufficient
+evidence, request available evidence): six physical calls, 19,471 reported tokens,
+zero unknown usage. The [receipt](../../../docs/omega/evidence/nyx-length-contract-4edbd7b8.json)
+verifies six source digests, artifact/log agreement and cleanup. Linux CI passed
+109 suites / 11,746 checks, TypeScript zero, production build, package smoke and
+W0 inventory. Windows' Device Guard blocked the local Vite launcher; no bypass
+was attempted. Small action compatibility does not certify cognitive improvement.
+
+The next epoch freezes four new objectives: strict quoted-row parsing, exact
+decimal half-even quantization, nested cell transactions and reachable expression
+evaluation. Both arms retain the same model, prompts, authority, 8,192 output-token
+ceiling, two shared physical attempts, two candidate iterations and original-state
+quality/private oracles. The only treatment is request-derived length/array
+generation bounds without prose regex. Test-only references must pass the real
+Omega loop and unchanged quality checks before inference; their initial static
+quality failures were repaired without changing any expected result or threshold.
+Report first-attempt and repaired acceptance, delivery failures, hidden failures,
+quality rejection and realized compute separately. These synthetic tasks have
+same-session E3 authorship, not independent replication or external benchmark status.
+
 ### Full-protocol generation recovery: escaping diagnosis
 
 At frozen `cde45497`, four synthetic copy requests all returned JSON, three
