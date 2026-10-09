@@ -1838,3 +1838,20 @@ JavaScript object literal silently changed a `__proto__` key into prototype synt
 The shared fixture generator now parses a quoted JSON data string, preserving exact
 input identity without exposing expected answers or relaxing any acceptance check.
 The counterexample remains a regression test; old receipt bytes are not rewritten.
+
+Fresh transfer [38002507576](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38002507576)
+at `e71123b05a80cf6fbb27880a149f66529e01c8dc` **falsified promotion again**.
+Prior policy: 4/4 functionally accepted, 2/4 quality accepted (one first-call,
+one repaired); two remaining candidates exceeded unchanged declaration limits.
+Bounded-pattern policy: 0/4, with all eight responses failing JSON parsing before
+execution. The plain-sentence diagnostic had not established full intent escaping
+compatibility. Unreached checks are not hidden-case reasoning failures.
+
+Fifteen physical calls / 78,773 reported tokens / zero unknown usage or provider
+failures. All pairs provider-stable, none matched realized compute; treatment used
+more tokens in every pair. The [receipt](../../../docs/omega/evidence/nyx-pattern-transfer-e71123b0.json)
+verifies artifact/log/source identity, cleanup and clean-candidate CI (109 suites /
+11,719 checks). These objectives are now exposed and no default/cognitive promotion
+is admitted. Next diagnostic must isolate quotation, backslash and control-character
+generation on generic synthetic data, not loosen JSON parsing or repair benchmark
+answers to force a passing result.
