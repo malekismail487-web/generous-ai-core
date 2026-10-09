@@ -1774,3 +1774,22 @@ schema/source failures, public/hidden failures and quality rejection remain dist
 Test-only independent references and scorer adversarial checks run before inference.
 Fixture expected answers and references are never model inputs. Same-session
 authorship and unproven hostile-code network isolation remain limitations.
+
+Frozen transfer [37999962307](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37999962307)
+at `4905f4ffab9cdc7572e9e36a9460681a81f6f7d7` **falsified promotion**.
+Prior grammar: 1/4 quality accepted; bounded grammar: 0/4. All eight bounded
+interactions were rejected for duplicate counterexamples before execution, so
+unreached functional/hidden checks are not reasoning failures. The single-item
+compatibility probe had not exercised this defect. Prior grammar also exposed
+one recurring hidden-case failure, two functionally correct but quality-rejected
+candidates, and a syntax-invalid final repair. First and repaired outcomes remain
+separate; a prior passing iteration is not a passing final revision.
+
+All four pairs were provider-stable, but none met the frozen realized-compute
+match. Fifteen physical calls, 65,294 reported tokens, zero unknown usage,
+provider failures or retries. The [receipt](../../../docs/omega/evidence/nyx-bounded-transfer-4905f4ff.json)
+verifies ZIP/report hashes, exact log agreement, sixteen source hashes, cleanup
+and clean-candidate CI (109 suites / 11,638 checks). No default change or cognitive
+gain is promoted. These four objectives are now exposed: a correction must be
+developed on generic synthetic inputs and evaluated on fresh transfer tasks,
+not presented as fresh progress by repeating this selection.
