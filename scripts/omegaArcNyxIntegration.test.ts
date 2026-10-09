@@ -16,6 +16,7 @@ import { MEASURED_QUALITY_TRANSFER_TASKS } from "./omega/benchmarks/measuredQual
 import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTransferTasks";
 import { DECISION_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/decisionContractTransferTasks";
 import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContractTransferTasks";
+import { PATTERN_REPAIR_TRANSFER_TASKS } from "./omega/benchmarks/patternRepairTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -590,7 +591,56 @@ representationReferences["LEXICOGRAPHIC-PARTIAL-ORDER"] = `export function trans
   }
   return visit([]);
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS]) {
+// Independent stack traversal, explicit indexed sort, BigInt arithmetic and
+// indexed selection references are evaluator-only, never model inputs.
+{
+  const task=PATTERN_REPAIR_TRANSFER_TASKS[0];
+  const files=representationRepositoryFiles(task);
+  const encoded=files["src/inputs.mjs"].slice("export const inputs = JSON.parse(".length,-3);
+  const inputs=JSON.parse(JSON.parse(encoded));
+  check(Object.prototype.hasOwnProperty.call(inputs[4][""],"__proto__"),
+    "generated fixture preserves JSON __proto__ as data rather than object-initializer semantics");
+  check(theoryDigest(inputs)===theoryDigest(task.privateCases.map(c=>c.input)),
+    "generated private input population is exactly the frozen JSON data");
+  check(!files["src/inputs.mjs"].includes(JSON.stringify(task.privateCases)),
+    "safe data serialization does not leak private expected results");
+}
+representationReferences["TYPED-LEAF-PATHS"] = `export function transform(input) {
+  const stack=[[input,[]]], output=[];
+  while(stack.length) {
+    const [value,path]=stack.pop();
+    if(value!==null && typeof value==="object") {
+      for(const key of Object.keys(value).reverse()) {
+        stack.push([value[key],[...path,Array.isArray(value)?Number(key):key]]);
+      }
+    } else output.push([path,value]);
+  }
+  return output;
+}`;
+representationReferences["STABLE-NULL-AWARE-ORDER"] = `export function transform(input) {
+  return input.map((row,index)=>({row,index})).sort((a,b)=>
+    (a.row.group>b.row.group)-(a.row.group<b.row.group) ||
+    (b.row.score??-Infinity)-(a.row.score??-Infinity) || a.index-b.index)
+    .map(item=>({...item.row}));
+}`;
+representationReferences["SIGNED-MODULAR-MATRIX"] = `export function transform(input) {
+  const modulus=BigInt(input.mod);
+  return input.left.map(row=>input.right[0].map((_,j)=>
+    Number((row.reduce((sum,x,k)=>sum+BigInt(x)*BigInt(input.right[k][j]),0n)%modulus+modulus)%modulus)));
+}`;
+representationReferences["DEADLINE-CAPACITY-SELECTION"] = `export function transform(input) {
+  let remaining=input.capacity;
+  const selected=[];
+  for(const record of input.jobs.map((job,index)=>({job,index})).sort((a,b)=>
+    a.job.deadline-b.job.deadline || a.index-b.index)) {
+    if(record.job.size<=remaining) {
+      remaining-=record.job.size;
+      selected.push(record.index);
+    }
+  }
+  return {selected,used:input.capacity-remaining};
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

@@ -17,6 +17,7 @@ import { QUALITY_SITE_TRANSFER_TASKS } from "./benchmarks/qualitySiteTransferTas
 import { DECISION_CONTRACT_TRANSFER_TASKS } from "./benchmarks/decisionContractTransferTasks";
 import { NYX_DECISION_REQUIRED_SCHEMA_POLICY, NYX_BOUNDED_DECISION_SCHEMA_POLICY } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./benchmarks/boundedContractTransferTasks";
+import { PATTERN_REPAIR_TRANSFER_TASKS } from "./benchmarks/patternRepairTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -27,6 +28,8 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
 const original = theoryDigest(git("ls-files", "-s"));
 const decisionContractComparison = process.env.NYX_DECISION_CONTRACT_COMPARISON === "1";
 const boundedContractComparison = process.env.NYX_BOUNDED_CONTRACT_COMPARISON === "1";
+const patternTransfer = process.env.NYX_PATTERN_TRANSFER_TASKS === "1";
+if(patternTransfer && !boundedContractComparison) throw Error("pattern_transfer_requires_bounded_comparison");
 const decisionGenerationComparison = decisionContractComparison || boundedContractComparison;
 const model = decisionGenerationComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
 const boundsComparison = process.env.NYX_ARRAY_BOUND_COMPARISON === "1";
@@ -35,8 +38,9 @@ const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1
 const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
 if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
 const variants=boundedContractComparison?["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS"]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
-const selectedTasks = boundedContractComparison?BOUNDED_CONTRACT_TRANSFER_TASKS:decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+const selectedTasks = boundedContractComparison?(patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
+  taskCorpus:patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
   providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
@@ -60,7 +64,7 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts",
   ...(decisionGenerationComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
-    boundedContractComparison?"scripts/omega/benchmarks/boundedContractTransferTasks.ts":"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
+    boundedContractComparison?(patternTransfer?"scripts/omega/benchmarks/patternRepairTransferTasks.ts":"scripts/omega/benchmarks/boundedContractTransferTasks.ts"):"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
     "src/lib/codelab/model/nvidiaNimProvider.ts", "scripts/omega/benchmarks/r3RepositorySession.ts",
     "scripts/omega/benchmarks/nyxArcAdapter.ts"] : [])
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));

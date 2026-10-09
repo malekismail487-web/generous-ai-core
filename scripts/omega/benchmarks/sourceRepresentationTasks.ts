@@ -38,9 +38,11 @@ export const SOURCE_REPRESENTATION_TASKS: readonly RepresentationTask[] = [
 
 export function representationRepositoryFiles(task: RepresentationTask): Readonly<Record<string, string>> {
   return {"src/transform.mjs": 'export function transform(input) {\n  throw new Error("Not implemented");\n}\n',
-    "src/examples.mjs": `export const examples = ${JSON.stringify(task.publicCases)};\n`,
+    // JSON is data, not an object initializer: a __proto__ key must remain an
+    // own property rather than silently changing the generated fixture's prototype.
+    "src/examples.mjs": `export const examples = JSON.parse(${JSON.stringify(JSON.stringify(task.publicCases))});\n`,
     // Withheld inputs are legitimate task arguments, not private expected outputs.
-    "src/inputs.mjs": `export const inputs = ${JSON.stringify(task.privateCases.map(c => c.input))};\n`,
+    "src/inputs.mjs": `export const inputs = JSON.parse(${JSON.stringify(JSON.stringify(task.privateCases.map(c => c.input)))});\n`,
     "tools/verify.mjs": `import {transform} from "../src/transform.mjs";
 import {examples} from "../src/examples.mjs";
 import {inputs} from "../src/inputs.mjs";

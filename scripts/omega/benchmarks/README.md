@@ -1820,3 +1820,21 @@ Supporting: independent dialect reproduction and preservation of negative result
 Deferred: cognitive promotion and new reasoning layers. Conflict resolved: standard
 JSON Schema substring-pattern assumptions differ from observed hosted generation;
 use an explicit, versioned generation normal form without weakening local admission.
+
+Hosted correction [38001803320](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38001803320)
+at `35a3e13f43b06bb322bcdc23887e37e6d4a51aa3`: both repaired-pattern cases
+and both length-only controls were informative, distinct and within bounds.
+Four physical calls / 422 tokens / zero unknown usage. The [receipt](../../../docs/omega/evidence/nyx-generation-pattern-repair-35a3e13f.json)
+verifies exact artifact/log agreement and four source hashes. This is development
+delivery verification, not fresh cognitive improvement; prior failures stay intact.
+
+Next frozen transfer (`NYX_PATTERN_TRANSFER_TASKS=1` with the existing bounded
+comparison) uses four new objectives: typed leaf paths, stable null-aware ordering,
+signed modular matrix products and deadline/capacity selection. Same model/native
+none, source representation, budgets, quality thresholds and exact private scorer.
+Independent test-only references pass existing Omega execution and strict quality.
+That preflight found a fixture defect: embedding serialized JSON directly as a
+JavaScript object literal silently changed a `__proto__` key into prototype syntax.
+The shared fixture generator now parses a quoted JSON data string, preserving exact
+input identity without exposing expected answers or relaxing any acceptance check.
+The counterexample remains a regression test; old receipt bytes are not rewritten.

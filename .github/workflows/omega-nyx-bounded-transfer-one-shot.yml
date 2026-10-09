@@ -1,6 +1,9 @@
 name: Omega NYX bounded intent fresh engineering transfer
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-bounded-transfer-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   bounded-contract-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-bounded-transfer-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-pattern-transfer-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -33,6 +36,7 @@ jobs:
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NYX_BOUNDED_CONTRACT_COMPARISON: '1'
+          NYX_PATTERN_TRANSFER_TASKS: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
       - name: Preserve sanitized evidence including rejected candidates

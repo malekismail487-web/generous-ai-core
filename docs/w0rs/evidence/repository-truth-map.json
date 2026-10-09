@@ -2363,6 +2363,12 @@
       ]
     },
     {
+      "name": "NYX_PATTERN_TRANSFER_TASKS",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SITE_COMPARISON",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"
