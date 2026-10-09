@@ -51,6 +51,7 @@ jobs:
           scripts/omega/nyx-docker-storage-preflight.ts scripts/omegaStoragePrerequisite.test.ts
           scripts/omega/nyx-source-representation-cycle.ts
           scripts/omega/nyx-bounded-contract-probe.ts
+          scripts/omega/nyx-generation-pattern-diagnostic.ts
           scripts/omega/nyx-structured-array-diagnostic.ts
           scripts/omegaPublicFailureWitness.test.ts scripts/omega/nyx-public-witness-cycle.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
