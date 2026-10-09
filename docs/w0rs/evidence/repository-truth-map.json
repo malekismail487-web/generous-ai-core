@@ -2289,6 +2289,12 @@
       ]
     },
     {
+      "name": "NYX_BOUNDED_CONTRACT_COMPARISON",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_CONNECTOME_CACHE_ROOT",
       "files": [
         "scripts/omega/verify-biological-connectome-cache.ts"

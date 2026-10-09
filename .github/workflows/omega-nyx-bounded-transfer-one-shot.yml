@@ -1,0 +1,48 @@
+name: Omega NYX bounded intent fresh engineering transfer
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-bounded-transfer-one-shot.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  bounded-contract-transfer:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-bounded-transfer-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify fresh oracles and unchanged local admission without credentials
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3DNyxNemotronCognition.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
+          npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-representation-cycle.ts scripts/omegaArcNyxIntegration.test.ts
+      - name: Compare prior and bounded grammar on four frozen fresh tasks under shared caps
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NYX_BOUNDED_CONTRACT_COMPARISON: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
+      - name: Preserve sanitized evidence including rejected candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-bounded-transfer-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-source-representation-*.json
+          if-no-files-found: error

@@ -1749,3 +1749,28 @@ unknown-usage calls (not the report's two). The [receipt](../../../docs/omega/ev
 verifies the ZIP SHA256, exact report/log agreement, six source hashes and cleanup.
 One focused probe correction withholds unobserved policy and fixes zero-dispatch
 accounting without changing model, budgets, grammar or local acceptance.
+
+Corrected probe [37999196649](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37999196649)
+at `0bb4662259a00858b10fc84934d08961de9b47ce`: **OBSERVED_COMPATIBLE**.
+All three bounded action shapes passed independent JSON Schema and unchanged
+local admission, while the prior grammar admitted none locally (one embedded
+source terminator and two overlong diagnoses). Six physical calls, 18,975 tokens,
+zero provider failures and zero unknown usage; dispatch/delivery accounting agrees.
+The [receipt](../../../docs/omega/evidence/nyx-bounded-contract-0bb46622.json)
+preserves both controls, ZIP/report hashes, source identities and cleanup.
+No candidate was applied: this remains a small delivery result, not functional
+engineering acceptance, cognitive promotion or a frontier benchmark score.
+
+Next frozen transfer uses `NYX_BOUNDED_CONTRACT_COMPARISON=1` in the **existing**
+source-representation runner: VERSIONED-EVENT-PROJECTION, HALF-OPEN-LOAD-PROJECTION,
+SIGNED-SPARSE-CONVOLUTION and LEXICOGRAPHIC-PARTIAL-ORDER. Two development and two
+unseen validation objectives; no exposed ARC or earlier engineering task is reused.
+Identical Super/native-none, temperature zero, LINES source, 8,192 output tokens,
+two physical calls including retries per arm/task, three verification calls,
+155-second task leases and unchanged exact functional and cumulative-original-state
+quality checks. Arm order is balanced before results; strict realized calls/tokens/
+verifier-work matching still uses 10% tolerance. First-call versus repaired results,
+schema/source failures, public/hidden failures and quality rejection remain distinct.
+Test-only independent references and scorer adversarial checks run before inference.
+Fixture expected answers and references are never model inputs. Same-session
+authorship and unproven hostile-code network isolation remain limitations.

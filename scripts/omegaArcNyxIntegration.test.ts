@@ -15,6 +15,7 @@ import { SOURCE_LITERAL_TRANSFER_TASKS } from "./omega/benchmarks/sourceLiteralT
 import { MEASURED_QUALITY_TRANSFER_TASKS } from "./omega/benchmarks/measuredQualityTransferTasks";
 import { QUALITY_SITE_TRANSFER_TASKS } from "./omega/benchmarks/qualitySiteTransferTasks";
 import { DECISION_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/decisionContractTransferTasks";
+import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContractTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -533,7 +534,63 @@ representationReferences["UNICODE-EDIT-METRIC"] = `export function transform(inp
   }
   return state.previous[state.right.length];
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS]) {
+representationReferences["VERSIONED-EVENT-PROJECTION"] = `export function transform(input) {
+  const result = {value:input.initial,applied:[]};
+  for (const event of input.events) {
+    if (event.generation === input.generation && !result.applied.includes(event.seq)) {
+      result.value += event.delta;
+      result.applied.push(event.seq);
+    }
+  }
+  return result;
+}`;
+// Reference scans each elementary interval, independent of an event-sweep implementation.
+representationReferences["HALF-OPEN-LOAD-PROJECTION"] = `export function transform(input) {
+  const state = {points:[...new Set(input.flatMap(item => [item[0],item[1]]))].sort((a,b) => a-b),
+    segments:[],load:0};
+  for (let index=1; index<state.points.length; index++) {
+    state.load = input.reduce((total,item) => total +
+      (item[0]<=state.points[index-1] && item[1]>state.points[index-1] ? item[2] : 0),0);
+    if (!state.load) continue;
+    if (state.segments.length && state.segments.at(-1)[1]===state.points[index-1]
+      && state.segments.at(-1)[2]===state.load) state.segments.at(-1)[1]=state.points[index];
+    else state.segments.push([state.points[index-1],state.points[index],state.load]);
+  }
+  return state.segments;
+}`;
+// Dense coefficient enumeration differs from sparse map-based convolution.
+representationReferences["SIGNED-SPARSE-CONVOLUTION"] = `export function transform(input) {
+  const state = {maximum:Math.max(-1,...input.left.map(term => term[0])) +
+    Math.max(-1,...input.right.map(term => term[0])),terms:[],coefficient:0,power:0,leftIndex:0,rightIndex:0};
+  while (state.power<=state.maximum) {
+    state.coefficient=0;
+    for (state.leftIndex=0; state.leftIndex<input.left.length; state.leftIndex++) {
+      for (state.rightIndex=0; state.rightIndex<input.right.length; state.rightIndex++) {
+        state.coefficient += input.left[state.leftIndex][0]+input.right[state.rightIndex][0]===state.power
+          ? input.left[state.leftIndex][1]*input.right[state.rightIndex][1] : 0;
+      }
+    }
+    if (state.coefficient) state.terms.push([state.power,state.coefficient]);
+    state.power++;
+  }
+  return state.terms;
+}`;
+// Exhaustive lexical search is an independent small-fixture check, not a supplied model solution.
+representationReferences["LEXICOGRAPHIC-PARTIAL-ORDER"] = `export function transform(input) {
+  const nodes = [...input.nodes].sort();
+  function visit(prefix) {
+    if (prefix.length===nodes.length) return prefix;
+    for (const node of nodes) {
+      if (!prefix.includes(node) && input.edges.every(([from,to]) => to!==node || prefix.includes(from))) {
+        const found = visit([...prefix,node]);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return visit([]);
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

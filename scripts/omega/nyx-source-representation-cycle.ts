@@ -15,7 +15,8 @@ import { SOURCE_LITERAL_TRANSFER_TASKS } from "./benchmarks/sourceLiteralTransfe
 import { MEASURED_QUALITY_TRANSFER_TASKS } from "./benchmarks/measuredQualityTransferTasks";
 import { QUALITY_SITE_TRANSFER_TASKS } from "./benchmarks/qualitySiteTransferTasks";
 import { DECISION_CONTRACT_TRANSFER_TASKS } from "./benchmarks/decisionContractTransferTasks";
-import { NYX_DECISION_REQUIRED_SCHEMA_POLICY } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+import { NYX_DECISION_REQUIRED_SCHEMA_POLICY, NYX_BOUNDED_DECISION_SCHEMA_POLICY } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./benchmarks/boundedContractTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -25,21 +26,23 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
   throw Error("source_representation_cycle_clean_candidate_required");
 const original = theoryDigest(git("ls-files", "-s"));
 const decisionContractComparison = process.env.NYX_DECISION_CONTRACT_COMPARISON === "1";
-const model = decisionContractComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
+const boundedContractComparison = process.env.NYX_BOUNDED_CONTRACT_COMPARISON === "1";
+const decisionGenerationComparison = decisionContractComparison || boundedContractComparison;
+const model = decisionGenerationComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
 const boundsComparison = process.env.NYX_ARRAY_BOUND_COMPARISON === "1";
 const localDeliveryComparison=process.env.NYX_STRICT_LOCAL_COMPARISON==="1";
 const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1";
 const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
-if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
-const variants=decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
-const selectedTasks = decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
+const variants=boundedContractComparison?["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS"]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
+const selectedTasks = boundedContractComparison?BOUNDED_CONTRACT_TRANSFER_TASKS:decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: "CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
   providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
-  ...(decisionContractComparison ? {physicalCallsPerTaskIncludingRetries: 2, reasoningControl: "SUPER_HOSTED_NATIVE",
-    reasoningEffort: "none", generationPolicy: NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
-  changedVariable: decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
+  ...(decisionGenerationComparison ? {physicalCallsPerTaskIncludingRetries: 2, reasoningControl: "SUPER_HOSTED_NATIVE",
+    reasoningEffort: "none", generationPolicy: boundedContractComparison?NYX_BOUNDED_DECISION_SCHEMA_POLICY:NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
+  changedVariable: boundedContractComparison?"REQUEST_DERIVED_GENERATION_BOUNDS_ONLY":decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
     ?"AGGREGATE_MEASUREMENTS_VS_BOUNDED_AST_DECLARATION_SITES_ONLY":qualityGuidanceComparison
     ?"PUBLIC_STATIC_METRICS_VS_SOURCE_LINKED_DETECTOR_EXPLANATION_ONLY":localDeliveryComparison
     ?"EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY":boundsComparison
@@ -56,9 +59,10 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "scripts/omega/benchmarks/measuredQualityTransferTasks.ts", "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts",
   "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts",
-  ...(decisionContractComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
-    "scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
-    "src/lib/codelab/model/nvidiaNimProvider.ts", "scripts/omega/benchmarks/r3RepositorySession.ts"] : [])
+  ...(decisionGenerationComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
+    boundedContractComparison?"scripts/omega/benchmarks/boundedContractTransferTasks.ts":"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
+    "src/lib/codelab/model/nvidiaNimProvider.ts", "scripts/omega/benchmarks/r3RepositorySession.ts",
+    "scripts/omega/benchmarks/nyxArcAdapter.ts"] : [])
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));
 const began = Date.now(); const globalDeadline = began + frozen.globalWallClockMs;
 const tasks = selectedTasks.map(t => ({id: t.id, tier: t.tier, domain: t.domain,
@@ -69,7 +73,7 @@ const results: any[] = [];
 for (const [index, task] of selectedTasks.entries()) {
   // Balanced order, not selected by the model or observed outcome.
   for (const variant of (index % 2 ? variants.slice().reverse() : variants)) {
-    const representation = boundsComparison||localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison||decisionContractComparison ? "LINES" : variant as "TEXT" | "LINES";
+    const representation = boundsComparison||localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison||decisionGenerationComparison ? "LINES" : variant as "TEXT" | "LINES";
     const preserveProviderArrayBounds = !boundsComparison || variant === "CORRECTED_BOUNDED";
     if (Date.now() >= globalDeadline) {results.push({id: task.id, variant, representation, state: "BLOCKED_GLOBAL_BUDGET"}); continue;}
     const started = Date.now(); const deadline = Math.min(globalDeadline, started + frozen.wallClockMsPerTask);
@@ -88,7 +92,7 @@ for (const [index, task] of selectedTasks.entries()) {
         return response;
       }});
     // This new epoch counts retries inside the same task budget. Historical reports are not rewritten.
-    const provider = decisionContractComparison ? baseProvider.withHttpAttemptBudget(2, "WITHIN_SHARED_BUDGET") : baseProvider;
+    const provider = decisionGenerationComparison ? baseProvider.withHttpAttemptBudget(2, "WITHIN_SHARED_BUDGET") : baseProvider;
     const session = await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task), candidate, deadline, frozen.maxPatchBytes);
     let loopResult: Awaited<ReturnType<R3BoundedRepairLoop["run"]>> | null = null;
     let cleanup: Awaited<ReturnType<R3BenchmarkRepositorySession["close"]>> | null = null;
@@ -101,8 +105,9 @@ for (const [index, task] of selectedTasks.entries()) {
         provider, maxPromptBytes: frozen.maxPromptBytes, maxOutputTokens: frozen.maxOutputTokens, sourceRepresentation: representation,
         intentCompilationMode: "SAFE_CANONICALIZATION", repairFeedbackPolicy: "TRANSIENT_REJECTED_SOURCE_WINDOW",
         experimentVariant: "CURRENT", comparisonInferencePolicy: "CONSTRAINED_JSON", preserveProviderArrayBounds,
-        ...(decisionContractComparison ? {comparisonReasoningControl: "SUPER_HOSTED_NATIVE" as const} : {}),
+        ...(decisionGenerationComparison ? {comparisonReasoningControl: "SUPER_HOSTED_NATIVE" as const} : {}),
         ...(variant === "DECISION_REQUIRED_FIELDS" ? {providerIntentShape: "DECISION_REQUIRED_FIELDS" as const} : {}),
+        ...(variant === "DECISION_REQUIRED_FIELDS_AND_BOUNDS" ? {providerIntentShape: "DECISION_REQUIRED_FIELDS_AND_BOUNDS" as const} : {}),
         ...(variant==="STRICT_LOCAL"?{structuredOutputMode:"STRICT_LOCAL" as const}:{}),
         ...(["MEASURED_STRUCTURE","STRUCTURE_SITES"].includes(variant)
           ?{qualityRepairGuidance:variant as "MEASURED_STRUCTURE"|"STRUCTURE_SITES"}:{})});
@@ -154,7 +159,7 @@ for (const [index, task] of selectedTasks.entries()) {
       qualityRejected:last?.candidateAdmission?.decision==="REJECTED",publicFailed:last?.functionallyPassed===false,
       privateFailure:score?.failure??null});
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
-      ...(decisionContractComparison ? {providerIntentShape: variant === "DECISION_REQUIRED_FIELDS" ? variant : "LEGACY_OPTIONAL_FIELDS",
+      ...(decisionGenerationComparison ? {providerIntentShape: ["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
         schemaRejectedInteractions: loopResult?.cognitionFailures.length ?? 0} : {}),
       representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
       firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
@@ -181,20 +186,22 @@ const pairs = tasks.map(task => {
     const values = rows.map(r => r.usage[key] + (key === "toolWorkUnits" ? r.privateScorerWorkUnits : 0));
     return Math.max(...values) - Math.min(...values) <= Math.max(1, ...values) * frozen.realizedTolerance;
   });
-  const baseline = rows.find(r => r.variant === "LEGACY_OPTIONAL_FIELDS");
-  const treatment = rows.find(r => r.variant === "DECISION_REQUIRED_FIELDS");
-  const noMoreMeasuredCompute = decisionContractComparison && stable && baseline && treatment
+  const baseline = rows.find(r => r.variant === (boundedContractComparison?"DECISION_REQUIRED_FIELDS":"LEGACY_OPTIONAL_FIELDS"));
+  const treatment = rows.find(r => r.variant === (boundedContractComparison?"DECISION_REQUIRED_FIELDS_AND_BOUNDS":"DECISION_REQUIRED_FIELDS"));
+  const noMoreMeasuredCompute = decisionGenerationComparison && stable && baseline && treatment
     && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key =>
       treatment.usage[key] + (key === "toolWorkUnits" ? treatment.privateScorerWorkUnits : 0)
       <= baseline.usage[key] + (key === "toolWorkUnits" ? baseline.privateScorerWorkUnits : 0));
   return {id: task.id, tier: task.tier, providerStable: stable, matchedRealizedCompute: matched,
-    ...(decisionContractComparison ? {treatmentNoMoreMeasuredCompute: !!noMoreMeasuredCompute,
+    ...(decisionGenerationComparison ? {treatmentNoMoreMeasuredCompute: !!noMoreMeasuredCompute,
       qualityAcceptanceGainWithoutMoreMeasuredCompute: !!(noMoreMeasuredCompute && treatment.accepted && !baseline.accepted)} : {}),
     outcomes: rows.map(r => ({variant: r.variant, accepted: r.accepted, failureClass: r.failureClass}))};
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: decisionContractComparison
+  hypothesis: boundedContractComparison
+    ? "Request-derived string and decision-specific array constraints reduce source-interface failure and improve fresh engineering acceptance under unchanged parser, quality, authority and compute limits."
+    :decisionContractComparison
     ? "Decision-specific required generation fields reduce interface rejection and improve fresh engineering acceptance under unchanged local validation, authority and compute limits."
     :qualitySiteComparison
     ? "Bounded, source-linked declaration sites make structural repair actionable and improve fresh quality admission compared with aggregate guidance alone."
