@@ -3,6 +3,7 @@ import { immutableTheoryValue } from "../research/theoryContracts";
 /** Generation grammar only. Local semantic validation and Omega authorization remain authoritative. */
 export const NYX_DECISION_REQUIRED_SCHEMA_POLICY = "nyx-decision-required-schema/1" as const;
 export const NYX_BOUNDED_DECISION_SCHEMA_POLICY = "nyx-bounded-decision-schema/2" as const;
+export const NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY = "nyx-length-bounded-decision-schema/1" as const;
 
 /** Generation normal form: start informative prose immediately; never transform model output.
  * Bounds live in the regex too: observed hosted pattern compilation ignored length siblings.
@@ -40,6 +41,22 @@ export function nyxDecisionRequiredProviderSchema(schema: Readonly<Record<string
 export function nyxBoundedDecisionRequiredProviderSchema(providerSchema: Readonly<Record<string, unknown>>,
   localSchema: Readonly<Record<string, unknown>>, allowedActions: readonly string[],
   requiredFields: Readonly<Record<string, readonly string[]>>) {
+  return boundedDecisionSchema(providerSchema, localSchema, allowedActions, requiredFields, true);
+}
+
+/** Explicit regex-free generation experiment, not a fallback or relaxation of local acceptance.
+ * Hosted regex compatibility failed full-protocol transfer; nonempty/unique prose remains
+ * independently enforced by cognition. Historical grammars retain their exact behavior.
+ */
+export function nyxLengthBoundedDecisionRequiredProviderSchema(providerSchema: Readonly<Record<string, unknown>>,
+  localSchema: Readonly<Record<string, unknown>>, allowedActions: readonly string[],
+  requiredFields: Readonly<Record<string, readonly string[]>>) {
+  return boundedDecisionSchema(providerSchema, localSchema, allowedActions, requiredFields, false);
+}
+
+function boundedDecisionSchema(providerSchema: Readonly<Record<string, unknown>>,
+  localSchema: Readonly<Record<string, unknown>>, allowedActions: readonly string[],
+  requiredFields: Readonly<Record<string, readonly string[]>>, prosePattern: boolean) {
   const restoreBounds = (wire: unknown, local: unknown, depth = 0): Record<string, unknown> => {
     if (depth > 16 || !wire || !local || typeof wire !== "object" || typeof local !== "object"
       || Array.isArray(wire) || Array.isArray(local)) throw Error("nyx_bounded_schema_structure_invalid");
@@ -72,11 +89,13 @@ export function nyxBoundedDecisionRequiredProviderSchema(providerSchema: Readonl
     const properties = { ...branch.properties } as Record<string, Record<string, unknown>>;
     // Free-form intent prose must contain information. Do not impose this on code: blank
     // lines, indentation and the final empty line encode source and must remain exact.
-    for (const field of ["diagnosis", "causalHypothesis", "invariant", "failureInterpretation", "expectedResult"])
-      properties[field] = nyxInformativeProviderStringSchema(properties[field]);
-    for (const field of ["uncertainties", "counterexamples", "assumptions"])
-      properties[field] = { ...properties[field], items: nyxInformativeProviderStringSchema(
-        properties[field].items as Record<string, unknown>) };
+    if (prosePattern) {
+      for (const field of ["diagnosis", "causalHypothesis", "invariant", "failureInterpretation", "expectedResult"])
+        properties[field] = nyxInformativeProviderStringSchema(properties[field]);
+      for (const field of ["uncertainties", "counterexamples", "assumptions"])
+        properties[field] = { ...properties[field], items: nyxInformativeProviderStringSchema(
+          properties[field].items as Record<string, unknown>) };
+    }
     for (const field of branch.required) if (properties[field].type === "array") {
       if (!(Number.isSafeInteger(properties[field].maxItems) && (properties[field].maxItems as number) >= 1))
         throw Error("nyx_bounded_schema_required_array_impossible");

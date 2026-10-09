@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import Ajv from "ajv";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
-  nyxInformativeProviderStringSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+  nyxInformativeProviderStringSchema, nyxLengthBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -707,6 +707,42 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     maxPromptBytes:50000,maxOutputTokens:1024,providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_BOUNDS",preserveProviderArrayBounds:false});}
   catch {conflicting=true;}
   check(conflicting,"bounded generation rejects conflicting array ablation before inference");
+}
+
+{
+  const contract = buildNyxRepairIntentContract(request(), "LINES");
+  const lengths = nyxLengthBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema,
+    contract.allowedActions, contract.requiredFields);
+  const regex = nyxBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema,
+    contract.allowedActions, contract.requiredFields);
+  const withoutPatterns = JSON.parse(JSON.stringify(regex, (key,value) => key === "pattern" ? undefined : value));
+  check(JSON.stringify(lengths) === JSON.stringify(withoutPatterns) && !schemaKeys(lengths).includes("pattern"),
+    "explicit length grammar differs only by prose regex, not scope, fields or bounds");
+  check(Object.isFrozen(lengths) && Object.isFrozen(lengths.anyOf[0].properties.changes),
+    "length-only grammar remains recursively immutable");
+  for (const content of [intent(), intent({counterexamples:["   "]}), intent({counterexamples:["one","one"]}),
+    intent({causalHypothesis:"x".repeat(1001)}), intent({evidenceRefs:["FILE:unobserved.ts"]}),
+    intent({changes:[{target:"../escape.ts",replacement:repaired}]}),
+    intent({changes:[{target:"src/math.ts",replacement:"export const add = ( ;"}]}), "```json\n{}\n```"] ) {
+    const outcomes = [];
+    for (const shape of ["DECISION_REQUIRED_FIELDS", "DECISION_REQUIRED_FIELDS_AND_LENGTHS"] as const) {
+      let captured:any;
+      const instance = NyxNemotronEngineeringCognition.create({cognitionId:"EXPLICIT-LENGTH-GRAMMAR",
+        provider:provider(async(url,init)=>{captured=JSON.parse(String(init?.body));return transportFor(content)(url,init);}),
+        maxPromptBytes:50000,maxOutputTokens:1024,providerIntentShape:shape});
+      const result = await instance.proposeRepair(request());
+      outcomes.push({decision:result.decision,reason:result.reason,categories:result.schemaDiagnostics.map(d=>d.category)});
+      check(!result.omegaAuthorityGranted && !schemaKeys(captured.response_format.json_schema.schema).includes("pattern"),
+        "regex-free generation cannot mint authority or silently add unsupported patterns");
+    }
+    check(JSON.stringify(outcomes[0])===JSON.stringify(outcomes[1]),
+      "unchanged local acceptance rejects whitespace, duplicates, overflow, invalid evidence, targets, syntax and JSON identically");
+  }
+  let rejected=false;
+  try { NyxNemotronEngineeringCognition.create({cognitionId:"CONFLICTING-LENGTH-GRAMMAR",
+    provider:provider(transportFor(intent())),maxPromptBytes:50000,maxOutputTokens:1024,
+    providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_LENGTHS",preserveProviderArrayBounds:false}); } catch { rejected=true; }
+  check(rejected,"length-only grammar rejects contradictory host configuration before inference");
 }
 
 function schemaKeys(value: unknown): string[] {

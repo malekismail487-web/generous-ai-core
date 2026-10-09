@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import Ajv from "ajv";
 import { NyxNemotronEngineeringCognition, NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
   type NyxRepairCognitionRequest } from "../../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
-import { NYX_BOUNDED_DECISION_SCHEMA_POLICY } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+import { NYX_BOUNDED_DECISION_SCHEMA_POLICY, NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, NvidiaNimProvider,
   nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
@@ -20,11 +20,13 @@ const candidate = process.env.GITHUB_SHA || git("rev-parse","HEAD");
 if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse","HEAD") || git("status","--porcelain"))
   throw Error("bounded_contract_probe_clean_candidate_required");
 const sourceIdentity = theoryDigest(git("ls-files","-s"));
-const frozen = {version:"nyx-bounded-contract-probe/2",model:"nvidia/nemotron-3-super-120b-a12b",
-  temperature:0,reasoningEffort:"none",generationPolicy:NYX_BOUNDED_DECISION_SCHEMA_POLICY,
+const lengthsOnly = process.env.NYX_LENGTH_CONTRACT_PROBE === "1";
+const treatment = lengthsOnly ? "DECISION_REQUIRED_FIELDS_AND_LENGTHS" : "DECISION_REQUIRED_FIELDS_AND_BOUNDS";
+const frozen = {version:lengthsOnly?"nyx-bounded-contract-probe/3":"nyx-bounded-contract-probe/2",model:"nvidia/nemotron-3-super-120b-a12b",
+  temperature:0,reasoningEffort:"none",generationPolicy:lengthsOnly?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:NYX_BOUNDED_DECISION_SCHEMA_POLICY,
   maxOutputTokens:2048,maxPromptBytes:48000,providerTimeoutMs:65000,caseWallClockMs:80000,
   globalWallClockMs:540000,maxPhysicalCallsIncludingRetries:6,physicalCallsPerCase:1,
-  maxDiagnosisCharacters:256,maxCounterexamples:1,maxChanges:1,maxPatchBytes:4096,
+  maxDiagnosisCharacters:lengthsOnly?1500:256,maxCounterexamples:1,maxChanges:1,maxPatchBytes:4096,
   authority:"COGNITION_PROPOSAL_ONLY_NO_CANDIDATE_APPLICATION",defaultConfigurationChanged:false,
   benchmarkTasksUsed:false,provesUniversalHostedEnforcement:false,cognitivePromotion:false};
 const cases = [
@@ -64,7 +66,7 @@ const results: Record<string,any>[]=[];
 let rejectedBackend=false;
 const ajv=new Ajv({allErrors:true,strictKeywords:true});
 for(const [index, item] of cases.entries()) {
-  const shapes = ["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS"] as const;
+  const shapes = ["DECISION_REQUIRED_FIELDS",treatment] as const;
   for(const shape of index%2 ? [...shapes].reverse() : shapes) {
     if(Date.now()>=globalDeadline || rejectedBackend) {
       results.push({id:item.id,shape,state:rejectedBackend?"UNEXECUTED_BACKEND_REJECTED":"UNEXECUTED_GLOBAL_BUDGET"});continue;
@@ -102,7 +104,7 @@ for(const [index, item] of cases.entries()) {
         try {schemaAccepted=Boolean(ajv.compile(capturedSchema as object)(JSON.parse(capturedContent)));}
         catch {schemaAccepted=false;}
       }
-      if(shape==="DECISION_REQUIRED_FIELDS_AND_BOUNDS" && [400,422].includes(result.evidence.modelStatusCode??0))
+      if(shape===treatment && [400,422].includes(result.evidence.modelStatusCode??0))
         rejectedBackend=true;
     }catch {infrastructureFailure=true;}finally {cleanup=await session.close();capturedContent=null;capturedSchema=null;}
     const expectedOutcome=item.expectedDecision==="PROPOSE_EDIT"?"PROPOSED":item.expectedDecision;
@@ -119,7 +121,7 @@ for(const [index, item] of cases.entries()) {
   }
 }
 const sourceUnchanged=sourceIdentity===theoryDigest(git("ls-files","-s")) && !git("status","--porcelain");
-const bounded=results.filter(r=>r.shape==="DECISION_REQUIRED_FIELDS_AND_BOUNDS");
+const bounded=results.filter(r=>r.shape===treatment);
 const report={schemaVersion:1,candidate,frozen,cases,sourceDigests,results,sourceUnchanged,
   outcome:bounded.length===3&&bounded.every(r=>r.observedCompatible&&r.accountingComplete)?"OBSERVED_COMPATIBLE":"NOT_YET_VERIFIED",
   elapsedMs:Date.now()-began,selected:6,attempted:results.filter(r=>(r.httpDispatches??0)>0).length,

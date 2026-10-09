@@ -184,8 +184,34 @@ const cognitionBoundedGenerationRefinement: readonly (readonly [string, string])
   ["      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS\"\n        ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema },\n",
     "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n        ? nyxBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema, contract.allowedActions, contract.requiredFields)\n        : this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS\"\n          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema },\n"],
 ];
+const cognitionLengthBoundedGenerationRefinement: readonly (readonly [string, string])[] = [
+  [
+    "import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema } from \"./nyxDecisionRequiredSchema\";\n",
+    "import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,\n  nyxLengthBoundedDecisionRequiredProviderSchema } from \"./nyxDecisionRequiredSchema\";\n"
+  ],
+  [
+    "  readonly providerIntentShape?: \"DECISION_REQUIRED_FIELDS\" | \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\";\n",
+    "  readonly providerIntentShape?: \"DECISION_REQUIRED_FIELDS\" | \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\" | \"DECISION_REQUIRED_FIELDS_AND_LENGTHS\";\n"
+  ],
+  [
+    "      && ![\"DECISION_REQUIRED_FIELDS\", \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"].includes(config.providerIntentShape)) {\n",
+    "      && ![\"DECISION_REQUIRED_FIELDS\", \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\", \"DECISION_REQUIRED_FIELDS_AND_LENGTHS\"].includes(config.providerIntentShape)) {\n"
+  ],
+  [
+    "    if (config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\" && config.preserveProviderArrayBounds === false) {\n",
+    "    if ([\"DECISION_REQUIRED_FIELDS_AND_BOUNDS\", \"DECISION_REQUIRED_FIELDS_AND_LENGTHS\"].includes(config.providerIntentShape ?? \"\")\n      && config.preserveProviderArrayBounds === false) {\n"
+  ],
+  [
+    "",
+    "        : this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_LENGTHS\"\n          ? nyxLengthBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema, contract.allowedActions, contract.requiredFields)\n"
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionLengthBoundedGenerationRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_length_generation_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of cognitionBoundedGenerationRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_cognition_bounded_generation_hunk_mismatch");
     current = current.split(after).join(before);

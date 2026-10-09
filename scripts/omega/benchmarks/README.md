@@ -1,5 +1,23 @@
 # NYX benchmark capability program
 
+### Full-protocol generation recovery: escaping diagnosis
+
+At frozen `cde45497`, four synthetic copy requests all returned JSON, three
+satisfied the local shape bounds, and only one preserved the benign strings
+exactly. One regex-bound response emitted four items despite the three-item
+limit. This does **not** reproduce or explain the eight non-JSON engineering
+responses at `e71123b0`; simple-schema compatibility is not full-protocol
+compatibility. The [sanitized receipt](../../../docs/omega/evidence/nyx-generation-escaping-cde45497.json)
+pins the artifact, four source digests, log agreement, four physical calls and
+545 reported tokens (zero unknown usage).
+
+The diagnostic candidate's CI passed all 11,719 deterministic checks but failed
+the stale W0 environment-variable inventory. That inventory is refreshed, not
+its detector weakened. An explicit, opt-in length-only generation policy is
+tested next; it preserves historical grammars, all local semantics and authority
+checks, and the default Ultra configuration. No cognitive promotion or benchmark
+score follows from this source-interface work.
+
 This is a reproducible **data/evaluation harness**, not a new executor or a new model. It does not claim a cognitive improvement, an official leaderboard score, or near-perfect readiness. Its format tests are development fixtures, never NYX performance evidence.
 
 ### Bounded transient recovery and explicit Ultra phase controls
