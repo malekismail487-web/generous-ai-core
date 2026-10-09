@@ -4418,6 +4418,7 @@
           "scripts/omega/benchmarks/generalReasoningTasks.ts",
           "scripts/omega/benchmarks/lengthGrammarTransferTasks.ts",
           "scripts/omega/benchmarks/measuredQualityTransferTasks.ts",
+          "scripts/omega/benchmarks/nativeReasoningTransferTasks.ts",
           "scripts/omega/benchmarks/nyxArcAdapter.ts",
           "scripts/omega/benchmarks/nyxDockerDriver.ts",
           "scripts/omega/benchmarks/nyxTextBenchmark.ts",
@@ -5266,6 +5267,7 @@
       "rationale": "Present in repository migrations; retain conservatively until Phase B semantic and caller review.",
       "evidence": {
         "firstPartyCodeReferences": [
+          "scripts/omega/benchmarks/nativeReasoningTransferTasks.ts",
           "scripts/omega/benchmarks/probabilityTransferTasks.ts",
           "scripts/omegaBoundedReasoningWorkbench.test.ts",
           "scripts/omegaResearchParty.test.ts",
@@ -6759,6 +6761,7 @@
           "scripts/omega/nyx-generation-pattern-diagnostic.ts",
           "scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts",
           "scripts/omega/nyx-quantitative-provider-diagnostic-fixtures.ts",
+          "scripts/omega/nyx-source-representation-cycle.ts",
           "scripts/omega/nyx-structured-array-diagnostic.ts",
           "scripts/omega/nyx-workbench-transfer-live-eval.ts",
           "scripts/omegaArcNyxIntegration.test.ts",
@@ -8246,6 +8249,7 @@
           "scripts/omega/benchmarks/generalReasoningTasks.ts",
           "scripts/omega/benchmarks/lengthGrammarTransferTasks.ts",
           "scripts/omega/benchmarks/measuredQualityTransferTasks.ts",
+          "scripts/omega/benchmarks/nativeReasoningTransferTasks.ts",
           "scripts/omega/benchmarks/nyxHarborBridge.ts",
           "scripts/omega/benchmarks/nyxTextBenchmark.ts",
           "scripts/omega/benchmarks/patternRepairTransferTasks.ts",

@@ -1,5 +1,37 @@
 # NYX benchmark capability program
 
+### Native reasoning allocation: fresh controlled engineering transfer
+
+`NYX_NATIVE_REASONING_TRANSFER=1` freezes four new objectives: weighted Unicode
+edit distance, exact rational aggregation, versioned register reconciliation and
+bounded Boolean model enumeration. Literal private expectations and test-only
+reference implementations are evaluator-owned and pass the real existing R3
+loop, unchanged static admission and exact scorer before model inference. The
+references are not supplied to NYX. Authorship is same-session E3, not independent
+replication or reserved external benchmark content.
+
+Both arms use explicitly labeled Super, the length-only decision-required grammar,
+identical prompts/feedback policy, 8,192 total output-token ceiling, two logical
+and shared physical calls including retries, two iterations, existing authority,
+verification and time/mutation limits. Control uses native `none`; treatment uses
+the existing native `high` setting with a finite 2,048-token reasoning reservation
+inside that ceiling. No new cognition, provider, repair stack or authority is built.
+[NVIDIA documents these native controls](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer).
+Safe wire projections verify actual settings without persisting messages, headers,
+model reasoning or generated source. Unknown arms fail closed. The default Ultra
+configuration remains unchanged.
+
+Hypothesis: reasoning allocation helps form coherent implementations and preserve
+function while satisfying structural quality constraints. Falsify on no reproducible
+quality-accepted gain or reduced repair cost on fresh tasks at matched realized
+compute, any gate weakening or unexpected authority. Report first and repaired
+outcomes separately, every failure class, latency, calls, tokens, verification work
+and cleanup. Equal ceilings are not equal compute; retain the existing 10% paired
+parity check and no-more-measured-compute test. Live benefit remains unverified.
+Plan coverage: evidence-linked diagnosis and controlled ablation; supports bounded
+reasoning, generator/detector separation and provenance; defers default promotion,
+production, recursion and device integration. Coverage is PARTIAL / JUST-IN-TIME.
+
 ### Fresh length-only transfer: delivery recovered, acceptance did not
 
 At frozen `f8621c51`, both arms fully attempted four fresh engineering objectives

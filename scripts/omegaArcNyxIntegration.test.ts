@@ -18,6 +18,7 @@ import { DECISION_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/decisionCon
 import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContractTransferTasks";
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./omega/benchmarks/patternRepairTransferTasks";
 import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarTransferTasks";
+import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./omega/benchmarks/nativeReasoningTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -701,7 +702,66 @@ representationReferences["REACHABLE-EXPRESSION-GRAPH"] = `export function transf
   }
   try { return {values: input.targets.map(solve)}; } catch { return {error: "INVALID"}; }
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS]) {
+representationReferences["WEIGHTED-UNICODE-EDIT"] = `export function transform(input) {
+  const state = {left: [...input.from], right: [...input.to], grid: []};
+  for (let i = 0; i <= state.left.length; i++) {
+    state.grid[i] = [i * input.deleteCost];
+    for (let j = 1; j <= state.right.length; j++) {
+      state.grid[i][j] = i === 0 ? j * input.insertCost : Math.min(
+        state.grid[i - 1][j] + input.deleteCost,
+        state.grid[i][j - 1] + input.insertCost,
+        state.grid[i - 1][j - 1] + (state.left[i - 1] === state.right[j - 1] ? 0 : input.replaceCost));
+    }
+  }
+  return state.grid[state.left.length][state.right.length];
+}`;
+representationReferences["EXACT-RATIONAL-AGGREGATE"] = `export function transform(input) {
+  const state = {numerator: 0n, denominator: 1n, first: 0n, second: 0n};
+  for (const [numerator, denominator] of input) {
+    state.numerator = state.numerator * BigInt(denominator) + BigInt(numerator) * state.denominator;
+    state.denominator *= BigInt(denominator);
+  }
+  if (state.denominator < 0n) {
+    state.numerator = -state.numerator;
+    state.denominator = -state.denominator;
+  }
+  state.first = state.numerator < 0n ? -state.numerator : state.numerator;
+  state.second = state.denominator;
+  while (state.second) [state.first, state.second] = [state.second, state.first % state.second];
+  return [(state.numerator / state.first).toString(), (state.denominator / state.first).toString()];
+}`;
+representationReferences["VERSIONED-REGISTER-RECONCILIATION"] = `export function transform(input) {
+  const cells = new Map();
+  for (const [index, event] of input.entries()) {
+    const previous = cells.get(event.key);
+    if (previous && previous[1] > event.version) continue;
+    if (previous && previous[1] === event.version && previous[2] !== event.value) return {error: index};
+    cells.set(event.key, [event.key, event.version, event.value]);
+  }
+  return {rows: [...cells.values()].sort((a, b) => (a[0] > b[0]) - (a[0] < b[0]))};
+}`;
+representationReferences["BOUNDED-BOOLEAN-MODELS"] = `export function transform(input) {
+  const state = {models: [], bits: "", mask: 0};
+  for (; state.mask < 2 ** input.variables; state.mask++) {
+    state.bits = input.variables ? state.mask.toString(2).padStart(input.variables, "0") : "";
+    if (input.clauses.every(clause => clause.some(literal =>
+      state.bits[Math.abs(literal) - 1] === (literal > 0 ? "1" : "0")))) state.models.push(state.bits);
+  }
+  return {models: state.models};
+}`;
+{
+  const control = nativeReasoningTransferConfiguration("NATIVE_NONE");
+  const treatment = nativeReasoningTransferConfiguration("NATIVE_BOUNDED_REASONING");
+  check(control.providerIntentShape === treatment.providerIntentShape
+    && control.comparisonReasoningControl === treatment.comparisonReasoningControl,
+    "native comparison keeps generation grammar and actual model control identical");
+  check(control.comparisonInferencePolicy === "CONSTRAINED_JSON" && control.comparisonReasoningBudgetTokens === undefined,
+    "native control disables thinking without a hidden budget or default mutation");
+  check(treatment.comparisonInferencePolicy === "REASONING_JSON" && treatment.comparisonReasoningBudgetTokens === 2048,
+    "native reasoning uses the existing finite reservation inside the unchanged output ceiling");
+  rejects(() => nativeReasoningTransferConfiguration("UNLIMITED"), "unknown native arm cannot silently inherit a policy");
+}
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
