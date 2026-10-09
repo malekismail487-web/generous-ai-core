@@ -559,6 +559,25 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
   const empty = await make(intent({evidenceRefs: []})).proposeRepair(request());
   check(empty.decision === "COGNITION_ERROR" && has(empty,"SEMANTIC_REPAIR_INVALID"),
     "generation field presence is not a substitute for local evidence semantics");
+  // Independent development reproduction of residual wire/parser differences.
+  // This is negative evidence, not a fix or a benchmark-specific repair strategy.
+  const fullLocalSchema = validator.compile(buildNyxRepairIntentContract(request()).schema);
+  for (const scenario of [
+    {label:"empty counterexample string",value:{counterexamples:[""]},fullSchemaAccepts:false},
+    {label:"overlong counterexample string",value:{counterexamples:["x".repeat(501)]},fullSchemaAccepts:false},
+    {label:"overlong causal prose",value:{causalHypothesis:"x".repeat(1001)},fullSchemaAccepts:false},
+    {label:"whitespace-only counterexample",value:{counterexamples:["   "]},fullSchemaAccepts:true},
+    {label:"empty required counterexample array",value:{counterexamples:[]},fullSchemaAccepts:true},
+  ]) {
+    const value = JSON.parse(intent(scenario.value));
+    check(aligned(value), `reproduce decision-required portable grammar admitting ${scenario.label}`);
+    check(Boolean(fullLocalSchema(value)) === scenario.fullSchemaAccepts,
+      `${scenario.label} distinguishes excluded JSON bounds from additional semantic constraints`);
+    const result = await make(JSON.stringify(value)).proposeRepair(request());
+    check(result.decision === "COGNITION_ERROR" && result.hypothesis === null
+      && has(result,"SEMANTIC_REPAIR_INVALID") && !result.omegaAuthorityGranted,
+      `${scenario.label} still fails unchanged local validation without fabricated content or authority`);
+  }
   const unsafe = await make(intent({changes: [{target: "src/math.ts",replacement: "export const add = ( ;"}]})).proposeRepair(request());
   check(unsafe.decision === "COGNITION_ERROR" && has(unsafe,"SOURCE_QUALITY_INVALID"),
     "decision-complete generation cannot bypass source syntax admission");

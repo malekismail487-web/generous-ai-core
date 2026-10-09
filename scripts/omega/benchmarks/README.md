@@ -1686,3 +1686,13 @@ launch checks. Automatic launch is removed; default Ultra and authority remain
 unchanged. Next: reproduce the remaining nonempty/text-bound generation/parser
 mismatch on independent development intents, not these exposed ARC problems.
 No additional cognitive layer or weaker oracle is warranted by this result.
+
+Independent development intents now reproduce five residual contract gaps in
+`omegaR3DNyxNemotronCognition.test.ts`. Decision-required portable grammar admits
+empty/overlong counterexample strings and overlong causal prose that the full
+local JSON schema rejects. Whitespace-only entries and an empty required array
+are further semantic rejections even when the full local schema permits them.
+All five fail unchanged local validation with no proposal or authority. These
+are synthetic interface reproductions, not benchmark performance or a correction.
+Any proposed hosted string-bound treatment must retain independent semantic
+validation and demonstrate compatibility at the actual endpoint before transfer.
