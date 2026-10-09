@@ -1696,3 +1696,39 @@ All five fail unchanged local validation with no proposal or authority. These
 are synthetic interface reproductions, not benchmark performance or a correction.
 Any proposed hosted string-bound treatment must retain independent semantic
 validation and demonstrate compatibility at the actual endpoint before transfer.
+
+### Bounded decision grammar — experimental delivery correction
+
+`DECISION_REQUIRED_FIELDS_AND_BOUNDS` is an opt-in refinement of the existing
+shared cognition, not a reasoning layer or new executor. It derives string and
+array bounds from the local request contract, adds decision-specific nonempty
+arrays and excludes whitespace-only intent prose. It preserves admitted targets,
+evidence enumerations, complete-source reconstruction (including blank lines),
+the unchanged local parser, syntax checks, static quality, leases and authority.
+The original optional and decision-required policies remain unchanged controls.
+Unicode code-point versus UTF-16 lengths and semantic truth still require local
+checks; an inference grammar never certifies correctness or authorizes an action.
+
+The hosted compatibility probe uses three synthetic development action shapes,
+paired with the previous decision-required policy, through the existing provider,
+cognition and disposable repository session. At most six physical calls, 2,048
+output tokens per call, 65-second provider timeouts and a nine-minute epoch are
+allowed. A rejected hosted schema stops the probe; no silent keyword stripping or
+fallback is permitted. Raw responses, reasoning and credentials are not persisted.
+This is E4 delivery compatibility plus E3 local admission, not a benchmark score,
+general capability gain or proof of universal hosted enforcement. Fresh transfer
+requires an observed compatible result and unchanged acceptance checks.
+
+Research: [NVIDIA structured generation](https://docs.nvidia.com/nim/large-language-models/1.15.0/structured-generation.html)
+documents guided schemas but not this hosted model's deployed backend version.
+[JSON Schema strings](https://json-schema.org/understanding-json-schema/reference/string)
+defines length/pattern semantics; backend support must be observed, not inferred.
+
+Ω plan coverage: **PARTIAL / JUST-IN-TIME**. Direct: generator requires detector,
+no self-certification, evidence outranks confidence, capability is not authority.
+Supporting: original-state quality comparison and exact historical source binding.
+Deferred: cognitive promotion, extra connectome layers, production and unrestricted
+execution. Conflict: richer hosted keyword support is unknown; retain independent
+local checks and reject incompatible delivery rather than weaken them. Superseded
+operational approach: silently treating portable grammar acceptance as complete
+semantic acceptance; historical results and controls remain preserved.

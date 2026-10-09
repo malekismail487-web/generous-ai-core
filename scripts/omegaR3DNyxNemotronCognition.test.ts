@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import Ajv from "ajv";
-import { nyxDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -592,6 +592,95 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     try { nyxDecisionRequiredProviderSchema(contract.providerSchema,actions,contract.requiredFields); } catch { rejected=true; }
     check(rejected,"unknown, duplicated, or empty generation decisions fail closed");
   }
+}
+
+{
+  const ajv = new Ajv({ allErrors: true, strictKeywords: true });
+  const contract = buildNyxRepairIntentContract(request());
+  const bounded = nyxBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema,
+    contract.allowedActions, contract.requiredFields);
+  const validate = ajv.compile(bounded);
+  check(validate(JSON.parse(intent())), "bounded generation admits complete valid intent without invented values");
+  const gaps = [
+    {counterexamples:[""]}, {counterexamples:["x".repeat(501)]}, {causalHypothesis:"x".repeat(1001)},
+    {counterexamples:["   "]}, {counterexamples:[]}, {evidenceRefs:[]}, {changes:[]},
+    {diagnosis:"\t\n\u00a0\u2028"}, {uncertainties:["\u2003"]}, {assumptions:["\ufeff"]},
+  ];
+  for (const gap of gaps) check(!validate(JSON.parse(intent(gap))),
+    "bounded grammar excludes independently reproduced empty, whitespace, oversized and semantically empty intent");
+  const noAction = {decision:"NO_ACTION",diagnosis:"Policy unavailable.",uncertainties:["Missing authoritative policy."]};
+  check(validate(noAction) && validate({...noAction,changes:[],requestedEvidenceRefs:[]}),
+    "non-action remains minimal and does not invent mutation or evidence requests");
+  for (const wrong of [{uncertainties:[]},{changes:[{target:"src/math.ts",replacement:repaired}]},
+    {requestedEvidenceRefs:["OBJECTIVE"]}]) check(!validate({...noAction,...wrong}),
+    "decision-specific generation excludes contradictory non-action fields");
+  const withEvidence = buildNyxRepairIntentContract(request({availableEvidence:[{evidenceRef:"AVAILABLE:policy",
+    kind:"FILE",relativePath:"src/policy.ts",description:"Authoritative constants"}]}));
+  const evidenceSchema = ajv.compile(nyxBoundedDecisionRequiredProviderSchema(withEvidence.providerSchema,
+    withEvidence.schema,withEvidence.allowedActions,withEvidence.requiredFields));
+  const ask = {decision:"REQUEST_EVIDENCE",diagnosis:"Read policy.",uncertainties:["Which value applies?"],
+    requestedEvidenceRefs:["AVAILABLE:policy"]};
+  check(evidenceSchema(ask), "request branch remains bound to available evidence and stated uncertainty");
+  check(!evidenceSchema({...ask,requestedEvidenceRefs:[]}) && !evidenceSchema({...ask,uncertainties:[]})
+    && !evidenceSchema(noAction), "evidence request cannot omit semantic prerequisites or exit prematurely");
+  const lineContract = buildNyxRepairIntentContract(request(),"LINES");
+  const lineSchema = ajv.compile(nyxBoundedDecisionRequiredProviderSchema(lineContract.providerSchema,lineContract.schema,
+    lineContract.allowedActions,lineContract.requiredFields));
+  const multiline = "export const add = (a: number, b: number) => {\n\n  return a + b;\n};\n";
+  const lines = JSON.parse(intent({changes:[{target:"src/math.ts",replacement:{lines:multiline.split("\n"),lineEnding:"LF"}}]}));
+  check(lineSchema(lines), "prose constraints preserve indentation, interior blank source lines and final newline");
+  check(!lineSchema(JSON.parse(intent({changes:[{target:"src/math.ts",replacement:{lines:[],lineEnding:"LF"}}]})))
+    && !lineSchema(JSON.parse(intent({changes:[{target:"src/math.ts",replacement:{lines:["x".repeat(121)],lineEnding:"LF"}}]}))),
+    "source lines retain their independent local length and population limits");
+  let captured: any;
+  const make = (content: string) => NyxNemotronEngineeringCognition.create({cognitionId:"BOUNDED-GENERATION-TEST",
+    provider:provider(async(url,init)=>{captured=JSON.parse(String(init?.body));return transportFor(content)(url,init);}),
+    maxPromptBytes:50000,maxOutputTokens:1024,providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_BOUNDS"});
+  const valid = await make(intent()).proposeRepair(request());
+  check(valid.decision === "PROPOSED" && !valid.omegaAuthorityGranted
+    && ajv.compile(captured.response_format.json_schema.schema)(JSON.parse(intent())),
+    "opt-in shared cognition forwards bounded generation without execution authority");
+  for (const gap of gaps) {
+    const rejected = await make(intent(gap)).proposeRepair(request());
+    check(rejected.decision === "COGNITION_ERROR" && !rejected.hypothesis && !rejected.omegaAuthorityGranted,
+      "nonconforming provider remains rejected by unchanged local semantics despite generation grammar");
+  }
+  // JSON Schema counts code points; local strings use UTF-16. This residual mismatch must
+  // remain an explicit local check, not a claim of complete hosted semantic enforcement.
+  const astral = JSON.parse(intent({counterexamples:["😀".repeat(251)]}));
+  check(validate(astral), "JSON grammar character count is not falsely equated with UTF-16 units");
+  const astralRejected = await make(JSON.stringify(astral)).proposeRepair(request());
+  check(astralRejected.decision === "COGNITION_ERROR" && has(astralRejected,"SEMANTIC_REPAIR_INVALID"),
+    "unchanged local UTF-16 limit catches astral string beyond local bound");
+  const syntax = await make(intent({changes:[{target:"src/math.ts",replacement:"export const add = ( ;"}]})).proposeRepair(request());
+  check(syntax.decision === "COGNITION_ERROR" && has(syntax,"SOURCE_QUALITY_INVALID"),
+    "bounded generation does not waive syntactic source admission");
+  const unobserved = await make(intent({evidenceRefs:["FILE:unobserved.ts"]})).proposeRepair(request());
+  check(unobserved.decision === "COGNITION_ERROR" && has(unobserved,"UNSUPPORTED_EVIDENCE_REFERENCE"),
+    "bounded generation does not waive provenance enumeration");
+  const scoped = buildNyxRepairIntentContract(request({maxDiagnosisCharacters:100,maxCounterexamples:1,maxChanges:1}));
+  const scopedSchema = ajv.compile(nyxBoundedDecisionRequiredProviderSchema(scoped.providerSchema,scoped.schema,
+    scoped.allowedActions,scoped.requiredFields));
+  check(!scopedSchema(JSON.parse(intent({causalHypothesis:"x".repeat(101)})))
+    && !scopedSchema(JSON.parse(intent({counterexamples:["one","two"]}))),
+    "generation uses request-specific limits rather than frozen task constants");
+  check(Object.isFrozen(bounded) && Object.isFrozen(bounded.anyOf[0].properties.counterexamples.items),
+    "nested generation schema is immutable");
+  for (const local of [null, {...contract.schema,type:"array"},
+    {...contract.schema,properties:{...contract.schema.properties,diagnosis:{type:"string",minLength:1,maxLength:NaN}}},
+    {...contract.schema,properties:{...contract.schema.properties,diagnosis:{type:"string",minLength:101,maxLength:100}}},
+    {...contract.schema,properties:{...contract.schema.properties,counterexamples:{type:"array",maxItems:0,items:{type:"string"}}}},
+    {...contract.schema,properties:{diagnosis:{type:"string"}}}]) {
+    let rejected=false;
+    try {nyxBoundedDecisionRequiredProviderSchema(contract.providerSchema,local as never,contract.allowedActions,contract.requiredFields);}
+    catch {rejected=true;}
+    check(rejected,"malformed or impossible host-derived bounded schema fails closed");
+  }
+  let conflicting=false;
+  try {NyxNemotronEngineeringCognition.create({cognitionId:"CONFLICTING-GENERATION",provider:provider(transportFor(intent())),
+    maxPromptBytes:50000,maxOutputTokens:1024,providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_BOUNDS",preserveProviderArrayBounds:false});}
+  catch {conflicting=true;}
+  check(conflicting,"bounded generation rejects conflicting array ablation before inference");
 }
 
 function schemaKeys(value: unknown): string[] {

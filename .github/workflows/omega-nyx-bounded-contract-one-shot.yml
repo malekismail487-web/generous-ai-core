@@ -1,0 +1,46 @@
+name: Omega NYX bounded intent hosted compatibility
+on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths:
+      - .github/workflows/omega-nyx-bounded-contract-one-shot.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  bounded-contract-probe:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-bounded-contract-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Preserve local grammar, source, quality and authority checks without credentials
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3DNyxNemotronCognition.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
+          npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-bounded-contract-probe.ts
+      - name: Observe bounded generation through existing cognition with six physical calls maximum
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-bounded-contract-probe.ts
+      - name: Preserve sanitized outcomes including incompatibility
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-bounded-contract-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-bounded-contract-*.json
+          if-no-files-found: error
