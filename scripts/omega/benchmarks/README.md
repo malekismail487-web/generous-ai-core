@@ -1647,3 +1647,42 @@ compute matching cannot support promotion. Lower schema rejection alone remains
 interface reliability, not cognitive improvement. The one-shot push trigger is
 removed immediately after confirming the single launch; artifacts also retain
 an explicitly partial checkpoint if execution is interrupted.
+
+### ARC source-linked quality transfer — terminal evidence
+
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37855788646)
+at `b4ea88c0a94e6b74533d628ea000e34210ce9049` completed eight fresh tasks
+in both arms with zero provider failures, retries or unknown-usage calls.
+Both used repaired decision-required grammar, native Super reasoning `none`
+and unchanged budgets and acceptance. Neither arm reached hidden-grid grading:
+**0/8 accepted and 8/8 ungraded per arm**, not a complete ARC score. All twenty
+public candidate executions failed; no quality assessment occurred. Therefore
+the source-linked quality-feedback treatment was **not exercised**, and its
+causal benefit is unestablished. First-attempt and repair successes were both zero.
+
+Current final failures: three schema, two truncation, three functional.
+Treatment final failures: four schema, four functional; one earlier truncation
+was preserved even though its final outcome was functional failure. Intermediate
+diagnostics include six invalid counterexample-item observations, two overlong
+causal hypotheses, one no-op repair and one syntax rejection. The current
+`invalid_item` code cannot establish whether an item was empty or overlong.
+Public mismatch versus runtime errors is also unresolved by retained diagnostic
+digests. Ungraded hidden cases are not hidden-case reasoning failures.
+
+Both used sixteen calls and eighty tool-work units; current reported 238,982
+model tokens versus 220,429 for treatment, with aggregate task latencies 222,054
+and 176,149ms. Only **1/8** pairs met strict realized-compute parity; the entire
+epoch took 398,238ms. Equal caps and provider stability do not prove matching or
+cognitive improvement. No broad promotion is justified.
+
+Artifact SHA256:
+`0a212a05a076a3c027cfa50908c77ad9525e137a2e582ef8053546b73864a673`.
+The [receipt](../../../docs/omega/evidence/nyx-arc-decision-quality-b4ea88c0.json)
+records log/artifact/progress agreement, all 134 source-file hash bindings,
+configuration, selection, original and repaired outcomes, independent accounting,
+cleanup and unchanged source. Hosted CI passed 109 suites / 11,541 checks,
+TypeScript zero, secret scan, production build without deployment and packaged
+launch checks. Automatic launch is removed; default Ultra and authority remain
+unchanged. Next: reproduce the remaining nonempty/text-bound generation/parser
+mismatch on independent development intents, not these exposed ARC problems.
+No additional cognitive layer or weaker oracle is warranted by this result.

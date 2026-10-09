@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ARC-DECISION-QUALITY-RESULT-001",
+  "candidate": "b4ea88c0a94e6b74533d628ea000e34210ce9049",
+  "runId": 37855788646,
+  "jobId": 113579503144,
+  "artifactId": 11583807784,
+  "artifactDigest": "0a212a05a076a3c027cfa50908c77ad9525e137a2e582ef8053546b73864a673",
+  "artifactBytes": 18607,
+  "artifactMembers": [
+    {
+      "name": "nyx-arc-progress-b4ea88c0a94e6b74533d628ea000e34210ce9049.json",
+      "bytes": 24828,
+      "sha256": "1250c3d19baa4197be9d51c6842e78dd46ca8be9501717c122fcdb8fc47ea798"
+    },
+    {
+      "name": "nyx-arc-public-b4ea88c0a94e6b74533d628ea000e34210ce9049.json",
+      "bytes": 86057,
+      "sha256": "b927d7759160056bd4a30658678f928530e64aa09d89b2808de02844f4afd4e7"
+    }
+  ],
+  "reportDigest": "4c8abe2ea5dc4f92409c83686418985100f73eae74f0c8be13aec0866b7c453c",
+  "campaignReportDigest": "2983b69e854551429cbe939804d74daa856d98e6b3195db18a45a613270a5492",
+  "campaignDigest": "a325831f8d0873ca861635740eb7643ca78e5dfca610950071c95ecf7a6e0054",
+  "selection": {
+    "revision": "f3283f727488ad98fe575ea6a5ac981e4a188e49",
+    "partition": "data/evaluation",
+    "population": 120,
+    "selection": "NEXT_EIGHT_LEXICOGRAPHIC_PATHS_AFTER_EIGHTEEN_EXERCISED_TASKS_QUALITY_GUIDANCE_ONLY",
+    "taskIds": [
+      "291dc1e1",
+      "2b83f449",
+      "2ba387bc",
+      "2c181942",
+      "2d0172a1",
+      "31f7f899",
+      "332f06d7",
+      "35ab12c3"
+    ],
+    "oraclePolicy": "WITHHELD_OUTPUTS_EVALUATOR_ONLY_NO_BENCHMARK_FEEDBACK_RETRIES",
+    "contamination": "PUBLIC_EVALUATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED"
+  },
+  "modelConfiguration": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "maxProviderPromptBytes": 64000,
+    "timeoutMs": 65000,
+    "configurationByArm": {
+      "CURRENT_NYX": "SUPER_HOSTED_NONE",
+      "CANDIDATE_NYX": "SUPER_HOSTED_NONE"
+    },
+    "providerIntentShape": "DECISION_REQUIRED_FIELDS",
+    "qualityGuidanceByArm": {
+      "CURRENT_NYX": "PUBLIC_FINDINGS_ONLY",
+      "CANDIDATE_NYX": "STRUCTURE_SITES"
+    },
+    "binding": "IDENTICAL_MODEL_GENERATION_GRAMMAR_LIMITS_AND_ACCEPTANCE_QUALITY_REPAIR_GUIDANCE_ONLY"
+  },
+  "environment": "linux-x64-node-v24.21.0",
+  "executionIdentity": "github-actions-37855788646",
+  "sourceIdentity": {
+    "sourceFiles": 134,
+    "sourceDigest": "26c1db37cacd61efaeac5d6cde9c689448e840b373ff8d907aaa6ab96af61d32",
+    "verifierVersion": "arc-exact-two-predictions/1",
+    "verifierSourceDigest": "6d77bd3f7caf7074570f69bf50ecb87180e5c4094fcdd8a1a7286ff99d34ce1d"
+  },
+  "limits": {
+    "maxCallsPerTask": 2,
+    "maxReportedTokensPerTask": 100000,
+    "maxToolCallsPerTask": 3,
+    "maxToolWorkUnitsPerTask": 600,
+    "maxAttemptsPerTask": 1,
+    "maxArtifactBytes": 50000,
+    "maxWallClockMsPerTask": 155000,
+    "maxWallClockMs": 2500000
+  },
+  "observed": {
+    "requestedTasks": 8,
+    "configuredArmTaskObservations": 16,
+    "perArm": [
+      {
+        "arm": "CURRENT_NYX",
+        "selected": 8,
+        "attempted": 8,
+        "graded": 0,
+        "correct": 0,
+        "ungraded": 8,
+        "unexecuted": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "publicCandidateExecutions": 10,
+        "publicPassingCandidates": 0,
+        "qualityAssessedCandidates": 0,
+        "schemaAffectedObservations": 4,
+        "sourceTruncationObservations": 2,
+        "finalFailureCounts": {
+          "TRUNCATION": 2,
+          "FUNCTIONAL_FAILURE": 3,
+          "SCHEMA_FAILURE": 3
+        },
+        "usage": {
+          "logicalCalls": 16,
+          "physicalCalls": 16,
+          "httpAttempts": 16,
+          "reportedTokens": 238982,
+          "unknownUsageCalls": 0,
+          "toolCalls": 18,
+          "toolWorkUnits": 80,
+          "wallClockMs": 222054,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "modelCorrectiveInteractions": 8,
+        "additionalCandidateIterations": 2
+      },
+      {
+        "arm": "CANDIDATE_NYX",
+        "selected": 8,
+        "attempted": 8,
+        "graded": 0,
+        "correct": 0,
+        "ungraded": 8,
+        "unexecuted": 0,
+        "firstAttemptAccepted": 0,
+        "repairedAccepted": 0,
+        "finalAccepted": 0,
+        "publicCandidateExecutions": 10,
+        "publicPassingCandidates": 0,
+        "qualityAssessedCandidates": 0,
+        "schemaAffectedObservations": 5,
+        "sourceTruncationObservations": 1,
+        "finalFailureCounts": {
+          "SCHEMA_FAILURE": 4,
+          "FUNCTIONAL_FAILURE": 4
+        },
+        "usage": {
+          "logicalCalls": 16,
+          "physicalCalls": 16,
+          "httpAttempts": 16,
+          "reportedTokens": 220429,
+          "unknownUsageCalls": 0,
+          "toolCalls": 18,
+          "toolWorkUnits": 80,
+          "wallClockMs": 176149,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "calibration": {
+          "metric": "BINARY_BRIER_NOT_OFFICIAL_HLE_CALIBRATION",
+          "population": 0,
+          "value": null
+        },
+        "modelCorrectiveInteractions": 8,
+        "additionalCandidateIterations": 2
+      }
+    ],
+    "taskOutcomes": [
+      {
+        "taskId": "291dc1e1",
+        "taskDigest": "de0abf3131a0977a8d3f5436ab91063376603c09b60eab2fca3d03c65b55ebb4",
+        "inputDigest": "efc765c2e47371acb64b54381948379bf652067f9187683b10ed59040b67d9c4",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "TRUNCATION",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 31658,
+            "publicCandidateExecutions": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 22844,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "2b83f449",
+        "taskDigest": "2068c416dd6a6299a65e5cf4ceb5ddfb6a69374d9aaa46cb62fc1df4234c8f57",
+        "inputDigest": "85a68501c08da9fdcf108d06118808bb3f8b3855af5065f548b84bd83b712f60",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 23273,
+            "publicCandidateExecutions": 2
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 21656,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "2ba387bc",
+        "taskDigest": "53892b8cba3517c8ac2372edd147fc816fb8b7cd70c42931cb7bd0b024cc0403",
+        "inputDigest": "8957a808e88225e1aa6c1e81be31b38bb2b4c5cf07ca2d78520af6f797e1ed98",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 20767,
+            "publicCandidateExecutions": 2
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 31979,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "2c181942",
+        "taskDigest": "c064a14c63db7e83381b1fe00d7de1fcfc1dd1abd002f0d6fe128e515d5af72f",
+        "inputDigest": "39c0b101915796c2a6821491c81e437e7e2a06dbe3b26c7ce05faf8acbbf385c",
+        "outcomes": [
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 39608,
+            "publicCandidateExecutions": 2
+          },
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 38160,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "2d0172a1",
+        "taskDigest": "2797010b7ec1df6243b488c877ba464a8980296ee7b78447b3719c8f5a4c42db",
+        "inputDigest": "78f0feb75b99d4250ce1ca38fe231965804dac8954377a2bd747a3e25bfe653c",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 37873,
+            "publicCandidateExecutions": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 30169,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "31f7f899",
+        "taskDigest": "ed83bccd45dfbf2c32345fe4a62eb410e246c45e92b633cbc25fb736e391c55a",
+        "inputDigest": "ee763ca64f373917530b17b292360cb8c5470d63c48f73d9e55ae84de6625ac2",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 16877,
+            "publicCandidateExecutions": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 22978,
+            "publicCandidateExecutions": 2
+          }
+        ]
+      },
+      {
+        "taskId": "332f06d7",
+        "taskDigest": "d2e08d5df56437b67d96b2e89c9b8240de5969eea328e3060b4cb12616df5ea6",
+        "inputDigest": "0d1ba2624cf110182a05c4dca7f4b04cf701c06d54e4a576aec87b9cf5ed02cf",
+        "outcomes": [
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "TRUNCATION",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 37196,
+            "publicCandidateExecutions": 1
+          },
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "FUNCTIONAL_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 18554,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      },
+      {
+        "taskId": "35ab12c3",
+        "taskDigest": "43d05999b061bb9a98bf2f07c2ace3dbaee469360c61cc1082619c9b00369778",
+        "inputDigest": "3e63dcb28d90c95f66807ab50b3af840b510b9080d3d5e02e5f9bf1844427bde",
+        "outcomes": [
+          {
+            "arm": "CANDIDATE_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 32641,
+            "publicCandidateExecutions": 1
+          },
+          {
+            "arm": "CURRENT_NYX",
+            "finalFailure": "SCHEMA_FAILURE",
+            "independentlyGraded": false,
+            "physicalCalls": 2,
+            "reportedTokens": 33178,
+            "publicCandidateExecutions": 1
+          }
+        ]
+      }
+    ],
+    "diagnosticCounts": {
+      "UNEXPECTED_STRUCTURE/$/finish_reason_length": 3,
+      "SEMANTIC_REPAIR_INVALID/$.counterexamples/invalid_item": 6,
+      "SEMANTIC_REPAIR_INVALID/$.counterexamples/array_length_0": 6,
+      "REPEATED_FALSIFIED_STRATEGY/$.changes[0].replacement/no_op_repair": 1,
+      "SEMANTIC_REPAIR_INVALID/$.causalHypothesis/invalid_length": 2,
+      "SOURCE_QUALITY_INVALID/$.changes[0].replacement/syntax_error_line_38_column_65": 1
+    },
+    "publicPassingCandidates": 0,
+    "qualityAssessedCandidates": 0,
+    "qualityTreatmentPathExercised": false,
+    "matchedRealizedCompute": false,
+    "strictMatchedPairs": 1,
+    "pairedTasks": 8,
+    "reportedTokensTotal": 459411,
+    "logicalCallsTotal": 32,
+    "physicalCallsTotal": 32,
+    "unknownUsageCallsTotal": 0,
+    "providerFailures": 0,
+    "retries": 0,
+    "observedEpochWallClockMs": 398238,
+    "stopReason": "ALL_CONFIGURED_TASKS_ATTEMPTED",
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "falseAcceptances": null,
+    "falseAcceptanceAudit": "INDEPENDENT_AUDIT_NOT_EXECUTED",
+    "calibration": "NO_GRADED_POPULATION"
+  },
+  "verification": {
+    "artifactSha256MatchesGitHub": true,
+    "terminalLogSummaryMatchesArtifact": true,
+    "terminalTracesMatchArtifact": true,
+    "progressMatchesFinal": true,
+    "progressStillExplicitlyPartial": true,
+    "candidateSourceHashesVerified": true,
+    "modelConfigurationBindingVerified": true,
+    "verifierSourceMatchesFrozenCandidate": true,
+    "taskPopulationBindingVerified": true,
+    "perArmUsageRecomputed": true,
+    "perTaskParityIndependentlyRecomputed": true,
+    "exactInputSourceReconstruction": "NOT_REPEATED_RAW_TASKS_NOT_INSPECTED_THIS_CAPTURE",
+    "captureEvaluatorCorrection": "NULL_SCORER_USAGE_AFTER_PROVEN_PRE_SCORER_FAILURE_IS_KNOWN_ZERO_NOT_UNKNOWN; EPHEMERAL_PARITY_AUDITOR_CORRECTED_WITHOUT_CHANGING_REPORT_OR_CAMPAIGN"
+  },
+  "verificationAtCandidate": {
+    "ciRunId": 37855788539,
+    "ciJobId": 113579502793,
+    "ciResult": "SUCCESS",
+    "suites": 109,
+    "passedChecks": 11541,
+    "failedSuites": 0,
+    "typescriptVersion": "5.8.3",
+    "typescriptCurrent": 0,
+    "manifestDigest": "c4b547678ebbb0b800c6ff50e3e54ea7d4ff7824e28ad51d8f2e8d43db4ff36a",
+    "secretScanFiles": 1290,
+    "secretFindings": 0,
+    "build": "PASS_WITH_PREEXISTING_WARNINGS",
+    "packageIntegrity": "PASS"
+  },
+  "assessment": {
+    "classification": "NO_VERIFIED_ACCEPTANCE_GAIN_QUALITY_TREATMENT_NOT_EXERCISED",
+    "officialBenchmarkScore": null,
+    "fullBenchmarkScoreClaim": false,
+    "hiddenCaseReasoningFailureEstablished": false,
+    "publicFunctionalFailureEstablished": true,
+    "publicMismatchVersusRuntimeFailure": "NOT_RESOLVED_BY_EXISTING_SANITIZED_DIAGNOSTIC_DIGESTS",
+    "providerStableBothArms": true,
+    "qualityGuideCausalEffect": "INSUFFICIENT_EVIDENCE_NO_QUALITY_REJECTION_REACHED",
+    "requiredFieldsRemainingIssue": "COUNTEREXAMPLE_ITEM_AND_TEXT_BOUNDS_NOT_ENFORCED_BY_HOSTED_PORTABLE_SCHEMA; INVALID_ITEM_DIAGNOSTIC_DOES_NOT_IDENTIFY_EMPTY_VS_OVERLONG",
+    "nextGeneralCorrection": "REPRODUCE_NONEMPTY_AND_TEXT_LENGTH_GENERATION_VALIDATION_MISMATCH_ON_SEPARATE_DEVELOPMENT_INTENTS; DISTINGUISH_BOUND_REASONS_AND_TEST_HOSTED_COMPATIBILITY_BEFORE_NEW_FRESH_COMPARISON",
+    "cognitiveGain": false,
+    "broadPromotion": false,
+    "defaultUltraChanged": false,
+    "authorityDelta": "NONE",
+    "candidateNetworkIsolation": "NOT_PROVEN",
+    "hostileCodeSandbox": false,
+    "automaticLaunchRemovedAt": "26cee5045c0ce712f1bef193bc74a3e5a5f13486",
+    "originalEvidencePreserved": true,
+    "near80PercentAllBenchmarksClaim": false
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "FROZEN_FRESH_TRANSFER_COMPARISON",
+      "PRESERVE_NEGATIVE_AND_UNGRADED_EVIDENCE"
+    ],
+    "supporting": [
+      "NO_SELF_CERTIFICATION",
+      "EVIDENCE_OVER_CONFIDENCE",
+      "UNCHANGED_QUALITY_ORACLE",
+      "HONEST_REALIZED_COMPUTE",
+      "CAPABILITY_NOT_AUTHORITY"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "PROTECTED_OR_FULL_BENCHMARK_CLAIM",
+      "PRODUCTION_AUTHORITY",
+      "RECURSION",
+      "BIOLOGICAL_EXPANSION"
+    ],
+    "conflicts": [],
+    "coverageStatus": "PARTIAL_JUST_IN_TIME"
+  }
+}
