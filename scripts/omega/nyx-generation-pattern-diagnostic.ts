@@ -18,13 +18,19 @@ const historicalVariants = [
     pattern: "^[\\s\\S]*\\S[\\s\\S]*$" } },
   { id: "LENGTH_ONLY_CONTROL", string: { type: "string", minLength: 8, maxLength: 64 } },
 ] as const;
-const repair = process.env.NYX_PATTERN_REPAIR === "1";
+const escapes = process.env.NYX_PATTERN_ESCAPES === "1";
+const repair = process.env.NYX_PATTERN_REPAIR === "1" || escapes;
 const variants = repair ? [historicalVariants[2], {id:"BOUNDED_PREFIX_PATTERN",
   string:nyxInformativeProviderStringSchema({type:"string",minLength:8,maxLength:64})}] : historicalVariants;
-const cases = [
+const sentenceCases = [
   { id: "INPUT_READER", prompt: "Give three distinct short sentences describing different failure risks for an input reader." },
   { id: "MEASUREMENT", prompt: "Give three distinct short sentences describing different measurement errors in a simulation." },
 ] as const;
+const escapeCases = [
+  {id:"QUOTES_SLASH_LF",expected:["The label is \"alpha\".","A literal slash is \\.","The next word follows:\nnext."]},
+  {id:"CRLF_PATH_TAB",expected:["A CRLF follows:\r\nnext.","A path is C:\\work\\task.","A tab separates:\twords."]},
+].map(item=>({...item,prompt:"Copy exactly these three JSON string values into the items array, in order; do not paraphrase: "+JSON.stringify(item.expected)}));
+const cases = escapes ? escapeCases : sentenceCases;
 const schema = (string: object) => ({ type: "object", additionalProperties: false, required: ["items"],
   properties: { items: { type: "array", minItems: 3, maxItems: 3, items: string } } });
 function shape(value: unknown) {
@@ -55,7 +61,7 @@ if (process.argv.includes("--self-test")) {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse","HEAD") || git("status","--porcelain"))
     throw Error("pattern_diagnostic_clean_candidate_required");
   const sourceIdentity = theoryDigest(git("ls-files","-s"));
-  const frozen = { version:repair?"nyx-generation-pattern-diagnostic/2":"nyx-generation-pattern-diagnostic/1",
+  const frozen = { version:escapes?"nyx-generation-pattern-diagnostic/3":repair?"nyx-generation-pattern-diagnostic/2":"nyx-generation-pattern-diagnostic/1",
     model:"nvidia/nemotron-3-super-120b-a12b",
     temperature:0,reasoningEffort:"none",maxOutputTokens:512,providerTimeoutMs:65000,
     caseWallClockMs:80000,globalWallClockMs:540000,maxPhysicalCallsIncludingRetries:cases.length*variants.length,
@@ -89,16 +95,25 @@ if (process.argv.includes("--self-test")) {
       responseFormat:{type:"JSON_SCHEMA",name:"nyx_pattern_diagnostic",schema:wireSchema},
       inferencePolicy:"CONSTRAINED_JSON",reasoningControl:"SUPER_HOSTED_NATIVE",observedAtEpochMs:began,
       deadlineEpochMs:deadline,signal:AbortSignal.timeout(Math.max(1,deadline-Date.now()))});
-    let metadata: ReturnType<typeof shape> = null, localSchemaAccepted: boolean|null = null;
+    let metadata: ReturnType<typeof shape> = null, localSchemaAccepted: boolean|null = null,
+      exactCopyAccepted: boolean|null = null, parseErrorPosition: number|null = null;
     if (result.content !== null) try {
       const decoded: unknown = JSON.parse(result.content);
       metadata = shape(decoded); localSchemaAccepted = Boolean(ajv.compile(wireSchema)(decoded));
-    } catch { localSchemaAccepted = false; }
+      if ("expected" in item) exactCopyAccepted = JSON.stringify((decoded as {items?:unknown}).items)===JSON.stringify(item.expected);
+    } catch (error) {
+      localSchemaAccepted = false;
+      if ("expected" in item) exactCopyAccepted = false;
+      // Numeric parser location only: exception text can contain raw generated content.
+      const match=error instanceof SyntaxError?/\bposition (\d+)\b/.exec(error.message):null;
+      parseErrorPosition=match?Number(match[1]):null;
+    }
     const usage = inferUsage([{modelEvidenceId:result.evidence.networkAttempted?result.evidence.evidenceId:"NOT_INVOKED",
       modelUsage:result.evidence.usage,delivery:result.evidence.delivery,providerFailureCategory:result.evidence.failureCategory}]);
     usage.wallClockMs = Date.now()-began;
     const row = {id:item.id,variant:variant.id,state:result.decision,status:result.evidence.statusCode,
       reason:result.reason,finishReason:result.finishReason,localSchemaAccepted,shape:metadata,
+      exactCopyAccepted,parseErrorPosition,
       substantiveDistinct:localSchemaAccepted===true && metadata?.distinctTrimmed===3 && metadata.nonWhitespace.every(Boolean),
       schemaDigest:theoryDigest(wireSchema),evidence:result.evidence,usage,httpDispatches:dispatched-before,
       accountingComplete:usage.physicalCalls===dispatched-before,authorityGranted:result.executorAuthorityGranted};
