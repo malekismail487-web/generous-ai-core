@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-hosted-contract-compatibility/1",
+  "candidate": "0cdae3e5ddfb4848f81b0b23bf4e1bb95216826e",
+  "runId": 37998536356,
+  "jobId": 114050628985,
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "generationPolicy": "nyx-bounded-decision-schema/1",
+  "artifact": {
+    "id": 11648222549,
+    "bytes": 5003,
+    "sha256": "eacfeeb1cddcf0a167e5aadbd81b9c479492abfafc8a7e62214a64319faf6238",
+    "reportBytes": 25963,
+    "reportSha256": "794479d8c23369d48d69adf069e8744c9a9817f5471595c7a483e5eae50fd225"
+  },
+  "verification": {
+    "artifactLogAgreement": true,
+    "sourceDigestsVerified": {
+      "scripts/omega/nyx-bounded-contract-probe.ts": "2f9f0be7d030e8d6d8321cc863f8561b1b7481e37f4c6d335d649aec57d6e717",
+      "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts": "864c63b56c15498a982748e051ad92272d5e511254ce323cc3da3c60796f5772",
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "ad0cb9d5d76905ce13abe3459e49bea4aa995c174ac14ab7a597555c3deca08a",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "d61636b510107af9d524d5ac592853ace7083638e0dc13c876876536f0b463db"
+    },
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "positiveDispatchesMatchDelivery": true,
+    "zeroDispatchesHaveNotInvokedIdentity": true
+  },
+  "outcome": "NOT_YET_VERIFIED",
+  "selected": 6,
+  "attemptedModelCalls": 4,
+  "preInferenceHarnessRejections": 2,
+  "observedBoundedCompatibleActionShapes": [
+    "EDIT",
+    "UNCERTAIN"
+  ],
+  "unexercisedBoundedActionShapes": [
+    "EVIDENCE"
+  ],
+  "reported": {
+    "logicalCalls": 6,
+    "physicalCalls": 4,
+    "unknownUsageCalls": 2,
+    "reportedTokens": 13321
+  },
+  "audited": {
+    "logicalModelCalls": 4,
+    "physicalCalls": 4,
+    "knownTokens": 13321,
+    "unknownUsageCalls": 0,
+    "providerFailures": 0,
+    "elapsedMs": 5998
+  },
+  "accountingDiscrepancy": {
+    "reason": "inferUsage assumed one attempt for NOT_INVOKED evidence when delivery was absent",
+    "affectedCases": [
+      {
+        "id": "EVIDENCE",
+        "shape": "DECISION_REQUIRED_FIELDS",
+        "recordedUsage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "actualDispatches": 0
+      },
+      {
+        "id": "EVIDENCE",
+        "shape": "DECISION_REQUIRED_FIELDS_AND_BOUNDS",
+        "recordedUsage": {
+          "logicalCalls": 1,
+          "physicalCalls": 1,
+          "httpAttempts": 1,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 0,
+          "providerFailures": 0,
+          "retries": 0
+        },
+        "actualDispatches": 0
+      }
+    ],
+    "originalReportPreserved": true
+  },
+  "outcomes": [
+    {
+      "id": "EDIT",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "COGNITION_ERROR",
+      "reason": "nyx_cognition_output_schema_invalid",
+      "status": 200,
+      "observedCompatible": false,
+      "httpDispatches": 1,
+      "reportedTokens": 3461,
+      "diagnostics": [
+        {
+          "category": "SEMANTIC_REPAIR_INVALID",
+          "path": "$.changes[0].replacement.lines[0]",
+          "expected": "one source line without embedded terminators",
+          "observed": "embedded_line_terminator"
+        }
+      ],
+      "requestDigest": "a4a68941a19970227874b345bbec19638a323c7a5c7581dbd955bd28c47f4024",
+      "responseDigest": "f6bd4f4d5149320e36e437a27bf0fab43c35fa24e17a4866319ef5e7e6980a74",
+      "schemaDigest": "74868275c25aefbe08735057cd1a2e4dbcdebf948e8b398b1b0d2b0acda83419"
+    },
+    {
+      "id": "EDIT",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_BOUNDS",
+      "state": "PROPOSED",
+      "reason": "nyx_repair_hypothesis_validated",
+      "status": 200,
+      "observedCompatible": true,
+      "httpDispatches": 1,
+      "reportedTokens": 3343,
+      "diagnostics": [],
+      "requestDigest": "c6cff99fab68e181c46a8de568151e0a02bed1a0fde848abdf55d50398ec8933",
+      "responseDigest": "abb48e047b568f91864033d282dbfb6f5a06628abbd196f0cc46350620b6ac9a",
+      "schemaDigest": "df38f1428c3884f0e4609fc925eb747dc186dbe21a967ced1254293b39e1bb3c"
+    },
+    {
+      "id": "UNCERTAIN",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_BOUNDS",
+      "state": "NO_ACTION",
+      "reason": "nyx_cognition_no_action",
+      "status": 200,
+      "observedCompatible": true,
+      "httpDispatches": 1,
+      "reportedTokens": 3238,
+      "diagnostics": [],
+      "requestDigest": "131d798aeaee621d56999759535f635007dc387fa0f3a365bf74883750a39745",
+      "responseDigest": "4f06ac598b8c87e97a87129b3ea036ca7ed6435a6dd2d2b41ac687f0a3fac7e9",
+      "schemaDigest": "21f4c7cd0f3f085056e04c6daa8d6eb1190eb5904487a48e336bbf8dc0de3f92"
+    },
+    {
+      "id": "UNCERTAIN",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "NO_ACTION",
+      "reason": "nyx_cognition_no_action",
+      "status": 200,
+      "observedCompatible": true,
+      "httpDispatches": 1,
+      "reportedTokens": 3279,
+      "diagnostics": [],
+      "requestDigest": "d2086c1b20002bb370f2ddb46dd4f63fa8e785cf0c21e37f4e55fa45b7355a35",
+      "responseDigest": "9d0c101410450fd07733a0fa75a60dbc2821feccc389703e47224e0f1bf02637",
+      "schemaDigest": "0b730ebf90b1ca87db283e6c4af5fbb3bbfb85434175e70381f31743a0aee32f"
+    },
+    {
+      "id": "EVIDENCE",
+      "shape": "DECISION_REQUIRED_FIELDS",
+      "state": "REJECTED",
+      "reason": "nyx_cognition_available_evidence_invalid",
+      "status": null,
+      "observedCompatible": false,
+      "httpDispatches": 0,
+      "reportedTokens": 0,
+      "diagnostics": [
+        {
+          "category": "OTHER_SCHEMA_MISMATCH",
+          "path": "$request",
+          "expected": "valid admitted cognition request",
+          "observed": "nyx_cognition_available_evidence_invalid"
+        }
+      ],
+      "requestDigest": null,
+      "responseDigest": null,
+      "schemaDigest": null
+    },
+    {
+      "id": "EVIDENCE",
+      "shape": "DECISION_REQUIRED_FIELDS_AND_BOUNDS",
+      "state": "REJECTED",
+      "reason": "nyx_cognition_available_evidence_invalid",
+      "status": null,
+      "observedCompatible": false,
+      "httpDispatches": 0,
+      "reportedTokens": 0,
+      "diagnostics": [
+        {
+          "category": "OTHER_SCHEMA_MISMATCH",
+          "path": "$request",
+          "expected": "valid admitted cognition request",
+          "observed": "nyx_cognition_available_evidence_invalid"
+        }
+      ],
+      "requestDigest": null,
+      "responseDigest": null,
+      "schemaDigest": null
+    }
+  ],
+  "diagnosis": {
+    "integrationFailure": "Probe listed policy as unobserved although baseline.prepared.files already included it; local request contract correctly rejected both evidence cases",
+    "correction": "Withhold the available policy from observed context; explicitly filter NOT_INVOKED, and make shared usage inference ignore zero-dispatch rejection without concealing positive delivery",
+    "controlsUnchanged": [
+      "model",
+      "six physical call ceiling",
+      "token and wall-clock caps",
+      "local parser",
+      "syntax",
+      "scope",
+      "quality",
+      "Omega authorization"
+    ],
+    "originalControlSourceError": "EDIT portable generation emitted an embedded line terminator; unchanged local source-line validation rejected it"
+  },
+  "evidenceClass": "E4_LIVE_DELIVERY_PLUS_E3_LOCAL_ADMISSION_AND_RECEIPT_AUDIT",
+  "limitations": [
+    "Synthetic compatibility only, not fresh task generalization or benchmark score",
+    "Only two of three bounded action shapes reached inference",
+    "Backend version unknown; conforming responses do not prove universal decoding enforcement",
+    "Actual configured model is Super; historical cognitiveSubstrate literal in shared evidence remains an Ultra nominal tag",
+    "JSON Schema code-point lengths differ from local UTF-16; local validation remains authoritative"
+  ],
+  "defaultUltraChanged": false,
+  "candidateApplied": false,
+  "authorityIncrease": false,
+  "rawContentPersisted": false,
+  "cognitivePromotion": false
+}

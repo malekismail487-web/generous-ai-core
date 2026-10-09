@@ -20,7 +20,7 @@ const candidate = process.env.GITHUB_SHA || git("rev-parse","HEAD");
 if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse","HEAD") || git("status","--porcelain"))
   throw Error("bounded_contract_probe_clean_candidate_required");
 const sourceIdentity = theoryDigest(git("ls-files","-s"));
-const frozen = {version:"nyx-bounded-contract-probe/1",model:"nvidia/nemotron-3-super-120b-a12b",
+const frozen = {version:"nyx-bounded-contract-probe/2",model:"nvidia/nemotron-3-super-120b-a12b",
   temperature:0,reasoningEffort:"none",generationPolicy:NYX_BOUNDED_DECISION_SCHEMA_POLICY,
   maxOutputTokens:2048,maxPromptBytes:48000,providerTimeoutMs:65000,caseWallClockMs:80000,
   globalWallClockMs:540000,maxPhysicalCallsIncludingRetries:6,physicalCallsPerCase:1,
@@ -82,7 +82,8 @@ for(const [index, item] of cases.entries()) {
     try {
       const baseline=await session.baseline();
       const request: NyxRepairCognitionRequest={schemaVersion:1,cognitionRequestId:`BOUNDED-${item.id}-${shape}`,
-        objective:item.objective,observation:baseline.observation,files:baseline.prepared.files,
+        objective:item.objective,observation:baseline.observation,
+        files:baseline.prepared.files.filter(file=>file.relativePath!=="src/policy.mjs"),
         allowedMutationPaths:["src/transform.mjs"],availableEvidence:item.available?[{evidenceRef:"AVAILABLE:policy",
           kind:"FILE",relativePath:"src/policy.mjs",description:"Authoritative policy, not yet observed"}]:[],
         priorHypotheses:[],priorCognitionFailures:[],candidateQualityFeedback:null,
@@ -105,7 +106,7 @@ for(const [index, item] of cases.entries()) {
         rejectedBackend=true;
     }catch {infrastructureFailure=true;}finally {cleanup=await session.close();capturedContent=null;capturedSchema=null;}
     const expectedOutcome=item.expectedDecision==="PROPOSE_EDIT"?"PROPOSED":item.expectedDecision;
-    const usage=result?inferUsage([result.evidence]):null;
+    const usage=result?inferUsage(result.evidence.modelEvidenceId==="NOT_INVOKED"?[]:[result.evidence]):null;
     const row={id:item.id,shape,state:result?.decision??"INFRASTRUCTURE_FAILURE",reason:result?.reason??"PROBE_THROW",
       expectedOutcome,observedCompatible:result?.decision===expectedOutcome && schemaAccepted===true && responseIntegrity===true
         && !infrastructureFailure && cleanup?.cleanupVerified===true && cleanup.sourceUnchanged,
@@ -120,7 +121,7 @@ for(const [index, item] of cases.entries()) {
 const sourceUnchanged=sourceIdentity===theoryDigest(git("ls-files","-s")) && !git("status","--porcelain");
 const bounded=results.filter(r=>r.shape==="DECISION_REQUIRED_FIELDS_AND_BOUNDS");
 const report={schemaVersion:1,candidate,frozen,cases,sourceDigests,results,sourceUnchanged,
-  outcome:bounded.length===3&&bounded.every(r=>r.observedCompatible)?"OBSERVED_COMPATIBLE":"NOT_YET_VERIFIED",
+  outcome:bounded.length===3&&bounded.every(r=>r.observedCompatible&&r.accountingComplete)?"OBSERVED_COMPATIBLE":"NOT_YET_VERIFIED",
   elapsedMs:Date.now()-began,selected:6,attempted:results.filter(r=>(r.httpDispatches??0)>0).length,
   logicalCalls:results.reduce((n,r)=>n+(r.usage?.logicalCalls??0),0),
   physicalCalls:dispatched,accountingComplete:results.every(r=>!r.evidence && !(r.httpDispatches??0) || r.accountingComplete),

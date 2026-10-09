@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxNemotronEngineeringCognition } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
-import { createArcAdapter, arcRepositoryFiles, extractArcArtifact, classifyArcLoopFailure, arcInferenceConfiguration } from "./omega/benchmarks/nyxArcAdapter";
+import { createArcAdapter, arcRepositoryFiles, extractArcArtifact, classifyArcLoopFailure, arcInferenceConfiguration, inferUsage } from "./omega/benchmarks/nyxArcAdapter";
 import { contentHash, R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { runCampaign } from "./omega/benchmarks/campaign";
 import { prepareTask } from "./omega/benchmarks/tasks";
@@ -65,6 +65,22 @@ const intent = (source: string) => JSON.stringify({ decision: "PROPOSE_EDIT", di
   changes: [{ target: "src/transform.mjs", replacement: { lines: source.split("\n"), lineEnding: "LF" } }], confidence: 0.8 });
 const request = (signal = new AbortController().signal) => ({ input, inputDigest: theoryDigest(input), attempt: 1,
   feedback: null, remaining: limits, signal });
+
+{
+  const notInvoked = {modelEvidenceId:"NOT_INVOKED",modelUsage:{promptTokens:null,completionTokens:null,totalTokens:null},
+    providerFailureCategory:null};
+  const local = inferUsage([notInvoked]);
+  check(local.physicalCalls===0 && local.logicalCalls===0 && local.unknownUsageCalls===0,
+    "pre-inference cognition rejection cannot manufacture a physical call or unknown token usage");
+  const dispatched = inferUsage([{...notInvoked,modelEvidenceId:"E4-ATTEMPT"}]);
+  check(dispatched.physicalCalls===1 && dispatched.logicalCalls===1 && dispatched.unknownUsageCalls===1,
+    "dispatched evidence without usage remains counted and explicitly unknown");
+  const contradiction = inferUsage([{...notInvoked,delivery:{policy:"nvidia-capacity/1",requestsPerMinute:40,
+    scope:"PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",httpAttempts:1,rateLimitedResponses:0,transientUnavailableResponses:0,
+    timedOutAttempts:0,capacityWaitMs:0,state:"STOPPED",notBeforeEpochMs:null,authorityRenewed:false}}]);
+  check(contradiction.physicalCalls===1 && contradiction.unknownUsageCalls===1,
+    "NOT_INVOKED label cannot conceal an independently recorded positive HTTP attempt");
+}
 
 // Synthetic fixtures exercise the actual shared cognition, authorization, execution and cleanup path.
 // They do not establish model reasoning quality or actual ARC accuracy.

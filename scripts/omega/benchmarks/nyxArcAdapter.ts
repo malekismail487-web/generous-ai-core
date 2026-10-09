@@ -83,9 +83,13 @@ export function extractArcArtifact(stdout: string, count: number) {
   return predictions;
 }
 export function inferUsage(evidence: readonly { modelUsage: NvidiaNimEvidence["usage"];
-  delivery?: NvidiaNimEvidence["delivery"]; providerFailureCategory: NvidiaNimEvidence["failureCategory"] }[]): Usage {
+  modelEvidenceId?: string; delivery?: NvidiaNimEvidence["delivery"];
+  providerFailureCategory: NvidiaNimEvidence["failureCategory"] }[]): Usage {
   const usage = zeroUsage();
   for (const item of evidence) {
+    // Local request rejection is not an inference attempt. Positive delivery evidence
+    // still counts even if a contradictory NOT_INVOKED label is supplied.
+    if (item.modelEvidenceId === "NOT_INVOKED" && !item.delivery?.httpAttempts) continue;
     const httpAttempts = item.delivery?.httpAttempts ?? 1;
     if (!httpAttempts) continue;
     usage.logicalCalls++; usage.physicalCalls += httpAttempts; usage.httpAttempts += httpAttempts;

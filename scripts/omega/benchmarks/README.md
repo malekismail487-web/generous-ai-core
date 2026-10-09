@@ -1732,3 +1732,20 @@ execution. Conflict: richer hosted keyword support is unknown; retain independen
 local checks and reject incompatible delivery rather than weaken them. Superseded
 operational approach: silently treating portable grammar acceptance as complete
 semantic acceptance; historical results and controls remain preserved.
+
+Initial compatibility run [37998536356](https://github.com/malekismail487-web/generous-ai-core/actions/runs/37998536356)
+at `0cdae3e5ddfb4848f81b0b23bf4e1bb95216826e` reached four actual model calls.
+Both bounded edit and uncertainty shapes were locally admitted with HTTP 200.
+The two evidence-request cases correctly failed before inference: the probe
+mistakenly supplied the policy both as observed and as unobserved. Therefore
+full hosted compatibility remains **NOT_YET_VERIFIED**, not a provider failure.
+The portable edit also failed unchanged source-line validation on an embedded
+terminator. No candidate was applied and no reasoning performance was measured.
+
+The original report is preserved. Its generic usage reducer counted the two
+`NOT_INVOKED` rejections as calls with unknown usage. Independent dispatch and
+delivery evidence establish four physical calls, 13,321 reported tokens and zero
+unknown-usage calls (not the report's two). The [receipt](../../../docs/omega/evidence/nyx-bounded-contract-0cdae3e5.json)
+verifies the ZIP SHA256, exact report/log agreement, six source hashes and cleanup.
+One focused probe correction withholds unobserved policy and fixes zero-dispatch
+accounting without changing model, budgets, grammar or local acceptance.
