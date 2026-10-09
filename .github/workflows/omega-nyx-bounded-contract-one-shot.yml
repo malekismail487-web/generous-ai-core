@@ -1,9 +1,5 @@
 name: Omega NYX bounded intent hosted compatibility
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - .github/workflows/omega-nyx-bounded-contract-one-shot.yml
   workflow_dispatch:
 permissions:
   contents: read
