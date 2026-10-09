@@ -1,6 +1,9 @@
 name: Omega NYX bounded intent hosted compatibility
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-bounded-contract-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   bounded-contract-probe:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-pattern-diagnostic-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-pattern-repair-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -29,9 +32,10 @@ jobs:
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-bounded-contract-probe.ts scripts/omega/nyx-generation-pattern-diagnostic.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-generation-pattern-diagnostic.ts --self-test
-      - name: Diagnose hosted pattern dialect with six synthetic physical calls maximum
+      - name: Verify derived bounded pattern with four synthetic physical calls maximum
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NYX_PATTERN_REPAIR: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-generation-pattern-diagnostic.ts
       - name: Preserve sanitized outcomes including incompatibility

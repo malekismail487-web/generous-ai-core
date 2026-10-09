@@ -2,7 +2,19 @@ import { immutableTheoryValue } from "../research/theoryContracts";
 
 /** Generation grammar only. Local semantic validation and Omega authorization remain authoritative. */
 export const NYX_DECISION_REQUIRED_SCHEMA_POLICY = "nyx-decision-required-schema/1" as const;
-export const NYX_BOUNDED_DECISION_SCHEMA_POLICY = "nyx-bounded-decision-schema/1" as const;
+export const NYX_BOUNDED_DECISION_SCHEMA_POLICY = "nyx-bounded-decision-schema/2" as const;
+
+/** Generation normal form: start informative prose immediately; never transform model output.
+ * Bounds live in the regex too: observed hosted pattern compilation ignored length siblings.
+ * Local validation remains authoritative for UTF-16 lengths, uniqueness and semantic content.
+ */
+export function nyxInformativeProviderStringSchema(value: Readonly<Record<string, unknown>>) {
+  const min = value.minLength, max = value.maxLength;
+  if (value.type !== "string" || !Number.isSafeInteger(min) || !Number.isSafeInteger(max)
+    || (min as number) < 1 || (max as number) < (min as number) || (max as number) > 2000)
+    throw Error("nyx_informative_string_bounds_invalid");
+  return { ...value, pattern: `^\\S[\\s\\S]{${(min as number)-1},${(max as number)-1}}$` };
+}
 
 export function nyxDecisionRequiredProviderSchema(schema: Readonly<Record<string, unknown>>,
   allowedActions: readonly string[], requiredFields: Readonly<Record<string, readonly string[]>>) {
@@ -61,9 +73,10 @@ export function nyxBoundedDecisionRequiredProviderSchema(providerSchema: Readonl
     // Free-form intent prose must contain information. Do not impose this on code: blank
     // lines, indentation and the final empty line encode source and must remain exact.
     for (const field of ["diagnosis", "causalHypothesis", "invariant", "failureInterpretation", "expectedResult"])
-      properties[field] = { ...properties[field], pattern: "\\S" };
+      properties[field] = nyxInformativeProviderStringSchema(properties[field]);
     for (const field of ["uncertainties", "counterexamples", "assumptions"])
-      properties[field] = { ...properties[field], items: { ...properties[field].items as object, pattern: "\\S" } };
+      properties[field] = { ...properties[field], items: nyxInformativeProviderStringSchema(
+        properties[field].items as Record<string, unknown>) };
     for (const field of branch.required) if (properties[field].type === "array") {
       if (!(Number.isSafeInteger(properties[field].maxItems) && (properties[field].maxItems as number) >= 1))
         throw Error("nyx_bounded_schema_required_array_impossible");

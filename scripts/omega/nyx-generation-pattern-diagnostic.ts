@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import Ajv from "ajv";
+import { nyxInformativeProviderStringSchema } from "../../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { NVIDIA_NIM_CHAT_COMPLETIONS_URL, NvidiaNimProvider,
   nvidiaNimCredentialFromEnvironment } from "../../src/lib/codelab/model/nvidiaNimProvider";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
@@ -11,12 +12,15 @@ import { inferUsage } from "./benchmarks/nyxArcAdapter";
 
 // Development-only differential diagnosis. No benchmark prompts/answers, cognition
 // success claim, candidate execution, output repair, fallback, or authority change.
-const variants = [
+const historicalVariants = [
   { id: "SEARCH_PATTERN", string: { type: "string", minLength: 8, maxLength: 64, pattern: "\\S" } },
   { id: "WHOLE_STRING_PATTERN", string: { type: "string", minLength: 8, maxLength: 64,
     pattern: "^[\\s\\S]*\\S[\\s\\S]*$" } },
   { id: "LENGTH_ONLY_CONTROL", string: { type: "string", minLength: 8, maxLength: 64 } },
 ] as const;
+const repair = process.env.NYX_PATTERN_REPAIR === "1";
+const variants = repair ? [historicalVariants[2], {id:"BOUNDED_PREFIX_PATTERN",
+  string:nyxInformativeProviderStringSchema({type:"string",minLength:8,maxLength:64})}] : historicalVariants;
 const cases = [
   { id: "INPUT_READER", prompt: "Give three distinct short sentences describing different failure risks for an input reader." },
   { id: "MEASUREMENT", prompt: "Give three distinct short sentences describing different measurement errors in a simulation." },
@@ -51,12 +55,13 @@ if (process.argv.includes("--self-test")) {
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse","HEAD") || git("status","--porcelain"))
     throw Error("pattern_diagnostic_clean_candidate_required");
   const sourceIdentity = theoryDigest(git("ls-files","-s"));
-  const frozen = { version:"nyx-generation-pattern-diagnostic/1",model:"nvidia/nemotron-3-super-120b-a12b",
+  const frozen = { version:repair?"nyx-generation-pattern-diagnostic/2":"nyx-generation-pattern-diagnostic/1",
+    model:"nvidia/nemotron-3-super-120b-a12b",
     temperature:0,reasoningEffort:"none",maxOutputTokens:512,providerTimeoutMs:65000,
-    caseWallClockMs:80000,globalWallClockMs:540000,maxPhysicalCallsIncludingRetries:6,
+    caseWallClockMs:80000,globalWallClockMs:540000,maxPhysicalCallsIncludingRetries:cases.length*variants.length,
     physicalCallsPerCase:1,backendVersion:"UNKNOWN",candidateApplied:false,benchmarkTasksUsed:false,
     rawContentPersisted:false,cognitivePromotion:false,defaultConfigurationChanged:false };
-  const sourcePaths = ["scripts/omega/nyx-generation-pattern-diagnostic.ts",
+  const sourcePaths = ["scripts/omega/nyx-generation-pattern-diagnostic.ts","src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
     "src/lib/codelab/model/nvidiaNimProvider.ts","scripts/omega/benchmarks/nyxArcAdapter.ts"];
   const sourceDigests = Object.fromEntries(await Promise.all(sourcePaths.map(async path=>[path,contentHash(await readFile(path,"utf8"))])));
   const started = Date.now(), globalDeadline = started + frozen.globalWallClockMs;
@@ -102,7 +107,7 @@ if (process.argv.includes("--self-test")) {
   }
   const sourceUnchanged = sourceIdentity===theoryDigest(git("ls-files","-s")) && !git("status","--porcelain");
   const report = {schemaVersion:1,candidate,frozen,cases,variants,sourceDigests,results,sourceUnchanged,
-    elapsedMs:Date.now()-started,selected:6,physicalCalls:dispatched,
+    elapsedMs:Date.now()-started,selected:cases.length*variants.length,physicalCalls:dispatched,
     reportedTokens:results.reduce((n,r)=>n+(r.usage?.reportedTokens??0),0),
     unknownUsageCalls:results.reduce((n,r)=>n+(r.usage?.unknownUsageCalls??0),0),
     evidence:"E4_HOSTED_DELIVERY_AND_E3_INDEPENDENT_SCHEMA_VALIDATION",benchmarkScore:null,

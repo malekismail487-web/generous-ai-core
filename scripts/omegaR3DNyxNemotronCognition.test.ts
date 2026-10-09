@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import Ajv from "ajv";
-import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
+import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
+  nyxInformativeProviderStringSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -601,6 +602,28 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     contract.allowedActions, contract.requiredFields);
   const validate = ajv.compile(bounded);
   check(validate(JSON.parse(intent())), "bounded generation admits complete valid intent without invented values");
+  // Independent backend/full-match simulation must not collapse prose to one character,
+  // and cannot depend on minLength/maxLength siblings that a hosted compiler may ignore.
+  for (const [minimum, maximum] of [[1,1],[1,64],[8,64],[1,256],[1,500],[1,1500]]) {
+    const item=nyxInformativeProviderStringSchema({type:"string",minLength:minimum,maxLength:maximum});
+    const patternOnly=ajv.compile({type:"string",pattern:item.pattern});
+    for (const length of [0,minimum-1,minimum,maximum,maximum+1]) {
+      check(patternOnly("x".repeat(length))===(length>=minimum&&length<=maximum),
+        "pattern carries request-derived bounds even when sibling length keywords are ignored");
+    }
+    check(!patternOnly(" ".repeat(maximum)) && patternOnly("x"+" ".repeat(maximum-1)),
+      "canonical informative prefix rejects whitespace-only prose without discarding internal whitespace");
+  }
+  const boundedProse=nyxInformativeProviderStringSchema({type:"string",minLength:1,maxLength:64});
+  const multilineProse=ajv.compile({type:"string",pattern:boundedProse.pattern});
+  check(multilineProse("Risk\nwith\tUnicode α😀") && !multilineProse("\nRisk"),
+    "generation normal form permits multiline unicode content but starts informative prose immediately");
+  for (const item of [{type:"string",minLength:0,maxLength:8},{type:"string",minLength:2,maxLength:1},
+    {type:"string",minLength:1,maxLength:2001},{type:"string",minLength:1},
+    {type:"number",minLength:1,maxLength:64}]) {
+    let rejected=false;try {nyxInformativeProviderStringSchema(item);}catch {rejected=true;}
+    check(rejected,"informative generation fails closed on malformed or unbounded host contracts");
+  }
   const gaps = [
     {counterexamples:[""]}, {counterexamples:["x".repeat(501)]}, {causalHypothesis:"x".repeat(1001)},
     {counterexamples:["   "]}, {counterexamples:[]}, {evidenceRefs:[]}, {changes:[]},
@@ -645,10 +668,13 @@ function has(result: NyxRepairCognitionResult, category: NyxSchemaDiagnosticCate
     check(rejected.decision === "COGNITION_ERROR" && !rejected.hypothesis && !rejected.omegaAuthorityGranted,
       "nonconforming provider remains rejected by unchanged local semantics despite generation grammar");
   }
-  // JSON Schema counts code points; local strings use UTF-16. This residual mismatch must
-  // remain an explicit local check, not a claim of complete hosted semantic enforcement.
+  // JSON Schema length counts code points; AJV 6 compiles patterns without `u`,
+  // so its quantifiers count UTF-16 units. Verify both dialects explicitly; a
+  // conforming Unicode grammar still cannot replace the local UTF-16 guard.
   const astral = JSON.parse(intent({counterexamples:["😀".repeat(251)]}));
-  check(validate(astral), "JSON grammar character count is not falsely equated with UTF-16 units");
+  const itemPattern=(bounded.anyOf[0].properties.counterexamples.items as {pattern:string}).pattern;
+  check(new RegExp(itemPattern,"u").test(astral.counterexamples[0]) && !validate(astral),
+    "Unicode grammar, AJV 6 regex dialect and local UTF-16 lengths are distinguished");
   const astralRejected = await make(JSON.stringify(astral)).proposeRepair(request());
   check(astralRejected.decision === "COGNITION_ERROR" && has(astralRejected,"SEMANTIC_REPAIR_INVALID"),
     "unchanged local UTF-16 limit catches astral string beyond local bound");

@@ -1793,3 +1793,30 @@ and clean-candidate CI (109 suites / 11,638 checks). No default change or cognit
 gain is promoted. These four objectives are now exposed: a correction must be
 developed on generic synthetic inputs and evaluated on fresh transfer tasks,
 not presented as fresh progress by repeating this selection.
+
+Synthetic differential diagnosis [38001146471](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38001146471)
+at `aea71894fba4f8bb079301ddef35333d95634b66` reproduced two interface defects.
+The unanchored non-whitespace pattern yielded one-character strings in both cases
+despite `minLength=8`; the whole-string pattern yielded 74-97-character strings
+despite `maxLength=64`. The length-only control passed both. Six physical calls,
+589 reported tokens, zero unknown usage/provider failures. The [receipt](../../../docs/omega/evidence/nyx-generation-pattern-aea71894.json)
+verifies artifact/log/source identities. These are generic development prompts,
+not benchmark questions, and only sanitized shape statistics are retained.
+
+This behavior is consistent with a documented [XGrammar limitation](https://github.com/mlc-ai/xgrammar/pull/896),
+but the hosted backend/version remains **UNKNOWN**. Version 2 of the opt-in
+bounded grammar encodes request-derived limits in the whole regex itself and
+requires informative prose to start with a non-whitespace character. It does
+not trim, deduplicate, invent or silently rewrite returned intent. Local semantic,
+syntax, cumulative quality and authorization checks stay unchanged; source blank
+lines and historical/default grammars remain intact. AJV 6 regex quantifiers use
+UTF-16 rather than Unicode mode, so Unicode/code-point and host-dialect residuals
+are explicitly tested and still guarded locally. Hosted correction and fresh
+engineering transfer must be observed separately before promotion.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: generator requires a validated
+detector, evidence outranks confidence, no self-certification or authority delta.
+Supporting: independent dialect reproduction and preservation of negative results.
+Deferred: cognitive promotion and new reasoning layers. Conflict resolved: standard
+JSON Schema substring-pattern assumptions differ from observed hosted generation;
+use an explicit, versioned generation normal form without weakening local admission.

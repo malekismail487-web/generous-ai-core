@@ -2357,6 +2357,12 @@
       ]
     },
     {
+      "name": "NYX_PATTERN_REPAIR",
+      "files": [
+        "scripts/omega/nyx-generation-pattern-diagnostic.ts"
+      ]
+    },
+    {
       "name": "NYX_QUALITY_SITE_COMPARISON",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"
