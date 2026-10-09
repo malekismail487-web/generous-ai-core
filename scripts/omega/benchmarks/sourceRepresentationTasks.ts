@@ -118,6 +118,10 @@ export function classifyRepresentationFailure(input: {
   if(failure?.diagnostics.some(d=>d.category==="SOURCE_QUALITY_INVALID"&&/^syntax_error_/.test(d.observed)))return "SYNTAX_FAILURE";
   if(failure?.diagnostics.some(d=>d.category==="SOURCE_QUALITY_INVALID"))return "QUALITY_REJECTION";
   if(failure?.diagnostics.some(d=>["UNKNOWN_CAPABILITY","INVALID_TARGET_REFERENCE","STALE_TARGET_REFERENCE","UNSUPPORTED_FILE_TARGET"].includes(d.category)))return "AUTHORIZATION_FAILURE";
+  // Valid JSON can describe an oversized or already-falsified edit. These are
+  // not serialization failures, and neither classification relaxes admission.
+  if(failure?.diagnostics.some(d=>d.category==="SEMANTIC_REPAIR_INVALID"&&d.observed==="patch_bound_exceeded"))return "SOURCE_BOUND_REJECTION";
+  if(failure?.diagnostics.some(d=>["SEMANTIC_REPAIR_INVALID","REPEATED_FALSIFIED_STRATEGY"].includes(d.category)))return "SEMANTIC_INTENT_FAILURE";
   if(failure)return "SCHEMA_FAILURE";
   if(input.publicFailed)return "FUNCTIONAL_FAILURE";
   if(input.qualityRejected)return "QUALITY_REJECTION";

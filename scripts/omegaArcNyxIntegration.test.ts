@@ -753,6 +753,12 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
     "latest truncation remains separately attributable");
   check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"SCHEMA_INVALID",diagnostics:[{category:"SOURCE_QUALITY_INVALID",observed:"syntax_error_line_8"}]}})==="SYNTAX_FAILURE",
     "syntax failure not misrepresented as hidden-case reasoning failure");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"SCHEMA_INVALID",diagnostics:[{category:"SEMANTIC_REPAIR_INVALID",observed:"patch_bound_exceeded"}]}})==="SOURCE_BOUND_REJECTION",
+    "valid JSON exceeding the source byte cap remains a bound rejection, not a serialization failure");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"SCHEMA_INVALID",diagnostics:[{category:"REPEATED_FALSIFIED_STRATEGY",observed:"no_op_repair"}]}})==="SEMANTIC_INTENT_FAILURE",
+    "valid JSON repeating the unchanged rejected candidate remains a semantic intent failure");
+  check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"SCHEMA_INVALID",diagnostics:[{category:"SEMANTIC_REPAIR_INVALID",observed:"invalid_item"}]}})==="SEMANTIC_INTENT_FAILURE",
+    "valid JSON with invalid counterexample content is not called a transport or schema decoding failure");
   check(classifyRepresentationFailure({...base,qualityRejected:false,privateFailure:"HIDDEN_CASE_FAILURE"})==="HIDDEN_CASE_FAILURE",
     "private reasoning failure distinct from unavailable or unreached evidence");
   check(classifyRepresentationFailure({...base,qualityRejected:false})==="INSUFFICIENT_EVIDENCE",

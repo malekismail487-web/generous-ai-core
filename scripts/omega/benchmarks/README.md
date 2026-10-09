@@ -1,5 +1,33 @@
 # NYX benchmark capability program
 
+### Fresh length-only transfer: delivery recovered, acceptance did not
+
+At frozen `f8621c51`, both arms fully attempted four fresh engineering objectives
+with unchanged public/private checks and original-state quality admission. Neither
+produced a fully accepted first or repaired candidate: control **0/4**, length-only
+treatment **0/4**. The control's last evaluated candidates were functionally correct
+on 2/4 objectives, the treatment's on 0/4; neither passed quality. On expression
+evaluation, the treatment first passed every functional case and then regressed
+after quality feedback. Transaction repair also lost previously passing behavior.
+No best-of accumulation or quality waiver is applied.
+
+All 16 responses reached JSON/source inspection; 15 sources were syntactically
+valid and one control source was rejected. There were zero provider failures,
+unknown-usage calls or truncations. Total: 16 physical calls, 96,587 reported tokens.
+Four pairs were provider-stable, only two matched realized calls/tokens/verifier
+work within the frozen 10% tolerance. These synthetic E3/E4 tasks are now exposed,
+not independent replication, external benchmarks or evidence of frontier readiness.
+
+The [sanitized receipt](../../../docs/omega/evidence/nyx-length-transfer-f8621c51.json)
+preserves the original per-iteration failures, artifact/report SHA256, 16 source
+digests, log agreement and verified cleanup. Linux CI passed 109 suites / 11,782
+checks, TypeScript zero and production build. Promotion is **FALSIFIED**. The
+next bottleneck is coherent structural repair that preserves functional invariants,
+not another grammar layer. Future failure accounting distinguishes valid-JSON
+semantic/no-op and source-bound rejection from malformed JSON; this does not
+rewrite the frozen report or change any acceptance threshold. Default Ultra,
+authority, leases and production state remain unchanged.
+
 ### Explicit regex-free contract and fresh transfer
 
 At frozen `4edbd7b8`, both the prior decision-required grammar and the explicit
