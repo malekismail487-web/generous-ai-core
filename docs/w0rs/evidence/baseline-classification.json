@@ -4546,6 +4546,7 @@
           "scripts/omegaNyxEngineeringQualityAssurance.test.ts",
           "scripts/omegaNyxFreshCircuitTopics.test.ts",
           "scripts/omegaNyxHarborBridge.test.ts",
+          "scripts/omegaNyxSourceEmissionReliability.test.ts",
           "scripts/omegaNyxTextBenchmark.test.ts",
           "scripts/omegaNyxWorkbenchTransfer.test.ts",
           "scripts/omegaPlanArtifact.test.ts",
