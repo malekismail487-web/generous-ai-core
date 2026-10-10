@@ -1,0 +1,2344 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-runtime-observation-transfer/1",
+  "candidate": "d29003447e4884d519f78db0bad8228149210477",
+  "runId": 38027149037,
+  "jobId": 114140302130,
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "frozen": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "taskCorpus": "nyx-runtime-observation-fresh-transfer/1",
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 2,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 1350000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "physicalCallsPerTaskIncludingRetries": 2,
+    "reasoningControl": "SUPER_HOSTED_NATIVE",
+    "reasoningEffort": "none",
+    "generationPolicy": "nyx-length-bounded-decision-schema/1",
+    "changedVariable": "BOUNDED_PUBLIC_RUNTIME_OBSERVATIONS_IN_IDENTICAL_POST_VERIFICATION_CADENCE",
+    "publicFeedback": "IDENTICAL_TESTS_AND_ADMISSION_PLUS_OPTIONAL_UNTRUSTED_PUBLIC_SAMPLES",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "reviewCadence": "BOTH_ARMS_ONCE_WITHIN_EXISTING_BUDGET",
+    "runtimeInputs": "PREDECLARED_PUBLIC_SYNTHETIC_NOT_REFERENCE_ANSWERS",
+    "runtimeExecution": "IDENTICAL_PINNED_TEST_ENTRYPOINT_BOTH_ARMS",
+    "maximumRuntimeSamples": 4,
+    "firstAttemptDifferences": "NO_OBSERVATION_TREATMENT_BEFORE_FIRST_CANDIDATE_NOT_CAUSAL_GAINS",
+    "observationProvenance": "UNTRUSTED_CANDIDATE_OUTPUT_NOT_AUTHENTICATED_ORACLE",
+    "realizedMatchScope": "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
+    "verifierWorkPolicy": "SCHEDULED_CASE_INVOCATION_PROXY_NOT_BRANCH_STEPS_OR_HOST_CPU",
+    "hostDiagnosticCost": "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "artifact": {
+    "id": 11660602169,
+    "name": "nyx-bounded-transfer-d29003447e4884d519f78db0bad8228149210477",
+    "archiveSha256": "7acda5b21ea8019460f000f3cbd9eaf5b4cd61d1737a63bc5fa81f7dafcac877",
+    "archiveBytes": 9330,
+    "reportSha256": "9a3ad0f63cbe27203d572a16d4c0e896339f1dfda701ed3b64c1bb4a8ad4bcff",
+    "reportBytes": 61726
+  },
+  "verification": {
+    "terminalConclusion": "SUCCESS",
+    "logArtifactAgreement": true,
+    "freezeReportAgreement": true,
+    "frozenSourceHashes": [
+      {
+        "path": "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts",
+        "expected": "bc5e125c2263edfb5c554a081166eca26810e8a1d791e9b8b86ae6a80e7c46bd",
+        "actual": "bc5e125c2263edfb5c554a081166eca26810e8a1d791e9b8b86ae6a80e7c46bd"
+      },
+      {
+        "path": "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts",
+        "expected": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+        "actual": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff"
+      },
+      {
+        "path": "src/lib/codelab/engine/r3BoundedRepairLoop.ts",
+        "expected": "3aafadc31a49464b76993d8829c4f551e01a4291488e6db4d115e25afdeccab3",
+        "actual": "3aafadc31a49464b76993d8829c4f551e01a4291488e6db4d115e25afdeccab3"
+      },
+      {
+        "path": "scripts/omega/benchmarks/sourceRepresentationTasks.ts",
+        "expected": "4ebfab0aca3dac1777ff19d07c9209c0116b2a23c755836fe36cbdfa1c09467b",
+        "actual": "4ebfab0aca3dac1777ff19d07c9209c0116b2a23c755836fe36cbdfa1c09467b"
+      },
+      {
+        "path": "scripts/omega/benchmarks/arrayBoundTransferTasks.ts",
+        "expected": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+        "actual": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c"
+      },
+      {
+        "path": "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts",
+        "expected": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2",
+        "actual": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2"
+      },
+      {
+        "path": "scripts/omega/benchmarks/measuredQualityTransferTasks.ts",
+        "expected": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3",
+        "actual": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3"
+      },
+      {
+        "path": "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts",
+        "expected": "8e2265c769ff921a2fca9837f067642433cb5665755bbb14f331f7f14e0c434a",
+        "actual": "8e2265c769ff921a2fca9837f067642433cb5665755bbb14f331f7f14e0c434a"
+      },
+      {
+        "path": "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
+        "expected": "084344f447220904a054667745a0d7f0392fe44ed19af4230f9f213d472b9f10",
+        "actual": "084344f447220904a054667745a0d7f0392fe44ed19af4230f9f213d472b9f10"
+      },
+      {
+        "path": "src/lib/codelab/assurance/engineeringQualityOracle.ts",
+        "expected": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+        "actual": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d"
+      },
+      {
+        "path": "src/lib/codelab/assurance/candidateEngineeringAdmission.ts",
+        "expected": "e501022e0c82a3602d127f1cfee77082fc1e571cb494841b6137726d3ef74f60",
+        "actual": "e501022e0c82a3602d127f1cfee77082fc1e571cb494841b6137726d3ef74f60"
+      },
+      {
+        "path": "scripts/omega/benchmarks/publicRuntimeSamples.ts",
+        "expected": "0dd7573e753d5b2b41d9c6a39eabc25406470b6ee6a23369d387e404bd6040cc",
+        "actual": "0dd7573e753d5b2b41d9c6a39eabc25406470b6ee6a23369d387e404bd6040cc"
+      },
+      {
+        "path": "src/lib/codelab/observation/r3EngineeringObservation.ts",
+        "expected": "c66e89dec96fce65fd1bf219174b89c7fd5a035bd9a7c708d60f3f7f4b649298",
+        "actual": "c66e89dec96fce65fd1bf219174b89c7fd5a035bd9a7c708d60f3f7f4b649298"
+      },
+      {
+        "path": "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
+        "expected": "0a0092b282ad48894e3801a96951d041721be686a7a6e7c79c1311f2e0161dc5",
+        "actual": "0a0092b282ad48894e3801a96951d041721be686a7a6e7c79c1311f2e0161dc5"
+      },
+      {
+        "path": "scripts/omega/benchmarks/runtimeReviewTransferTasks.ts",
+        "expected": "71e9d91359635dd0155b4b9bd3c917e009c666d0b12bdd50e199f294b25a12f0",
+        "actual": "71e9d91359635dd0155b4b9bd3c917e009c666d0b12bdd50e199f294b25a12f0"
+      },
+      {
+        "path": "scripts/omega/nyx-source-representation-cycle.ts",
+        "expected": "b57f1acc3abf69948ba5beb48b1065055dac7b3016fe30ba917a8ab7eb0c811d",
+        "actual": "b57f1acc3abf69948ba5beb48b1065055dac7b3016fe30ba917a8ab7eb0c811d"
+      },
+      {
+        "path": "src/lib/codelab/model/nvidiaNimProvider.ts",
+        "expected": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+        "actual": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723"
+      },
+      {
+        "path": "scripts/omega/benchmarks/r3RepositorySession.ts",
+        "expected": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+        "actual": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536"
+      },
+      {
+        "path": "scripts/omega/benchmarks/nyxArcAdapter.ts",
+        "expected": "c880b82172d3eb19de07635a6181d5b4d9d745b14dcbb7ace817b9c4bd5f4a9b",
+        "actual": "c880b82172d3eb19de07635a6181d5b4d9d745b14dcbb7ace817b9c4bd5f4a9b"
+      }
+    ],
+    "acceptanceAndIntentCompilerUnchanged": true,
+    "sourceAndOwnedCleanupVerified": true
+  },
+  "tasks": [
+    {
+      "id": "LEXICAL-DAG-ORDER",
+      "tier": "DEVELOPMENT",
+      "domain": "DEPENDENCY_SCHEDULING",
+      "inputDigest": "a8662bd0b7064a7dcb6499b10d15e9681161aab49bc13f47a7431c3598c2f1c1",
+      "oracleDigest": "35a4bb6da7e5856944214d2c9e9b2c9d9ca56c12fdb8112155bbfee8857cfbf6",
+      "fixtureDigest": "837f1ca1f2f52c304c8f5dc87f9f7e33e9fc95e3d1ff9db5cf505d003b243e0d"
+    },
+    {
+      "id": "RECURRING-DECIMAL",
+      "tier": "DEVELOPMENT",
+      "domain": "EXACT_RATIONAL_REPRESENTATION",
+      "inputDigest": "2a92a9dbf4f36418db4152e69b256c65034218025e32480773e2d0b22ccc4cc5",
+      "oracleDigest": "ab9118ec4d31c5944f41390a4ea55deff7ffcca133e1c13c3024822207c62bcb",
+      "fixtureDigest": "3817d168fd5bc6c0ad53af22aa72ae53024070a5ccf37d35e59dbf7f3c1fabcc"
+    },
+    {
+      "id": "MINIMUM-EDIT-DISTANCE",
+      "tier": "VALIDATION",
+      "domain": "UNICODE_SEQUENCE_OPTIMIZATION",
+      "inputDigest": "e7c5b71eb1f1ab0081fd9d20d8a24c8a5d018e923cdf8a4caa48aab778637f04",
+      "oracleDigest": "24eb3d6831867c5dd7b3920790bcaa03319762457f5749a36f244294833f5fed",
+      "fixtureDigest": "a8d033916b54d05afa8c8c94d2a0b0fa1ab642e89d1b33bb34dad57c67fa74a9"
+    },
+    {
+      "id": "LINEAR-SAMPLE-INTEGRAL",
+      "tier": "VALIDATION",
+      "domain": "PIECEWISE_NUMERICAL_INTEGRATION",
+      "inputDigest": "c7e3a1ea3761e090d1ed7472ca627b278af37af84e1ac878c668d85b245e0452",
+      "oracleDigest": "a602f42e9adde1e9e7150c9e1b4794909825a1d2610e1113ff1e1818ec62b76a",
+      "fixtureDigest": "98747bc133fee9d0810f73b5853108da9509673a182fecb94061fe4b225cac3a"
+    }
+  ],
+  "results": [
+    {
+      "id": "LEXICAL-DAG-ORDER",
+      "tier": "DEVELOPMENT",
+      "domain": "DEPENDENCY_SCHEDULING",
+      "variant": "SCOPED_REVIEW_CONTROL",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "56fd7ec08e9e95c74c6cd2e92589908e857e2b32b67609a175135bd734f6fa71",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "82d1461bae2bb00f04e276b314141942ad552633c198b062d4090616de05809d"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "fa5fdaec6e3ca5ecefd73c787d08b412565e5b62d7b05c4ac1b460497ff5bee3",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "01f01acc5c1c995246481f9b9d5fee4960de959187d0cdced16743767ef8356e"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 0,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "0cf7d25791f070e38d112ef774e172fbd4bc040e0df0af90bf82fed69c26cb3e",
+          "sourceDigest": "7dd00b4d63274ad1fc8a869ac335ccc64c99e0c14d8aa2dee7a9cdc03d9cb070",
+          "sourceBytes": 1232,
+          "lineCount": 39,
+          "finalLineLength": 1,
+          "maximumLineLength": 57,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "f810dde764e6225208e8edadd15e0b5ce9f56b3730acffee77ad1687365d3d57",
+          "sourceDigest": "78b5ee5f0c3daca0975daa47d63f9dd70ae37d329afcb1c52ab48c14b7e7426a",
+          "sourceBytes": 1112,
+          "lineCount": 37,
+          "finalLineLength": 1,
+          "maximumLineLength": 57,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13501,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 13558,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "7dd00b4d63274ad1fc8a869ac335ccc64c99e0c14d8aa2dee7a9cdc03d9cb070",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "MAINTAINABILITY",
+              "code": "COMPLEXITY_LIMIT",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "COMPLEXITY_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 8,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "78b5ee5f0c3daca0975daa47d63f9dd70ae37d329afcb1c52ab48c14b7e7426a",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "MAINTAINABILITY",
+              "code": "COMPLEXITY_LIMIT",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "COMPLEXITY_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 12,
+                "limit": 8
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 7,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "91059812f6971b12ab68af49aff8529e3f41f8c57f38961f3892b7a7c2e9bd7c",
+        "31e70d987d486bfd2f3e3db6a9cd3aa2b9b2b7ac5863fe54bfe89d0b71045fde"
+      ],
+      "responseDigests": [
+        "0cf7d25791f070e38d112ef774e172fbd4bc040e0df0af90bf82fed69c26cb3e",
+        "f810dde764e6225208e8edadd15e0b5ce9f56b3730acffee77ad1687365d3d57"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    },
+    {
+      "id": "LEXICAL-DAG-ORDER",
+      "tier": "DEVELOPMENT",
+      "domain": "DEPENDENCY_SCHEDULING",
+      "variant": "RUNTIME_OBSERVATION_REVIEW",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "48730f3058a5e33e46f6f4e06a7ee944a269b3e98bd8a9679f03cfb6f7f687a9",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "04d7fd49aa8016ed9b33bbd575de77983537973a4dffea826d21b62581a7a905"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "dd2825358d341407367b0b227be7ccecc7bec5dc5ad8fa57690dc5670c737de0",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 4,
+          "promptDigest": "4649d5efb0ca0bb6aa8d0053fcb7299f34da490db843df1b957f92a974f95907"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 1,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "fa40fa5361147281481c13fa9e078d96121e21397129ab2cd7d65ca83dfc0f1a",
+          "sourceDigest": "5597434777fd33e18f23549ed249fc602bdb3d0e0903425b442f284a6e60890a",
+          "sourceBytes": 1741,
+          "lineCount": 64,
+          "finalLineLength": 1,
+          "maximumLineLength": 83,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "c68ff6b2e71bd2458f54bd18019cbf999231536b8d37a99dd6459b190cbbecd1",
+          "sourceDigest": "832e48ac61c0a4ad0d6267a8cd5f58a797b2dedc18fb3e7cc2343aef050732d9",
+          "sourceBytes": 963,
+          "lineCount": 35,
+          "finalLineLength": 1,
+          "maximumLineLength": 56,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 15462,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 15138,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "5597434777fd33e18f23549ed249fc602bdb3d0e0903425b442f284a6e60890a",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "MAINTAINABILITY",
+              "code": "COMPLEXITY_LIMIT",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 22,
+                "limit": 12
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "COMPLEXITY_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 21,
+                "limit": 8
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 15,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "832e48ac61c0a4ad0d6267a8cd5f58a797b2dedc18fb3e7cc2343aef050732d9",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "MAINTAINABILITY",
+              "code": "COMPLEXITY_LIMIT",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "COMPLEXITY_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            },
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 6,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "930460cef2946b41642c1bb4593ba565f933cab6cd3ec2c0e1525c262ef7636e",
+        "e45518747b35c12195d565abd94b4e7166c3cf6a51e11a609ff1b9694a9a958a"
+      ],
+      "responseDigests": [
+        "fa40fa5361147281481c13fa9e078d96121e21397129ab2cd7d65ca83dfc0f1a",
+        "c68ff6b2e71bd2458f54bd18019cbf999231536b8d37a99dd6459b190cbbecd1"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    },
+    {
+      "id": "RECURRING-DECIMAL",
+      "tier": "DEVELOPMENT",
+      "domain": "EXACT_RATIONAL_REPRESENTATION",
+      "variant": "RUNTIME_OBSERVATION_REVIEW",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "ecf9a5465320fa67151e773302fc5b9f662bef8f986a613b10d29522767b1f72",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "c637ec97e0378f25c4be5d2eb9ddc82c66d7fa56c5f68235dfc8a50dae5946de"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "d6a24ab8c06ed03ea00e4abb1f2c396988a3f1c6163f62c80621ba620c8cf7bb",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 4,
+          "promptDigest": "a52f537604443683c41e77c1e8c879b50810255f0ebbbe516c960b510e19982c"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 1,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "b05608b1bc77ed4e2de1e00e23e0cfcbd3a2895c554116bc88122637e91e73b5",
+          "sourceDigest": "12958e320bdad00b798b9a5ee33b8028ba4bf8688531affd8ccddf9196d599b5",
+          "sourceBytes": 1136,
+          "lineCount": 33,
+          "finalLineLength": 1,
+          "maximumLineLength": 75,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "4dd443c348816478c4998fbebbbcf8867f65b6ce8538909e2a3300b76334e477",
+          "sourceDigest": "f6839ac0622a3915effe29cd462aa6835ff257558d325c270ae66c98929c5b09",
+          "sourceBytes": 1076,
+          "lineCount": 28,
+          "finalLineLength": 1,
+          "maximumLineLength": 120,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13161,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 14981,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "12958e320bdad00b798b9a5ee33b8028ba4bf8688531affd8ccddf9196d599b5",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "f6839ac0622a3915effe29cd462aa6835ff257558d325c270ae66c98929c5b09",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "e1d39c02262e497916105ee01c5e5df9051ee0a716a5afda432d497c4f89b8c9",
+        "5b462c27e9d8145c6bc67a1eb119d6602a34a423f0b40f04e5b9cbf5ae250476"
+      ],
+      "responseDigests": [
+        "b05608b1bc77ed4e2de1e00e23e0cfcbd3a2895c554116bc88122637e91e73b5",
+        "4dd443c348816478c4998fbebbbcf8867f65b6ce8538909e2a3300b76334e477"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    },
+    {
+      "id": "RECURRING-DECIMAL",
+      "tier": "DEVELOPMENT",
+      "domain": "EXACT_RATIONAL_REPRESENTATION",
+      "variant": "SCOPED_REVIEW_CONTROL",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "58e0cf2be864910a3b2228a0db615fad4896dc186f2f61b31192935cf1f17f97",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "0cf821c177b7d822079aafa3d704cdb3c92164deec4dc2766f1276d6c8c66684"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "f8a5c2485b9a4a42b2647b4b9bbfbe4424b93ac8cb3df2955c8a52fd882378e4",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "9ac4e6e693e6d3b9f6e6f6f430b04c899cd493c07b104847c6169b37e1473790"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 0,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "a39281163a5eb937af7e1c61e63df2f8ab0ed9aaf2d41bcf2a99954067875c1f",
+          "sourceDigest": "12958e320bdad00b798b9a5ee33b8028ba4bf8688531affd8ccddf9196d599b5",
+          "sourceBytes": 1136,
+          "lineCount": 33,
+          "finalLineLength": 1,
+          "maximumLineLength": 75,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "8a00d826b09056915129646de43088529cd5e9dbc464d957d8cdfe59e6bf99c0",
+          "sourceDigest": "eb4fa3afd89c7022de8cc9779a997dc734ced2c96f623a9f68432e594e4c478b",
+          "sourceBytes": 1086,
+          "lineCount": 27,
+          "finalLineLength": 1,
+          "maximumLineLength": 120,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12260,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 17103,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "12958e320bdad00b798b9a5ee33b8028ba4bf8688531affd8ccddf9196d599b5",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "eb4fa3afd89c7022de8cc9779a997dc734ced2c96f623a9f68432e594e4c478b",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 14,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "69b1f837b63b6d8a8a9283160512765cc9dbfe0e5879c675157bb889b692c902",
+        "b25b7c1b48758f3892309ee8a4e4cf8045dd86615cbedca3f9887bbb46c2eb2f"
+      ],
+      "responseDigests": [
+        "a39281163a5eb937af7e1c61e63df2f8ab0ed9aaf2d41bcf2a99954067875c1f",
+        "8a00d826b09056915129646de43088529cd5e9dbc464d957d8cdfe59e6bf99c0"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    },
+    {
+      "id": "MINIMUM-EDIT-DISTANCE",
+      "tier": "VALIDATION",
+      "domain": "UNICODE_SEQUENCE_OPTIMIZATION",
+      "variant": "SCOPED_REVIEW_CONTROL",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "fdb62be040778cb69e607a42d51e1d00035523e4530aa879372908314dc88526",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "49756eedd4c54520c4dccd538985b5618326fe1a52bbe1cc78cc8692175c39ef"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "e43b449b51e24ba1d49b88266eae2dc568d3e9e1c284e3dabb03747cdd6f1b00",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "532f2fd84a3ce9ac7713a4cc660093746df0be66f3e67ff04b1431a1dc39bc14"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 0,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 7,
+        "total": 7,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "d2d2eed941062f9499dab05841e1ed539e556a27c9a3058f5fb7806242e3fc10",
+          "sourceDigest": "11625f770b1a480a72a54c8e4b2e34a1c3ff1ca0f154ede3e8ca161dfbc22c03",
+          "sourceBytes": 629,
+          "lineCount": 21,
+          "finalLineLength": 1,
+          "maximumLineLength": 86,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "04813feda3e17beb3c771ea158ed2cc4ba4ae29226185f7b2c4949c777df1515",
+          "sourceDigest": "50259df49944ea9f446002c6e02c700a192685b7da162f947f24b0bb4c6a5a83",
+          "sourceBytes": 595,
+          "lineCount": 24,
+          "finalLineLength": 1,
+          "maximumLineLength": 74,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11697,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 39,
+        "wallClockMs": 9898,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "11625f770b1a480a72a54c8e4b2e34a1c3ff1ca0f154ede3e8ca161dfbc22c03",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 6,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 7,
+            "total": 7,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 7
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "50259df49944ea9f446002c6e02c700a192685b7da162f947f24b0bb4c6a5a83",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 6,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 7,
+            "total": 7,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 7
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "a07412c3e44f477d0dc4268bac0e2bb8eff38979980d88d26854715e49ec38d5",
+        "0daa3852820f71d752f57ca068734dda28d6a0a0114e7f4b4563789884097c55"
+      ],
+      "responseDigests": [
+        "d2d2eed941062f9499dab05841e1ed539e556a27c9a3058f5fb7806242e3fc10",
+        "04813feda3e17beb3c771ea158ed2cc4ba4ae29226185f7b2c4949c777df1515"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 14
+    },
+    {
+      "id": "MINIMUM-EDIT-DISTANCE",
+      "tier": "VALIDATION",
+      "domain": "UNICODE_SEQUENCE_OPTIMIZATION",
+      "variant": "RUNTIME_OBSERVATION_REVIEW",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "6c13c0b07f1cfb28e9468557a62a0634f2160feb659524c3ba3b148071a45ad7",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "a67b646c55847090faa3db7f93b35c1826f226cf0508a3ed614ec408cc42f468"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "db798849604b2fe0265187a5bfc31287c2ea54f2564a3addf992f8dd0f2a0797",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 4,
+          "promptDigest": "9828b0d25885be140e4b88099eb0c95010129f59ab94809bdfdacf1865875648"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 1,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 7,
+        "total": 7,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "a35d5d7b79156b53f5d4ef5a7980bab757a6bc6029397f69791ca762442d8e44",
+          "sourceDigest": "bca51d696321c9f51e83dbd169404bb4d6d34f67238091b2ec0c58e9f4d6815d",
+          "sourceBytes": 872,
+          "lineCount": 30,
+          "finalLineLength": 1,
+          "maximumLineLength": 77,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "a00e628f432dd64691170cdfc6aaa530364fa19ba7b09c5a385acc0a7e4d3719",
+          "sourceDigest": "dc5acd30219aff2842ef1460773dc6191a62edb2d0caf0ee8e36d81307d7815f",
+          "sourceBytes": 386,
+          "lineCount": 11,
+          "finalLineLength": 1,
+          "maximumLineLength": 95,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12633,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 39,
+        "wallClockMs": 8964,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "bca51d696321c9f51e83dbd169404bb4d6d34f67238091b2ec0c58e9f4d6815d",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 6,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 7,
+            "total": 7,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 7
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "dc5acd30219aff2842ef1460773dc6191a62edb2d0caf0ee8e36d81307d7815f",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 5,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 7,
+            "total": 7,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 7
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "af4307555ff591fc0ddf3aa8bce7007a57b96b381fb065437ffba8efbf4981d9",
+        "b6a48736a0e60169dfb56dd1b4cdcc2e331a5de210eea4b0409ff0db6842bc29"
+      ],
+      "responseDigests": [
+        "a35d5d7b79156b53f5d4ef5a7980bab757a6bc6029397f69791ca762442d8e44",
+        "a00e628f432dd64691170cdfc6aaa530364fa19ba7b09c5a385acc0a7e4d3719"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 14
+    },
+    {
+      "id": "LINEAR-SAMPLE-INTEGRAL",
+      "tier": "VALIDATION",
+      "domain": "PIECEWISE_NUMERICAL_INTEGRATION",
+      "variant": "RUNTIME_OBSERVATION_REVIEW",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "75291df0dd5cb02093059d350fbd1f6cc1ae2234b8e2b2190fff447df188a626",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "4063fbb9cd2c7f9469386ce8ad30ac97fe4edf993077e7a8df29a0a6279aceef"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "bc24079979521e818c275daf50004ee7b67401d656eba1722f91ea1b0033d603",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 4,
+          "promptDigest": "6e2b1a76727f3b333457a1eed97e09cfe6937e29b4d4a414979b4b7c07b0f5cf"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 1,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "91894240704048b0e08ba01cf95c010b8e18c66a6dca35b2bf67abbf685fb84c",
+          "sourceDigest": "104793148a4afc0007389357f4ba59415ca890acd867b2922e4cf3534d1ed638",
+          "sourceBytes": 829,
+          "lineCount": 27,
+          "finalLineLength": 1,
+          "maximumLineLength": 66,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "e42f5aefc0f62769c13d69124bb2d824ff1cef96d8073e1219bf79150df3f9f6",
+          "sourceDigest": "469ebd75232c06feabf525ea0fb08c99ac7e9ca13e6a886125953b8eafc63aae",
+          "sourceBytes": 770,
+          "lineCount": 22,
+          "finalLineLength": 1,
+          "maximumLineLength": 58,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13285,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 10585,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "104793148a4afc0007389357f4ba59415ca890acd867b2922e4cf3534d1ed638",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "469ebd75232c06feabf525ea0fb08c99ac7e9ca13e6a886125953b8eafc63aae",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 12,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "7bfd4034defdb6bf16050dcd3b2ede3902d5741f793b302d75e3dc4907754fe3",
+        "5f9eba2deede1cbba4a65f65200505359ef8ec49a10ad20c47b4d80b9687c3dd"
+      ],
+      "responseDigests": [
+        "91894240704048b0e08ba01cf95c010b8e18c66a6dca35b2bf67abbf685fb84c",
+        "e42f5aefc0f62769c13d69124bb2d824ff1cef96d8073e1219bf79150df3f9f6"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    },
+    {
+      "id": "LINEAR-SAMPLE-INTEGRAL",
+      "tier": "VALIDATION",
+      "domain": "PIECEWISE_NUMERICAL_INTEGRATION",
+      "variant": "SCOPED_REVIEW_CONTROL",
+      "preserveProviderArrayBounds": true,
+      "providerIntentShape": "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "schemaRejectedInteractions": 0,
+      "observedInferenceControls": [
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "37f5631001c1426f67ec28db5473f5ec78c885ae16468784f5eae9e121aaa24d",
+          "postCandidatePhase": false,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "a877a6d214cd5338a87358e8e173775c23e3208ed98f3a004c3e3968867232bd"
+        },
+        {
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "maxTokens": 8192,
+          "temperature": 0,
+          "effort": "none",
+          "reasoningBudget": null,
+          "schemaDigest": "09c1de7ca70013917d76e9b43c94c880ad8624070267e0fea4352ecac55cf673",
+          "postCandidatePhase": true,
+          "passReviewPhase": false,
+          "publicRuntimeSampleCount": 0,
+          "promptDigest": "8693d3866bfe554217819d8ea9d73ca9c192c996fbcfd9d9c498307c5a901176"
+        }
+      ],
+      "inferenceControlVerified": true,
+      "runtimeReviewControlVerified": true,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 0,
+      "retainedWithoutMutation": false,
+      "representation": "LINES",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "publicAccepted": true,
+      "score": {
+        "accepted": true,
+        "correct": 6,
+        "total": 6,
+        "failure": null
+      },
+      "firstCallAccepted": false,
+      "firstCandidateMeetsChecks": false,
+      "mutationRepairCount": 1,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "infrastructureFailure": false,
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "2c7e136a97eca62cb92d1120f6bc53ba95c7bd54be5eb86d39d1d8e653076553",
+          "sourceDigest": "adb87fabf55fef179f24615a955ac1d443548a0b9adb1bc52c1fa054746f1c50",
+          "sourceBytes": 796,
+          "lineCount": 23,
+          "finalLineLength": 1,
+          "maximumLineLength": 66,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        },
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "8a29b518d4d9efb6f4baff20085ad9bb88e3d9b8e2c058ac9fb565d4776c3fb6",
+          "sourceDigest": "dc099139794eba20140e405c77457f4b6061004e5225fd9e610261cdc6a609b8",
+          "sourceBytes": 719,
+          "lineCount": 22,
+          "finalLineLength": 1,
+          "maximumLineLength": 58,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12162,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 12857,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "candidateIterations": 2,
+      "toolUsageComplete": true,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "candidateSourceDigest": "adb87fabf55fef179f24615a955ac1d443548a0b9adb1bc52c1fa054746f1c50",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 13,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "candidateSourceDigest": "dc099139794eba20140e405c77457f4b6061004e5225fd9e610261cdc6a609b8",
+          "quality": "REJECTED",
+          "qualityFindings": [
+            {
+              "dimension": "UNNECESSARY_COMPLEXITY",
+              "code": "DECLARATION_DELTA",
+              "paths": [
+                "src/transform.mjs"
+              ],
+              "measurement": {
+                "observed": 12,
+                "limit": 4
+              }
+            }
+          ],
+          "score": {
+            "accepted": true,
+            "correct": 6,
+            "total": 6,
+            "failure": null
+          },
+          "functionalAccepted": true,
+          "qualityAccepted": false,
+          "accepted": false,
+          "privateScorerWorkUnits": 6
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "e5a04f20516748d040f9468e7757e7d0ce6da0e3cb0c52d0c823d420f25d6d99",
+        "3f3ef1804259a1b8938c593a477f5b15ea9e0b3af0cde69c032e69cf879b476c"
+      ],
+      "responseDigests": [
+        "2c7e136a97eca62cb92d1120f6bc53ba95c7bd54be5eb86d39d1d8e653076553",
+        "8a29b518d4d9efb6f4baff20085ad9bb88e3d9b8e2c058ac9fb565d4776c3fb6"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      },
+      "privateScorerWorkUnits": 12
+    }
+  ],
+  "pairs": [
+    {
+      "id": "LEXICAL-DAG-ORDER",
+      "tier": "DEVELOPMENT",
+      "providerStable": true,
+      "matchedRealizedCompute": false,
+      "treatmentExercised": true,
+      "sameFirstCandidate": false,
+      "sameFirstPrompt": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SCOPED_REVIEW_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "RUNTIME_OBSERVATION_REVIEW",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "RECURRING-DECIMAL",
+      "tier": "DEVELOPMENT",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": true,
+      "sameFirstCandidate": true,
+      "sameFirstPrompt": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "RUNTIME_OBSERVATION_REVIEW",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "SCOPED_REVIEW_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "MINIMUM-EDIT-DISTANCE",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": true,
+      "sameFirstCandidate": false,
+      "sameFirstPrompt": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SCOPED_REVIEW_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "RUNTIME_OBSERVATION_REVIEW",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "LINEAR-SAMPLE-INTEGRAL",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": true,
+      "sameFirstCandidate": false,
+      "sameFirstPrompt": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "RUNTIME_OBSERVATION_REVIEW",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "SCOPED_REVIEW_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    }
+  ],
+  "summaries": [
+    {
+      "variant": "SCOPED_REVIEW_CONTROL",
+      "accepted": 0,
+      "functionallyAccepted": 4,
+      "qualityAccepted": 0,
+      "firstCallAccepted": 0,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 0,
+      "retainedWithoutMutation": 0,
+      "reviewRegressions": 0,
+      "repairedAccepted": 0,
+      "reportedTokens": 49620,
+      "unknownUsageCalls": 0
+    },
+    {
+      "variant": "RUNTIME_OBSERVATION_REVIEW",
+      "accepted": 0,
+      "functionallyAccepted": 4,
+      "qualityAccepted": 0,
+      "firstCallAccepted": 0,
+      "passReviewPrompts": 0,
+      "sampleObservationPrompts": 4,
+      "retainedWithoutMutation": 0,
+      "reviewRegressions": 0,
+      "repairedAccepted": 0,
+      "reportedTokens": 54541,
+      "unknownUsageCalls": 0
+    }
+  ],
+  "totals": {
+    "selectedObjectives": 4,
+    "taskArms": 8,
+    "attemptedTaskArms": 8,
+    "providerStablePairs": 4,
+    "matchedModelAndScheduledVerifierProxyPairs": 3,
+    "candidateIterations": 16,
+    "syntacticallyValidEmissions": 16,
+    "privateCaseEvaluationsAcrossBothArmsAndIterations": 100,
+    "correctPrivateCaseEvaluations": 100,
+    "uniquePrivateCases": 25,
+    "privateCaseEvaluationsAreNotIndependentTasks": true,
+    "finalFunctionalTaskArms": 8,
+    "finalQualityAcceptedTaskArms": 0,
+    "logicalCalls": 16,
+    "physicalCalls": 16,
+    "reportedTokens": 104161,
+    "unknownUsageCalls": 0,
+    "providerFailures": 0,
+    "retries": 0,
+    "schemaFailures": 0,
+    "truncations": 0,
+    "verifierProcesses": 24,
+    "scheduledCaseInvocationProxy": 294,
+    "independentPrivateScorerWorkUnits": 100,
+    "summedTaskArmWallClockMs": 103084,
+    "wholeHostCpuMeasured": false,
+    "sourcePreserved": true,
+    "ownedCleanup": true,
+    "stopReason": "ALL_FROZEN_TASK_ARMS_COMPLETED_WITHIN_PREDECLARED_LIMITS"
+  },
+  "outcome": "NO_ACCEPTANCE_GAIN_ALL_FUNCTIONALLY_CORRECT_QUALITY_REJECTED_NOT_PROMOTED",
+  "causalInterpretation": {
+    "rawFirstPromptDigestsIdenticalPairs": 0,
+    "rawPromptIdentityIncludesHostObservationIds": true,
+    "normalizedSemanticFirstPromptEquivalenceNotRecorded": true,
+    "sameFirstCandidatePairs": 1,
+    "firstCandidateVariationIsNotEvidenceOfTreatmentEffect": true,
+    "treatmentSamplePrompts": 4,
+    "postPassReviewPrompts": 0,
+    "postPassReviewNotLiveExercised": "NO_CANDIDATE_PASSED_STATIC_ADMISSION",
+    "finalFailures": "EIGHT_QUALITY_REJECTIONS_NO_OBSERVED_FUNCTIONAL_FAILURE",
+    "declaredBudgetsUnchanged": true,
+    "qualityFailureDetails": [
+      {
+        "id": "LEXICAL-DAG-ORDER",
+        "variant": "SCOPED_REVIEW_CONTROL",
+        "first": [
+          {
+            "dimension": "MAINTAINABILITY",
+            "code": "COMPLEXITY_LIMIT",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 12
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "COMPLEXITY_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 13,
+              "limit": 8
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 8,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "MAINTAINABILITY",
+            "code": "COMPLEXITY_LIMIT",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 13,
+              "limit": 12
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "COMPLEXITY_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 12,
+              "limit": 8
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 7,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "LEXICAL-DAG-ORDER",
+        "variant": "RUNTIME_OBSERVATION_REVIEW",
+        "first": [
+          {
+            "dimension": "MAINTAINABILITY",
+            "code": "COMPLEXITY_LIMIT",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 22,
+              "limit": 12
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "COMPLEXITY_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 21,
+              "limit": 8
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 15,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "MAINTAINABILITY",
+            "code": "COMPLEXITY_LIMIT",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 12
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "COMPLEXITY_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 13,
+              "limit": 8
+            }
+          },
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 6,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "RECURRING-DECIMAL",
+        "variant": "RUNTIME_OBSERVATION_REVIEW",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "RECURRING-DECIMAL",
+        "variant": "SCOPED_REVIEW_CONTROL",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 14,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "MINIMUM-EDIT-DISTANCE",
+        "variant": "SCOPED_REVIEW_CONTROL",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 6,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 6,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "MINIMUM-EDIT-DISTANCE",
+        "variant": "RUNTIME_OBSERVATION_REVIEW",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 6,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 5,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "LINEAR-SAMPLE-INTEGRAL",
+        "variant": "RUNTIME_OBSERVATION_REVIEW",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 13,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 12,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "LINEAR-SAMPLE-INTEGRAL",
+        "variant": "SCOPED_REVIEW_CONTROL",
+        "first": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 13,
+              "limit": 4
+            }
+          }
+        ],
+        "last": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/transform.mjs"
+            ],
+            "measurement": {
+              "observed": 12,
+              "limit": 4
+            }
+          }
+        ]
+      }
+    ],
+    "interpretation": "Execution observations reached all treatment quality-repair phases but did not improve full acceptance. All first and repaired candidates passed the finite functional oracle. This epoch therefore does not demonstrate either a functional reasoning gain or successful structural constraint repair.",
+    "improvementPromoted": false,
+    "benchmark80PercentConfidenceEstablished": false
+  },
+  "developmentEvidence": {
+    "localSuites": 109,
+    "localChecks": 12158,
+    "localFailedChecks": 0,
+    "observationChecks": 47,
+    "repairLoopChecks": 182,
+    "arcIntegrationChecks": 725,
+    "testsCover": [
+      "default unchanged one-call stop",
+      "bounded pass retention without mutation",
+      "review-induced regression rejection",
+      "cancellation before retention",
+      "forged/conflicted review provenance rejection",
+      "quality rejection cannot be retained",
+      "public sample bounded schema",
+      "private predictions excluded from feedback",
+      "independent authored reference checks",
+      "guarded sample value/error/ownership handling"
+    ]
+  },
+  "ci": {
+    "runId": 38027148995,
+    "jobId": 114140302024,
+    "conclusion": "SUCCESS",
+    "candidate": "d29003447e4884d519f78db0bad8228149210477",
+    "discoveredSuites": 109,
+    "executedSuites": 109,
+    "passedSuites": 109,
+    "failedSuites": 0,
+    "passedChecks": 12158,
+    "failedChecks": 0,
+    "semanticTestDefinitions": 4465,
+    "manifestDigest": "68d09d7de6d18f204c31cfebaaff23e329cc1b880c77e672d5d8adf711f5a8ee",
+    "typescript": "5.8.3",
+    "typescriptBaseline": 0,
+    "typescriptCurrent": 0,
+    "typescriptNew": 0,
+    "secretScan": {
+      "textFiles": 1318,
+      "findings": 0
+    },
+    "productionBuildSeconds": 12.68,
+    "packageSmoke": "PASS",
+    "deployment": false
+  },
+  "research": [
+    {
+      "url": "https://i.cs.hku.hk/~tse/Papers/2010s/hlmtCSUR.html",
+      "scope": "Primary author survey motivates executable observations and relation/oracle separation; does not establish this mechanism improves NYX."
+    }
+  ],
+  "pluginDiscovery": {
+    "additionalPluginRequired": false,
+    "builtInResearchAndConnectedGitHubSufficient": true,
+    "connectionsChanged": false,
+    "permissionsExpanded": false,
+    "chargesAuthorized": false
+  },
+  "security": {
+    "authorityIncrease": false,
+    "sourceRepositoryWrite": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "defaultUltraChanged": false,
+    "NVIDIASecretLogged": false,
+    "rawModelReasoningPersisted": false,
+    "rawGeneratedSourcePersisted": false,
+    "hostileCodeIsolation": "NOT_PROVEN",
+    "runtimeOutput": "UNTRUSTED_NOT_AUTHENTICATED_NOT_AN_ORACLE",
+    "modelEndpoint": "EXISTING_EXPLICIT_NVIDIA_ONLY"
+  },
+  "planCoverage": {
+    "status": "PARTIAL_JUST_IN_TIME",
+    "directlyImplemented": [
+      "bounded observation-diagnosis-repair",
+      "generator/detector separation",
+      "provenance and lease-preserving scoped review"
+    ],
+    "supporting": [
+      "unchanged cumulative quality oracle",
+      "first and final outcome separation",
+      "compute accounting",
+      "candidate cannot self-certify"
+    ],
+    "deferred": [
+      "dynamic arbitrary model experiments",
+      "new cognitive/biological layers",
+      "recursion",
+      "production promotion",
+      "protected benchmark access"
+    ],
+    "conflicts": [
+      "A functional pass is not full acceptance. No favorable confidence label or relaxed gate may convert this negative result into promotion."
+    ]
+  },
+  "nextEvidenceSupportedAction": "Investigate why quantitative quality feedback produces insufficient algorithmic restructuring. Develop an explicit constraint-consistent refactoring strategy on separate development programs; reject declaration packing that only games the counter. Test on fresh tasks without changing the oracle. Post-pass observation value remains unexercised in this epoch."
+}

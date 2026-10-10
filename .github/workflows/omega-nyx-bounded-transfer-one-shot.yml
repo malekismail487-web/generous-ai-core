@@ -31,7 +31,7 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-representation-cycle.ts scripts/omegaArcNyxIntegration.test.ts
-      - name: Frozen fresh paired runtime observation review under identical execution and shared caps
+      - name: Optional development rerun on now-exposed runtime review tasks under unchanged shared caps
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NYX_RUNTIME_REVIEW_TRANSFER: '1'

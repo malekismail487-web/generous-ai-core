@@ -7,7 +7,8 @@ export function runtimeReviewTransferConfiguration(variant: string) {
     qualityRepairGuidance: "STRUCTURE_SITES" as const, structuralBudgetGuidance: "PUBLIC_ORIGINAL_STATE" as const };
 }
 
-// Fresh at initial freeze. Same-author E3 fixtures; inputs visible, private expected outputs withheld.
+// Frozen at d2900344 before inference; now exposed development, never rerun as fresh.
+// Same-author E3 fixtures; inputs visible, private expected outputs withheld.
 // Public runtime inputs contain no expected answers and do not overlap the private cases.
 export const RUNTIME_REVIEW_TRANSFER_TASKS: readonly RepresentationTask[] = [
   { id: "LEXICAL-DAG-ORDER", tier: "DEVELOPMENT", domain: "DEPENDENCY_SCHEDULING",

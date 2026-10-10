@@ -2,6 +2,40 @@
 
 ### Bounded runtime-observation review: candidate experiment, not promoted
 
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38027149037)
+at `d2900344` is complete. The
+[verified receipt](../../../docs/omega/evidence/nyx-runtime-observation-transfer-d2900344.json)
+pins the artifact/report SHA256, all 19 source hashes, actual configuration,
+log/freeze agreement and cleanup. Both arms achieved **4/4 functional acceptance,
+0/4 full acceptance**. Every first and second candidate passed the finite public
+and private functional oracle; all 16 candidates were rejected by unchanged
+structural quality limits. The 100 passing private case evaluations include
+repeated arm/iteration evaluations of just 25 unique cases, not 100 tasks.
+
+Control used **49,620 tokens / eight calls**; treatment used **54,541 / eight**.
+All four pairs were provider-stable; three were within 10% realized model calls,
+tokens and scheduled verifier-work proxy. There were no provider, retry, schema,
+syntax or truncation failures. Four treatment repair prompts received samples,
+but **zero post-pass reviews were exercised**, because no candidate passed static
+admission. Observation capture works; no acceptance/cognitive gain is established.
+No raw reasoning or generated source was persisted.
+
+One pair began with the same candidate. Literal first-prompt digests differed in
+all pairs; host-generated observation identities are included and semantic
+normalization was not recorded. Do not reinterpret first-candidate variation as
+a treatment gain. The recurring-decimal pair retained declaration delta 14
+after both repairs; the remaining final candidates also exceeded the delta-four
+limit, with additional complexity failures on scheduling. There were no observed
+functional regressions. The next supported investigation is general algorithmic
+restructuring that genuinely satisfies the unchanged quality contract, not more
+observation layers, raised thresholds or cosmetic declaration packing. These
+tasks are now exposed development material and must not be rerun as fresh.
+
+Frozen Linux CI: **109 suites / 12,158 checks / zero failures**, TypeScript 5.8.3
+zero diagnostics, secret scan zero findings, production build 12.68 seconds,
+package smoke passing. Production was not deployed; default Ultra and authority
+remain unchanged.
+
 The next frozen experiment compares `SCOPED_REVIEW_CONTROL` with
 `RUNTIME_OBSERVATION_REVIEW` on four newly authored cross-domain engineering
 objectives. Both use the existing R3 repository session, the same pinned TEST
