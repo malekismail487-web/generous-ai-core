@@ -1,5 +1,49 @@
 # NYX benchmark capability program
 
+### Binding-use repair transfer: no acceptance gain, not promoted
+
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38022952653)
+at `9850e645` evaluated four fresh objectives in both arms. The
+[receipt](../../../docs/omega/evidence/nyx-behavior-repair-transfer-9850e645.json)
+verifies artifact/log agreement, all 17 source hashes, actual native-none wire
+controls, source preservation and owned cleanup. Both arms finished **0/4 full
+acceptance, 2/4 functional acceptance** at their last evaluated candidates.
+There is no cognitive promotion or default configuration change.
+
+The treatment added bounded, source-bound lexical binding-use facts only after
+publicly passing execution plus a quality rejection. Both arms retained the
+same first-candidate configuration, original structural budget, declaration
+sites, strict intent grammar, private oracle, authority and finite call/token/
+wall limits. Six quality-repair prompts occurred, three with treatment. Two
+pairs were within 10% realized calls/tokens/verifier work; none gained acceptance.
+Treatment spent 43,435 tokens versus 40,032 control tokens. One treatment repair
+regressed from 8/8 to 7/8 private cases while still passing public checks. Public
+regression counts alone therefore do not establish behavior preservation.
+Graph treatment's functional success predates treatment exposure and is not a
+causal gain. First-attempt and repaired outcomes remain separate.
+
+All 16 responses contained syntactically valid, untruncated source; provider,
+infrastructure and unknown-usage counts were zero. Both run-fold second responses
+repeated a falsified candidate and were rejected as semantic no-op repairs, not
+transport failures. The other three pairs remained quality-rejected. Sources
+were not retained; the exact low-level cause of each semantic bug is not inferred
+from pass counts. These tasks are now exposed, not future fresh holdouts.
+
+Trusted development programs separately reproduced call/getter repetition and
+accumulator regressions. Lexical summaries deliberately assert no purity,
+liveness, alias or equivalence proof. Test-only reference candidates demonstrate
+that all four tasks can satisfy the unchanged public/private/quality gates.
+This design follows the separation of repair tests from independent evaluation
+in [patch-overfitting research](https://people.cs.umass.edu/~brun/pubs/pubs/Smith15fse.pdf),
+not a claim that additional feedback itself improves reasoning.
+
+Linux CI passed **109 suites / 11,958 checks**, TypeScript 5.8.3 zero, build,
+package smoke, secret scan and inventories. Experimental `BINDING_USES` remains
+opt-in, unpromoted; the automatic launch trigger is removed. Next investigate
+bounded behavior-preserving refactor operations on separate development programs
+rather than add another prompt-only layer or weaken the oracle. No new plugin
+connection, permission expansion, production change or SEC-003 work occurred.
+
 ### Original-budget transfer: one acceptance gain, no general promotion
 
 The [frozen run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38020783952)
