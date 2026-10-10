@@ -244,7 +244,93 @@ const runtimeReviewRefinement: Record<string, readonly (readonly [string, string
   ["      if (candidateAdmission?.decision === \"INSUFFICIENT_EVIDENCE\") {\n        return finish(\"BLOCKED\", \"candidate_admission_evidence_insufficient\", iterations, currentObservation);\n      }\n      if (passed) return finish(\"FUNCTIONALLY_REPAIRED_VERIFIED\", \"bounded_repair_functionally_verified\", iterations, verifications[0].observation);\n      if (functionallyPassed && candidateAdmission?.decision === \"REJECTED\") {\n        priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,\n          parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,\n","      if (candidateAdmission?.decision === \"INSUFFICIENT_EVIDENCE\") {\n        return finish(\"BLOCKED\", \"candidate_admission_evidence_insufficient\", iterations, currentObservation);\n      }\n      reviewingPassedCandidate = false;\n      if (passed) {\n        if (this.#config.passedCandidateReview && !passReviewUsed && cognitionCycle < maxModelInteractions\n          && iterations.length < this.#config.maxIterations) {\n          passReviewUsed = true;\n          reviewingPassedCandidate = true;\n          priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,\n            parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,\n            expectedResult: cognition.hypothesis.expectedResult, strategyDigest: cognition.hypothesis.strategyDigest,\n            disposition: \"SUPPORTED\", verificationEvidenceRefs: Object.freeze(verifications.map(item => item.execution.evidence.evidenceId)) }));\n          currentObservation = verifications[0].observation;\n          currentFiles = candidateContexts;\n          candidateQualityFeedback = null;\n          continue;\n        }\n        return finish(\"FUNCTIONALLY_REPAIRED_VERIFIED\", \"bounded_repair_functionally_verified\", iterations, verifications[0].observation);\n      }\n      if (functionallyPassed && candidateAdmission?.decision === \"REJECTED\") {\n        priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,\n          parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,\n"],
 ],
 };
+const cognitionSelectionRefinement: readonly (readonly [string, string, number])[] = [
+  [
+    "",
+    "import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactorSelectionSchema,\n  type NyxRefactorSelectionEvidence } from \"./nyxSourceBoundRefactorSelection\";\n",
+    1
+  ],
+  [
+    "",
+    "  readonly refactorSelection?: NyxRefactorSelectionEvidence;\n",
+    1
+  ],
+  [
+    "",
+    "  /** Opt-in emission path only. A selected host proposal is neither generated source nor approval. */\n  readonly localRefactorSelection?: \"SOURCE_BOUND_REFERENCES\";\n",
+    1
+  ],
+  [
+    "",
+    "    if (config.localRefactorSelection !== undefined && (config.localRefactorSelection !== \"SOURCE_BOUND_REFERENCES\"\n      || config.localRefactorGuidance === undefined || config.experimentVariant === \"MINIMAL_REFERENCE\")) {\n      throw new Error(\"nyx_local_refactor_selection_invalid\");\n    }\n",
+    1
+  ],
+  [
+    "",
+    "    const refactorSelection = this.#config.localRefactorSelection\n      ? buildNyxRefactorSelection(request, this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\") : null;\n",
+    1
+  ],
+  [
+    "      availableSemanticActions: contract.allowedActions,\n      requiredFieldsByDecision: contract.requiredFields,\n",
+    "      availableSemanticActions: refactorSelection ? [...contract.allowedActions, \"SELECT_LOCAL_REFACTOR\"] : contract.allowedActions,\n      requiredFieldsByDecision: refactorSelection ? { ...contract.requiredFields,\n        SELECT_LOCAL_REFACTOR: [...contract.requiredFields.PROPOSE_EDIT.filter(field => field !== \"changes\"), \"selectedProposalRef\"] }\n        : contract.requiredFields,\n",
+    1
+  ],
+  [
+    "      ...(localRefactorProposals ? { localRefactorProposals } : {}),\n",
+    "      ...(refactorSelection ? { localRefactorProposals: refactorSelection,\n        proposalSelectionDecision: \"SELECT_LOCAL_REFACTOR is a wire representation of PROPOSE_EDIT, not a new Omega capability.\" }\n        : localRefactorProposals ? { localRefactorProposals } : {}),\n",
+    1
+  ],
+  [
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: withNyxRefactorSelectionSchema(this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    1
+  ],
+  [
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema },\n",
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection) },\n",
+    1
+  ],
+  [
+    "    const compiled = await compileNyxRepairIntent(parsed, { mode: this.#intentCompilationMode,\n",
+    "    const selected = resolveNyxRefactorSelection(parsed, refactorSelection, request, this.#sourceRepresentation,\n      this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\");\n    if (selected?.value === null) return this.#result(\"COGNITION_ERROR\", \"nyx_cognition_refactor_selection_invalid\",\n      request, null, null, completion.evidence,\n      [diagnostic(\"STALE_TARGET_REFERENCE\", \"$\", \"current source-bound proposal without inline changes\", selected.evidence.reason)],\n      undefined, feedbackPresented, selected.evidence);\n    const compiled = await compileNyxRepairIntent(selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n",
+    1
+  ],
+  [
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented);\n",
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    1
+  ],
+  [
+    "        completion.evidence, [], compiled.evidence, feedbackPresented);\n",
+    "        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    1
+  ],
+  [
+    "      completion.evidence, [], compiled.evidence, feedbackPresented);\n",
+    "      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    2
+  ],
+  [
+    "    rejectedSourceFeedbackPresented = false): NyxRepairCognitionResult {\n",
+    "    rejectedSourceFeedbackPresented = false, refactorSelection?: NyxRefactorSelectionEvidence): NyxRepairCognitionResult {\n",
+    1
+  ],
+  [
+    "      intentCompilation: intentCompilation ?? null })).slice(0, 32)}`,\n",
+    "      intentCompilation: intentCompilation ?? null, ...(refactorSelection ? { refactorSelection } : {}) })).slice(0, 32)}`,\n",
+    1
+  ],
+  [
+    "",
+    "      ...(refactorSelection ? { refactorSelection } : {}),\n",
+    1
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after, count] of cognitionSelectionRefinement) {
+    if (current.split(after).length !== count + 1) throw Error("arc_cognition_selection_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of [
     ['  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";',
       '  readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS";'],

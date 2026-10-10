@@ -1,5 +1,38 @@
 # NYX benchmark capability program
 
+### Source-bound proposal selection: exposed diagnostic, not cognitive promotion
+
+The conditional v3 failure below exposed model reserialization of already
+host-computed source: two syntax rejections and one truncated output. The next
+frozen diagnostic compares **the same v3 proposals** in both arms, with an opt-in
+`SELECT_LOCAL_REFACTOR` wire branch in treatment. It resolves one exact current
+proposal into ordinary `PROPOSE_EDIT`; no new Omega action or approval exists.
+References bind request, objective, source, evidence, scope and resource policy.
+The catalog is recomputed after inference; changed state, unlisted references,
+missing provenance and mixed reference/source output fail closed. Ordinary
+syntax, schema, quality, scope, execution and cumulative admission still apply.
+Default Ultra configuration is unchanged. Source remains visible for review;
+selected source is **host-proposed/model-selected**, not model-generated.
+
+Reuse the exposed four-task/two-repeat cohort and its unchanged literal oracle,
+original stub, one live call/HTTP attempt per arm, token/candidate/tool caps,
+balanced order and 10% realized-compute criterion. The v3 source-emission control
+is rerun, not compared only with stale earlier failures. Report actual selection
+receipt coverage separately from offered branches, model emission errors,
+functional and quality results, provider failures and resource use. The existing
+E3 direct-proposal witnesses remain the simpler host-computation baseline:
+selecting them cannot establish new independent cognition. New unseeded transfer
+and unrelated-task replication are required before any broad promotion.
+
+This implements a falsifiable emission interface correction, not an extra
+cognitive layer. Syntax success is not semantic correctness; the primary
+[TypeScript language-service design](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API)
+also explicitly distinguishes syntactic and semantic diagnostics. Ω coverage is
+**PARTIAL / JUST-IN-TIME**: proposal ≠ authority, implemented ≠ verified,
+generator/detector separation, source-bound provenance and critical falsification.
+Production/SEC-003, protected benchmarks, biological expansion, recursion and
+policy-applicability changes remain deferred. Live results are pending.
+
 ### Conditional one-call quality repair: v2 versus v3 proposals
 
 The preceding unseeded epoch could not identify a mechanism effect because no

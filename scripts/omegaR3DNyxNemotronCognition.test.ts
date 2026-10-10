@@ -6,6 +6,8 @@ import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSc
 import { measuredQualityRepairGuidance, originalStateQualityBudget, measureBindingUses,
   behaviorPreservingQualityGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { proposeNyxLocalRefactors, nyxLocalRefactorGuidance } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
+import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactorSelectionSchema }
+  from "../src/lib/codelab/cognition/nyxSourceBoundRefactorSelection";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -1121,6 +1123,96 @@ function schemaKeys(value: unknown): string[] {
     candidateQualityFeedback:{...measuredRequest.candidateQualityFeedback!,findings:[{dimension:"UNNECESSARY_COMPLEXITY",
       code:"DECLARATION_DELTA",paths:["src/math.mjs"],measurement:{observed:5,limit:4}}]}};
   const localGuide = nyxLocalRefactorGuidance(localRequest)!;
+  const selection = buildNyxRefactorSelection(localRequest, false)!;
+  const selectionIntent = JSON.parse(intent({decision:"SELECT_LOCAL_REFACTOR",
+    evidenceRefs:[selection.evidenceRef,selection.passingObservationRef,"FILE:src/math.mjs"],
+    selectedProposalRef:selection.proposals[0].proposalRef}));
+  delete selectionIntent.changes;
+  const ordinaryContract=buildNyxRepairIntentContract(localRequest);
+  const selectionSchema=withNyxRefactorSelectionSchema(ordinaryContract.providerSchema,selection);
+  const validateSelection=new Ajv().compile(selectionSchema);
+  check(validateSelection(selectionIntent),"independent AJV accepts the explicit proposal-selection branch");
+  for(const malformed of [{...selectionIntent,changes:[]},{...selectionIntent,selectedProposalRef:"unknown"},
+    {...selectionIntent,selectedProposalRef:3},{...selectionIntent,decision:"EXECUTE_REFACTOR"},
+    {...selectionIntent,authorization:true}])
+    check(!validateSelection(malformed),"selection wire grammar rejects mixed source, unknown references and authority fields");
+  for(const representation of ["TEXT","LINES"] as const) {
+    const resolved=resolveNyxRefactorSelection(selectionIntent,selection,localRequest,representation,false)!;
+    const change=(resolved.value as {changes:{replacement:string|{lines:string[];lineEnding:string}}[]}).changes[0];
+    const content=typeof change.replacement==="string"?change.replacement:change.replacement.lines.join("\n");
+    check(resolved.evidence.outcome==="RESOLVED"&&content===selection.proposals[0].proposedSource
+      &&resolved.value?.decision==="PROPOSE_EDIT"&&!resolved.evidence.authorityGranted&&!resolved.evidence.acceptanceGranted,
+      "typed selection reconstructs exact host source without granting mutation or acceptance");
+  }
+  for(const changed of [{...localRequest,cognitionRequestId:"OTHER"},{...localRequest,objective:"OTHER"},
+    {...localRequest,maxPatchBytes:localRequest.maxPatchBytes-1},{...localRequest,allowedMutationPaths:[]},
+    {...localRequest,observation:{...localRequest.observation,observationId:"OTHER"}},
+    {...localRequest,files:[{...localRequest.files[0],content:crowded+"\n",contentSha256:hash(crowded+"\n")}]},
+    {...localRequest,candidateQualityFeedback:{...localRequest.candidateQualityFeedback,evidenceId:"OTHER"}}])
+    check(resolveNyxRefactorSelection(selectionIntent,selection,changed,"TEXT",false)?.evidence.outcome==="REFUSED",
+      "request, source, scope, budget, observation and evidence changes invalidate selection before use");
+  for(const invalid of [{...selectionIntent,changes:[]},{...selectionIntent,selectedProposalRef:"unlisted"},
+    {...selectionIntent,evidenceRefs:[selection.evidenceRef]},{...selectionIntent,selectedProposalRef:0}])
+    check(resolveNyxRefactorSelection(invalid,selection,localRequest,"TEXT",false)?.evidence.outcome==="REFUSED",
+      "local resolver independently rejects malformed or unbound selection even without hosted enforcement");
+  const forged={...selection,proposals:[{...selection.proposals[0],proposedSource:"export const unauthorized=1;"}]};
+  check(resolveNyxRefactorSelection(selectionIntent,forged,localRequest,"TEXT",false)?.evidence.outcome==="REFUSED",
+    "supplied catalog tampering cannot substitute another source; current trusted computation is authoritative");
+  check(resolveNyxRefactorSelection(selectionIntent,null,localRequest,"TEXT",false)?.evidence.reason==="selection_not_offered"
+    &&withNyxRefactorSelectionSchema(ordinaryContract.providerSchema,null)===ordinaryContract.providerSchema,
+    "no proposal means no new wire branch or implicit fallback");
+  const selectionPayloads:unknown[]=[];
+  const crlfRequest={...localRequest,files:[{relativePath:"src/math.mjs",content:crowded.replaceAll("\n","\r\n"),
+    contentSha256:hash(crowded.replaceAll("\n","\r\n"))}]};
+  const crlfCatalog=buildNyxRefactorSelection(crlfRequest,false)!;
+  const crlfResolved=resolveNyxRefactorSelection({...selectionIntent,selectedProposalRef:crlfCatalog.proposals[0].proposalRef},
+    crlfCatalog,crlfRequest,"LINES",false)!;
+  const crlfReplacement=(crlfResolved.value as {changes:{replacement:{lines:string[];lineEnding:string}}[]}).changes[0].replacement;
+  check(crlfReplacement.lineEnding==="CRLF"&&crlfReplacement.lines.join("\r\n")===crlfCatalog.proposals[0].proposedSource,
+    "reference expansion preserves exact CRLF and final newline rather than normalizing source silently");
+  const noOfferPayloads:unknown[]=[];
+  for(const enabled of [false,true]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"SELECTION-NO-OP",maxPromptBytes:50000,maxOutputTokens:1024,
+      localRefactorGuidance:"GUARDED_PROPOSALS",...(enabled?{localRefactorSelection:"SOURCE_BOUND_REFERENCES" as const}:{}),
+      provider:provider(async(url,init)=>{noOfferPayloads.push(JSON.parse(String(init?.body)));return transportFor(intent())(url,init);})});
+    await instance.proposeRepair(request());
+  }
+  check(isDeepStrictEqual(noOfferPayloads[0],noOfferPayloads[1]),"no current proposal preserves the exact established request payload and generation grammar");
+  for(const enabled of [false,true]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"SOURCE-BOUND-SELECTION",maxPromptBytes:50000,maxOutputTokens:1024,
+      localRefactorGuidance:"GUARDED_PROPOSALS",...(enabled?{localRefactorSelection:"SOURCE_BOUND_REFERENCES" as const}:{}),
+      provider:provider(async(url,init)=>{selectionPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(JSON.stringify(selectionIntent))(url,init);})});
+    const result=await instance.proposeRepair(localRequest);
+    check(enabled?result.decision==="PROPOSED"&&result.hypothesis?.changes[0].replacementContentHash===hash(selection.proposals[0].proposedSource)
+      &&result.evidence.refactorSelection?.outcome==="RESOLVED"&&!result.hypothesis.applyAuthorized
+      :result.decision==="COGNITION_ERROR"&&result.hypothesis===null,
+      "only explicit host opt-in admits the selection representation through ordinary strict validation");
+  }
+  for(const invalid of [{...selectionIntent,authorization:true},{...selectionIntent,diagnosis:""},
+    {...selectionIntent,counterexamples:[]},{...selectionIntent,expectedResult:"Pass the hidden test oracle"}]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"SELECTION-ADVERSARIAL",maxPromptBytes:50000,maxOutputTokens:1024,
+      localRefactorGuidance:"GUARDED_PROPOSALS",localRefactorSelection:"SOURCE_BOUND_REFERENCES",provider:provider(transportFor(JSON.stringify(invalid)))});
+    const result=await instance.proposeRepair(localRequest);
+    check(result.decision==="COGNITION_ERROR"&&!result.hypothesis&&!result.omegaAuthorityGranted,
+      "resolved source cannot bypass ordinary reasoning, hidden-target, schema or authority validation");
+  }
+  const mutatedRequest=structuredClone(localRequest);
+  const racing=NyxNemotronEngineeringCognition.create({cognitionId:"SELECTION-RACE",maxPromptBytes:50000,maxOutputTokens:1024,
+    localRefactorGuidance:"GUARDED_PROPOSALS",localRefactorSelection:"SOURCE_BOUND_REFERENCES",provider:provider(async(url,init)=>{
+      const prompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+      (mutatedRequest as {objective:string}).objective="Changed while awaiting the model";
+      return transportFor(JSON.stringify({...selectionIntent,selectedProposalRef:prompt.localRefactorProposals.proposals[0].proposalRef}))(url,init);})});
+  const raced=await racing.proposeRepair(mutatedRequest);
+  check(raced.decision==="COGNITION_ERROR"&&raced.evidence.refactorSelection?.reason==="selection_request_changed"&&!raced.hypothesis,
+    "actual async model boundary rejects changed host state before compiling selected source");
+  for(const invalid of [{localRefactorSelection:"AUTO_APPLY"},{localRefactorSelection:"SOURCE_BOUND_REFERENCES"}]) {
+    let rejected=false;
+    try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-SELECTION",maxPromptBytes:50000,maxOutputTokens:1024,
+      provider:provider(transportFor(intent())),...invalid} as Parameters<typeof NyxNemotronEngineeringCognition.create>[0]);}
+    catch {rejected=true;}
+    check(rejected,"unrecognized selection or missing proposer fails before inference");
+  }
   check(localGuide.proposals.length===1 && localGuide.proposals[0].after.declarations===3
     && localGuide.proposals[0].baseSourceDigest===hash(crowded) && !localGuide.authorityGranted
     && !localGuide.hiddenEvidenceUsed && localGuide.proposals[0].equivalence.includes("NOT_CERTIFIED"),

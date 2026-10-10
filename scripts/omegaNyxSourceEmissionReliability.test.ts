@@ -53,5 +53,21 @@ const text = await inspect(wire(validSource), "TEXT");
 check(text.outcome === "SYNTACTICALLY_VALID" && text.sourceDigest === digest(validSource),
 "TEXT representation is independently inspected");
 
+const selectedContent=JSON.stringify({decision:"SELECT_LOCAL_REFACTOR",selectedProposalRef:"LOCAL-REFACTOR-TEST"});
+const selectionReceipt={policy:"nyx-source-bound-refactor-selection/1",outcome:"RESOLVED",reason:"test-only-receipt",
+  bindingDigest:"a".repeat(64),selectedProposalRef:"LOCAL-REFACTOR-TEST",path:"src/transform.mjs",
+  baseSourceDigest:"b".repeat(64),proposedSourceDigest:"c".repeat(64),inputDigest:"d".repeat(64),outputDigest:"e".repeat(64),
+  sourceOrigin:"HOST_PROPOSAL_MODEL_SELECTED",authorityGranted:false,acceptanceGranted:false} as const;
+const selectedInput={content:selectedContent,finishReason:"stop",providerResponseDigest:digest(selectedContent),
+  expectedTarget:"src/transform.mjs",representation:"LINES" as const,refactorSelection:selectionReceipt};
+const selectedInspection=await inspectNyxSourceEmission(selectedInput);
+check(selectedInspection.outcome==="HOST_SOURCE_SELECTION_RESOLVED"&&selectedInspection.sourceDigest===null
+  &&!selectedInspection.authorityGranted,"resolved selection is host-owned source, not syntactically certified model emission");
+for(const change of [{refactorSelection:undefined},{refactorSelection:{...selectionReceipt,selectedProposalRef:"other"}},
+  {refactorSelection:{...selectionReceipt,path:"other"}},{refactorSelection:{...selectionReceipt,outcome:"REFUSED" as const}}])
+  check((await inspectNyxSourceEmission({...selectedInput,...change})).outcome==="SOURCE_SELECTION_REFUSED",
+    "absent, mismatched or refused selection receipt cannot become emission success");
+check((await inspectNyxSourceEmission({...selectedInput,finishReason:"length"})).outcome==="TRUNCATED",
+  "selection representation cannot hide a provider truncation");
 console.log(`OMEGA_NYX_SOURCE_EMISSION_RELIABILITY passed: ${passed}, failed: ${failures.length}`);
 if (failures.length) process.exitCode = 1;

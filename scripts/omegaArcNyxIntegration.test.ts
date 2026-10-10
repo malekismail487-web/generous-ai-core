@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./omega/benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./omega/benchmarks/evaluationOrderTransferTasks";
-import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate }
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate, sourceSelectionWireControlVerified }
   from "./omega/benchmarks/conditionalRefactorRepairTasks";
 import { proposeNyxLocalRefactors } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
@@ -1004,6 +1004,20 @@ representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(
   rejects(()=>evaluationOrderTransferConfiguration("AUTO_APPLY"),"comparison cannot request automatic mutation");
 }
 // Conditional tests deliberately supply a correct but over-budget algorithm.
+for(const variant of ["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"]) {
+  const selected=variant==="SOURCE_BOUND_SELECTION";
+  const active={qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1,
+    localProposalVersion:selected?"nyx-source-bound-refactor-selection/1":"nyx-local-refactor-proposals/3",
+    selectionBranchOffered:selected,selectionBindingDigest:selected?"a".repeat(64):null};
+  const empty={qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0,localProposalVersion:null,
+    selectionBranchOffered:false,selectionBindingDigest:null};
+  check(sourceSelectionWireControlVerified(variant,[active,empty]),"recorded v3 reference or emission control is bound to its actual wire branch");
+  for(const bad of [[],[{...active,qualityRepairPhase:false}],[{...active,localProposalCount:9}],
+    [{...active,selectionBranchOffered:!selected}],[{...empty,selectionBindingDigest:"forged"}],
+    [{...active,localProposalVersion:"future"}]])
+    check(!sourceSelectionWireControlVerified(variant,bad),"missing, stale, out-of-scope and contradictory selection wire evidence fails closed");
+}
+check(!sourceSelectionWireControlVerified("AUTO_APPLY",[]),"unknown reference-control arm never verifies");
 // This is not model discovery or a claim that those supplied solutions are NYX's.
 check(lastConditionalModelCandidate([{iteration:1,functionalAccepted:true}])===undefined,
   "retaining a supplied passing candidate after rejected model output is not model functional acceptance");
@@ -1029,7 +1043,7 @@ for (const task of CONDITIONAL_REFACTOR_REPAIR_TASKS) {
         `${task.id} supplied, independent reference and proposed source preserve frozen literal cases`);
     }
   }
-  for (const variant of ["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]) {
+  for (const variant of ["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS","SOURCE_BOUND_SELECTION"]) {
     let realPhaseCalls=0,phaseBound=false,proposalBound=false;
     const live=NyxNemotronEngineeringCognition.create({cognitionId:"CONDITIONAL-REPAIR-TEST-ONLY",
       provider:provider(async (_url,init)=>{
@@ -1038,14 +1052,21 @@ for (const task of CONDITIONAL_REFACTOR_REPAIR_TASKS) {
         phaseBound=prompt.activeRepairDriver.kind==="QUALITY_REJECTION"&&prompt.hypothesisHistory.length===1;
         proposalBound=variant==="GUARDED_V2_CONTROL"?(!prompt.localRefactorProposals||prompt.localRefactorProposals.version==="nyx-local-refactor-proposals/2")
           :proposeNyxLocalRefactors("src/transform.mjs",task.suppliedCandidate,true)
-            ?prompt.localRefactorProposals?.version==="nyx-local-refactor-proposals/3":!prompt.localRefactorProposals;
+            ?prompt.localRefactorProposals?.version===(variant==="SOURCE_BOUND_SELECTION"?"nyx-source-bound-refactor-selection/1":"nyx-local-refactor-proposals/3"):!prompt.localRefactorProposals;
         const response=JSON.parse(intent(conditionalReferences[task.id]));
         response.causalHypothesis="Preserve the supplied algorithm while reducing redundant local structure.";
         response.invariant="Preserve every specified domain boundary and input.";
         response.counterexamples=["Empty inputs, signed values and boundary parameters"];
+        if(variant==="SOURCE_BOUND_SELECTION"&&prompt.localRefactorProposals) {
+          response.decision="SELECT_LOCAL_REFACTOR";
+          response.selectedProposalRef=prompt.localRefactorProposals.proposals[0].proposalRef;
+          response.evidenceRefs=[prompt.localRefactorProposals.evidenceRef,prompt.localRefactorProposals.passingObservationRef,"FILE:src/transform.mjs"];
+          delete response.changes;
+        }
         return reply(JSON.stringify(response));
       },"nvidia/nemotron-3-super-120b-a12b"),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
-      repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",...evaluationOrderTransferConfiguration(variant)});
+      repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",...evaluationOrderTransferConfiguration(variant==="SOURCE_BOUND_SELECTION"?"EVALUATION_ORDER_PROPOSALS":variant),
+      ...(variant==="SOURCE_BOUND_SELECTION"?{localRefactorSelection:"SOURCE_BOUND_REFERENCES" as const}:{})});
     const composition=suppliedCandidateThenLive(live,task.suppliedCandidate);
     const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task),"a".repeat(40),Date.now()+20000,12000);
     let closed;

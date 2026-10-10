@@ -2524,6 +2524,12 @@
       ]
     },
     {
+      "name": "NYX_SOURCE_BOUND_REFACTOR_SELECTION",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_STRICT_LOCAL_COMPARISON",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"

@@ -30,7 +30,7 @@ import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./benchmarks/evaluationOrderTransferTasks";
-import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate,
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate, sourceSelectionWireControlVerified,
   type ConditionalRepairTask } from "./benchmarks/conditionalRefactorRepairTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
@@ -47,6 +47,8 @@ const localRefactorComparison = process.env.NYX_LOCAL_REFACTOR_TRANSFER === "1";
 const runtimeReviewComparison = process.env.NYX_RUNTIME_REVIEW_TRANSFER === "1";
 const evaluationOrderComparison = process.env.NYX_EVALUATION_ORDER_TRANSFER === "1";
 const conditionalRepair = process.env.NYX_CONDITIONAL_REFACTOR_REPAIR === "1";
+const sourceSelectionComparison = process.env.NYX_SOURCE_BOUND_REFACTOR_SELECTION === "1";
+if(sourceSelectionComparison&&!conditionalRepair) throw Error("source_selection_requires_exposed_conditional_comparison");
 if (conditionalRepair && !evaluationOrderComparison) throw Error("conditional_repair_requires_v2_v3_comparison");
 const concreteRefactorComparison = localRefactorComparison || evaluationOrderComparison;
 const qualityMechanismComparison = behaviorRepairComparison || concreteRefactorComparison;
@@ -65,7 +67,7 @@ const localDeliveryComparison=process.env.NYX_STRICT_LOCAL_COMPARISON==="1";
 const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1";
 const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
 if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison,originalBudgetComparison,behaviorRepairComparison,localRefactorComparison,runtimeReviewComparison,evaluationOrderComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
-const variants=evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
+const variants=sourceSelectionComparison?["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"]:evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
 const selectedTasks = conditionalRepair?CONDITIONAL_REFACTOR_REPAIR_TASKS.flatMap(task=>[1,2].map(repeat=>({...task,id:`${task.id}-REPEAT-${repeat}`}))):evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
   taskCorpus:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
@@ -76,7 +78,7 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
     ...(nativeReasoningComparison?{reasoningPolicies:{NATIVE_NONE:{effort:"none",budget:null},
       NATIVE_BOUNDED_REASONING:{effort:"high",budget:2048}}}:{reasoningEffort:"none"}),
     generationPolicy: nativeReasoningComparison||budgetGuidanceComparison?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:boundedContractComparison?(lengthTransfer?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:NYX_BOUNDED_DECISION_SCHEMA_POLICY):NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
-  changedVariable: evaluationOrderComparison?"OPTIONAL_FIRST_EVALUATED_USE_PROPOSALS_V3_VS_EXISTING_V2_ONLY":runtimeReviewComparison?"BOUNDED_PUBLIC_RUNTIME_OBSERVATIONS_IN_IDENTICAL_POST_VERIFICATION_CADENCE":localRefactorComparison?"OPTIONAL_GUARDED_CONCRETE_PROPOSALS_ON_QUALITY_ONLY_REPAIR":behaviorRepairComparison?"BOUND_CURRENT_SOURCE_BINDING_USES_ON_QUALITY_ONLY_REPAIR":originalBudgetComparison?"EXACT_ORIGINAL_STATE_PUBLIC_STRUCTURAL_BUDGET_BEFORE_FIRST_CANDIDATE_ONLY":nativeReasoningComparison?"EXISTING_NATIVE_REASONING_RESERVATION_WITHIN_SHARED_OUTPUT_CAP":boundedContractComparison?"REQUEST_DERIVED_GENERATION_BOUNDS_ONLY":decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
+  changedVariable: sourceSelectionComparison?"SAME_V3_HOST_PROPOSALS_OPTIONAL_SOURCE_BOUND_REFERENCE_VS_MODEL_SOURCE_RESERIALIZATION":evaluationOrderComparison?"OPTIONAL_FIRST_EVALUATED_USE_PROPOSALS_V3_VS_EXISTING_V2_ONLY":runtimeReviewComparison?"BOUNDED_PUBLIC_RUNTIME_OBSERVATIONS_IN_IDENTICAL_POST_VERIFICATION_CADENCE":localRefactorComparison?"OPTIONAL_GUARDED_CONCRETE_PROPOSALS_ON_QUALITY_ONLY_REPAIR":behaviorRepairComparison?"BOUND_CURRENT_SOURCE_BINDING_USES_ON_QUALITY_ONLY_REPAIR":originalBudgetComparison?"EXACT_ORIGINAL_STATE_PUBLIC_STRUCTURAL_BUDGET_BEFORE_FIRST_CANDIDATE_ONLY":nativeReasoningComparison?"EXISTING_NATIVE_REASONING_RESERVATION_WITHIN_SHARED_OUTPUT_CAP":boundedContractComparison?"REQUEST_DERIVED_GENERATION_BOUNDS_ONLY":decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
     ?"AGGREGATE_MEASUREMENTS_VS_BOUNDED_AST_DECLARATION_SITES_ONLY":qualityGuidanceComparison
     ?"PUBLIC_STATIC_METRICS_VS_SOURCE_LINKED_DETECTOR_EXPLANATION_ONLY":localDeliveryComparison
     ?"EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY":boundsComparison
@@ -101,6 +103,10 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
     QUALITY_SITES_CONTROL:"STRUCTURE_SITES",GUARDED_REFACTOR_PROPOSALS:"STRUCTURE_SITES_PLUS_CONCRETE_LOCAL_PROPOSALS"},
     maximumLocalRefactorOperations:8,localRefactorCost:"BOUNDED_HOST_AST_NO_EXTRA_MODEL_OR_EXECUTION_CALLS",
     firstAttemptDifferences:"NO_TREATMENT_PRESENT_BEFORE_QUALITY_REJECTION_NOT_CAUSAL_MECHANISM_GAINS"}:{}),
+  ...(sourceSelectionComparison?{sourceSelectionPolicy:"nyx-source-bound-refactor-selection/1",
+    postQualityGuidance:{EVALUATION_ORDER_SOURCE_CONTROL:"V3_PROPOSALS_MODEL_EMITS_SOURCE",SOURCE_BOUND_SELECTION:"SAME_V3_PROPOSALS_EXPLICIT_REQUEST_BOUND_SELECTION_OPTION"},
+    sourceOrigin:"HOST_PROPOSAL_IF_SELECTED_NOT_MODEL_GENERATED",
+    claimScope:"EXPOSED_CONDITIONAL_EMISSION_DIAGNOSTIC_NOT_COGNITIVE_GAIN_OR_FRESH_GENERALIZATION"}:{}),
   ...(runtimeReviewComparison?{reviewCadence:"BOTH_ARMS_ONCE_WITHIN_EXISTING_BUDGET",runtimeInputs:"PREDECLARED_PUBLIC_SYNTHETIC_NOT_REFERENCE_ANSWERS",
     runtimeExecution:"IDENTICAL_PINNED_TEST_ENTRYPOINT_BOTH_ARMS",maximumRuntimeSamples:4,
     firstAttemptDifferences:"NO_OBSERVATION_TREATMENT_BEFORE_FIRST_CANDIDATE_NOT_CAUSAL_GAINS",
@@ -120,6 +126,7 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   ...(budgetGuidanceComparison ? ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts"] : []),
   ...(concreteRefactorComparison ? ["src/lib/codelab/cognition/nyxLocalRefactorProposals.ts"] : []),
   ...(conditionalRepair?["scripts/omega/benchmarks/conditionalRefactorRepairTasks.ts"]:[]),
+  ...(sourceSelectionComparison?["src/lib/codelab/cognition/nyxSourceBoundRefactorSelection.ts"]:[]),
   ...(runtimeReviewComparison?["scripts/omega/benchmarks/publicRuntimeSamples.ts","src/lib/codelab/observation/r3EngineeringObservation.ts"]:[]),
   ...(decisionGenerationComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
     evaluationOrderComparison?"scripts/omega/benchmarks/evaluationOrderTransferTasks.ts":runtimeReviewComparison?"scripts/omega/benchmarks/runtimeReviewTransferTasks.ts":localRefactorComparison?"scripts/omega/benchmarks/localRefactorTransferTasks.ts":behaviorRepairComparison?"scripts/omega/benchmarks/behaviorRepairTransferTasks.ts":originalBudgetComparison?"scripts/omega/benchmarks/originalBudgetTransferTasks.ts":nativeReasoningComparison?"scripts/omega/benchmarks/nativeReasoningTransferTasks.ts":boundedContractComparison?(lengthTransfer?"scripts/omega/benchmarks/lengthGrammarTransferTasks.ts":patternTransfer?"scripts/omega/benchmarks/patternRepairTransferTasks.ts":"scripts/omega/benchmarks/boundedContractTransferTasks.ts"):"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
@@ -147,7 +154,8 @@ for (const [index, task] of selectedTasks.entries()) {
       initialCandidateState?: boolean; originalBudgetPresented?: boolean;
       postCandidatePhase?:boolean; passReviewPhase?:boolean; publicRuntimeSampleCount?:number; promptDigest?:string;
       qualityRepairPhase?: boolean; bindingUsesPresented?: boolean; localProposalsPresented?: boolean;
-      localProposalCount?: number; localProposalVersion?: string | null; localProposalIdentities?: readonly unknown[]}[] = [];
+      localProposalCount?: number; localProposalVersion?: string | null; localProposalIdentities?: readonly unknown[];
+      selectionBranchOffered?:boolean;selectionBindingDigest?:string|null}[] = [];
     const baseProvider = NvidiaNimProvider.create({providerId: `NYX-REPRESENTATION-${representation}`, model,
       authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
       maxPromptBytes: 64000, maxOutputTokens: frozen.maxOutputTokens, timeoutMs: frozen.providerTimeoutMs,
@@ -171,12 +179,15 @@ for (const [index, task] of selectedTasks.entries()) {
               bindingUsesPresented:prompt.behaviorPreservingQualityRepair?.version
                 ==="nyx-behavior-preserving-quality-repair/1"}:{}), ...(concreteRefactorComparison?{
               qualityRepairPhase:prompt.activeRepairDriver.kind==="QUALITY_REJECTION",
-              localProposalsPresented:["nyx-local-refactor-proposals/2","nyx-local-refactor-proposals/3"].includes(prompt.localRefactorProposals?.version),
+              localProposalsPresented:["nyx-local-refactor-proposals/2","nyx-local-refactor-proposals/3","nyx-source-bound-refactor-selection/1"].includes(prompt.localRefactorProposals?.version),
               localProposalVersion:prompt.localRefactorProposals?.version??null,
               localProposalCount:prompt.localRefactorProposals?.proposals?.length??0,
               localProposalIdentities:(prompt.localRefactorProposals?.proposals??[]).map((proposal:any)=>({
                 baseSourceDigest:proposal.baseSourceDigest,proposedSourceDigest:proposal.proposedSourceDigest,
-                operations:proposal.operations.map((operation:any)=>operation.kind),before:proposal.before,after:proposal.after}))}:{} )});
+                operations:proposal.operations.map((operation:any)=>operation.kind),before:proposal.before,after:proposal.after})),
+              ...(sourceSelectionComparison?{selectionBranchOffered:(body.response_format.json_schema.schema.anyOf??[])
+                .some((branch:any)=>branch.properties?.decision?.enum?.includes("SELECT_LOCAL_REFACTOR")),
+                selectionBindingDigest:prompt.localRefactorProposals?.bindingDigest??null}:{} )}:{} )});
         }
         const response = await fetch(url, init);
         if (response.ok) try {
@@ -211,7 +222,8 @@ for (const [index, task] of selectedTasks.entries()) {
         ...(nativeReasoningComparison?nativeReasoningTransferConfiguration(variant):{}),
         ...(behaviorRepairComparison?behaviorRepairTransferConfiguration(variant):{}),
         ...(localRefactorComparison?localRefactorTransferConfiguration(variant):{}),
-        ...(evaluationOrderComparison?evaluationOrderTransferConfiguration(variant):{}),
+        ...(evaluationOrderComparison?evaluationOrderTransferConfiguration(sourceSelectionComparison?"EVALUATION_ORDER_PROPOSALS":variant):{}),
+        ...(sourceSelectionComparison&&variant==="SOURCE_BOUND_SELECTION"?{localRefactorSelection:"SOURCE_BOUND_REFERENCES" as const}:{}),
         ...(runtimeReviewComparison?runtimeReviewTransferConfiguration(variant):{}),
         ...(originalBudgetComparison?originalBudgetTransferConfiguration(variant):{})});
       const composition=conditionalRepair?suppliedCandidateThenLive(cognition,(task as ConditionalRepairTask).suppliedCandidate):null;
@@ -245,7 +257,8 @@ for (const [index, task] of selectedTasks.entries()) {
       // This is in-process diagnostic consistency, not independent transport authentication.
       const recorded = capture.content === null ? null : evidence.find(e => e.modelResponseDigest === contentHash(capture.content));
       inspections.push(await inspectNyxSourceEmission({content: capture.content, finishReason: capture.finishReason,
-        providerResponseDigest: recorded?.modelResponseDigest ?? null, expectedTarget: "src/transform.mjs", representation}));
+        providerResponseDigest: recorded?.modelResponseDigest ?? null, expectedTarget: "src/transform.mjs", representation,
+        refactorSelection:recorded?.refactorSelection}));
     }
     captures.length = 0; // No raw response/source persistence.
     const last = loopResult?.iterations.at(-1);
@@ -278,6 +291,8 @@ for (const [index, task] of selectedTasks.entries()) {
         suppliedFunctionalAcceptance:perIteration[0]?.functionalAccepted===true,
         nominalLoopInteractions:loopResult?.modelCallCount??0,
         firstLiveRepairAccepted:accepted&&usage.logicalCalls===1&&loopResult?.iterations.length===2}:{}),
+      ...(sourceSelectionComparison?{refactorSelections:evidence.flatMap(e=>e.refactorSelection?[e.refactorSelection]:[]),
+        sourceOrigin:evidence.some(e=>e.refactorSelection?.outcome==="RESOLVED")?"HOST_PROPOSAL_MODEL_SELECTED":"MODEL_EMITTED_OR_NO_REPAIR"}:{}),
       ...(decisionGenerationComparison ? {providerIntentShape: nativeReasoningComparison||budgetGuidanceComparison?"DECISION_REQUIRED_FIELDS_AND_LENGTHS":["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS","DECISION_REQUIRED_FIELDS_AND_LENGTHS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
         schemaRejectedInteractions: loopResult?.cognitionFailures.length ?? 0} : {}),
       ...(nativeReasoningComparison||budgetGuidanceComparison?{observedInferenceControls,
@@ -300,7 +315,7 @@ for (const [index, task] of selectedTasks.entries()) {
           qualityRepairPromptCount:observedInferenceControls.filter(control=>control.qualityRepairPhase).length,
           bindingUsePromptCount:observedInferenceControls.filter(control=>control.bindingUsesPresented).length}:{}),
         ...(concreteRefactorComparison?{localRefactorControlVerified:
-          evaluationOrderComparison?evaluationOrderWireControlVerified(variant,observedInferenceControls)
+          sourceSelectionComparison?sourceSelectionWireControlVerified(variant,observedInferenceControls):evaluationOrderComparison?evaluationOrderWireControlVerified(variant,observedInferenceControls)
             :localRefactorWireControlVerified(variant,observedInferenceControls),
           qualityRepairPromptCount:observedInferenceControls.filter(control=>control.qualityRepairPhase).length,
           localRefactorPromptCount:observedInferenceControls.filter(control=>control.localProposalsPresented).length,
@@ -338,8 +353,8 @@ const pairs = tasks.map(task => {
     const values = rows.map(r => r.usage[key] + (key === "toolWorkUnits" ? r.privateScorerWorkUnits : 0));
     return Math.max(...values) - Math.min(...values) <= Math.max(1, ...values) * frozen.realizedTolerance;
   });
-  const baseline = rows.find(r => r.variant === (evaluationOrderComparison?"GUARDED_V2_CONTROL":runtimeReviewComparison?"SCOPED_REVIEW_CONTROL":qualityMechanismComparison?"QUALITY_SITES_CONTROL":originalBudgetComparison?"STRUCTURE_SITES_CONTROL":nativeReasoningComparison?"NATIVE_NONE":boundedContractComparison?"DECISION_REQUIRED_FIELDS":"LEGACY_OPTIONAL_FIELDS"));
-  const treatment = rows.find(r => r.variant === (evaluationOrderComparison?"EVALUATION_ORDER_PROPOSALS":runtimeReviewComparison?"RUNTIME_OBSERVATION_REVIEW":localRefactorComparison?"GUARDED_REFACTOR_PROPOSALS":behaviorRepairComparison?"BINDING_USES":originalBudgetComparison?"ORIGINAL_BUDGET":nativeReasoningComparison?"NATIVE_BOUNDED_REASONING":boundedContractComparison?boundedTreatment:"DECISION_REQUIRED_FIELDS"));
+  const baseline = rows.find(r => r.variant === (sourceSelectionComparison?"EVALUATION_ORDER_SOURCE_CONTROL":evaluationOrderComparison?"GUARDED_V2_CONTROL":runtimeReviewComparison?"SCOPED_REVIEW_CONTROL":qualityMechanismComparison?"QUALITY_SITES_CONTROL":originalBudgetComparison?"STRUCTURE_SITES_CONTROL":nativeReasoningComparison?"NATIVE_NONE":boundedContractComparison?"DECISION_REQUIRED_FIELDS":"LEGACY_OPTIONAL_FIELDS"));
+  const treatment = rows.find(r => r.variant === (sourceSelectionComparison?"SOURCE_BOUND_SELECTION":evaluationOrderComparison?"EVALUATION_ORDER_PROPOSALS":runtimeReviewComparison?"RUNTIME_OBSERVATION_REVIEW":localRefactorComparison?"GUARDED_REFACTOR_PROPOSALS":behaviorRepairComparison?"BINDING_USES":originalBudgetComparison?"ORIGINAL_BUDGET":nativeReasoningComparison?"NATIVE_BOUNDED_REASONING":boundedContractComparison?boundedTreatment:"DECISION_REQUIRED_FIELDS"));
   const noMoreMeasuredCompute = decisionGenerationComparison && stable && baseline && treatment
     && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key =>
       treatment.usage[key] + (key === "toolWorkUnits" ? treatment.privateScorerWorkUnits : 0)
@@ -364,7 +379,9 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: conditionalRepair
+  hypothesis: sourceSelectionComparison
+    ? "Explicit selection of the same current v3 host proposal reduces reserialization failure and improves one-call conditional quality repair over source emission. This exposed supplied-algorithm diagnostic cannot establish model-generated source, independent reasoning or fresh generalization."
+    : conditionalRepair
     ? "Optional v3 proposals improve one-call behavior-preserving cumulative-quality repair over v2, conditioned on an identical predeclared supplied algorithm that passes functional checks but fails unchanged quality admission. This is not first-attempt coding or fresh unseeded generalization."
     : evaluationOrderComparison
     ? "Adding guarded single-use first-evaluated-expression proposals improves fresh cumulative-quality repair over existing v2 proposals without extra model calls, changed original state, oracle, authority or shared resource caps."
