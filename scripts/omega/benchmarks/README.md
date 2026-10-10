@@ -1,5 +1,30 @@
 # NYX benchmark capability program
 
+### Native reasoning transfer: no acceptance gain
+
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38006515872)
+at `f999513d` fully attempted all four new tasks in both arms. Actual wire settings,
+16 source hashes, report/log agreement and owned cleanup are verified in the
+[receipt](../../../docs/omega/evidence/nyx-native-transfer-f999513d.json).
+Native-none and bounded-native-reasoning both finished with **3/4 functional,
+0/4 quality, 0/4 full acceptance**. Every assessed public-test-passing candidate
+exceeded the unchanged declaration limit. Native reasoning did not consistently
+reduce that count, and one Boolean-model repair lost a previously passing hidden
+case. Its register repair was syntax-rejected; the preceding candidate remains
+functionally correct but unaccepted. No best-of accumulation is used.
+
+Control used eight physical calls / 38,070 reported tokens; treatment eight /
+52,742. No unknown usage, provider or infrastructure failures occurred. No pair
+matched realized compute within 10%, and treatment used more measured compute
+on every pair. Promotion is **FALSIFIED**: extra thinking did not buy an acceptance
+gain here. The corpus is now exposed, not a benchmark score or evidence of ≥80%
+all-benchmark readiness. Next investigate actionable structural-budget guidance
+using the existing detector; do not relax admission or add another cognition layer.
+
+Candidate Linux CI passed 109 suites / 11,825 checks, TypeScript zero, production
+build, package smoke and inventories. The one-shot trigger is removed. Default
+Ultra, original baselines, authority, leases and production remain unchanged.
+
 ### Native reasoning allocation: fresh controlled engineering transfer
 
 `NYX_NATIVE_REASONING_TRANSFER=1` freezes four new objectives: weighted Unicode
