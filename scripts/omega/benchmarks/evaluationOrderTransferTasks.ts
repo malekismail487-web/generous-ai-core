@@ -21,8 +21,9 @@ export function evaluationOrderWireControlVerified(variant: string, controls: re
       : control.localProposalCount === 0 && control.localProposalVersion === null));
 }
 
-// Freeze before first live inference. No seeds, implementation hints, exposed
-// benchmark questions, task-specific proposer rules or evaluator feedback to NYX.
+// Frozen before first inference at 578b8dc7; now exposed development, not fresh holdouts.
+// No seeds, implementation hints, external benchmark questions,
+// task-specific proposer rules or evaluator feedback to NYX.
 // Small transfer evidence is not a frontier benchmark or broad cognition claim.
 export const EVALUATION_ORDER_TRANSFER_TASKS: readonly RepresentationTask[] = [
   {id:"QUOTE-DISCOUNT-TAX",tier:"DEVELOPMENT",domain:"ORDERED_DECIMAL_COMPOSITION",

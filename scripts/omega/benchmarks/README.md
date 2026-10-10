@@ -19,7 +19,7 @@ functional checks still judge that intent. Omitted configuration retains v2
 behavior. The quality-policy applicability finding below remains unresolved;
 no policy version, threshold or original stub has been changed.
 
-The prospective comparison uses the same Super model, temperature zero,
+The frozen comparison used the same Super model, temperature zero,
 native reasoning disabled, strict generation schema, two calls/candidates,
 three tool calls, 8,192 output tokens, 155-second task-arm limit and 10% realized
 compute tolerance. Control uses existing v2 proposals; treatment adds only the
@@ -31,8 +31,35 @@ Provider instability, first-attempt differences, repair opportunities,
 proposal coverage and functional regressions must be reported separately.
 Unexercised treatment or unmatched compute cannot establish mechanism gains.
 
-The implementation and oracle witnesses are development-only E3 work. Live
-E4 outcome and cognitive promotion remain **unproven pending the frozen run**.
+At `578b8dc775fc490c8ae68394d5cc57783ade5911`, live
+[run 38041321114](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38041321114)
+completed. **Both arms achieved 4/4 functional and full quality acceptance**.
+Control needed one quality repair (3/4 first-call acceptance); treatment solved
+4/4 first-call. However, **the treatment was never exercised**: zero treatment
+quality-repair prompts and zero actionable proposal prompts. Its first-attempt
+or token advantage cannot be attributed to a mechanism absent from those calls.
+Control's one initial declaration-delta rejection was repaired from ordinary
+measured feedback, with no concrete proposal. There were zero final failures,
+provider errors, truncations, syntax/schema failures or unknown-usage calls.
+
+Control consumed five calls/23,471 reported tokens; treatment four/17,969.
+Three pairs meet the declared 10% realized-compute tolerance; the channel pair
+does not. Two pairs emitted identical first candidate source. The schema policy
+is shared, but raw request-bound schema digests differ because evidence enums
+include scoped identifiers; normalized live schema/prompt equality was not
+captured. No causal architectural gain or cognitive promotion is established.
+The epoch contains 25 unique private cases and 56 candidate-case evaluations,
+not 56 tasks. All source-integrity and cleanup checks passed. The tasks are now
+**exposed development/2**, not fresh holdouts for any future rerun.
+
+The [sanitized receipt](../../../docs/omega/evidence/nyx-evaluation-order-transfer-578b8dc7.json)
+binds the artifact SHA256, matching terminal logs, frozen source/task hashes,
+first/repaired outcomes and honest resources. Linux CI at the exact candidate
+passed **109 suites / 12,553 checks / zero failures**, TypeScript 5.8.3 zero,
+secret scan, package check and production build (14.67 seconds); no deployment.
+Windows' local Vite executable was blocked by Device Guard; that policy was
+not modified or bypassed. The optional grammar is implemented and locally
+verified, but **NOT PROMOTED: UNEXERCISED**. Default behavior remains unchanged.
 Default Ultra, all official benchmark outcomes, production, SEC-003 and
 authority remain unchanged. This small transfer study cannot establish ≥80%
 across the agreed benchmarks.

@@ -31,7 +31,7 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-representation-cycle.ts scripts/omegaArcNyxIntegration.test.ts
-      - name: Frozen fresh evaluation-order proposal transfer against existing v2 under unchanged shared caps
+      - name: Optional development rerun on exposed evaluation-order tasks under unchanged shared caps
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NYX_EVALUATION_ORDER_TRANSFER: '1'
