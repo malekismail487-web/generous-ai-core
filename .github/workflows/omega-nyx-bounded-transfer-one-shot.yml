@@ -1,8 +1,6 @@
 name: Omega NYX bounded intent fresh engineering transfer
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:
