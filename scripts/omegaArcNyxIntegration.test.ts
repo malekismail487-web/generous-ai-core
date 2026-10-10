@@ -2,6 +2,9 @@ import { execFileSync } from "node:child_process";
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./omega/benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./omega/benchmarks/evaluationOrderTransferTasks";
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive }
+  from "./omega/benchmarks/conditionalRefactorRepairTasks";
+import { proposeNyxLocalRefactors } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
 import { arcCorePredecessorSource, NYX_ARC_CORE_REFINEMENT } from "./omega/nyx-arc-core-refinement";
 import { readFile } from "node:fs/promises";
@@ -65,8 +68,8 @@ const spec = (arm: ArmSpec["arm"]): ArmSpec => ({ arm, version: "test", sourceDi
 const limits: CampaignSpec["limits"] = { maxCallsPerTask: 2, maxReportedTokensPerTask: 100000,
   maxToolCallsPerTask: 3, maxToolWorkUnitsPerTask: 300, maxAttemptsPerTask: 1, maxArtifactBytes: 50000,
   maxWallClockMsPerTask: 60000, maxWallClockMs: 180000 };
-function provider(transport: NvidiaNimTransport) {
-  return NvidiaNimProvider.create({ providerId: "ARC-TEST", model: spec("CURRENT_NYX").model,
+function provider(transport: NvidiaNimTransport, model=spec("CURRENT_NYX").model) {
+  return NvidiaNimProvider.create({ providerId: "ARC-TEST", model,
     authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-double", read: () => "explicit-test-double-material-only" },
     maxPromptBytes: 64000, maxOutputTokens: 8192, timeoutMs: 1000, transport });
 }
@@ -1000,6 +1003,71 @@ representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(
   }
   rejects(()=>evaluationOrderTransferConfiguration("AUTO_APPLY"),"comparison cannot request automatic mutation");
 }
+// Conditional tests deliberately supply a correct but over-budget algorithm.
+// This is not model discovery or a claim that those supplied solutions are NYX's.
+const conditionalReferences: Record<string,string> = {
+  "BATCH-ENERGY-BILL":'export function transform(input) {\n  return input.watts * input.minutes / 60000 * input.count\n    * (1 + input.lossPercent / 100) * input.rate - input.credit;\n}\n',
+  "SIGNED-TEXT-BUCKET":'export function transform(input) {\n  return ((input.text.trim().length + input.offset) % input.modulus\n    + input.modulus) % input.modulus + input.bias;\n}\n',
+  "HORNER-RESIDUAL":'export function transform(input) {\n  let value = 0;\n  for (const coefficient of input.coefficients) value = value * input.x + coefficient;\n  return Math.round((value - input.target) * input.scale * 1000) / 1000;\n}\n',
+  "SATURATING-RECURRENCE":'export function transform(input) {\n  let state = input.initial;\n  for (const next of input.values) {\n    state = Math.max(input.low, Math.min(input.high, input.alpha * next + (1 - input.alpha) * state));\n  }\n  return state;\n}\n',
+};
+for (const task of CONDITIONAL_REFACTOR_REPAIR_TASKS) {
+  for (const source of [task.suppliedCandidate,conditionalReferences[task.id],
+    proposeNyxLocalRefactors("src/transform.mjs",task.suppliedCandidate,true)?.proposedSource].filter((s):s is string=>typeof s==="string")) {
+    const implementation=new Function(source.replace("export function","return function"))() as (input:unknown)=>unknown;
+    for (const example of [...task.publicCases,...task.privateCases]) {
+      const value=structuredClone(example.input),before=theoryDigest(value);
+      check(theoryDigest(implementation(value))===theoryDigest(example.expected)&&theoryDigest(value)===before,
+        `${task.id} supplied, independent reference and proposed source preserve frozen literal cases`);
+    }
+  }
+  for (const variant of ["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]) {
+    let realPhaseCalls=0,phaseBound=false,proposalBound=false;
+    const live=NyxNemotronEngineeringCognition.create({cognitionId:"CONDITIONAL-REPAIR-TEST-ONLY",
+      provider:provider(async (_url,init)=>{
+        realPhaseCalls++;
+        const body=JSON.parse(String(init.body)),prompt=JSON.parse(body.messages[1].content);
+        phaseBound=prompt.activeRepairDriver.kind==="QUALITY_REJECTION"&&prompt.hypothesisHistory.length===1;
+        proposalBound=variant==="GUARDED_V2_CONTROL"?(!prompt.localRefactorProposals||prompt.localRefactorProposals.version==="nyx-local-refactor-proposals/2")
+          :proposeNyxLocalRefactors("src/transform.mjs",task.suppliedCandidate,true)
+            ?prompt.localRefactorProposals?.version==="nyx-local-refactor-proposals/3":!prompt.localRefactorProposals;
+        const response=JSON.parse(intent(conditionalReferences[task.id]));
+        response.causalHypothesis="Preserve the supplied algorithm while reducing redundant local structure.";
+        response.invariant="Preserve every specified domain boundary and input.";
+        response.counterexamples=["Empty inputs, signed values and boundary parameters"];
+        return reply(JSON.stringify(response));
+      },"nvidia/nemotron-3-super-120b-a12b"),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
+      repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",...evaluationOrderTransferConfiguration(variant)});
+    const composition=suppliedCandidateThenLive(live,task.suppliedCandidate);
+    const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task),"a".repeat(40),Date.now()+20000,12000);
+    let closed;
+    try {
+      const baseline=await session.baseline();
+      const loop=R3BoundedRepairLoop.create({loopId:`CONDITIONAL-${task.id}-${variant}`,evaluatorVersion:"conditional-test/1",
+        observerIdentity:"CONDITIONAL-OMEGA-TEST",cognition:composition.cognition,
+        candidateBuilder:{builderIdentity:"EXISTING-R3",prepare:h=>session.prepare(h)},
+        maxIterations:2,maxModelInteractions:2,maxCognitionCorrections:0,maxWallClockMs:18000,
+        maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+      const result=await loop.run({schemaVersion:1,repairRequestId:"CONDITIONAL",objective:task.objective,
+        initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
+        availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],
+        observedAtEpochMs:Date.now()});
+      check(result.iterations.length===2&&result.iterations[0].functionallyPassed&&result.iterations[0].candidateAdmission?.decision==="REJECTED"
+        &&result.iterations[0].hypothesis.changes[0].replacementContentHash===contentHash(task.suppliedCandidate),
+        `${task.id} actual common supplied source passes execution and fails unchanged cumulative quality`);
+      check(composition.fixtureEvidence.length===1&&composition.fixtureEvidence[0].evidenceClass==="E3"&&realPhaseCalls===1,
+        "supplied fixture is separate E3 work and only the next request reaches the existing reasoning adapter");
+      check(phaseBound&&proposalBound,`${variant} passes real quality feedback, not manufactured diagnostic text`);
+      const last=result.iterations.at(-1);
+      check(result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"&&last?.candidateAdmission?.decision==="ADMITTED"
+        &&scoreRepresentationArtifact(task,last.verifications[0].execution.evidence.stdout??"").accepted,
+        `${task.id} independent reference proves conditional repair feasibility without changing any gate`);
+    } finally {closed=await session.close();}
+    check(closed.sourceUnchanged&&closed.cleanupVerified,"conditional composition preserves source and cleans all lifecycle artifacts");
+  }
+}
+rejects(()=>suppliedCandidateThenLive({} as NyxNemotronEngineeringCognition,"x".repeat(12001)),"conditional fixture cannot exceed patch scope");
+
 // Test-only reference witnesses establish oracle feasibility; none is a model seed.
 representationReferences["QUOTE-DISCOUNT-TAX"] = "export function transform(input){return Math.round((input.price*input.quantity*(1-input.discountPercent/100)*(1+input.taxPercent/100)+input.fee)*100)/100;}";
 representationReferences["QUADRATIC-DRAG-UNITS"] = "export function transform(input){const speed=input.speedKmh/3.6;return Math.round(0.5*input.density*speed*speed*input.dragCoefficient*input.area*1000)/1000;}";

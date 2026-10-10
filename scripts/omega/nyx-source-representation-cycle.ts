@@ -30,6 +30,8 @@ import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./benchmarks/evaluationOrderTransferTasks";
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive,
+  type ConditionalRepairTask } from "./benchmarks/conditionalRefactorRepairTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -44,6 +46,8 @@ const behaviorRepairComparison = process.env.NYX_BEHAVIOR_REPAIR_TRANSFER === "1
 const localRefactorComparison = process.env.NYX_LOCAL_REFACTOR_TRANSFER === "1";
 const runtimeReviewComparison = process.env.NYX_RUNTIME_REVIEW_TRANSFER === "1";
 const evaluationOrderComparison = process.env.NYX_EVALUATION_ORDER_TRANSFER === "1";
+const conditionalRepair = process.env.NYX_CONDITIONAL_REFACTOR_REPAIR === "1";
+if (conditionalRepair && !evaluationOrderComparison) throw Error("conditional_repair_requires_v2_v3_comparison");
 const concreteRefactorComparison = localRefactorComparison || evaluationOrderComparison;
 const qualityMechanismComparison = behaviorRepairComparison || concreteRefactorComparison;
 const budgetGuidanceComparison = originalBudgetComparison || qualityMechanismComparison || runtimeReviewComparison;
@@ -62,13 +66,13 @@ const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1
 const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
 if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison,originalBudgetComparison,behaviorRepairComparison,localRefactorComparison,runtimeReviewComparison,evaluationOrderComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
 const variants=evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
-const selectedTasks = evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+const selectedTasks = conditionalRepair?CONDITIONAL_REFACTOR_REPAIR_TASKS.flatMap(task=>[1,2].map(repeat=>({...task,id:`${task.id}-REPEAT-${repeat}`}))):evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
-  taskCorpus:evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
-  providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
+  taskCorpus:conditionalRepair?"nyx-supplied-candidate-conditional-repair/1":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
+  providerTimeoutMs: 65000, logicalCallsPerTask: conditionalRepair?1:2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
-  ...(decisionGenerationComparison ? {physicalCallsPerTaskIncludingRetries: 2, reasoningControl: "SUPER_HOSTED_NATIVE",
+  ...(decisionGenerationComparison ? {physicalCallsPerTaskIncludingRetries: conditionalRepair?1:2, reasoningControl: "SUPER_HOSTED_NATIVE",
     ...(nativeReasoningComparison?{reasoningPolicies:{NATIVE_NONE:{effort:"none",budget:null},
       NATIVE_BOUNDED_REASONING:{effort:"high",budget:2048}}}:{reasoningEffort:"none"}),
     generationPolicy: nativeReasoningComparison||budgetGuidanceComparison?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:boundedContractComparison?(lengthTransfer?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:NYX_BOUNDED_DECISION_SCHEMA_POLICY):NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
@@ -87,7 +91,12 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
     GUARDED_V2_CONTROL:"EXISTING_CONCRETE_PROPOSALS_V2",EVALUATION_ORDER_PROPOSALS:"EXISTING_PROPOSALS_PLUS_FIRST_EVALUATED_USE"},
     maximumLocalRefactorOperations:8,localRefactorCost:"BOUNDED_HOST_AST_NO_EXTRA_MODEL_OR_EXECUTION_CALLS",
     firstAttemptDifferences:"NO_TREATMENT_PRESENT_BEFORE_QUALITY_REJECTION_NOT_CAUSAL_MECHANISM_GAINS",
-    implementationHintsOrSeedsProvided:false}:{}),
+    implementationHintsOrSeedsProvided:conditionalRepair,
+    ...(conditionalRepair?{suppliedCandidatesPerTask:1,suppliedCandidateEvidence:"E3_TEST_DOUBLE_NOT_INFERENCE",
+      liveRepairCallsPerTask:1,predeclaredRepeats:2,uniqueTasks:4,
+      comparisonScope:"CONDITIONAL_QUALITY_REPAIR_NOT_FIRST_ATTEMPT_CODING_OR_FRONTIER_BENCHMARK",
+      efficacyCriterion:"BOTH_PREDECLARED_REPEATS_WIN_IN_AT_LEAST_TWO_DISTINCT_TASK_FAMILIES_AT_MATCHED_REALIZED_COMPUTE_WITHOUT_REGRESSION",
+      defaultOrBroadPromotion:"NONE_REQUIRES_NEW_UNSEEDED_REPLICATION"}:{} )}:{}),
   ...(localRefactorComparison?{preCandidateGuidance:"IDENTICAL_PUBLIC_ORIGINAL_STATE",postQualityGuidance:{
     QUALITY_SITES_CONTROL:"STRUCTURE_SITES",GUARDED_REFACTOR_PROPOSALS:"STRUCTURE_SITES_PLUS_CONCRETE_LOCAL_PROPOSALS"},
     maximumLocalRefactorOperations:8,localRefactorCost:"BOUNDED_HOST_AST_NO_EXTRA_MODEL_OR_EXECUTION_CALLS",
@@ -110,6 +119,7 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "src/lib/codelab/assurance/engineeringQualityOracle.ts",
   ...(budgetGuidanceComparison ? ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts"] : []),
   ...(concreteRefactorComparison ? ["src/lib/codelab/cognition/nyxLocalRefactorProposals.ts"] : []),
+  ...(conditionalRepair?["scripts/omega/benchmarks/conditionalRefactorRepairTasks.ts"]:[]),
   ...(runtimeReviewComparison?["scripts/omega/benchmarks/publicRuntimeSamples.ts","src/lib/codelab/observation/r3EngineeringObservation.ts"]:[]),
   ...(decisionGenerationComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
     evaluationOrderComparison?"scripts/omega/benchmarks/evaluationOrderTransferTasks.ts":runtimeReviewComparison?"scripts/omega/benchmarks/runtimeReviewTransferTasks.ts":localRefactorComparison?"scripts/omega/benchmarks/localRefactorTransferTasks.ts":behaviorRepairComparison?"scripts/omega/benchmarks/behaviorRepairTransferTasks.ts":originalBudgetComparison?"scripts/omega/benchmarks/originalBudgetTransferTasks.ts":nativeReasoningComparison?"scripts/omega/benchmarks/nativeReasoningTransferTasks.ts":boundedContractComparison?(lengthTransfer?"scripts/omega/benchmarks/lengthGrammarTransferTasks.ts":patternTransfer?"scripts/omega/benchmarks/patternRepairTransferTasks.ts":"scripts/omega/benchmarks/boundedContractTransferTasks.ts"):"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
@@ -119,6 +129,7 @@ const sourceDigests = Object.fromEntries(await Promise.all([
 const began = Date.now(); const globalDeadline = began + frozen.globalWallClockMs;
 const tasks = selectedTasks.map(t => ({id: t.id, tier: t.tier, domain: t.domain,
   inputDigest: theoryDigest({objective: t.objective, publicCases: t.publicCases, privateInputs: t.privateCases.map(c => c.input),
+    ...(conditionalRepair?{suppliedCandidateDigest:contentHash((t as ConditionalRepairTask).suppliedCandidate)}:{}),
     ...(runtimeReviewComparison?{publicRuntimeInputs:t.publicRuntimeInputs}:{})}),
   oracleDigest: theoryDigest(t.privateCases), fixtureDigest: theoryDigest(t)}));
 console.log(`NYX_REPRESENTATION_FREEZE ${JSON.stringify({candidate, frozen, sourceDigests, tasks, freezeDigest: theoryDigest({candidate, frozen, sourceDigests, tasks})})}`);
@@ -176,12 +187,13 @@ for (const [index, task] of selectedTasks.entries()) {
         return response;
       }});
     // This new epoch counts retries inside the same task budget. Historical reports are not rewritten.
-    const provider = decisionGenerationComparison ? baseProvider.withHttpAttemptBudget(2, "WITHIN_SHARED_BUDGET") : baseProvider;
+    const provider = decisionGenerationComparison ? baseProvider.withHttpAttemptBudget(conditionalRepair?1:2, "WITHIN_SHARED_BUDGET") : baseProvider;
     const session = await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task), candidate, deadline, frozen.maxPatchBytes);
     let loopResult: Awaited<ReturnType<R3BoundedRepairLoop["run"]>> | null = null;
     let cleanup: Awaited<ReturnType<R3BenchmarkRepositorySession["close"]>> | null = null;
     let infrastructureFailure = false;
     let baselineExecutions = 0;
+    let fixtureEvidence: readonly NyxRepairCognitionEvidence[] = [];
     try {
       const baseline = await session.baseline();
       baselineExecutions++;
@@ -202,12 +214,14 @@ for (const [index, task] of selectedTasks.entries()) {
         ...(evaluationOrderComparison?evaluationOrderTransferConfiguration(variant):{}),
         ...(runtimeReviewComparison?runtimeReviewTransferConfiguration(variant):{}),
         ...(originalBudgetComparison?originalBudgetTransferConfiguration(variant):{})});
+      const composition=conditionalRepair?suppliedCandidateThenLive(cognition,(task as ConditionalRepairTask).suppliedCandidate):null;
+      fixtureEvidence=composition?.fixtureEvidence??[];
       const loop = R3BoundedRepairLoop.create({loopId: `REPRESENTATION-${task.id}-${representation}`, evaluatorVersion: "source-representation-cycle/1",
-        observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition,
+        observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition:composition?.cognition??cognition,
         candidateBuilder: {builderIdentity: "OMEGA-REPRESENTATION-EXISTING-R3", prepare: h => session.prepare(h)},
         ...(runtimeReviewComparison?{passedCandidateReview:"ONCE_WITHIN_EXISTING_BUDGET" as const,
           ...(variant==="RUNTIME_OBSERVATION_REVIEW"?{publicRuntimeSamples:"BOUNDED_OBSERVATIONS" as const}:{})}:{}),
-        maxIterations: frozen.candidateIterationsPerTask, maxModelInteractions: frozen.logicalCallsPerTask, maxCognitionCorrections: 1,
+        maxIterations: frozen.candidateIterationsPerTask, maxModelInteractions: frozen.logicalCallsPerTask+(conditionalRepair?1:0), maxCognitionCorrections: conditionalRepair?0:1,
         maxWallClockMs: Math.max(100, deadline - Date.now() - 5000), maxChangesPerIteration: 1,
         maxPatchBytesPerIteration: frozen.maxPatchBytes, maxDiagnosisCharacters: 1500});
       loopResult = await loop.run({schemaVersion: 1, repairRequestId: `REPRESENTATION-${task.id}`, objective: task.objective,
@@ -219,7 +233,8 @@ for (const [index, task] of selectedTasks.entries()) {
       ...(loopResult?.cognitionFailures.map(i => i.cognitionEvidence) ?? []),
       ...(loopResult?.evidenceAcquisitions.map(i => i.cognitionEvidence) ?? []),
       ...(loopResult?.lastCognitionEvidence ? [loopResult.lastCognitionEvidence] : [])]
-      .filter((e, i, all) => e.modelEvidenceId !== "NOT_INVOKED" && all.findIndex(v => v.evidenceId === e.evidenceId) === i) as NyxRepairCognitionEvidence[];
+      .filter((e, i, all) => e.modelEvidenceId !== "NOT_INVOKED" && all.findIndex(v => v.evidenceId === e.evidenceId) === i
+        && !fixtureEvidence.some(fixture=>fixture.evidenceId===e.evidenceId)) as NyxRepairCognitionEvidence[];
     const usage = inferUsage(evidence);
     usage.toolCalls = baselineExecutions + (loopResult?.iterations.reduce((n, i) => n + i.verifications.length, 0) ?? 0);
     usage.toolWorkUnits = usage.toolCalls * (task.publicCases.length + task.privateCases.length + (task.publicRuntimeInputs?.length??0));
@@ -253,6 +268,13 @@ for (const [index, task] of selectedTasks.entries()) {
       qualityRejected:last?.candidateAdmission?.decision==="REJECTED",publicFailed:last?.functionallyPassed===false,
       privateFailure:score?.failure??null});
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
+      ...(conditionalRepair?{conditionalRepair:true,suppliedCandidateDigest:contentHash((task as ConditionalRepairTask).suppliedCandidate),
+        fixtureInteractions:fixtureEvidence.length,fixtureEvidence:fixtureEvidence.map(e=>({evidenceId:e.evidenceId,evidenceClass:e.evidenceClass,
+          providerRequestDigest:e.modelRequestDigest,responseDigest:e.modelResponseDigest,authorityGranted:e.authorityGranted})),
+        fixtureReady:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="REJECTED"
+          &&perIteration[0]?.candidateSourceDigest===contentHash((task as ConditionalRepairTask).suppliedCandidate),
+        nominalLoopInteractions:loopResult?.modelCallCount??0,
+        firstLiveRepairAccepted:accepted&&usage.logicalCalls===1&&loopResult?.iterations.length===2}:{}),
       ...(decisionGenerationComparison ? {providerIntentShape: nativeReasoningComparison||budgetGuidanceComparison?"DECISION_REQUIRED_FIELDS_AND_LENGTHS":["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS","DECISION_REQUIRED_FIELDS_AND_LENGTHS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
         schemaRejectedInteractions: loopResult?.cognitionFailures.length ?? 0} : {}),
       ...(nativeReasoningComparison||budgetGuidanceComparison?{observedInferenceControls,
@@ -282,7 +304,7 @@ for (const [index, task] of selectedTasks.entries()) {
           actionableProposalPromptCount:observedInferenceControls.filter(control=>(control.localProposalCount??0)>0).length}:{}),
       }:{}),
       representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
-      firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
+      firstCallAccepted: !conditionalRepair && accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
       ...(runtimeReviewComparison?{firstCandidateMeetsChecks:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="ADMITTED",
         mutationRepairCount:Math.max(0,(loopResult?.iterations.length??0)-1)}:{}),
       repairedAccepted: accepted && (usage.logicalCalls > 1 || (loopResult?.iterations.length ?? 0) > 1),
@@ -307,6 +329,7 @@ const pairs = tasks.map(task => {
     && (!originalBudgetComparison || r.inferenceControlVerified === true && r.originalBudgetControlVerified === true)
     && (!behaviorRepairComparison || r.inferenceControlVerified === true && r.behaviorRepairControlVerified === true)
     && (!concreteRefactorComparison || r.inferenceControlVerified === true && r.localRefactorControlVerified === true)
+    && (!conditionalRepair || r.fixtureReady===true&&r.fixtureInteractions===1&&r.fixtureEvidence[0]?.evidenceClass==="E3")
     && r.usage.unknownUsageCalls === 0 && r.usage.providerFailures === 0 && r.usage.retries === 0);
   const matched = stable && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key => {
     const values = rows.map(r => r.usage[key] + (key === "toolWorkUnits" ? r.privateScorerWorkUnits : 0));
@@ -338,7 +361,9 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: evaluationOrderComparison
+  hypothesis: conditionalRepair
+    ? "Optional v3 proposals improve one-call behavior-preserving cumulative-quality repair over v2, conditioned on an identical predeclared supplied algorithm that passes functional checks but fails unchanged quality admission. This is not first-attempt coding or fresh unseeded generalization."
+    : evaluationOrderComparison
     ? "Adding guarded single-use first-evaluated-expression proposals improves fresh cumulative-quality repair over existing v2 proposals without extra model calls, changed original state, oracle, authority or shared resource caps."
     : runtimeReviewComparison
     ? "Actual bounded public runtime observations improve scoped candidate review or repair on fresh tasks over the identical review cadence without observations, under unchanged models, calls, verifier, private oracle and quality gates."

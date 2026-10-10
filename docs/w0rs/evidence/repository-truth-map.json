@@ -2303,6 +2303,12 @@
       ]
     },
     {
+      "name": "NYX_CONDITIONAL_REFACTOR_REPAIR",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_CONNECTOME_CACHE_ROOT",
       "files": [
         "scripts/omega/verify-biological-connectome-cache.ts"

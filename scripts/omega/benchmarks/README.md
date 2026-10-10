@@ -1,5 +1,51 @@
 # NYX benchmark capability program
 
+### Conditional one-call quality repair: v2 versus v3 proposals
+
+The preceding unseeded epoch could not identify a mechanism effect because no
+treatment proposal reached live inference. The next predeclared study therefore
+conditions on an **identical supplied algorithm**, independently checked to pass
+the finite functional oracle and fail the existing cumulative quality policy.
+This is conditional refactoring, **not first-attempt coding, discovery, an
+official benchmark score or an unseeded generalization claim**. No quality policy,
+threshold, original stub, production cognition or executor is modified.
+
+Four new synthetic domains cover ordered energy/tariff composition, Unicode
+text and signed modular arithmetic, Horner iteration, and a saturating stateful
+signal recurrence. Each has two public and four private cases. Two repeats per
+domain are fixed before inference, with balanced arm order. They are four unique
+tasks, eight paired observations and 16 task-arms, not eight independent domains.
+The fourth domain is an unsupported-grammar negative control. The third exposes
+only partial proposal coverage; a proposal is not guaranteed to meet admission.
+
+Both arms use the same Super configuration, strict generation schema, public
+feedback, original-state quality policy, authority and lease. Each task-arm has
+one supplied E3 candidate plus **one live call/HTTP attempt**, at most two
+candidates, three tool executions, 8,192 output tokens, 155 seconds and a shared
+1,350-second epoch limit. The supplied candidate is parsed through existing
+`TEST_DOUBLE_ONLY` cognition, then applied, executed and judged by the same R3
+loop. Its E3 receipt is retained separately; it is never counted as model
+generation or charged as live compute. Only the subsequent repair request goes
+to the configured NVIDIA endpoint. No raw model reasoning is persisted.
+
+Control provides existing v2 proposals; treatment permits v3. A conditional
+efficacy signal requires both repeats to win in at least two distinct domains
+under the declared 10% realized-compute match, without functional/quality or
+authority regression. Token/call differences, provider failures, unsupported
+grammar and unexercised proposals remain visible. Actual host CPU is not proven
+matched by reported model tokens and scheduled verifier work. Even a positive
+result requires new unseeded replication before default/broad promotion.
+
+The experimental rationale is to isolate executable feedback and reuse of
+candidate code, rather than infer repair benefit from tasks with no repair
+opportunity; see [Teaching Large Language Models to Self-Debug](https://arxiv.org/abs/2304.05128).
+That paper's results are not evidence that this NYX mechanism works. Ω coverage
+is **PARTIAL / JUST-IN-TIME**: generator/detector separation, cumulative
+original-state evaluation, evidence over confidence, and capability ≠ authority.
+Biological expansion, recursion, deployment and additional cognitive layers
+remain deferred. The unresolved quality-policy applicability decision remains
+unchanged.
+
 ### Evaluation-order refactor proposal: fresh bounded comparison
 
 An opt-in `EVALUATION_ORDER_PROPOSALS` mode extends the existing v2 local
