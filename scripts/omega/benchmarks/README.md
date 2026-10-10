@@ -1,5 +1,33 @@
 # NYX benchmark capability program
 
+### Original structural budget: fresh transfer experiment
+
+`NYX_ORIGINAL_BUDGET_TRANSFER=1` compares existing source-site repair guidance
+with the same stack plus exact original-state structural totals before its first
+candidate. Four new objectives cover stable relational joins, strict UTF-16
+framing, exact affine skip-ahead and weighted interval optimization. The control
+already receives the public policy; treatment translates that policy and the
+original authorized file's AST into concrete totals. No solution or hidden score
+enters cognition. After a candidate, original-state guidance is unavailable;
+both arms retain identical bound post-rejection source-site feedback.
+
+Both arms use separately labeled Super native-none, length-bounded hosted
+grammar, unchanged local parser, original-state quality, public verifier and
+private literal oracle. Shared limits are two logical/physical calls including
+retries, two candidates, three verifier executions, 8,192 output tokens per call,
+155 seconds per task/arm and 22.5 minutes per epoch. Reported tokens, first and
+repaired acceptance, private outcomes and actual wire configuration remain
+separate. Realized match is 10% for calls/tokens/verifier work; host detector CPU
+is included in wall-clock time but not separately profiled. No more-measured-
+compute wins are reported separately. Clean initial failures and test-only
+references pass real Omega lifecycle, unchanged admission and exact oracles.
+
+This is an unpromoted hypothesis, not a capability gain. Same-session evaluator
+authorship is not independent replication, disposable repositories are not
+proven hostile-code isolation, and a development transfer score is not an
+external benchmark score. Default Ultra, reserved benchmarks, authority,
+leases, credentials and production are unchanged.
+
 ### Native reasoning transfer: no acceptance gain
 
 The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38006515872)

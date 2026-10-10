@@ -206,8 +206,19 @@ const cognitionLengthBoundedGenerationRefinement: readonly (readonly [string, st
     "        : this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_LENGTHS\"\n          ? nyxLengthBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema, contract.allowedActions, contract.requiredFields)\n"
   ]
 ];
+const cognitionOriginalBudgetRefinement: readonly (readonly [string, string])[] = [
+  ['import { measuredQualityRepairGuidance } from "./nyxMeasuredQualityGuidance";\n',
+    'import { measuredQualityRepairGuidance, originalStateQualityBudget } from "./nyxMeasuredQualityGuidance";\n'],
+  ["", '  /** Host-only first-candidate explanation; no parser, admission or authority changes. */\n  readonly structuralBudgetGuidance?: "PUBLIC_ORIGINAL_STATE";\n'],
+  ["", '    if (config.structuralBudgetGuidance !== undefined && config.structuralBudgetGuidance !== "PUBLIC_ORIGINAL_STATE") {\n      throw new Error("nyx_structural_budget_guidance_invalid");\n    }\n'],
+  ["", '      ...(this.#config.structuralBudgetGuidance && !qualityFeedback && request.priorHypotheses.length === 0\n        ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),\n'],
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionOriginalBudgetRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_original_budget_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of cognitionLengthBoundedGenerationRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_cognition_length_generation_hunk_mismatch");
     current = current.split(after).join(before);

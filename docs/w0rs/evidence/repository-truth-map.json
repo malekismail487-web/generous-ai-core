@@ -2375,6 +2375,12 @@
       ]
     },
     {
+      "name": "NYX_ORIGINAL_BUDGET_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_PATTERN_ESCAPES",
       "files": [
         "scripts/omega/nyx-generation-pattern-diagnostic.ts"

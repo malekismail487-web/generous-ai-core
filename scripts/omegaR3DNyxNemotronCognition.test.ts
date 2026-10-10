@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import Ajv from "ajv";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxInformativeProviderStringSchema, nyxLengthBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
-import { measuredQualityRepairGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
+import { measuredQualityRepairGuidance, originalStateQualityBudget } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -1018,6 +1019,60 @@ function schemaKeys(value: unknown): string[] {
   check(!composedSites.hiddenEvidenceUsed&&!composedSites.authorityGranted
     &&composedSites.corrections[0].maximumCandidateTotal===5,
     "composed treatment preserves public-only evidence, original-state quality budget and no authority grant");
+  const originalSource = "export function add(a,b) { return a+b+1; }\n";
+  const originalRequest = request({files:[{relativePath:"src/math.ts",content:originalSource,contentSha256:hash(originalSource)}]});
+  const budget = originalStateQualityBudget(originalRequest)!;
+  check(budget.originalMeasurement.declarations === 1 && budget.maximumCandidateTotals.declarations === 5
+    && budget.maximumCandidateTotals.complexity === 9 && budget.maximumCandidateTotals.maxNesting === 4,
+    "first-candidate totals derive exactly from original AST and existing absolute/delta limits");
+  check(budget.originalSourceDigest === hash(originalSource) && budget.evidenceRef === "FILE:src/math.ts"
+    && budget.tinySingleTarget && !budget.hiddenEvidenceUsed && !budget.authorityGranted
+    && !JSON.stringify(budget).includes(originalSource),
+    "budget is original-source-bound public explanation, not a solution or authority");
+  check(Object.isFrozen(budget) && Object.isFrozen(budget.maximumCandidateTotals),
+    "explanatory totals are immutable");
+  const largerOriginal = "export function add(a,b) {\n  const offset = 1;\n  return a+b+offset;\n}\n";
+  const largerBudget = originalStateQualityBudget(request({files:[{relativePath:"src/math.ts",content:largerOriginal,
+    contentSha256:hash(largerOriginal)}]}))!;
+  check(!largerBudget.tinySingleTarget && largerBudget.maximumCandidateTotals.declarations === 14,
+    "non-tiny original uses existing general declaration delta rather than imposing a new rule");
+  for (const invalid of [
+    {...originalRequest, priorHypotheses},
+    {...originalRequest, candidateQualityFeedback: feedback},
+    {...originalRequest, allowedMutationPaths: []},
+    {...originalRequest, allowedMutationPaths: ["src/math.ts", "src/other.ts"]},
+    {...originalRequest, allowedMutationPaths: ["src/other.ts"]},
+    {...originalRequest, files: []},
+    {...originalRequest, files: [...originalRequest.files,...originalRequest.files]},
+    {...originalRequest, files: [{...originalRequest.files[0],contentSha256:"0".repeat(64)}]},
+    {...originalRequest, files: [{relativePath:"src/math.ts",content:"export function {",contentSha256:hash("export function {")}]},
+  ]) check(originalStateQualityBudget(invalid) === null,
+    "non-original, absent, ambiguous, stale or unparseable state cannot fabricate an original budget");
+  const budgetPayloads: any[] = [];
+  for (const enabled of [false, true]) {
+    const instance = NyxNemotronEngineeringCognition.create({cognitionId:"ORIGINAL-BUDGET-ABLATION",
+      provider:provider(async(url,init)=>{budgetPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);}), maxPromptBytes:50000,maxOutputTokens:1024,
+      providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_LENGTHS", qualityRepairGuidance:"STRUCTURE_SITES",
+      ...(enabled?{structuralBudgetGuidance:"PUBLIC_ORIGINAL_STATE" as const}:{})});
+    await instance.proposeRepair(originalRequest);
+    await instance.proposeRepair(measuredRequest);
+  }
+  const {originalStructuralBudget, ...budgetBase} = getPrompt(budgetPayloads[2]);
+  check(JSON.stringify(budgetBase) === JSON.stringify(getPrompt(budgetPayloads[0]))
+    && isDeepStrictEqual(originalStructuralBudget, budget),
+    "first-candidate ablation changes only exact public original-state explanation");
+  const withoutMessages = (payload:any) => {const {messages, ...rest}=payload; return rest;};
+  check(JSON.stringify(withoutMessages(budgetPayloads[0])) === JSON.stringify(withoutMessages(budgetPayloads[2]))
+    && budgetPayloads[0].messages[0].content === budgetPayloads[2].messages[0].content,
+    "original budget changes no model, grammar, compute control or system message");
+  check(JSON.stringify(budgetPayloads[1]) === JSON.stringify(budgetPayloads[3]),
+    "post-rejection site-guidance wire payload remains identical, with no rebaselining on repaired files");
+  let invalidBudgetMode = false, budgetCalls = 0;
+  try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-ORIGINAL-BUDGET",maxPromptBytes:50000,maxOutputTokens:1024,
+    structuralBudgetGuidance:"WAIVE_QUALITY" as never,provider:provider(async()=>{budgetCalls++;return new Response();})});}
+  catch {invalidBudgetMode = true;}
+  check(invalidBudgetMode && budgetCalls === 0,"unknown structural-budget mode rejected before inference");
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });

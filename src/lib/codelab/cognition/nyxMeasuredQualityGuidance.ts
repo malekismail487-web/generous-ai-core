@@ -1,6 +1,36 @@
 import { createHash } from "node:crypto";
 import { measureEngineeringStructure } from "../assurance/engineeringQualityOracle";
 import type { NyxRepairCognitionRequest } from "./nyxNemotronEngineeringCognition";
+import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2, OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
+  OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES } from "../assurance/candidateEngineeringAdmission";
+
+/** Explain the existing single-target policy before its first candidate, never authorize it. */
+export function originalStateQualityBudget(request: NyxRepairCognitionRequest) {
+  // After a candidate, current files are NOT the original quality baseline.
+  // Bound post-rejection measurements remain the existing repair guidance's job.
+  if (request.priorHypotheses.length || request.candidateQualityFeedback !== null
+    || request.allowedMutationPaths.length !== 1) return null;
+  const target = request.allowedMutationPaths[0];
+  const files = request.files.filter(file => file.relativePath === target);
+  if (files.length !== 1 || createHash("sha256").update(files[0].content).digest("hex") !== files[0].contentSha256) return null;
+  const source = files[0].content;
+  const measurement = measureEngineeringStructure(target, source, true);
+  if (!measurement.parseable) return null;
+  const originalNonblankLines = source.split(/\r?\n/).filter(line => line.trim()).length;
+  const tinySingleTarget = originalNonblankLines <= OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES;
+  const policy = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2;
+  const addedDeclarations = tinySingleTarget ? OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS : policy.maxAddedDeclarations;
+  return Object.freeze({ version: "nyx-original-state-quality-budget/1", target,
+    evidenceRef: `FILE:${target}`, originalSourceDigest: files[0].contentSha256,
+    originalNonblankLines, tinySingleTarget, originalMeasurement: measurement,
+    maximumCandidateTotals: Object.freeze({ declarations: measurement.declarations + addedDeclarations,
+      complexity: Math.min(policy.maxCyclomaticComplexity, measurement.complexity + policy.maxComplexityDelta),
+      maxNesting: policy.maxNestingDepth }),
+    scope: "SINGLE_ORIGINAL_AUTHORIZED_TARGET_NOT_A_NEW_ADMISSION_POLICY",
+    accounting: "Count each function, method, arrow/callback, and each variable-statement declarator. Parameters and loop-header bindings do not count as variable statements. Multiple variables on one line still count separately. Complexity includes control nodes and &&, ||, ??; nesting is AST control depth, not indentation.",
+    discipline: "Design a coherent algorithm within every total before emitting code. Avoid unnecessary intermediate representations, repeated traversals and redundant bindings. Do not golf identifiers, hide work in giant expressions/state objects, delete required behavior, change tests, or evade a detector. Preserve all functional requirements. This explanation does not establish correctness: Omega must remeasure and execute the complete candidate.",
+    hiddenEvidenceUsed: false, authorityGranted: false });
+}
 
 /** Public detector explanations only. No solutions, task IDs, hidden scores, or executable authority. */
 export function measuredQualityRepairGuidance(request: NyxRepairCognitionRequest, includeDeclarationSites = false) {

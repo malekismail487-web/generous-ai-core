@@ -19,6 +19,7 @@ import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContr
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./omega/benchmarks/patternRepairTransferTasks";
 import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarTransferTasks";
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./omega/benchmarks/nativeReasoningTransferTasks";
+import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration } from "./omega/benchmarks/originalBudgetTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -761,7 +762,74 @@ representationReferences["BOUNDED-BOOLEAN-MODELS"] = `export function transform(
     "native reasoning uses the existing finite reservation inside the unchanged output ceiling");
   rejects(() => nativeReasoningTransferConfiguration("UNLIMITED"), "unknown native arm cannot silently inherit a policy");
 }
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS]) {
+representationReferences["STABLE-FULL-OUTER-JOIN"] = `export function transform(input) {
+  const rows = [];
+  const matchedRight = new Set();
+  for (const left of input.left) {
+    let matched = false;
+    for (const [index, right] of input.right.entries()) {
+      if (left[0] === right[0]) {
+        rows.push([left[0], left[1], right[1]]);
+        matchedRight.add(index);
+        matched = true;
+      }
+    }
+    if (!matched) rows.push([left[0], left[1], null]);
+  }
+  for (const [index, right] of input.right.entries()) {
+    if (!matchedRight.has(index)) rows.push([right[0], null, right[1]]);
+  }
+  return rows;
+}`;
+representationReferences["UTF16-LENGTH-FRAMES"] = `export function transform(input) {
+  const frames = [];
+  let cursor = 0;
+  while (cursor < input.length) {
+    const header = /^(0|[1-9][0-9]*):/.exec(input.slice(cursor));
+    if (!header) return {error: cursor};
+    const length = Number(header[1]);
+    if (!Number.isSafeInteger(length) || input[cursor + header[0].length + length] !== ",") {
+      return {error: cursor};
+    }
+    frames.push(input.slice(cursor + header[0].length, cursor + header[0].length + length));
+    cursor += header[0].length + length + 1;
+  }
+  return {frames};
+}`;
+representationReferences["EXACT-AFFINE-SKIP"] = `export function transform(input) {
+  const modulus = BigInt(input.modulus);
+  let remaining = BigInt(input.steps);
+  let power = [BigInt(input.a) % modulus, BigInt(input.c) % modulus];
+  let accumulated = [1n, 0n];
+  while (remaining > 0n) {
+    if (remaining % 2n) accumulated = [power[0] * accumulated[0] % modulus,
+      (power[0] * accumulated[1] + power[1]) % modulus];
+    power = [power[0] * power[0] % modulus, (power[0] * power[1] + power[1]) % modulus];
+    remaining /= 2n;
+  }
+  return (((accumulated[0] * BigInt(input.seed) + accumulated[1]) % modulus + modulus) % modulus).toString();
+}`;
+representationReferences["WEIGHTED-INTERVAL-OPTIMUM"] = `export function transform(input) {
+  const intervals = [...input].sort((left, right) => left.end - right.end);
+  const optimum = [0];
+  for (let index = 0; index < intervals.length; index++) {
+    let predecessor = index - 1;
+    while (predecessor >= 0 && intervals[predecessor].end > intervals[index].start) predecessor--;
+    optimum[index + 1] = Math.max(optimum[index], intervals[index].weight + optimum[predecessor + 1]);
+  }
+  return optimum[intervals.length];
+}`;
+{
+  const control = originalBudgetTransferConfiguration("STRUCTURE_SITES_CONTROL");
+  const {structuralBudgetGuidance, ...treatment} = originalBudgetTransferConfiguration("ORIGINAL_BUDGET");
+  check(structuralBudgetGuidance === "PUBLIC_ORIGINAL_STATE" && JSON.stringify(control) === JSON.stringify(treatment),
+    "original-budget ablation changes exactly one host prompt configuration");
+  check(control.qualityRepairGuidance === "STRUCTURE_SITES" && control.comparisonInferencePolicy === "CONSTRAINED_JSON"
+    && control.providerIntentShape === "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+    "both arms preserve source-site repair, native-none allocation and length-bounded grammar");
+  rejects(() => originalBudgetTransferConfiguration("RELAX_QUALITY"), "unknown budget arm cannot weaken admission");
+}
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

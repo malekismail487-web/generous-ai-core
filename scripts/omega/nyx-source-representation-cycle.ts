@@ -21,6 +21,7 @@ import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./benchmarks/boundedContractTra
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./benchmarks/patternRepairTransferTasks";
 import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./benchmarks/lengthGrammarTransferTasks";
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./benchmarks/nativeReasoningTransferTasks";
+import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration } from "./benchmarks/originalBudgetTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -30,6 +31,7 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
   throw Error("source_representation_cycle_clean_candidate_required");
 const original = theoryDigest(git("ls-files", "-s"));
 const nativeReasoningComparison = process.env.NYX_NATIVE_REASONING_TRANSFER === "1";
+const originalBudgetComparison = process.env.NYX_ORIGINAL_BUDGET_TRANSFER === "1";
 const decisionContractComparison = process.env.NYX_DECISION_CONTRACT_COMPARISON === "1";
 const boundedContractComparison = process.env.NYX_BOUNDED_CONTRACT_COMPARISON === "1";
 const patternTransfer = process.env.NYX_PATTERN_TRANSFER_TASKS === "1";
@@ -37,30 +39,32 @@ if(patternTransfer && !boundedContractComparison) throw Error("pattern_transfer_
 const lengthTransfer = process.env.NYX_LENGTH_TRANSFER_TASKS === "1";
 if(lengthTransfer && (!boundedContractComparison || patternTransfer)) throw Error("length_transfer_requires_exclusive_bounded_comparison");
 const boundedTreatment = lengthTransfer ? "DECISION_REQUIRED_FIELDS_AND_LENGTHS" : "DECISION_REQUIRED_FIELDS_AND_BOUNDS";
-const decisionGenerationComparison = decisionContractComparison || boundedContractComparison || nativeReasoningComparison;
+const decisionGenerationComparison = decisionContractComparison || boundedContractComparison || nativeReasoningComparison || originalBudgetComparison;
 const model = decisionGenerationComparison ? "nvidia/nemotron-3-super-120b-a12b" : "nvidia/nemotron-3-ultra-550b-a55b";
 const boundsComparison = process.env.NYX_ARRAY_BOUND_COMPARISON === "1";
 const localDeliveryComparison=process.env.NYX_STRICT_LOCAL_COMPARISON==="1";
 const qualityGuidanceComparison=process.env.NYX_MEASURED_QUALITY_COMPARISON==="1";
 const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
-if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
-const variants=nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
-const selectedTasks = nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison,originalBudgetComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
+const variants=originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
+const selectedTasks = originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
-  taskCorpus:nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
+  taskCorpus:originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
   providerTimeoutMs: 65000, logicalCallsPerTask: 2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
   ...(decisionGenerationComparison ? {physicalCallsPerTaskIncludingRetries: 2, reasoningControl: "SUPER_HOSTED_NATIVE",
     ...(nativeReasoningComparison?{reasoningPolicies:{NATIVE_NONE:{effort:"none",budget:null},
       NATIVE_BOUNDED_REASONING:{effort:"high",budget:2048}}}:{reasoningEffort:"none"}),
-    generationPolicy: nativeReasoningComparison?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:boundedContractComparison?(lengthTransfer?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:NYX_BOUNDED_DECISION_SCHEMA_POLICY):NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
-  changedVariable: nativeReasoningComparison?"EXISTING_NATIVE_REASONING_RESERVATION_WITHIN_SHARED_OUTPUT_CAP":boundedContractComparison?"REQUEST_DERIVED_GENERATION_BOUNDS_ONLY":decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
+    generationPolicy: nativeReasoningComparison||originalBudgetComparison?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:boundedContractComparison?(lengthTransfer?NYX_LENGTH_BOUNDED_DECISION_SCHEMA_POLICY:NYX_BOUNDED_DECISION_SCHEMA_POLICY):NYX_DECISION_REQUIRED_SCHEMA_POLICY} : {}),
+  changedVariable: originalBudgetComparison?"EXACT_ORIGINAL_STATE_PUBLIC_STRUCTURAL_BUDGET_BEFORE_FIRST_CANDIDATE_ONLY":nativeReasoningComparison?"EXISTING_NATIVE_REASONING_RESERVATION_WITHIN_SHARED_OUTPUT_CAP":boundedContractComparison?"REQUEST_DERIVED_GENERATION_BOUNDS_ONLY":decisionContractComparison?"DECISION_REQUIRED_PROVIDER_FIELDS_ONLY":qualitySiteComparison
     ?"AGGREGATE_MEASUREMENTS_VS_BOUNDED_AST_DECLARATION_SITES_ONLY":qualityGuidanceComparison
     ?"PUBLIC_STATIC_METRICS_VS_SOURCE_LINKED_DETECTOR_EXPLANATION_ONLY":localDeliveryComparison
     ?"EXISTING_HOSTED_VS_STRICT_LOCAL_DELIVERY_ONLY":boundsComparison
     ? "HOSTED_MAX_ITEMS_PRESERVED_VS_OMITTED_ONLY" : "EXISTING_TEXT_VS_LINES_SOURCE_REPRESENTATION_ONLY",
   publicFeedback: "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION", authority: "EXISTING_R3_ISOLATED_ONLY",
+  ...(originalBudgetComparison?{postQualityGuidance:"IDENTICAL_STRUCTURE_SITES",preCandidateGuidance:{
+    STRUCTURE_SITES_CONTROL:"EXISTING_PUBLIC_POLICY_ONLY",ORIGINAL_BUDGET:"PUBLIC_ORIGINAL_STATE"}}:{}),
   realizedMatchScope: "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
   hostDiagnosticCost: "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
   sourceMutations: false, generalShell: false, generalNetwork: false, production: false,
@@ -72,8 +76,9 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "scripts/omega/benchmarks/measuredQualityTransferTasks.ts", "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts",
   "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts",
+  ...(originalBudgetComparison ? ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts"] : []),
   ...(decisionGenerationComparison ? ["src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts",
-    nativeReasoningComparison?"scripts/omega/benchmarks/nativeReasoningTransferTasks.ts":boundedContractComparison?(lengthTransfer?"scripts/omega/benchmarks/lengthGrammarTransferTasks.ts":patternTransfer?"scripts/omega/benchmarks/patternRepairTransferTasks.ts":"scripts/omega/benchmarks/boundedContractTransferTasks.ts"):"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
+    originalBudgetComparison?"scripts/omega/benchmarks/originalBudgetTransferTasks.ts":nativeReasoningComparison?"scripts/omega/benchmarks/nativeReasoningTransferTasks.ts":boundedContractComparison?(lengthTransfer?"scripts/omega/benchmarks/lengthGrammarTransferTasks.ts":patternTransfer?"scripts/omega/benchmarks/patternRepairTransferTasks.ts":"scripts/omega/benchmarks/boundedContractTransferTasks.ts"):"scripts/omega/benchmarks/decisionContractTransferTasks.ts", "scripts/omega/nyx-source-representation-cycle.ts",
     "src/lib/codelab/model/nvidiaNimProvider.ts", "scripts/omega/benchmarks/r3RepositorySession.ts",
     "scripts/omega/benchmarks/nyxArcAdapter.ts"] : [])
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));
@@ -92,18 +97,20 @@ for (const [index, task] of selectedTasks.entries()) {
     const started = Date.now(); const deadline = Math.min(globalDeadline, started + frozen.wallClockMsPerTask);
     const captures: {content: string | null; finishReason: string | null}[] = [];
     const observedInferenceControls: {model: unknown; maxTokens: unknown; temperature: unknown;
-      effort: unknown; reasoningBudget: unknown; schemaDigest: string}[] = [];
+      effort: unknown; reasoningBudget: unknown; schemaDigest: string; originalBudgetPresented?: boolean}[] = [];
     const baseProvider = NvidiaNimProvider.create({providerId: `NYX-REPRESENTATION-${representation}`, model,
       authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
       maxPromptBytes: 64000, maxOutputTokens: frozen.maxOutputTokens, timeoutMs: frozen.providerTimeoutMs,
       transport: async (url, init) => {
         if (String(url) !== NVIDIA_NIM_CHAT_COMPLETIONS_URL) throw Error("representation_endpoint_out_of_scope");
-        if (nativeReasoningComparison) {
+        if (nativeReasoningComparison || originalBudgetComparison) {
           // Only safe numeric/configuration fields: never persist messages, headers or reasoning.
           const body = JSON.parse(String(init.body));
           observedInferenceControls.push({model:body.model,maxTokens:body.max_tokens,temperature:body.temperature,
             effort:body.reasoning_effort,reasoningBudget:body.reasoning_budget??null,
-            schemaDigest:theoryDigest(body.response_format)});
+            schemaDigest:theoryDigest(body.response_format), ...(originalBudgetComparison?{
+              originalBudgetPresented:JSON.parse(body.messages[1].content).originalStructuralBudget?.version
+                ==="nyx-original-state-quality-budget/1"}:{})});
         }
         const response = await fetch(url, init);
         if (response.ok) try {
@@ -134,7 +141,8 @@ for (const [index, task] of selectedTasks.entries()) {
         ...(variant==="STRICT_LOCAL"?{structuredOutputMode:"STRICT_LOCAL" as const}:{}),
         ...(["MEASURED_STRUCTURE","STRUCTURE_SITES"].includes(variant)
           ?{qualityRepairGuidance:variant as "MEASURED_STRUCTURE"|"STRUCTURE_SITES"}:{}),
-        ...(nativeReasoningComparison?nativeReasoningTransferConfiguration(variant):{})});
+        ...(nativeReasoningComparison?nativeReasoningTransferConfiguration(variant):{}),
+        ...(originalBudgetComparison?originalBudgetTransferConfiguration(variant):{})});
       const loop = R3BoundedRepairLoop.create({loopId: `REPRESENTATION-${task.id}-${representation}`, evaluatorVersion: "source-representation-cycle/1",
         observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition,
         candidateBuilder: {builderIdentity: "OMEGA-REPRESENTATION-EXISTING-R3", prepare: h => session.prepare(h)},
@@ -183,13 +191,16 @@ for (const [index, task] of selectedTasks.entries()) {
       qualityRejected:last?.candidateAdmission?.decision==="REJECTED",publicFailed:last?.functionallyPassed===false,
       privateFailure:score?.failure??null});
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
-      ...(decisionGenerationComparison ? {providerIntentShape: nativeReasoningComparison?"DECISION_REQUIRED_FIELDS_AND_LENGTHS":["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS","DECISION_REQUIRED_FIELDS_AND_LENGTHS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
+      ...(decisionGenerationComparison ? {providerIntentShape: nativeReasoningComparison||originalBudgetComparison?"DECISION_REQUIRED_FIELDS_AND_LENGTHS":["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS","DECISION_REQUIRED_FIELDS_AND_LENGTHS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
         schemaRejectedInteractions: loopResult?.cognitionFailures.length ?? 0} : {}),
-      ...(nativeReasoningComparison?{observedInferenceControls,
+      ...(nativeReasoningComparison||originalBudgetComparison?{observedInferenceControls,
         inferenceControlVerified:observedInferenceControls.length===usage.physicalCalls&&observedInferenceControls.length>0
           &&observedInferenceControls.every(c=>c.model===model&&c.maxTokens===frozen.maxOutputTokens&&c.temperature===0
-            &&c.effort===(variant==="NATIVE_NONE"?"none":"high")
-            &&c.reasoningBudget===(variant==="NATIVE_NONE"?null:2048))}:{}),
+            &&c.effort===(variant==="NATIVE_BOUNDED_REASONING"?"high":"none")
+            &&c.reasoningBudget===(variant==="NATIVE_BOUNDED_REASONING"?2048:null)),
+        ...(originalBudgetComparison?{originalBudgetControlVerified:observedInferenceControls.length>0
+          && observedInferenceControls[0].originalBudgetPresented===(variant==="ORIGINAL_BUDGET")
+          && observedInferenceControls.slice(1).every(c=>c.originalBudgetPresented===false)}:{})}:{}),
       representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
       firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
       repairedAccepted: accepted && (usage.logicalCalls > 1 || (loopResult?.iterations.length ?? 0) > 1),
@@ -210,13 +221,14 @@ for (const [index, task] of selectedTasks.entries()) {
 const pairs = tasks.map(task => {
   const rows = results.filter(r => r.id === task.id); const stable = rows.length === 2 && rows.every(r => r.usage && !r.infrastructureFailure
     && r.toolUsageComplete
+    && (!originalBudgetComparison || r.inferenceControlVerified === true && r.originalBudgetControlVerified === true)
     && r.usage.unknownUsageCalls === 0 && r.usage.providerFailures === 0 && r.usage.retries === 0);
   const matched = stable && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key => {
     const values = rows.map(r => r.usage[key] + (key === "toolWorkUnits" ? r.privateScorerWorkUnits : 0));
     return Math.max(...values) - Math.min(...values) <= Math.max(1, ...values) * frozen.realizedTolerance;
   });
-  const baseline = rows.find(r => r.variant === (nativeReasoningComparison?"NATIVE_NONE":boundedContractComparison?"DECISION_REQUIRED_FIELDS":"LEGACY_OPTIONAL_FIELDS"));
-  const treatment = rows.find(r => r.variant === (nativeReasoningComparison?"NATIVE_BOUNDED_REASONING":boundedContractComparison?boundedTreatment:"DECISION_REQUIRED_FIELDS"));
+  const baseline = rows.find(r => r.variant === (originalBudgetComparison?"STRUCTURE_SITES_CONTROL":nativeReasoningComparison?"NATIVE_NONE":boundedContractComparison?"DECISION_REQUIRED_FIELDS":"LEGACY_OPTIONAL_FIELDS"));
+  const treatment = rows.find(r => r.variant === (originalBudgetComparison?"ORIGINAL_BUDGET":nativeReasoningComparison?"NATIVE_BOUNDED_REASONING":boundedContractComparison?boundedTreatment:"DECISION_REQUIRED_FIELDS"));
   const noMoreMeasuredCompute = decisionGenerationComparison && stable && baseline && treatment
     && ["physicalCalls", "reportedTokens", "toolWorkUnits"].every(key =>
       treatment.usage[key] + (key === "toolWorkUnits" ? treatment.privateScorerWorkUnits : 0)
@@ -228,7 +240,9 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: nativeReasoningComparison
+  hypothesis: originalBudgetComparison
+    ? "Exact public original-state structural totals before the first edit improve fresh quality-accepted engineering without extra calls, relaxed gates, task-specific solutions or changed post-rejection feedback."
+    : nativeReasoningComparison
     ? "Existing bounded native reasoning improves coherent, behavior-preserving engineering and quality repairs on fresh tasks under unchanged grammar, feedback, acceptance, authority and total output/call limits."
     : boundedContractComparison
     ? "Request-derived string and decision-specific array constraints reduce source-interface failure and improve fresh engineering acceptance under unchanged parser, quality, authority and compute limits."
@@ -243,7 +257,7 @@ const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, resul
     :boundsComparison
     ? "Preserving explicit hosted array bounds removes the reproduced 32-line source ceiling and improves fresh transfer without changing local acceptance."
     : "Using existing TEXT rather than LINES reduces interface/source failures across fresh engineering tasks without weakening acceptance or increasing realized compute.",
-  falsification: nativeReasoningComparison||qualityGuidanceComparison||qualitySiteComparison
+  falsification: originalBudgetComparison||nativeReasoningComparison||qualityGuidanceComparison||qualitySiteComparison
     ? "No reproducible gain in quality-accepted repairs or reduced repair cost on fresh tasks at matched realized compute, or any weakened gate."
     : "No reproducible syntax/correctness improvement across development and fresh transfer at matched realized compute.",
   summaries: variants.map(variant => {
