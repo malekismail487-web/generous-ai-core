@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./omega/benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./omega/benchmarks/evaluationOrderTransferTasks";
-import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive }
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate }
   from "./omega/benchmarks/conditionalRefactorRepairTasks";
 import { proposeNyxLocalRefactors } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
@@ -1005,6 +1005,14 @@ representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(
 }
 // Conditional tests deliberately supply a correct but over-budget algorithm.
 // This is not model discovery or a claim that those supplied solutions are NYX's.
+check(lastConditionalModelCandidate([{iteration:1,functionalAccepted:true}])===undefined,
+  "retaining a supplied passing candidate after rejected model output is not model functional acceptance");
+for (const accepted of [true,false]) {
+  const rows=[{iteration:1,functionalAccepted:true},{iteration:2,functionalAccepted:accepted}];
+  check(lastConditionalModelCandidate(rows)===rows[1]&&lastConditionalModelCandidate(rows)?.functionalAccepted===accepted,
+    "conditional model outcome follows its actual executed repair, not the supplied success");
+}
+check(lastConditionalModelCandidate([])===undefined,"no conditional execution is not graded success");
 const conditionalReferences: Record<string,string> = {
   "BATCH-ENERGY-BILL":'export function transform(input) {\n  return input.watts * input.minutes / 60000 * input.count\n    * (1 + input.lossPercent / 100) * input.rate - input.credit;\n}\n',
   "SIGNED-TEXT-BUCKET":'export function transform(input) {\n  return ((input.text.trim().length + input.offset) % input.modulus\n    + input.modulus) % input.modulus + input.bias;\n}\n',

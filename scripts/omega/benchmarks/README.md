@@ -46,6 +46,46 @@ Biological expansion, recursion, deployment and additional cognitive layers
 remain deferred. The unresolved quality-policy applicability decision remains
 unchanged.
 
+At `b4f9032b5cc8a0ecdea2d5a2919c9725cb35d6da`,
+[run 38043142537](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38043142537)
+completed all 16 task-arms. Every arm began with the identical scoped,
+functionally passing, quality-rejected supplied candidate. Control accepted
+**6/8 live repairs**; treatment **5/8**. All eight control candidates reached
+execution; two made functional mistakes. Only five treatment candidates reached
+execution; all five passed, while two outputs failed syntax and one truncated.
+Those three unexecuted outputs are not hidden-case reasoning failures or model
+functional successes. Treatment proposals were exercised in six pairs, but none
+produced an acceptance win. Only the two unsupported-proposal negative controls
+met realized-compute tolerance. The predeclared efficacy criterion was not met.
+
+Control used 41,079 reported tokens; treatment 57,532 (+40.05%). Total: 16 live
+calls, 98,611 reported tokens, zero unknown usage/provider failures/retries,
+45 verifier executions and 130,151 ms summed task-arm wall time. The 16 supplied
+E3 fixture interactions are separate from those model calls. There are 16 unique
+private cases; repeated seed/model verification is not extra independent tasks.
+All source-integrity and cleanup checks passed.
+
+An accounting defect was discovered during audit: the raw functional aggregate
+credited a retained supplied algorithm after rejected model output. The raw
+report remains intact, including its misleading treatment `8/8` functional
+aggregate. The [receipt](../../../docs/omega/evidence/nyx-conditional-quality-repair-b4f9032b.json)
+contains an explicit corrected projection: treatment **5/8 model functional
+acceptance, three ungraded model candidates**, not `8/8`. Full acceptance `5/8`
+and all original per-iteration outcomes are unchanged. The opt-in runner now
+requires an executed model repair for model functional credit, with regression
+tests for supplied-only, empty, passing and failing cases. This is evaluation
+integrity repair, **not a cognitive gain**.
+
+Artifact SHA256, final logs, frozen task/source identities and receipt agree.
+Linux CI at the exact frozen candidate passed 109 suites / 12,660 checks,
+TypeScript 5.8.3 zero, secret/package/inventory checks and build (15.31 seconds),
+without deployment. No v3/default promotion, quality relaxation, authority
+change or ≥80%-across-benchmarks claim is justified. These tasks are now exposed
+conditional development; repeats or future reruns are not fresh generalization.
+The smallest next hypothesis is source/evidence-bound selection of host-computed
+proposals instead of model reserialization, still through ordinary typed Omega
+edits and every unchanged verifier. It is **not yet implemented or verified**.
+
 ### Evaluation-order refactor proposal: fresh bounded comparison
 
 An opt-in `EVALUATION_ORDER_PROPOSALS` mode extends the existing v2 local

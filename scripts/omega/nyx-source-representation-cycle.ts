@@ -30,7 +30,7 @@ import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./benchmarks/runtimeReviewTransferTasks";
 import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
   evaluationOrderWireControlVerified } from "./benchmarks/evaluationOrderTransferTasks";
-import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive,
+import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate,
   type ConditionalRepairTask } from "./benchmarks/conditionalRefactorRepairTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
@@ -68,7 +68,7 @@ if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySi
 const variants=evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
 const selectedTasks = conditionalRepair?CONDITIONAL_REFACTOR_REPAIR_TASKS.flatMap(task=>[1,2].map(repeat=>({...task,id:`${task.id}-REPEAT-${repeat}`}))):evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
-  taskCorpus:conditionalRepair?"nyx-supplied-candidate-conditional-repair/1":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
+  taskCorpus:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
   providerTimeoutMs: 65000, logicalCallsPerTask: conditionalRepair?1:2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
@@ -249,8 +249,9 @@ for (const [index, task] of selectedTasks.entries()) {
     }
     captures.length = 0; // No raw response/source persistence.
     const last = loopResult?.iterations.at(-1);
-    const qualityAccepted = last?.candidateAdmission?.decision === "ADMITTED";
-    const publicAccepted = last?.functionallyPassed === true;
+    const lastModel=conditionalRepair?lastConditionalModelCandidate(loopResult?.iterations??[]):last;
+    const qualityAccepted = lastModel?.candidateAdmission?.decision === "ADMITTED";
+    const publicAccepted = lastModel?.functionallyPassed === true;
     const perIteration=loopResult?.iterations.map(i=>({iteration:i.iteration,publicAccepted:i.functionallyPassed,
       ...(qualityMechanismComparison||runtimeReviewComparison?{candidateSourceDigest:i.hypothesis.changes[0]?.replacementContentHash??null}:{}),
       quality:i.candidateAdmission?.decision??null,qualityFindings:i.candidateAdmission?.findings??[],
@@ -258,7 +259,7 @@ for (const [index, task] of selectedTasks.entries()) {
         qualityAccepted:i.candidateAdmission?.decision==="ADMITTED",
         verificationStdout:i.verifications[0]?.execution.evidence.stdout??null,
         loopVerified:i===last&&loopResult.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"})}))??[];
-    const assessment=perIteration.at(-1)??assessRepresentationCandidate(task,{publicAccepted:false,qualityAccepted:false,
+    const assessment=(conditionalRepair?lastConditionalModelCandidate(perIteration):perIteration.at(-1))??assessRepresentationCandidate(task,{publicAccepted:false,qualityAccepted:false,
       verificationStdout:null,loopVerified:false});
     const {score,accepted,functionalAccepted}=assessment;
     const priorFailure = loopResult?.cognitionFailures.at(-1);
@@ -273,6 +274,8 @@ for (const [index, task] of selectedTasks.entries()) {
           providerRequestDigest:e.modelRequestDigest,responseDigest:e.modelResponseDigest,authorityGranted:e.authorityGranted})),
         fixtureReady:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="REJECTED"
           &&perIteration[0]?.candidateSourceDigest===contentHash((task as ConditionalRepairTask).suppliedCandidate),
+        modelCandidateProduced:lastModel!==undefined,retainedSuppliedCandidate:!lastModel&&perIteration[0]?.iteration===1,
+        suppliedFunctionalAcceptance:perIteration[0]?.functionalAccepted===true,
         nominalLoopInteractions:loopResult?.modelCallCount??0,
         firstLiveRepairAccepted:accepted&&usage.logicalCalls===1&&loopResult?.iterations.length===2}:{}),
       ...(decisionGenerationComparison ? {providerIntentShape: nativeReasoningComparison||budgetGuidanceComparison?"DECISION_REQUIRED_FIELDS_AND_LENGTHS":["DECISION_REQUIRED_FIELDS","DECISION_REQUIRED_FIELDS_AND_BOUNDS","DECISION_REQUIRED_FIELDS_AND_LENGTHS"].includes(variant) ? variant : "LEGACY_OPTIONAL_FIELDS",
@@ -404,7 +407,10 @@ const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, resul
         treatmentPrompts:rows.reduce((n,r)=>n+(concreteRefactorComparison?r.localRefactorPromptCount??0:r.bindingUsePromptCount??0),0),
         ...(concreteRefactorComparison?{actionableProposalPrompts:rows.reduce((n,r)=>n+(r.actionableProposalPromptCount??0),0),
           privateRegressionsAfterQualityRejection:rows.filter(r=>r.perIteration?.[0]?.functionalAccepted
-            &&r.perIteration[0].quality==="REJECTED"&&r.perIteration.length>1&&!r.perIteration.at(-1).functionalAccepted).length}:{}),
+            &&r.perIteration[0].quality==="REJECTED"&&r.perIteration.length>1&&!r.perIteration.at(-1).functionalAccepted).length,
+          ...(conditionalRepair?{modelCandidatesProduced:rows.filter(r=>r.modelCandidateProduced).length,
+            retainedSuppliedCandidates:rows.filter(r=>r.retainedSuppliedCandidate).length,
+            suppliedFunctionalAcceptance:rows.filter(r=>r.suppliedFunctionalAcceptance).length}:{} )}:{}),
         publicRegressionsAfterQualityRejection:rows.filter(r=>r.perIteration?.[0]?.publicAccepted
           &&r.perIteration[0].quality==="REJECTED" &&r.perIteration.length>1 &&!r.perIteration.at(-1).publicAccepted).length}:{}),
       repairedAccepted: rows.filter(r => r.repairedAccepted).length, reportedTokens: rows.reduce((n, r) => n + (r.usage?.reportedTokens ?? 0), 0),

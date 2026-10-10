@@ -5,7 +5,7 @@ import type { RepresentationTask } from "./sourceRepresentationTasks";
 
 export interface ConditionalRepairTask extends RepresentationTask { readonly suppliedCandidate: string }
 
-// New synthetic development fixtures, frozen before inference. These deliberately
+// Frozen at b4f9032b before inference; now exposed conditional development. These deliberately
 // supply the algorithm: the experiment measures conditional quality repair, NOT
 // discovery, first-attempt engineering, or an official benchmark score.
 export const CONDITIONAL_REFACTOR_REPAIR_TASKS: readonly ConditionalRepairTask[] = [
@@ -46,6 +46,13 @@ export const CONDITIONAL_REFACTOR_REPAIR_TASKS: readonly ConditionalRepairTask[]
       {input:{values:[-4,-8],initial:0,alpha:0.5,low:-10,high:10},expected:-5},
       {input:{values:[8,0,8],initial:0,alpha:0.5,low:0,high:3},expected:3}]},
 ];
+
+/** A retained supplied algorithm is not a generated or executed model repair.
+ * Keep its E3 verification separately instead of crediting it after bad emission.
+ */
+export function lastConditionalModelCandidate<T extends {readonly iteration:number}>(rows: readonly T[]): T|undefined {
+  return rows.filter(row=>row.iteration>1).at(-1);
+}
 
 /** Development-only composition, not a new executor or cognitive engine.
  * The supplied first candidate is parsed by existing cognition in TEST_DOUBLE_ONLY
