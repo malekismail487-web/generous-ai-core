@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import ts from "typescript";
 import { admitStaticEngineeringCandidate, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1,
   OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
   validPublicQualityObligations, type CandidateEngineeringAdmissionRequest } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -6,6 +7,7 @@ import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
 import type { NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../src/lib/codelab/executor/r2PatchProposal";
 import type { R3AApplyResult, R3AEvent } from "../src/lib/codelab/executor/r3DisposablePatchApplication";
+import { measureEngineeringStructure } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 
 let passed = 0;
 let failed = 0;
@@ -343,6 +345,124 @@ const extraApplicationTransition = admitStaticEngineeringCandidate({ ...extraApp
     changedPaths: Object.freeze([...extraApplicationBase.application.changedPaths, "src/extra.mjs"]) } });
 check(extraApplicationTransition.decision !== "ADMITTED",
   "an application transition absent from the proposal cannot be admitted");
+
+// Development-only applicability counterexample. This preserves the existing
+// oracle, including its rejection; it does not regrade any frozen model result.
+// A differently formatted original stub must not be mistaken for a different
+// algorithm or for evidence that the candidate's engineering quality improved.
+{
+  const originals = [
+    'export function transform(input) {\n  throw new Error("Not implemented");\n}\n',
+    'export function transform(input) {\n  throw new Error(\n    "Not implemented");\n}\n',
+    'export function transform(input) {\n  // Implementation remains absent.\n  throw new Error("Not implemented");\n}\n',
+    'export function transform(input) {\n\n  throw new Error("Not implemented");\n\n}\n',
+  ];
+  const canonicalAst = (source: string) => ts.createPrinter({ removeComments: true }).printFile(
+    ts.createSourceFile(PATH, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS));
+  const candidate = `export function transform(input) {
+  const values = input.values;
+  const target = input.target;
+  let lower = 0;
+  let upper = values.length;
+  while (lower < upper) {
+    const middle = Math.floor((lower + upper) / 2);
+    if (values[middle] < target) lower = middle + 1;
+    else upper = middle;
+  }
+  return lower;
+}
+`;
+  const directReads = `export function transform(input) {
+  let lower = 0;
+  let upper = input.values.length;
+  while (lower < upper) {
+    const middle = Math.floor((lower + upper) / 2);
+    if (input.values[middle] < input.target) lower = middle + 1;
+    else upper = middle;
+  }
+  return lower;
+}
+`;
+  const transforms = await Promise.all([candidate, directReads].map(async source =>
+    (await import(`data:text/javascript,${encodeURIComponent(source)}`)).transform));
+  let checkedCases = 0;
+  let functionalFailures = 0;
+  let inputMutationFailures = 0;
+  // Independent linear-search oracle, not a second copy of binary search.
+  for (let length = 0; length <= 4; length++) {
+    for (let encoding = 0; encoding < 5 ** length; encoding++) {
+      const values = Array.from({ length }, (_, position) => Math.floor(encoding / 5 ** position) % 5 - 2);
+      if (values.some((value, position) => position > 0 && value < values[position - 1])) continue;
+      for (let target = -3; target <= 3; target++) {
+        const input = { values: values.slice(), target };
+        const before = JSON.stringify(input);
+        const found = values.findIndex(value => value >= target);
+        const expected = found < 0 ? values.length : found;
+        for (const transform of transforms) {
+          if (transform(input) !== expected) functionalFailures++;
+          if (JSON.stringify(input) !== before) inputMutationFailures++;
+        }
+        checkedCases++;
+      }
+    }
+  }
+  check(checkedCases === 882 && functionalFailures === 0 && inputMutationFailures === 0,
+    "applicability witness passes independent exhaustive finite lower-bound checks with unchanged inputs");
+  check(originals.every(source => canonicalAst(source) === canonicalAst(originals[0])),
+    "formatting and comment variants of original stub have identical normalized TypeScript ASTs");
+  const originalMeasurements = originals.map(source => measureEngineeringStructure(PATH, source));
+  check(originalMeasurements.every(value => JSON.stringify(value) === JSON.stringify(originalMeasurements[0])),
+    "stub formatting does not change original declaration, complexity or nesting measurements");
+  check(measureEngineeringStructure(PATH, candidate).declarations === 6,
+    "readable witness has one function and five ordinary named variable bindings, not declaration packing");
+  const review = (before: string, after: string) => admitStaticEngineeringCandidate({
+    ...fixture(before, after), objective: OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
+    publicQualityObligations: [immutableObligation],
+  });
+  const outcomes = originals.map(before => review(before, candidate));
+  check(outcomes[0].decision === "REJECTED" && outcomes[3].decision === "REJECTED"
+    && outcomes[0].findings.length === 1 && outcomes[0].findings[0].code === "DECLARATION_DELTA"
+    && outcomes[0].findings[0].measurement?.observed === 5
+    && outcomes[0].findings[0].measurement?.limit === 4,
+    "current tiny-baseline contract still rejects the independently correct candidate only for declaration delta");
+  check(outcomes[1].decision === "ADMITTED" && outcomes[2].decision === "ADMITTED"
+    && outcomes[1].findings.length === 0 && outcomes[2].findings.length === 0,
+    "known applicability discrepancy is reproduced: wrapping a throw or adding a comment changes admission without changing code semantics");
+  check(outcomes[0].appliedPolicyDigest !== outcomes[1].appliedPolicyDigest
+    && outcomes.every(value => value.staticPolicyId === "omega-public-static-candidate/2"),
+    "policy evidence exposes the different effective limits even though the public policy version is unchanged");
+  const directReadOutcomes = originals.map(before => review(before, directReads));
+  check(measureEngineeringStructure(PATH, directReads).declarations === 4
+    && directReadOutcomes.every(value => value.decision === "ADMITTED"),
+    "the same finite JSON-input objective has a readable admitted implementation without threshold relaxation or code packing");
+  for (const original of originals) {
+    check(review(original, 'export function transform(input) { return fetch("https://example.invalid"); }\n')
+      .decision === "REJECTED", "formatting discrepancy cannot waive the network-access detector");
+    check(review(original, 'export function transform(input) { input.values.sort(); return 0; }\n')
+      .findings.some(value => value.code === "INPUT_PARAMETER_MUTATION_RISK"),
+      "formatting discrepancy cannot waive the objective-bound input ownership detector");
+    check(review(original, 'export function transform(input) { return ; invalid syntax here }\n')
+      .decision !== "ADMITTED", "formatting discrepancy cannot waive syntax rejection");
+  }
+  console.log(`NYX_QUALITY_APPLICABILITY_DIAGNOSTIC ${JSON.stringify({
+    schemaVersion: 1, evidenceClass: "E3", evidenceIndependence: "SAME_AUTHOR_DEVELOPMENT_FIXTURE_SHARED_STATIC_ORACLE",
+    study: "BASELINE_FORMATTING_METAMORPHIC_COUNTEREXAMPLE", originalNonblankLines: originals.map(source =>
+      source.split(/\r?\n/).filter(line => line.trim()).length),
+    originalNormalizedAstEqual: originals.every(source => canonicalAst(source) === canonicalAst(originals[0])),
+    originalMeasurements, candidateDigest: hash(candidate), candidateMeasurement: measureEngineeringStructure(PATH, candidate),
+    checkedCases, candidateEvaluations: checkedCases * transforms.length, functionalFailures, inputMutationFailures,
+    directReadVariant: { candidateDigest: hash(directReads), candidateMeasurement: measureEngineeringStructure(PATH, directReads),
+      decisions: directReadOutcomes.map(value => value.decision),
+      equivalenceScope: "FINITE_PLAIN_JSON_INPUTS_NOT_GETTERS_PROXIES_OR_ARBITRARY_REFACTORING" },
+    outcomes: outcomes.map(value => ({
+      decision: value.decision, staticPolicyId: value.staticPolicyId, appliedPolicyDigest: value.appliedPolicyDigest,
+      findings: value.findings,
+    })), frozenResultsRegraded: false, policyChanged: false, modelCalls: 0, cognitiveGainEstablished: false,
+    semanticsScope: "CONTROLLED_STUB_FORMATTING_NOT_ARBITRARY_PROGRAM_EQUIVALENCE",
+    feasibilityScope: "WITNESS_IS_CORRECT_NOT_PROOF_THAT_TINY_LIMIT_IS_UNSATISFIABLE",
+    authorityGranted: false,
+  })}`);
+}
 
 console.log(`Omega candidate engineering admission tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) {

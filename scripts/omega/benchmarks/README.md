@@ -1,5 +1,46 @@
 # NYX benchmark capability program
 
+### Quality-policy applicability: reproduced baseline-formatting discrepancy
+
+Before another live model run, a separate development diagnostic reproduced a
+policy applicability problem in `omega-public-static-candidate/2`. Four original
+stubs have the same normalized AST and the same measurements (one declaration,
+complexity one, nesting zero), but their nonblank line counts are **3, 4, 4, 3**.
+The exact same readable binary-search candidate is **REJECTED, ADMITTED,
+ADMITTED, REJECTED**, respectively. Wrapping the original throw statement or
+adding a comment switches the effective declaration-delta limit from four to
+twelve. The candidate, objective, paths and other checks do not change.
+
+An independent linear-search oracle checked all 126 nondecreasing arrays of
+length zero through four over five integer values, with seven target values:
+**882 finite cases**. Both the named-alias implementation and a readable direct-
+input-read implementation pass, with inputs unchanged: **1,764 candidate
+evaluations**, not 1,764 tasks. The second implementation is admitted under all
+four baselines without packing declarations or relaxing any threshold. This
+shows a feasible candidate exists for this objective; it does **not** prove
+that any arbitrary refactor is equivalent, nor that the tiny limit is impossible.
+The equivalence observation applies to these plain JSON inputs, not getters or
+proxies. Syntax, network-access and input-mutation negative controls still reject.
+
+The production policy, original-state accounting, authority, default model and
+all frozen outcomes remain unchanged. No inference was performed. This is an
+**evaluation-validity finding, not a cognitive gain or a revised benchmark score**.
+The reproducible diagnostic is in `omegaCandidateEngineeringAdmission.test.ts`;
+its [sanitized receipt](../../../docs/omega/evidence/nyx-quality-policy-applicability-dc049077.json)
+records the unchanged runtime hashes, dirty evaluated test-source identity and
+109 suites / 12,178 checks / zero failures, TypeScript 5.8.3 zero diagnostics,
+secret scan zero findings, and passing package/inventory checks. A separately versioned,
+formatting-invariant task-applicability correction requires explicit review;
+padding a fixture or silently raising a limit is not an acceptable workaround.
+
+The metamorphic test follows the general idea of comparing controlled
+semantics-preserving variants, not arbitrary equivalence certification
+([primary compiler-testing research](https://arxiv.org/abs/2504.04321)).
+Research on code understandability also motivates treating complexity metrics
+as limited empirical indicators, not universal quality proofs
+([216-developer study](https://arxiv.org/abs/2303.07722)). Neither study establishes
+NYX's thresholds, this policy correction, or any NYX capability improvement.
+
 ### Bounded runtime-observation review: candidate experiment, not promoted
 
 The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38027149037)

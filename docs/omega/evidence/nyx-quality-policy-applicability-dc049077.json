@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-quality-policy-applicability/1",
+  "observedBaselineCommit": "dc049077bf84fb36c00d48a489303fc382386bcd",
+  "evaluationState": {
+    "commit": "dc049077bf84fb36c00d48a489303fc382386bcd",
+    "worktreeState": "DIRTY",
+    "scope": "LOCAL_CHANGED_TEST_SOURCE_WITH_PINNED_RUNTIME_POLICY_HASHES_NOT_A_FROZEN_LIVE_MODEL_EPOCH"
+  },
+  "evidenceClass": "E3",
+  "outcome": "BASELINE_FORMATTING_CHANGES_POLICY_APPLICABILITY_REPRODUCED_POLICY_UNCHANGED",
+  "sourceDigests": {
+    "scripts/omegaCandidateEngineeringAdmission.test.ts": "3c3cc35861b54987e567db1cbbe29eb845cdd110d5c226f051f5815fdab63e4d",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "e501022e0c82a3602d127f1cfee77082fc1e571cb494841b6137726d3ef74f60",
+    "src/lib/codelab/assurance/engineeringQualityOracle.ts": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+    "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "8e2265c769ff921a2fca9837f067642433cb5665755bbb14f331f7f14e0c434a"
+  },
+  "diagnostic": {
+    "schemaVersion": 1,
+    "evidenceClass": "E3",
+    "evidenceIndependence": "SAME_AUTHOR_DEVELOPMENT_FIXTURE_SHARED_STATIC_ORACLE",
+    "study": "BASELINE_FORMATTING_METAMORPHIC_COUNTEREXAMPLE",
+    "originalNonblankLines": [
+      3,
+      4,
+      4,
+      3
+    ],
+    "originalNormalizedAstEqual": true,
+    "originalMeasurements": [
+      {
+        "parseable": true,
+        "declarations": 1,
+        "complexity": 1,
+        "maxNesting": 0
+      },
+      {
+        "parseable": true,
+        "declarations": 1,
+        "complexity": 1,
+        "maxNesting": 0
+      },
+      {
+        "parseable": true,
+        "declarations": 1,
+        "complexity": 1,
+        "maxNesting": 0
+      },
+      {
+        "parseable": true,
+        "declarations": 1,
+        "complexity": 1,
+        "maxNesting": 0
+      }
+    ],
+    "candidateDigest": "222574bec215dfbebd9c5f1dd719162b0340ea18a06136313bfb49f71714757d",
+    "candidateMeasurement": {
+      "parseable": true,
+      "declarations": 6,
+      "complexity": 3,
+      "maxNesting": 2
+    },
+    "checkedCases": 882,
+    "candidateEvaluations": 1764,
+    "functionalFailures": 0,
+    "inputMutationFailures": 0,
+    "directReadVariant": {
+      "candidateDigest": "ae2f6c9826b9872c49fe684caa24962f5510708fbb9a9386a0bed1b290818a30",
+      "candidateMeasurement": {
+        "parseable": true,
+        "declarations": 4,
+        "complexity": 3,
+        "maxNesting": 2
+      },
+      "decisions": [
+        "ADMITTED",
+        "ADMITTED",
+        "ADMITTED",
+        "ADMITTED"
+      ],
+      "equivalenceScope": "FINITE_PLAIN_JSON_INPUTS_NOT_GETTERS_PROXIES_OR_ARBITRARY_REFACTORING"
+    },
+    "outcomes": [
+      {
+        "decision": "REJECTED",
+        "staticPolicyId": "omega-public-static-candidate/2",
+        "appliedPolicyDigest": "f6c9295a145c37d9d570d890da0331be6c2e7a20441122d508a308a28a85497b",
+        "findings": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/math.mjs"
+            ],
+            "measurement": {
+              "observed": 5,
+              "limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "decision": "ADMITTED",
+        "staticPolicyId": "omega-public-static-candidate/2",
+        "appliedPolicyDigest": "d4c4f37090f7868d0686c1aa4018a1fa87aae3f1fcfebce5d7712e47bc031f1e",
+        "findings": []
+      },
+      {
+        "decision": "ADMITTED",
+        "staticPolicyId": "omega-public-static-candidate/2",
+        "appliedPolicyDigest": "d4c4f37090f7868d0686c1aa4018a1fa87aae3f1fcfebce5d7712e47bc031f1e",
+        "findings": []
+      },
+      {
+        "decision": "REJECTED",
+        "staticPolicyId": "omega-public-static-candidate/2",
+        "appliedPolicyDigest": "f6c9295a145c37d9d570d890da0331be6c2e7a20441122d508a308a28a85497b",
+        "findings": [
+          {
+            "dimension": "UNNECESSARY_COMPLEXITY",
+            "code": "DECLARATION_DELTA",
+            "paths": [
+              "src/math.mjs"
+            ],
+            "measurement": {
+              "observed": 5,
+              "limit": 4
+            }
+          }
+        ]
+      }
+    ],
+    "frozenResultsRegraded": false,
+    "policyChanged": false,
+    "modelCalls": 0,
+    "cognitiveGainEstablished": false,
+    "semanticsScope": "CONTROLLED_STUB_FORMATTING_NOT_ARBITRARY_PROGRAM_EQUIVALENCE",
+    "feasibilityScope": "WITNESS_IS_CORRECT_NOT_PROOF_THAT_TINY_LIMIT_IS_UNSATISFIABLE",
+    "authorityGranted": false
+  },
+  "causalFinding": {
+    "selector": "ONE_REVIEWED_FILE_AND_ORIGINAL_NONBLANK_LINES_LE_3",
+    "limits": {
+      "tinyAddedDeclarations": 4,
+      "generalAddedDeclarations": 12
+    },
+    "normalizedOriginalSemanticsChanged": false,
+    "candidateSourceChanged": false,
+    "publicObjectiveChanged": false,
+    "interpretation": "The source-size applicability heuristic is formatting-sensitive. This is not evidence that all rejected sources are good, all tasks are feasible, or a replacement policy is validated.",
+    "previousCumulativeBaselineHypothesis": "FALSIFIED_ACCOUNTING_IS_CORRECT",
+    "unchangedRemainingLimits": {
+      "maxChangedFiles": 4,
+      "maxChangedLines": 200,
+      "maxCandidateBytes": 65536,
+      "maxCyclomaticComplexity": 12,
+      "maxComplexityDelta": 8,
+      "maxNestingDepth": 4
+    },
+    "candidateRepairLessons": "Avoid redundant aliases where the input contract permits direct reads; this fixture does not authorize generic property-read inlining or assert equivalence for getters/proxies.",
+    "controlLimitations": "Same-author trusted handwritten programs and synthetic application lineage; not a live NYX comparison or proof of hostile-code containment."
+  },
+  "verification": {
+    "command": "node scripts/omega/run-tests.mjs",
+    "aggregate": {
+      "discoveredSuites": 109,
+      "executedSuites": 109,
+      "passedSuites": 109,
+      "failedSuites": 0,
+      "passedChecks": 12178,
+      "failedChecks": 0,
+      "semanticTestDefinitions": 4476
+    },
+    "manifestDigest": "863fa8b0b71e08a359253f85233dbb4c0a3b586889606a426eb11a2406921e34",
+    "tools": {
+      "node": "v24.19.0",
+      "typescript": "5.8.3"
+    },
+    "studySuite": {
+      "suiteId": "OMEGA-CANDIDATE-ENGINEERING-ADMISSION",
+      "file": "scripts/omegaCandidateEngineeringAdmission.test.ts",
+      "criticality": "CRITICAL_GATE",
+      "status": "PASSED",
+      "failureReason": null,
+      "exitCode": 0,
+      "durationMs": 446,
+      "passedChecks": 60,
+      "failedChecks": 0,
+      "sourceDigest": "3c3cc35861b54987e567db1cbbe29eb845cdd110d5c226f051f5815fdab63e4d",
+      "testIdentityDigest": "8d079c07ae610c46342f76ddb7e4ee6a7096d25b1e0922a8f32b93959d62f247",
+      "semanticTestDefinitions": 51
+    },
+    "typescriptRatchet": {
+      "version": "5.8.3",
+      "baseline": 0,
+      "current": 0,
+      "new": 0
+    },
+    "isolatedTestTypecheck": "PASS",
+    "secretScan": {
+      "scannedTextFiles": 1319,
+      "findings": 0
+    },
+    "packageCheck": {
+      "files": 7,
+      "bytes": 291241,
+      "result": "PASS"
+    },
+    "inventoryCheck": "PASS",
+    "productionBuild": "NOT_RERUN_NO_RUNTIME_OR_PRODUCTION_SOURCE_CHANGES",
+    "policySourceUnchangedFromBaseline": true,
+    "qualityOracleSourceUnchangedFromBaseline": true,
+    "guidanceSourceUnchangedFromBaseline": true
+  },
+  "resources": {
+    "liveModelCalls": 0,
+    "modelTokens": 0,
+    "newBenchmarkRuns": 0,
+    "network": "PUBLIC_PRIMARY_RESEARCH_AND_EXISTING_GITHUB_ONLY"
+  },
+  "promotion": {
+    "cognitiveImprovement": false,
+    "benchmarkScoreChanged": false,
+    "qualityPolicyChanged": false,
+    "authorityIncrease": false,
+    "atLeast80PercentAllBenchmarksEstablished": false
+  },
+  "preservedEvidence": {
+    "runtimeObservationTransfer": "docs/omega/evidence/nyx-runtime-observation-transfer-d2900344.json",
+    "originalOutcomesRegraded": false,
+    "reservedEvaluationAnswersAccessed": false
+  },
+  "nextAction": {
+    "requiresExplicitReview": "Separate versioned, formatting-invariant applicability correction distinguishing declared stub implementation from existing-function repair.",
+    "authorizationRequested": true,
+    "authorizationAssumed": false,
+    "policyChangeCannotBeCountedAsCognitiveGain": true,
+    "futureCapabilityClaimRequires": "Fresh model tasks, unchanged functional/security/scope checks, prospective explicit policy, matched simpler controls and honest realized compute."
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "DETECTOR_REQUIRES_VALIDATION",
+      "EVIDENCE_OVER_CONFIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "CRITICAL_FALSIFICATION_OUTRANKS_POSITIVE_VOTES"
+    ],
+    "supporting": [
+      "ORIGINAL_STATE_CUMULATIVE_QUALITY",
+      "PROVENANCE_BOUND_ADMISSION",
+      "CAPABILITY_NOT_AUTHORITY"
+    ],
+    "deferred": [
+      "QUALITY_POLICY_REVISION_PENDING_EXPLICIT_REVIEW",
+      "COGNITIVE_PROMOTION",
+      "PRODUCTION_AUTHORITY"
+    ],
+    "conflicts": [
+      "Physical-line heuristic is not invariant to controlled semantics-preserving baseline formatting."
+    ],
+    "supersededOperationalApproaches": [],
+    "coverageStatus": "PARTIAL / JUST-IN-TIME"
+  },
+  "research": [
+    {
+      "url": "https://arxiv.org/abs/2504.04321",
+      "relevance": "Primary metamorphic compiler-testing research motivates controlled equivalence variants; not evidence for NYX gain."
+    },
+    {
+      "url": "https://arxiv.org/abs/2303.07722",
+      "relevance": "Primary empirical study motivates caution about metric-based quality inferences; does not establish NYX thresholds."
+    }
+  ]
+}
