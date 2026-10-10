@@ -23,6 +23,8 @@ import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
+import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
+  localRefactorWireControlVerified } from "./omega/benchmarks/localRefactorTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -912,7 +914,70 @@ representationReferences["DEPENDENCY-CRITICAL-FINISH"] = `export function transf
       "unknown phase, omitted required context or unsolicited treatment cannot establish valid comparison");
   rejects(()=>behaviorRepairTransferConfiguration("RELAX_QUALITY"),"unknown binding arm fails closed");
 }
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS]) {
+representationReferences["STABLE-KEYED-BAG-DIFFERENCE"] = `export function transform(input) {
+  const counts = new Map();
+  const remaining = [];
+  for (const key of input.right) counts.set(key, (counts.get(key) ?? 0) + 1);
+  for (const record of input.left) {
+    if ((counts.get(record.key) ?? 0) > 0) counts.set(record.key, counts.get(record.key) - 1);
+    else remaining.push(structuredClone(record));
+  }
+  return remaining;
+}`;
+representationReferences["COIN-COMBINATION-COUNT"] = `export function transform(input) {
+  const counts = Array(input.amount + 1).fill(0);
+  counts[0] = 1;
+  for (const coin of input.coins) {
+    for (let amount = coin; amount <= input.amount; amount++) counts[amount] += counts[amount - coin];
+  }
+  return counts[input.amount];
+}`;
+representationReferences["MEDIAN-ABSOLUTE-DEVIATION"] = `export function transform(input) {
+  if (!input.length) return null;
+  function median(values) {
+    values.sort((left, right) => left - right);
+    return (values[Math.floor((values.length - 1) / 2)] + values[Math.floor(values.length / 2)]) / 2;
+  }
+  const center = median([...input]);
+  return {median:center, mad:median(input.map(value => Math.abs(value - center)))};
+}`;
+representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(input) {
+  if (!input.adjacency.length) return [];
+  const distances = Array(input.adjacency.length).fill(null);
+  const queue = [input.start];
+  distances[input.start] = 0;
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    for (let next = 0; next < distances.length; next++) {
+      if (input.adjacency[queue[cursor]][next] && distances[next] === null) {
+        distances[next] = distances[queue[cursor]] + 1;
+        queue.push(next);
+      }
+    }
+  }
+  return distances;
+}`;
+{
+  const control=localRefactorTransferConfiguration("QUALITY_SITES_CONTROL");
+  const {localRefactorGuidance,...treatment}=localRefactorTransferConfiguration("GUARDED_REFACTOR_PROPOSALS");
+  check(localRefactorGuidance==="GUARDED_PROPOSALS" && JSON.stringify(control)===JSON.stringify(treatment),
+    "concrete-proposal comparison changes only optional quality-phase proposal machinery");
+  check(control.structuralBudgetGuidance==="PUBLIC_ORIGINAL_STATE" && control.qualityRepairGuidance==="STRUCTURE_SITES"
+    && !Object.hasOwn(control,"behaviorRepairGuidance"),"falsified binding-inventory intervention is not silently promoted into new control");
+  check(localRefactorWireControlVerified("GUARDED_REFACTOR_PROPOSALS",[
+    {qualityRepairPhase:false,localProposalsPresented:false,localProposalCount:0},
+    {qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:0},
+    {qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1}]),
+    "valid empty proposal coverage is distinct from exercised actionable repair");
+  check(localRefactorWireControlVerified("QUALITY_SITES_CONTROL",[
+    {qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0}]),"simpler control has no proposal source or compute");
+  for(const controls of [[],[{qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0}],
+    [{qualityRepairPhase:false,localProposalsPresented:true,localProposalCount:1}],
+    [{qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:-1}],
+    [{qualityRepairPhase:true,localProposalsPresented:true}]])
+    check(!localRefactorWireControlVerified("GUARDED_REFACTOR_PROPOSALS",controls),"missing phase, wrong state and malformed proposal count fail wire verification");
+  rejects(()=>localRefactorTransferConfiguration("AUTO_APPLY"),"unrecognized proposal comparison cannot grant authority");
+}
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

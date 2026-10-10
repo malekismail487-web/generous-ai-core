@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
 import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";
+import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxLengthBoundedDecisionRequiredProviderSchema } from "./nyxDecisionRequiredSchema";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
@@ -463,6 +464,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly structuralBudgetGuidance?: "PUBLIC_ORIGINAL_STATE";
   /** Experimental lexical context for quality-only repairs; no new authority or approval. */
   readonly behaviorRepairGuidance?: "BINDING_USES";
+  /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */
+  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -689,6 +692,9 @@ export class NyxNemotronEngineeringCognition {
     if (config.behaviorRepairGuidance !== undefined && config.behaviorRepairGuidance !== "BINDING_USES") {
       throw new Error("nyx_behavior_repair_guidance_invalid");
     }
+    if (config.localRefactorGuidance !== undefined && config.localRefactorGuidance !== "GUARDED_PROPOSALS") {
+      throw new Error("nyx_local_refactor_guidance_invalid");
+    }
     if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
       throw new Error("nyx_structured_output_mode_invalid");
     }
@@ -769,6 +775,8 @@ export class NyxNemotronEngineeringCognition {
         ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),
       ...(this.#config.behaviorRepairGuidance && qualityFeedback
         ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),
+      ...(this.#config.localRefactorGuidance && qualityFeedback
+        ? { localRefactorProposals: nyxLocalRefactorGuidance(request) } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

@@ -5,6 +5,7 @@ import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSc
   nyxInformativeProviderStringSchema, nyxLengthBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
 import { measuredQualityRepairGuidance, originalStateQualityBudget, measureBindingUses,
   behaviorPreservingQualityGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
+import { proposeNyxLocalRefactors, nyxLocalRefactorGuidance } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -1115,6 +1116,37 @@ function schemaKeys(value: unknown): string[] {
     maxPromptBytes:50000,maxOutputTokens:1024,behaviorRepairGuidance:"AUTO_REWRITE" as never});}
   catch {invalidBehavior=true;}
   check(invalidBehavior,"unrecognized behavior mode fails before inference");
+  const localRequest = {...measuredRequest, allowedMutationPaths:["src/math.mjs"],
+    files:[{relativePath:"src/math.mjs",content:crowded,contentSha256:hash(crowded)}],
+    candidateQualityFeedback:{...measuredRequest.candidateQualityFeedback!,findings:[{dimension:"UNNECESSARY_COMPLEXITY",
+      code:"DECLARATION_DELTA",paths:["src/math.mjs"],measurement:{observed:5,limit:4}}]}};
+  const localGuide = nyxLocalRefactorGuidance(localRequest)!;
+  check(localGuide.proposals.length===1 && localGuide.proposals[0].after.declarations===3
+    && localGuide.proposals[0].baseSourceDigest===hash(crowded) && !localGuide.authorityGranted
+    && !localGuide.hiddenEvidenceUsed && localGuide.proposals[0].equivalence.includes("NOT_CERTIFIED"),
+    "concrete quality proposal removes adjacent return aliases while preserving evidence binding and no certification");
+  for (const invalid of [request(),{...localRequest,observation:observation("TEST_FAIL")},
+    {...localRequest,files:[{...localRequest.files[0],contentSha256:"0".repeat(64)}]},
+    {...localRequest,allowedMutationPaths:[]}, {...localRequest,files:[...localRequest.files,...localRequest.files]}])
+    check(nyxLocalRefactorGuidance(invalid)===null,"unbound, unauthorized, failed or ambiguous refactor context fails closed");
+  const localPayloads:any[]=[];
+  for (const enabled of [false,true]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"LOCAL-REFACTOR-ABLATION",
+      maxPromptBytes:50000,maxOutputTokens:1024,qualityRepairGuidance:"STRUCTURE_SITES",
+      provider:provider(async(url,init)=>{localPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);}),...(enabled?{localRefactorGuidance:"GUARDED_PROPOSALS" as const}:{})});
+    await instance.proposeRepair(originalRequest);
+    await instance.proposeRepair(localRequest);
+  }
+  check(isDeepStrictEqual(localPayloads[0],localPayloads[2]),"concrete refactor treatment does not alter first-candidate wire");
+  const {localRefactorProposals,...localBase}=getPrompt(localPayloads[3]);
+  check(isDeepStrictEqual(localRefactorProposals,localGuide) && isDeepStrictEqual(localBase,getPrompt(localPayloads[1]))
+    && isDeepStrictEqual(withoutMessages(localPayloads[1]),withoutMessages(localPayloads[3])),
+    "optional concrete proposal is the only quality-phase wire delta; provider, caps, grammar and authority unchanged");
+  let invalidLocal=false;
+  try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-LOCAL-REFACTOR",maxPromptBytes:50000,maxOutputTokens:1024,
+    provider:provider(transportFor(intent())),localRefactorGuidance:"AUTOMATIC_APPROVAL" as never});} catch {invalidLocal=true;}
+  check(invalidLocal,"unknown local refactor mode fails before inference");
   check(validRevision.decision === "PROPOSED" && validRevision.hypothesis?.parentHypothesisId === prior.hypothesisId,
     "quality-driven revision requires a passing candidate with bound proposal, application, and E3 admission evidence");
   const citedQuality = await evaluate(intent({ evidenceRefs: [qualityEvidenceId] }), {
@@ -1144,6 +1176,75 @@ function schemaKeys(value: unknown): string[] {
   check([wrongProposal, wrongApplication, unreferencedEvidence, feedbackOnFailure].every((result) => result.decision === "REJECTED"
     && result.reason.includes("nyx_cognition_quality_feedback_invalid")) && calls === 0,
   "forged, unbound, unreferenced, or failure-state quality feedback is inert before provider invocation");
+}
+
+{
+  // Independent execution of trusted development fixtures, not model-generated programs.
+  const run=(body:string,...args:unknown[])=>new Function("return ("+body+")")()(...args);
+  const source="function subject(input) {const zero=0; const count=input.length+zero; const result=count; return result;}";
+  const proposal=proposeNyxLocalRefactors("src/subject.mjs",source)!;
+  check(proposal.operations.length===3 && proposal.after.declarations===1 && run(proposal.proposedSource,[1,2,3])===3
+    &&run(source,[])===run(proposal.proposedSource,[]) && proposal.baseSourceDigest===hash(source)
+    &&proposal.proposedSourceDigest===hash(proposal.proposedSource),
+    "guarded proposal cumulatively composes primitive substitution and return aliases on separate development program");
+  check(proposal.operations.every((operation,index)=>operation.inputDigest===(index?proposal.operations[index-1].outputDigest:hash(source)))
+    &&Object.isFrozen(proposal)&&Object.isFrozen(proposal.operations)&&!proposal.authorityGranted,
+    "each ordered local transformation has immutable source-bound provenance, not execution authority");
+  for(const source of [
+    "function subject(next){const value=next();return value;}",
+    "function subject(input){const value=input.value;return value;}",
+    "function subject(input){if(input.value)return true;else return false;}",
+    "function subject(input){if(input.value){return false;}else{return true;}}",
+  ]) {
+    const p=proposeNyxLocalRefactors("src/subject.mjs",source)!;
+    check(p!==null && run(source,()=>7)===run(p.proposedSource,()=>7),"narrow adjacent and opposite-boolean proposals preserve trusted visible behavior");
+    if(source.includes("input.value")) {
+      const make=()=>{let reads=0;return {get value(){return ++reads;},get reads(){return reads;}};};
+      const a=make(),b=make();
+      check(run(source,a)===run(p.proposedSource,b)&&a.reads===1&&b.reads===1,
+        "getters remain evaluated exactly once in adjacent-return and boolean proposals");
+    }
+  }
+  const boolean="function subject(input){if(input)return true;else return false;}";
+  const boolProposal=proposeNyxLocalRefactors("src/boolean.mjs",boolean)!;
+  for(const value of [undefined,null,false,true,0,-0,NaN,"","value",{},[],0n,1n,Symbol("x")])
+    check(run(boolean,value)===run(boolProposal.proposedSource,value),"boolean conversion preserves truthiness across primitive and object development cases");
+  const named="function subject(){const retained=()=>1;return retained;}";
+  check(run(named).name==="retained" && run("function subject(){return ()=>1;}").name===""
+    &&proposeNyxLocalRefactors("src/names.mjs",named)===null,
+    "inferred function name is a real counterexample to unguarded terminal alias deletion");
+  for (const unsafe of [named,"function subject(){const retained=class{};return retained;}",
+    "function subject(){const retained=function(){};return retained;}",
+    "function subject(next){const value=next();return value+value;}",
+    "function subject(input){const value=input.value;return value+value;}",
+    "function subject(){const value=1;return {value};}",
+    "function subject(){const value=1;return ()=>value;}",
+    "function subject(){return value;const value=1;}",
+    "function subject(){const value=1;eval('value');return value;}",
+    "function subject(){const value=1;return Function('return value')();}",
+    "function subject(input){const value=1;[value]=input;return value;}",
+    "function subject(){const value=1;(value)=2;return value;}",
+    "function subject(input){let total=0;for(const value of input)total+=value;return total;}",
+    "export const value=1; export function subject(){return value;}",
+    "function subject(input){if(input){sideEffect();return true;}else return false;}",
+    "async function subject(input){await using value=input;return value;}",
+    "function subject(){const value:number=1;return value;}",
+    "function subject(input){const value=input as number;return value;}",
+  ]) check(proposeNyxLocalRefactors("src/unsafe.mjs",unsafe)===null,
+    "unsupported effects, captures, dynamic scope, writes, comments or exports cannot acquire a guarded refactor");
+  const annotated=proposeNyxLocalRefactors("src/comments.mjs","function subject(){const value=1; /* important */ return value;}")!;
+  check(annotated.proposedSource.includes("/* important */"),"comments outside edited primitive declaration are preserved rather than silently discarded");
+  for(const [path,body] of [["src/a.ts",source],["src/a.json",source],["src/a.mjs","function {"],
+    ["src/a.mjs"," ".repeat(12001)+source]]) check(proposeNyxLocalRefactors(path,body)===null,
+    "unsupported language, parse failure and oversized input fail closed");
+  const chain="function subject(input){"+Array.from({length:12},(_,i)=>`const v${i}=${i?`v${i-1}`:"input"};`).join("")+"return v11;}";
+  const bounded=proposeNyxLocalRefactors("src/bounded.mjs",chain)!;
+  check(bounded.operations.length===8 && bounded.maximumOperations===8
+    &&run(chain,7)===run(bounded.proposedSource,7),"bounded cumulative proposer stops at its explicit operation limit");
+  check(proposeNyxLocalRefactors("src/many.mjs","function subject(){"+"0;".repeat(1800)+"const value=1;return value;}")===null,
+    "bounded AST inventory refuses resource-heavy valid source without executing it");
+  check(proposeNyxLocalRefactors("src/deep.mjs","function subject(){return "+"(".repeat(2000)+"1"+")".repeat(2000)+";}")===null,
+    "deeply nested parsing failure is contained as no proposal, not a crashed cognition process");
 }
 
 {

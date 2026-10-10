@@ -220,8 +220,18 @@ const cognitionBehaviorRepairRefinement: readonly (readonly [string, string])[] 
   ["", '    if (config.behaviorRepairGuidance !== undefined && config.behaviorRepairGuidance !== "BINDING_USES") {\n      throw new Error("nyx_behavior_repair_guidance_invalid");\n    }\n'],
   ["", '      ...(this.#config.behaviorRepairGuidance && qualityFeedback\n        ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),\n'],
 ];
+const cognitionLocalRefactorRefinement: readonly (readonly [string, string])[] = [
+  ["", 'import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";\n'],
+  ["", '  /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */\n  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";\n'],
+  ["", '    if (config.localRefactorGuidance !== undefined && config.localRefactorGuidance !== "GUARDED_PROPOSALS") {\n      throw new Error("nyx_local_refactor_guidance_invalid");\n    }\n'],
+  ["", '      ...(this.#config.localRefactorGuidance && qualityFeedback\n        ? { localRefactorProposals: nyxLocalRefactorGuidance(request) } : {}),\n'],
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionLocalRefactorRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_local_refactor_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of cognitionBehaviorRepairRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_cognition_behavior_repair_hunk_mismatch");
     current = current.split(after).join(before);
