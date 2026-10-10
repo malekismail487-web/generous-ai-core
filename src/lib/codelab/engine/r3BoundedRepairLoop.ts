@@ -82,6 +82,10 @@ export interface R3BoundedRepairLoopConfig {
   readonly maxChangesPerIteration: number;
   readonly maxPatchBytesPerIteration: number;
   readonly maxDiagnosisCharacters: number;
+  /** Research-only review of a scoped pass; consumes existing calls/candidates, never renews a lease. */
+  readonly passedCandidateReview?: "ONCE_WITHIN_EXISTING_BUDGET";
+  /** Observations only, not new tests or acceptance authority. Default wire behavior is unchanged. */
+  readonly publicRuntimeSamples?: "BOUNDED_OBSERVATIONS";
 }
 
 export interface R3RepairBaselineExecution {
@@ -280,6 +284,11 @@ export class R3BoundedRepairLoop {
       || !Number.isInteger(config.maxChangesPerIteration) || config.maxChangesPerIteration < 1
       || !Number.isInteger(config.maxPatchBytesPerIteration) || config.maxPatchBytesPerIteration < 1
       || !Number.isInteger(config.maxDiagnosisCharacters) || config.maxDiagnosisCharacters < 1) throw new Error("bounded_repair_loop_configuration_invalid");
+    if (config.passedCandidateReview !== undefined && (config.passedCandidateReview !== "ONCE_WITHIN_EXISTING_BUDGET"
+      || maxModelInteractions < 2 || config.maxIterations < 2)) throw new Error("bounded_pass_review_configuration_invalid");
+    if (config.publicRuntimeSamples !== undefined && config.publicRuntimeSamples !== "BOUNDED_OBSERVATIONS") {
+      throw new Error("bounded_runtime_samples_configuration_invalid");
+    }
     return new R3BoundedRepairLoop(config);
   }
 
@@ -321,6 +330,8 @@ export class R3BoundedRepairLoop {
     const priorCognitionFailures: NyxPriorCognitionFailure[] = [];
     const iterations: R3RepairIteration[] = [];
     let candidateQualityFeedback: NyxCandidateQualityFeedback | null = null;
+    let reviewingPassedCandidate = false;
+    let passReviewUsed = false;
     let cognitionCorrections = 0;
     const maxModelInteractions = this.#config.maxModelInteractions ?? this.#config.maxIterations;
     const maxCognitionCorrections = this.#config.maxCognitionCorrections ?? Math.max(0, this.#config.maxIterations - 1);
@@ -340,6 +351,7 @@ export class R3BoundedRepairLoop {
         availableEvidence: currentAvailableEvidence,
         priorHypotheses, priorCognitionFailures,
         candidateQualityFeedback,
+        ...(reviewingPassedCandidate ? { reviewPassedCandidate: true as const } : {}),
         sourceQualityConstraints: NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS,
         allowedVerificationToolIds: request.allowedVerificationToolIds, maxChanges: this.#config.maxChangesPerIteration,
         maxPatchBytes: this.#config.maxPatchBytesPerIteration, maxDiagnosisCharacters: this.#config.maxDiagnosisCharacters,
@@ -397,6 +409,10 @@ export class R3BoundedRepairLoop {
         currentAvailableEvidence = Object.freeze(currentAvailableEvidence.filter((item) => !requested.has(item.evidenceRef)));
         continue;
       }
+      if (cognition.decision === "NO_ACTION" && reviewingPassedCandidate && iterations.at(-1)?.passed
+        && candidateQualityFeedback === null && passing(currentObservation)) {
+        return finish("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_review_retained_independently_admitted_candidate", iterations, currentObservation);
+      }
       if (cognition.decision !== "PROPOSED" || !cognition.hypothesis) {
         const outcome = cognition.decision === "BLOCKED" || cognition.decision === "REJECTED" || cognition.decision === "NO_ACTION"
           ? "BLOCKED" : "COGNITION_ERROR";
@@ -430,6 +446,7 @@ export class R3BoundedRepairLoop {
             toolId: verification.toolId, toolKind: execution.evidence.toolKind,
             toolIdentityDigest: execution.evidence.toolIdentityDigest, environmentIdentity: execution.evidence.environmentIdentity },
           candidate: execution, baseline,
+          ...(this.#config.publicRuntimeSamples ? { capturePublicRuntimeSamples: true as const } : {}),
           observedAtEpochMs: Math.max(Date.now(), execution.evidence.endedAtEpochMs) });
         if (observed.decision !== "OBSERVED" || !observed.observation || observed.observation.epistemicState === "CONFLICTED") {
           return finish("BLOCKED", `repair_observation_${observed.reason}`, iterations, currentObservation);
@@ -466,7 +483,23 @@ export class R3BoundedRepairLoop {
       if (candidateAdmission?.decision === "INSUFFICIENT_EVIDENCE") {
         return finish("BLOCKED", "candidate_admission_evidence_insufficient", iterations, currentObservation);
       }
-      if (passed) return finish("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_repair_functionally_verified", iterations, verifications[0].observation);
+      reviewingPassedCandidate = false;
+      if (passed) {
+        if (this.#config.passedCandidateReview && !passReviewUsed && cognitionCycle < maxModelInteractions
+          && iterations.length < this.#config.maxIterations) {
+          passReviewUsed = true;
+          reviewingPassedCandidate = true;
+          priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,
+            parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,
+            expectedResult: cognition.hypothesis.expectedResult, strategyDigest: cognition.hypothesis.strategyDigest,
+            disposition: "SUPPORTED", verificationEvidenceRefs: Object.freeze(verifications.map(item => item.execution.evidence.evidenceId)) }));
+          currentObservation = verifications[0].observation;
+          currentFiles = candidateContexts;
+          candidateQualityFeedback = null;
+          continue;
+        }
+        return finish("FUNCTIONALLY_REPAIRED_VERIFIED", "bounded_repair_functionally_verified", iterations, verifications[0].observation);
+      }
       if (functionallyPassed && candidateAdmission?.decision === "REJECTED") {
         priorHypotheses.push(Object.freeze({ hypothesisId: cognition.hypothesis.hypothesisId,
           parentHypothesisId: cognition.hypothesis.parentHypothesisId, causalHypothesis: cognition.hypothesis.causalHypothesis,

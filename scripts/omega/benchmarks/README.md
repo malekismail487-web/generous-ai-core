@@ -1,5 +1,43 @@
 # NYX benchmark capability program
 
+### Bounded runtime-observation review: candidate experiment, not promoted
+
+The next frozen experiment compares `SCOPED_REVIEW_CONTROL` with
+`RUNTIME_OBSERVATION_REVIEW` on four newly authored cross-domain engineering
+objectives. Both use the existing R3 repository session, the same pinned TEST
+entrypoint, public/private scorer and cumulative original-state quality oracle.
+Both permit one post-pass review within the existing two model calls/two candidate
+iterations. Only treatment receives up to four bounded synthetic runtime samples.
+Inputs are predeclared; samples contain actual outputs, not expected answers.
+Model counterexample prose remains prose: this experiment does **not** implement
+dynamic arbitrary test generation or give the model a new tool.
+
+`NO_ACTION` can retain only the exact candidate already independently admitted
+by the host. It cannot certify an initial failure, rescue a quality rejection,
+ignore a later regression, renew a lease or evade cancellation. Malformed sample
+streams are unavailable evidence, never success. Ordinary execution diagnostics
+and private expected-output grading remain unchanged. Private inputs are visible
+in the fixture; expected outputs are withheld. These same-author fixtures are E3,
+not independently authored benchmark holdouts or cross-platform replication.
+
+The falsifiable job is whether execution observations improve objective-level
+acceptance over the identical review cadence, without more realized model compute
+or relaxed gates. All first and final candidates, retention versus actual repair,
+schema/provider failures, tokens, verifier work and regressions remain separate.
+Case-invocation accounting is a verifier-work proxy, not total CPU accounting.
+No broad cognitive promotion follows from infrastructure tests alone. Default
+Ultra, source-write permissions, production and general network authority remain
+unchanged; disposable isolation is not a proven hostile-code/network boundary.
+
+The [authors' metamorphic-testing survey](https://i.cs.hku.hk/~tse/Papers/2010s/hlmtCSUR.html)
+motivates distinguishing executable observations and necessary relations from
+oracle authority. This implementation is a bounded observation/review experiment,
+not a claim that model-proposed relations are correct or formal verification.
+Ω plan coverage is **PARTIAL / JUST-IN-TIME**: observe–diagnose–repair,
+generator/detector separation, unchanged independent acceptance, lease/provenance,
+bounded resources and capability-versus-authority. Dynamic experiments, broader
+benchmarks, recursion, biological expansion and production promotion are deferred.
+
 ### Concrete local refactor transfer: zero actionable coverage, not promoted
 
 The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38024882912)

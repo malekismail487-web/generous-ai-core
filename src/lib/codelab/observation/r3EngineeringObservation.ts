@@ -53,6 +53,8 @@ export interface EngineeringObservationRequest {
   readonly candidate: R3BExecutionResult;
   readonly baseline: R3BExecutionResult | null;
   readonly observedAtEpochMs: number;
+  /** Optional public synthetic runtime data; cannot alter tool state, attribution or acceptance. */
+  readonly capturePublicRuntimeSamples?: true;
 }
 
 export interface EngineeringObservation {
@@ -158,8 +160,44 @@ function parseChannel(value: string, channel: EngineeringDiagnostic["channel"]):
   return diagnostics;
 }
 
-export function parseEngineeringDiagnostics(evidence: R3BExecutionEvidence): readonly EngineeringDiagnostic[] {
-  const diagnostics = [...parseChannel(evidence.stderr, "STDERR"), ...parseChannel(evidence.stdout, "STDOUT")];
+function publicRuntimeSampleDiagnostics(stdout: string): readonly EngineeringDiagnostic[] {
+  const prefix = "PUBLIC_RUNTIME_SAMPLE ";
+  const rows = stdout.split(/\r?\n/).filter(line => line.startsWith(prefix));
+  if (!rows.length) return [];
+  try {
+    if (rows.length > 4) throw Error("sample_count");
+    const finiteJson = (value: unknown, depth = 0, budget = { nodes: 0 }): boolean => {
+      if (++budget.nodes > 120 || depth > 6) return false;
+      if (value === null || typeof value === "boolean") return true;
+      if (typeof value === "number") return Number.isFinite(value);
+      if (typeof value === "string") return value.length <= 120 && !/[\x00-\x1f\x7f]/.test(value);
+      if (typeof value !== "object") return false;
+      return Object.entries(value).every(([key, child]) => key.length <= 80 && !/[\x00-\x1f\x7f]/.test(key)
+        && finiteJson(child, depth + 1, budget));
+    };
+    return rows.map((line, index) => {
+      if (Buffer.byteLength(line, "utf8") > 1_000) throw Error("sample_bytes");
+      const value = JSON.parse(line.slice(prefix.length));
+      if (!value || Array.isArray(value) || Object.keys(value).sort().join(",") !== "index,input,inputUnchanged,resultDetached,status,value"
+        || value.index !== index || !["OBSERVED", "THREW", "VALUE_UNAVAILABLE"].includes(value.status)
+        || typeof value.inputUnchanged !== "boolean" || typeof value.resultDetached !== "boolean"
+        || !finiteJson(value.input) || !finiteJson(value.value)
+        || (value.status !== "OBSERVED" && value.value !== null)) throw Error("sample_schema");
+      return Object.freeze({ category: "GENERIC" as const, channel: "STDOUT" as const, file: null, line: null,
+        column: null, code: "PUBLIC_RUNTIME_SAMPLE", testName: null,
+        message: canonical({ provenance: "UNTRUSTED_PUBLIC_SYNTHETIC_OBSERVATION_NOT_ORACLE", ...value }) });
+    });
+  } catch {
+    return [Object.freeze({ category: "GENERIC", channel: "STDOUT", file: null, line: null, column: null,
+      code: "PUBLIC_RUNTIME_SAMPLES_INVALID", testName: null, message: "Public runtime samples unavailable: bounded schema rejected; do not infer correctness." })];
+  }
+}
+
+export function parseEngineeringDiagnostics(evidence: R3BExecutionEvidence, capturePublicRuntimeSamples = false): readonly EngineeringDiagnostic[] {
+  // Sample lines must never leak into the default error parser (including text containing 'error').
+  const stdout = evidence.stdout.split(/\r?\n/).filter(line => !line.startsWith("PUBLIC_RUNTIME_SAMPLE ")).join("\n");
+  const diagnostics = [...parseChannel(evidence.stderr, "STDERR"), ...parseChannel(stdout, "STDOUT"),
+    ...(capturePublicRuntimeSamples ? publicRuntimeSampleDiagnostics(evidence.stdout) : [])];
   const unique = new Map(diagnostics.map((diagnostic) => [diagnosticKey(diagnostic), diagnostic]));
   return Object.freeze([...unique.values()].slice(0, MAX_DIAGNOSTICS));
 }
@@ -225,6 +263,7 @@ function compare(candidateState: EngineeringState, candidateSignature: string | 
 export function observeEngineeringExecution(request: EngineeringObservationRequest): EngineeringObservationResult {
   if (request.schemaVersion !== 1 || !request.observationRequestId?.trim() || !request.observerIdentity?.trim()
     || !request.evaluatorVersion?.trim() || !Number.isFinite(request.observedAtEpochMs)
+    || (request.capturePublicRuntimeSamples !== undefined && request.capturePublicRuntimeSamples !== true)
     || request.observedAtEpochMs < request.candidate.evidence.endedAtEpochMs) {
     return Object.freeze({ decision: "REJECTED", reason: "observation_request_malformed", observation: null, grantsAuthority: false });
   }
@@ -234,7 +273,7 @@ export function observeEngineeringExecution(request: EngineeringObservationReque
   if (!matchesExpected(request.candidate.evidence, request.expected)) {
     return Object.freeze({ decision: "REJECTED", reason: "candidate_execution_binding_mismatch", observation: null, grantsAuthority: false });
   }
-  const candidateDiagnostics = parseEngineeringDiagnostics(request.candidate.evidence);
+  const candidateDiagnostics = parseEngineeringDiagnostics(request.candidate.evidence, request.capturePublicRuntimeSamples === true);
   const candidateState = engineeringState(request.candidate.evidence);
   const candidateSignature = failureSignature(request.candidate, candidateDiagnostics);
   let baselineState: EngineeringState | null = null;
@@ -247,7 +286,7 @@ export function observeEngineeringExecution(request: EngineeringObservationReque
     if (!comparableBaseline(request.candidate.evidence, request.baseline.evidence)) {
       contradictions.push("baseline_not_comparable_to_candidate_execution");
     } else {
-      const baselineDiagnostics = parseEngineeringDiagnostics(request.baseline.evidence);
+      const baselineDiagnostics = parseEngineeringDiagnostics(request.baseline.evidence, request.capturePublicRuntimeSamples === true);
       baselineState = engineeringState(request.baseline.evidence);
       baselineSignature = failureSignature(request.baseline, baselineDiagnostics);
     }

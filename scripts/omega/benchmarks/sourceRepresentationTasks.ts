@@ -1,9 +1,12 @@
 import { theoryDigest } from "../../../src/lib/codelab/research/theoryContracts";
+import { observePublicRuntimeSample } from "./publicRuntimeSamples";
 
 export interface RepresentationTask {
   id: string; tier: "DEVELOPMENT" | "VALIDATION"; domain: string; objective: string;
   publicCases: readonly {input: unknown; expected: unknown}[];
   privateCases: readonly {input: unknown; expected: unknown}[];
+  /** Predeclared synthetic observations, not oracle cases. Both comparison arms execute these. */
+  publicRuntimeInputs?: readonly unknown[];
 }
 // Authored independently of ARC evaluation content. Different engineering domains, no task-ID patches.
 // Source-emission comparisons do not demonstrate frontier reasoning or statistical generalization.
@@ -37,6 +40,15 @@ export const SOURCE_REPRESENTATION_TASKS: readonly RepresentationTask[] = [
 ];
 
 export function representationRepositoryFiles(task: RepresentationTask): Readonly<Record<string, string>> {
+  if (task.publicRuntimeInputs !== undefined && (!Array.isArray(task.publicRuntimeInputs)
+    || task.publicRuntimeInputs.length < 1 || task.publicRuntimeInputs.length > 4)) throw Error("runtime_sample_task_bound_invalid");
+  const runtimeSamples = task.publicRuntimeInputs ? `
+const publicRuntimeInputs = JSON.parse(${JSON.stringify(JSON.stringify(task.publicRuntimeInputs))});
+const observePublicRuntimeSample = ${observePublicRuntimeSample.toString()};
+for (const [index, input] of publicRuntimeInputs.entries()) {
+  console.log(observePublicRuntimeSample(input, transform, index));
+}
+` : "";
   return {"src/transform.mjs": 'export function transform(input) {\n  throw new Error("Not implemented");\n}\n',
     // JSON is data, not an object initializer: a __proto__ key must remain an
     // own property rather than silently changing the generated fixture's prototype.
@@ -74,7 +86,7 @@ try {
     return {value,inputUnchanged:JSON.stringify(input)===JSON.stringify(original),resultDetached:detachedResult(value,input)};});
   console.log("ENGINEERING_PREDICTIONS "+JSON.stringify(results));
 } catch {console.error("FAIL private-input execution-error"); failed++;}
-if(failed)process.exitCode=2;else console.log("TEST_PASS public-examples");
+${runtimeSamples}if(failed)process.exitCode=2;else console.log("TEST_PASS public-examples");
 `};
 }
 

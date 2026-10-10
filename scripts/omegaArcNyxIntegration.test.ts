@@ -1,4 +1,6 @@
 import { execFileSync } from "node:child_process";
+import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./omega/benchmarks/runtimeReviewTransferTasks";
+import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
 import { arcCorePredecessorSource, NYX_ARC_CORE_REFINEMENT } from "./omega/nyx-arc-core-refinement";
 import { readFile } from "node:fs/promises";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
@@ -1100,6 +1102,93 @@ for(const probe of SOURCE_LITERAL_PROBES) {
     "unreached deterministic verification is not a hidden-case failure");
   check(!assessRepresentationCandidate(task,{...input,verificationStdout:"ENGINEERING_PREDICTIONS []"}).accepted,
     "same exact private oracle rejects malformed prediction count");
+}
+{
+  const references: Record<string, (input: any) => unknown> = {
+    "LEXICAL-DAG-ORDER": ({ nodes, edges }) => {
+      // Exhaustive order enumeration rather than the candidate's likely indegree algorithm.
+      const orders: string[][] = [];
+      const visit = (prefix: string[], remaining: string[]): void => {
+        if (!remaining.length) {
+          if (edges.every(([a, b]: string[]) => prefix.indexOf(a) < prefix.indexOf(b))) orders.push(prefix);
+          return;
+        }
+        for (const node of remaining) visit([...prefix, node], remaining.filter(value => value !== node));
+      };
+      visit([], nodes);
+      return orders.sort((a, b) => {
+        const i = a.findIndex((value, index) => value !== b[index]);
+        return i < 0 ? 0 : a[i] < b[i] ? -1 : 1;
+      })[0] ?? null;
+    },
+    "RECURRING-DECIMAL": ({ numerator, denominator }) => {
+      const negative = numerator * denominator < 0;
+      const n = Math.abs(numerator), d = Math.abs(denominator);
+      let remainder = n % d; let fraction = "";
+      const seen = new Map<number, number>();
+      while (remainder && !seen.has(remainder)) {
+        seen.set(remainder, fraction.length); remainder *= 10;
+        fraction += Math.floor(remainder / d); remainder %= d;
+      }
+      if (remainder) fraction = fraction.slice(0, seen.get(remainder)) + "(" + fraction.slice(seen.get(remainder)) + ")";
+      return (negative ? "-" : "") + Math.floor(n / d) + (fraction ? "." + fraction : "");
+    },
+    "MINIMUM-EDIT-DISTANCE": ({ left, right }) => {
+      const a = Array.from(left), b = Array.from(right), memo = new Map<string, number>();
+      const distance = (i: number, j: number): number => {
+        if (i === a.length) return b.length - j;
+        if (j === b.length) return a.length - i;
+        const key = `${i}:${j}`; if (memo.has(key)) return memo.get(key)!;
+        const value = Math.min(1 + distance(i + 1, j), 1 + distance(i, j + 1),
+          Number(a[i] !== b[j]) + distance(i + 1, j + 1));
+        memo.set(key, value); return value;
+      };
+      return distance(0, 0);
+    },
+    "LINEAR-SAMPLE-INTEGRAL": ({ samples, from, to }) => {
+      const lo = Math.min(from, to), hi = Math.max(from, to);
+      const valueAt = (x: number): number => {
+        const i = Math.min(samples.length - 2, samples.findIndex((pair: number[]) => pair[0] >= x) - 1);
+        const k = Math.max(0, i), [a, av] = samples[k], [b, bv] = samples[k + 1];
+        return av + (bv - av) * (x - a) / (b - a);
+      };
+      const boundaries = [lo, ...samples.map((pair: number[]) => pair[0]).filter((x: number) => x > lo && x < hi), hi];
+      return boundaries.slice(1).reduce((sum: number, right: number, i: number) =>
+        sum + (right - boundaries[i]) * (valueAt(right) + valueAt(boundaries[i])) / 2, 0) * (from > to ? -1 : 1);
+    },
+  };
+  for (const task of RUNTIME_REVIEW_TRANSFER_TASKS) {
+    const reference = references[task.id];
+    const examples = [...task.publicCases, ...task.privateCases];
+    for (const example of examples) check(theoryDigest(reference(structuredClone(example.input))) === theoryDigest(example.expected),
+      `${task.domain} independent development reference agrees with frozen literal expectations`);
+    const inputDigests = new Set(task.privateCases.map(example => theoryDigest(example.input)));
+    check(task.publicRuntimeInputs?.length === 4 && task.publicRuntimeInputs.every(input => !inputDigests.has(theoryDigest(input))),
+      "public runtime probes neither contain expected values nor duplicate private inputs");
+    const files = representationRepositoryFiles(task);
+    check(files["tools/verify.mjs"].includes("PUBLIC_RUNTIME_SAMPLE") && !files["tools/verify.mjs"].includes("privateCases"),
+      "same pinned verifier executes probes without receiving private expected outputs");
+    for (const [index, input] of task.publicRuntimeInputs!.entries()) {
+      const value = JSON.parse(observePublicRuntimeSample(input, reference, index).slice("PUBLIC_RUNTIME_SAMPLE ".length));
+      check(value.status === "OBSERVED" && value.inputUnchanged && value.resultDetached,
+        "bounded public sample reports actual output and ownership evidence");
+    }
+  }
+  const sample = (transform: (value: unknown) => unknown) => JSON.parse(observePublicRuntimeSample([1], transform, 0).slice("PUBLIC_RUNTIME_SAMPLE ".length));
+  let calls = 0;
+  check(sample(input => { calls++; return input; }).resultDetached === false && calls === 1,
+    "a probe invokes the candidate exactly once and detects borrowed output");
+  check(sample(input => { (input as number[]).push(2); return [3]; }).inputUnchanged === false,
+    "public runtime observation detects input mutation without changing acceptance");
+  check(sample(() => { throw Error("untrusted-message-not-recorded"); }).status === "THREW",
+    "runtime exception exposes a bounded state, not raw error contents");
+  for (const value of [undefined, NaN, Infinity, "x".repeat(121), Promise.resolve(1), new Date(), { a: new Map() }]) {
+    check(sample(() => value).status === "VALUE_UNAVAILABLE", "unsupported output is unknown, not fabricated JSON correctness");
+  }
+  const circular: any = {}; circular.self = circular;
+  check(sample(() => circular).status === "VALUE_UNAVAILABLE", "cycle and depth bounds apply before output traversal");
+  check(theoryDigest(runtimeReviewTransferConfiguration("SCOPED_REVIEW_CONTROL"))
+    === theoryDigest(runtimeReviewTransferConfiguration("RUNTIME_OBSERVATION_REVIEW")), "runtime comparison shares exact inference configuration");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

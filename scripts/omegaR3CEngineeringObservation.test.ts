@@ -162,6 +162,30 @@ function request(candidate: R3BExecutionResult, baseline: R3BExecutionResult | n
   check(authorityResult.decision === "REJECTED" && authorityResult.reason === "candidate_execution_evidence_incoherent", "authority-bearing candidate evidence is rejected");
 }
 
+{
+  const sample = { index: 0, input: [3, 1], value: [1, 3], status: "OBSERVED", inputUnchanged: true, resultDetached: true };
+  const candidate = execution("PASS", { stdout: "PUBLIC_RUNTIME_SAMPLE " + JSON.stringify(sample)
+    + '\nENGINEERING_PREDICTIONS [{"value":"private-output-must-not-enter-feedback"}]' });
+  const ordinary = observeEngineeringExecution(request(candidate, null));
+  check(ordinary.observation?.diagnostics.length === 0, "runtime samples and private prediction streams are absent from default diagnostics");
+  const captured = observeEngineeringExecution(request(candidate, null, { capturePublicRuntimeSamples: true }));
+  check(captured.observation?.diagnostics.length === 1 && captured.observation.diagnostics[0].code === "PUBLIC_RUNTIME_SAMPLE"
+    && captured.observation.diagnostics[0].message.includes("NOT_ORACLE"), "bounded public observations retain explicit non-oracle provenance");
+  check(captured.observation?.state === ordinary.observation?.state && captured.observation?.epistemicState === ordinary.observation?.epistemicState
+    && !captured.grantsAuthority, "capturing a sample cannot change the tool result or grant acceptance authority");
+  for (const rows of [
+    [JSON.stringify({ ...sample, expected: [1, 3] })], [JSON.stringify({ ...sample, index: 1 })],
+    [JSON.stringify(sample), JSON.stringify(sample)], Array.from({ length: 5 }, (_, index) => JSON.stringify({ ...sample, index })),
+    ["not-json"], [JSON.stringify({ ...sample, value: "x".repeat(200) })],
+    [JSON.stringify({ ...sample, input: { nested: { a: { b: { c: { d: { e: { f: 1 } } } } } } } })],
+  ]) {
+    const malformed = execution("PASS", { stdout: rows.map(row => "PUBLIC_RUNTIME_SAMPLE " + row).join("\n") });
+    const observed = observeEngineeringExecution(request(malformed, null, { capturePublicRuntimeSamples: true }));
+    check(observed.observation?.diagnostics.length === 1 && observed.observation.diagnostics[0].code === "PUBLIC_RUNTIME_SAMPLES_INVALID",
+      "malformed, duplicate, excessive or oracle-bearing samples fail observation capture closed");
+  }
+}
+
 assert(R3_C_OBSERVATION_STATUS.newCapability === "STRUCTURED_ENGINEERING_FAILURE_OBSERVATION", "chunk reports exact structured-observation capability gain");
 assert(R3_C_OBSERVATION_STATUS.grantsExecutionAuthority === false && R3_C_OBSERVATION_STATUS.grantsEvidenceAuthority === false,
   "observation cannot promote execution or evidence authority");

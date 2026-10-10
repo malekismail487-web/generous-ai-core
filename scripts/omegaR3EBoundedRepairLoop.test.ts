@@ -197,11 +197,93 @@ function builder(tamper = false, additionalAdmittedPaths: () => readonly string[
 function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder(), maxIterations = 1,
   evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000,
   theorySession?: TheoryInvestigationSession,
-  interactionBudget?: { readonly maxModelInteractions: number; readonly maxCognitionCorrections: number }): R3BoundedRepairLoop {
+  interactionBudget?: { readonly maxModelInteractions: number; readonly maxCognitionCorrections: number;
+    readonly passedCandidateReview?: "ONCE_WITHIN_EXISTING_BUDGET" }): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
     observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs,
     ...interactionBudget,
     maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000, theorySession });
+}
+
+{
+  let calls = 0;
+  let reviewObserved = false;
+  let preparations = 0;
+  const allowedBuilder = builder();
+  const nyx = cognition(async (_input, init) => {
+    calls++;
+    const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+    if (calls === 1) return providerResponse(modelResponse(CORRECT_SOURCE));
+    reviewObserved = prompt.activeRepairDriver.kind === "SCOPED_PASS_REVIEW"
+      && prompt.hypothesisHistory.at(-1)?.disposition === "SUPPORTED"
+      && prompt.observation.state === "TEST_PASS" && prompt.constraints.evidenceBehavior.includes("not reference answers");
+    return providerResponse(JSON.stringify({ decision: "NO_ACTION", diagnosis: "No supported defect in this scoped candidate.",
+      uncertainties: ["Broader correctness remains unproven by the public test."] }));
+  });
+  let reviewRequest: Parameters<NyxNemotronEngineeringCognition["proposeRepair"]>[0] | undefined;
+  const propose = nyx.proposeRepair.bind(nyx);
+  nyx.proposeRepair = async request => { if (request.reviewPassedCandidate) reviewRequest = request; return propose(request); };
+  const result = await loop(nyx, { builderIdentity: allowedBuilder.builderIdentity, prepare: async (hypothesis, iteration) => {
+    preparations++; return allowedBuilder.prepare(hypothesis, iteration);
+  } }, 2, undefined, 30000, undefined, { maxModelInteractions: 2, maxCognitionCorrections: 1,
+    passedCandidateReview: "ONCE_WITHIN_EXISTING_BUDGET" }).run(loopRequest());
+  check(reviewObserved && result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED"
+    && result.reason === "bounded_review_retained_independently_admitted_candidate", "bounded review can retain an independently admitted candidate");
+  check(calls === 2 && preparations === 1 && result.iterations.length === 1 && result.modelCallCount === 2,
+    "retention consumes a real cognition call but never a fabricated mutation or verification");
+  check(result.candidateAdmissionAcceptance === "ACCEPTED" && !result.authorityGranted && !result.productionAuthority,
+    "review is not a replacement for independent candidate admission or authority enforcement");
+  if (!reviewRequest) throw Error("review_fixture_not_reached");
+  for (const request of [
+    { ...reviewRequest, reviewPassedCandidate: false as unknown as true },
+    { ...reviewRequest, priorHypotheses: [] },
+    { ...reviewRequest, priorHypotheses: reviewRequest.priorHypotheses.map(item => ({ ...item, disposition: "FALSIFIED" as const })) },
+    { ...reviewRequest, observation: { ...reviewRequest.observation, epistemicState: "CONFLICTED" as const } },
+    { ...reviewRequest, observation: { ...reviewRequest.observation, candidateEvidenceId: "unadmitted-evidence" } },
+  ]) {
+    const rejected = await propose(request);
+    check(rejected.decision === "REJECTED" && calls === 2, "forged or conflicted review provenance is rejected before another model call");
+  }
+}
+{
+  let calls = 0;
+  const result = await loop(cognition(async () => {
+    calls++;
+    return providerResponse(modelResponse(calls === 1 ? CORRECT_SOURCE : WRONG_SOURCE));
+  }), builder(), 2, undefined, 30000, undefined, { maxModelInteractions: 2, maxCognitionCorrections: 1,
+    passedCandidateReview: "ONCE_WITHIN_EXISTING_BUDGET" }).run(loopRequest());
+  check(result.outcome === "EXHAUSTED" && result.iterations.length === 2 && result.iterations[0].passed
+    && !result.iterations[1].passed, "a review-induced regression cannot recycle an earlier passing candidate as final success");
+}
+{
+  const signal = new AbortController();
+  let calls = 0;
+  const result = await loop(cognition(async () => {
+    calls++;
+    if (calls === 1) return providerResponse(modelResponse(CORRECT_SOURCE));
+    signal.abort();
+    return providerResponse(JSON.stringify({ decision: "NO_ACTION", diagnosis: "Retain", uncertainties: ["Not universal proof"] }));
+  }), builder(), 2, undefined, 30000, undefined, { maxModelInteractions: 2, maxCognitionCorrections: 1,
+    passedCandidateReview: "ONCE_WITHIN_EXISTING_BUDGET" }).run({ ...loopRequest(), signal: signal.signal });
+  check(result.outcome !== "FUNCTIONALLY_REPAIRED_VERIFIED" && calls === 2,
+    "cancellation during pass review prevents final retention without renewing authority");
+}
+{
+  let calls = 0;
+  const result = await loop(cognition(async () => { calls++; return providerResponse(modelResponse(CORRECT_SOURCE)); }), builder(), 2).run(loopRequest());
+  check(calls === 1 && result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED", "default repair behavior does not add a post-pass model call");
+  const noAction = await loop(cognition(async () => providerResponse(JSON.stringify({ decision: "NO_ACTION",
+    diagnosis: "No correction proposed", uncertainties: ["Unknown"] }))), builder(), 2).run(loopRequest());
+  check(noAction.outcome === "BLOCKED" && noAction.iterations.length === 0, "NO_ACTION cannot certify an initial failed repository");
+  let callsAfterRejected = 0;
+  const rejectedCandidate = await loop(cognition(async () => {
+    callsAfterRejected++;
+    return providerResponse(callsAfterRejected === 1 ? modelResponse(OVERCOMPLEX_SOURCE)
+      : JSON.stringify({ decision: "NO_ACTION", diagnosis: "Retain", uncertainties: ["Unknown"] }));
+  }), builder(), 2, undefined, 30000, undefined, { maxModelInteractions: 2, maxCognitionCorrections: 1,
+    passedCandidateReview: "ONCE_WITHIN_EXISTING_BUDGET" }).run(loopRequest());
+  check(rejectedCandidate.outcome === "BLOCKED" && rejectedCandidate.iterations[0].candidateAdmission?.decision === "REJECTED",
+    "review opt-in cannot use NO_ACTION to bypass a quality rejection");
 }
 
 {

@@ -2500,6 +2500,12 @@
       ]
     },
     {
+      "name": "NYX_RUNTIME_REVIEW_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_SERIALIZATION_DIAGNOSTIC",
       "files": [
         "scripts/omega/nyx-structured-array-diagnostic.ts"
