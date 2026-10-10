@@ -1,0 +1,1629 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-source-bound-selection/1",
+  "chunkId": "NYX-SOURCE-BOUND-SELECTION-DIAGNOSTIC-001",
+  "candidate": "d9ecacb3efdf6e371ab79b4a4e9170c46b2f2638",
+  "runId": 38045170905,
+  "jobId": 114193124786,
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "frozen": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "taskCorpus": "nyx-exposed-supplied-candidate-conditional-repair/2",
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 1,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 1350000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "physicalCallsPerTaskIncludingRetries": 1,
+    "reasoningControl": "SUPER_HOSTED_NATIVE",
+    "reasoningEffort": "none",
+    "generationPolicy": "nyx-length-bounded-decision-schema/1",
+    "changedVariable": "SAME_V3_HOST_PROPOSALS_OPTIONAL_SOURCE_BOUND_REFERENCE_VS_MODEL_SOURCE_RESERIALIZATION",
+    "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "preCandidateGuidance": "IDENTICAL_PUBLIC_ORIGINAL_STATE",
+    "postQualityGuidance": {
+      "EVALUATION_ORDER_SOURCE_CONTROL": "V3_PROPOSALS_MODEL_EMITS_SOURCE",
+      "SOURCE_BOUND_SELECTION": "SAME_V3_PROPOSALS_EXPLICIT_REQUEST_BOUND_SELECTION_OPTION"
+    },
+    "maximumLocalRefactorOperations": 8,
+    "localRefactorCost": "BOUNDED_HOST_AST_NO_EXTRA_MODEL_OR_EXECUTION_CALLS",
+    "firstAttemptDifferences": "NO_TREATMENT_PRESENT_BEFORE_QUALITY_REJECTION_NOT_CAUSAL_MECHANISM_GAINS",
+    "implementationHintsOrSeedsProvided": true,
+    "suppliedCandidatesPerTask": 1,
+    "suppliedCandidateEvidence": "E3_TEST_DOUBLE_NOT_INFERENCE",
+    "liveRepairCallsPerTask": 1,
+    "predeclaredRepeats": 2,
+    "uniqueTasks": 4,
+    "comparisonScope": "CONDITIONAL_QUALITY_REPAIR_NOT_FIRST_ATTEMPT_CODING_OR_FRONTIER_BENCHMARK",
+    "efficacyCriterion": "BOTH_PREDECLARED_REPEATS_WIN_IN_AT_LEAST_TWO_DISTINCT_TASK_FAMILIES_AT_MATCHED_REALIZED_COMPUTE_WITHOUT_REGRESSION",
+    "defaultOrBroadPromotion": "NONE_REQUIRES_NEW_UNSEEDED_REPLICATION",
+    "sourceSelectionPolicy": "nyx-source-bound-refactor-selection/1",
+    "sourceOrigin": "HOST_PROPOSAL_IF_SELECTED_NOT_MODEL_GENERATED",
+    "claimScope": "EXPOSED_CONDITIONAL_EMISSION_DIAGNOSTIC_NOT_COGNITIVE_GAIN_OR_FRESH_GENERALIZATION",
+    "realizedMatchScope": "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
+    "hostDiagnosticCost": "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "artifact": {
+    "id": 11667008973,
+    "name": "nyx-bounded-transfer-d9ecacb3efdf6e371ab79b4a4e9170c46b2f2638",
+    "archiveSha256": "7519a59ed4ec9b91321e799614d53b1b7af60697510ccaa808fda6df53e61578",
+    "archiveBytes": 12226,
+    "reportEntry": "nyx-source-representation-d9ecacb3efdf6e371ab79b4a4e9170c46b2f2638.json",
+    "reportSha256": "8629718693781b06f55e150bab11e282ee272ce86b0f00641dbc18e59a262013"
+  },
+  "verification": {
+    "artifactDescriptorAndDownloadedSha256Agree": true,
+    "artifactReportAndTerminalLogReportAgree": true,
+    "all16TaskLogRowsAndReportRowsAgree": true,
+    "freezeAndReportIdentityAgree": true,
+    "freezeDigest": "9190bcfc1431075ec4457ec99b95b5066beb0c7958d76090984d82254c9f176a",
+    "all20FrozenSourceHashesVerifiedAgainstGit": true,
+    "all8TaskInputOracleFixtureIdentitiesVerified": true,
+    "taskIdentitiesSameAsPrecedingB4ConditionalEpoch": true,
+    "sourceUnchanged": true,
+    "allOwnedLifecycleCleanupVerified": true,
+    "rawReportPreservedInArtifact": true
+  },
+  "sourceDigests": {
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "72b4a408842824ef85cbd3459e0e70cdd5ea555293db70268a6f400f55458bd3",
+    "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "3aafadc31a49464b76993d8829c4f551e01a4291488e6db4d115e25afdeccab3",
+    "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "4ebfab0aca3dac1777ff19d07c9209c0116b2a23c755836fe36cbdfa1c09467b",
+    "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+    "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2",
+    "scripts/omega/benchmarks/measuredQualityTransferTasks.ts": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3",
+    "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "8e2265c769ff921a2fca9837f067642433cb5665755bbb14f331f7f14e0c434a",
+    "scripts/omega/benchmarks/qualitySiteTransferTasks.ts": "084344f447220904a054667745a0d7f0392fe44ed19af4230f9f213d472b9f10",
+    "src/lib/codelab/assurance/engineeringQualityOracle.ts": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "e501022e0c82a3602d127f1cfee77082fc1e571cb494841b6137726d3ef74f60",
+    "src/lib/codelab/cognition/nyxLocalRefactorProposals.ts": "589583a1bb73afe96aaca4ccc26867d5cfe0b74b3c466ba50af9ea0c5042a7c4",
+    "scripts/omega/benchmarks/conditionalRefactorRepairTasks.ts": "edfab50511403dff1636ebaf05d96351ded51e8ff48ab9003a0be184610fad42",
+    "src/lib/codelab/cognition/nyxSourceBoundRefactorSelection.ts": "294f990852d58689a77923ff93eb5453900bbc77d80729465d8129531d2c8b4d",
+    "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts": "0a0092b282ad48894e3801a96951d041721be686a7a6e7c79c1311f2e0161dc5",
+    "scripts/omega/benchmarks/evaluationOrderTransferTasks.ts": "3af303432573eed401c9a2af7c982dab7ddf2ae4e5bf6d156e3d5ac9a281e4db",
+    "scripts/omega/nyx-source-representation-cycle.ts": "6028b05343e24faa948b3d6e61e7ed748ec50705a94e848e1190691e8e83b556",
+    "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+    "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+    "scripts/omega/benchmarks/nyxArcAdapter.ts": "c880b82172d3eb19de07635a6181d5b4d9d745b14dcbb7ace817b9c4bd5f4a9b"
+  },
+  "tasks": [
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-1",
+      "tier": "DEVELOPMENT",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "inputDigest": "0c28018b840dc18dc6ff4aa5a90d77974582734f5c95b8b8bef85642aa4a52fd",
+      "oracleDigest": "fa6b873d9d1c8546584364183712cb83acb4cac11d362146abc16c3bccd724ef",
+      "fixtureDigest": "b122069086cfe6a8b5c4afcc6cdc6ce2e27d09e1b138af49da1571e8d104dcf8"
+    },
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-2",
+      "tier": "DEVELOPMENT",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "inputDigest": "0c28018b840dc18dc6ff4aa5a90d77974582734f5c95b8b8bef85642aa4a52fd",
+      "oracleDigest": "fa6b873d9d1c8546584364183712cb83acb4cac11d362146abc16c3bccd724ef",
+      "fixtureDigest": "0eee6ee49928971f9aa20d8e01e6f34a0d264e07f14bd95f85fc2106fa3fa78e"
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-1",
+      "tier": "DEVELOPMENT",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "inputDigest": "327645500613e1fbe9e58159467eea3c51f8b3d20a2b1680396c7e5b32cb3371",
+      "oracleDigest": "f04f46339ed0912454fa518df85bfd09c9025a186245383eba01669c3d829ea7",
+      "fixtureDigest": "38ecdfc15c34eb64f96853bfd9bb43abc79310f8f7504f2c27c2b18db69c3e2f"
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-2",
+      "tier": "DEVELOPMENT",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "inputDigest": "327645500613e1fbe9e58159467eea3c51f8b3d20a2b1680396c7e5b32cb3371",
+      "oracleDigest": "f04f46339ed0912454fa518df85bfd09c9025a186245383eba01669c3d829ea7",
+      "fixtureDigest": "456bb67675738838f93ce8c037514e89a14c7cdbe749720ecd0938f7d7d96981"
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-1",
+      "tier": "VALIDATION",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "inputDigest": "32e81a5bf06e0671613ff2a048ee8bcea960d7f23f474cf20bd2b7b8fda10542",
+      "oracleDigest": "7e9df9f4bdc53e5feeaed7dc00f56149dbf90aa03e7cd7ead35d011aec1886ca",
+      "fixtureDigest": "af20b1c36a4ac50bf7aa1b80f836ed54ddb2b74a148546d4cd2ea3b9121a948f"
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-2",
+      "tier": "VALIDATION",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "inputDigest": "32e81a5bf06e0671613ff2a048ee8bcea960d7f23f474cf20bd2b7b8fda10542",
+      "oracleDigest": "7e9df9f4bdc53e5feeaed7dc00f56149dbf90aa03e7cd7ead35d011aec1886ca",
+      "fixtureDigest": "a6767cf47d014a2f682c679f3708a79d7ba72819f0c2e92ffc669c6026ae8bcb"
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-1",
+      "tier": "VALIDATION",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "inputDigest": "9dd9ccd3afdb61f4483d49dfb869adbda32e9fca47e16bd1e8389b8778238ade",
+      "oracleDigest": "512b512f64d0f0d4b74739081f801042b97519d8fad43e972d2f7ae48a68a343",
+      "fixtureDigest": "84ad7e9ba1e8d24101b837711b1716bdf5e5f464ae3e721ab2812a78076fe44b"
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-2",
+      "tier": "VALIDATION",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "inputDigest": "9dd9ccd3afdb61f4483d49dfb869adbda32e9fca47e16bd1e8389b8778238ade",
+      "oracleDigest": "512b512f64d0f0d4b74739081f801042b97519d8fad43e972d2f7ae48a68a343",
+      "fixtureDigest": "d566a26cb44b6fbce2d232108075fa96bc1b091a1405cf890be840ab96b27e66"
+    }
+  ],
+  "rawSummaries": [
+    {
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": 5,
+      "functionallyAccepted": 5,
+      "qualityAccepted": 5,
+      "firstCallAccepted": 0,
+      "qualityRepairPrompts": 8,
+      "treatmentPrompts": 6,
+      "actionableProposalPrompts": 6,
+      "privateRegressionsAfterQualityRejection": 0,
+      "modelCandidatesProduced": 5,
+      "retainedSuppliedCandidates": 3,
+      "suppliedFunctionalAcceptance": 8,
+      "publicRegressionsAfterQualityRejection": 0,
+      "repairedAccepted": 5,
+      "reportedTokens": 51095,
+      "unknownUsageCalls": 1
+    },
+    {
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": 5,
+      "functionallyAccepted": 5,
+      "qualityAccepted": 5,
+      "firstCallAccepted": 0,
+      "qualityRepairPrompts": 8,
+      "treatmentPrompts": 6,
+      "actionableProposalPrompts": 6,
+      "privateRegressionsAfterQualityRejection": 0,
+      "modelCandidatesProduced": 5,
+      "retainedSuppliedCandidates": 3,
+      "suppliedFunctionalAcceptance": 8,
+      "publicRegressionsAfterQualityRejection": 0,
+      "repairedAccepted": 5,
+      "reportedTokens": 51336,
+      "unknownUsageCalls": 0
+    }
+  ],
+  "rawOutcomeProjection": [
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-1",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "BLOCKED",
+      "loopReason": "repair_cognition_nvidia_http_attempt_budget_exhausted",
+      "failureClass": "QUALITY_REJECTION",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 1,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 65456,
+        "providerFailures": 1,
+        "retries": 0
+      },
+      "inspections": [],
+      "failureCodes": [],
+      "requestDigests": [
+        "ff1ac925147b6fb2d8050c78298350e345bfbbfb2ca19c2e787b794704556109"
+      ],
+      "responseDigests": [],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-1",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 7155,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 64870,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "1714c6649467850342a7b2f9afb2d3816af138ca39739526aeefdf98af4ebbb0",
+          "sourceDigest": "a947ff98c63ed746a0f81853858acece050336faac08d9cb1798ccdc94a08c53",
+          "sourceBytes": 171,
+          "lineCount": 4,
+          "finalLineLength": 1,
+          "maximumLineLength": 120,
+          "syntaxLine": 3,
+          "syntaxColumn": 8,
+          "syntaxAtFinalLine": false,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observed": "syntax_error_line_3_column_8",
+          "digest": "dcec96f230fb0f50ad6957594e552e56f954012487ae8115a34b9705ff97e69b"
+        }
+      ],
+      "requestDigests": [
+        "5438bd8ed889679a420ab5f67945f187bbce9583e4fed3ae9b3b9d5c567091e7"
+      ],
+      "responseDigests": [
+        "1714c6649467850342a7b2f9afb2d3816af138ca39739526aeefdf98af4ebbb0"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-2",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 7155,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 4863,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "f9b185d3f141e8a0ac6531d8317271c2ebdc9339283ebe19898e7a1d6fc588fa",
+          "sourceDigest": "aa1ff614dcbb5f936c7851ecc97db14d8103c5487e492461bc3589146a8a7505",
+          "sourceBytes": 167,
+          "lineCount": 4,
+          "finalLineLength": 1,
+          "maximumLineLength": 120,
+          "syntaxLine": 3,
+          "syntaxColumn": 8,
+          "syntaxAtFinalLine": false,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observed": "syntax_error_line_3_column_8",
+          "digest": "dcec96f230fb0f50ad6957594e552e56f954012487ae8115a34b9705ff97e69b"
+        }
+      ],
+      "requestDigests": [
+        "bccb1c8b6e497439572869f66be561c1f741e83562a472ccb5a6a6c9a942c7c3"
+      ],
+      "responseDigests": [
+        "f9b185d3f141e8a0ac6531d8317271c2ebdc9339283ebe19898e7a1d6fc588fa"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-2",
+      "domain": "ORDERED_UNIT_AND_TARIFF_COMPOSITION",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "TRUNCATION",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 14578,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 58104,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "TRUNCATED",
+          "responseDigest": "f77412aff067b010428a719703f4f863567fe1afdaae691ab04e2f0ac404fc9d",
+          "sourceDigest": null,
+          "sourceBytes": null,
+          "lineCount": null,
+          "finalLineLength": null,
+          "maximumLineLength": null,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [
+        {
+          "category": "UNEXPECTED_STRUCTURE",
+          "path": "$",
+          "observed": "finish_reason_length",
+          "digest": "2f7966661e4d7f09f9a552e667bf18b1d2586aed11e48e63162b30e24cf6a137"
+        }
+      ],
+      "requestDigests": [
+        "8beb819bb15069b716a512aaadac55b875bfd5cc9814f166fb1c465c1ea2d4ee"
+      ],
+      "responseDigests": [
+        "f77412aff067b010428a719703f4f863567fe1afdaae691ab04e2f0ac404fc9d"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-1",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6780,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 6606,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "cc594eb008d9dc7067a09c232e2901fb0a99ddfe70ac603f5ed355b94de08e4e",
+          "sourceDigest": "d58c555c3fd8f4bbeeaceef1c6274e9cf22026f38b002c6a3f0c1e0bc08e3270",
+          "sourceBytes": 201,
+          "lineCount": 5,
+          "finalLineLength": 1,
+          "maximumLineLength": 96,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "dd46bca50168c038a1575f6be585d0cec9199e2ce74b59417552463c182f4c7e"
+      ],
+      "responseDigests": [
+        "cc594eb008d9dc7067a09c232e2901fb0a99ddfe70ac603f5ed355b94de08e4e"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-1",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6886,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 3644,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "ddfe5d7c5e4e5b2cc7370490da3a5273898100edceed799b00845f02c8a3b7aa",
+          "sourceDigest": "237d7192ef24a8b158417f8a72276356f970d7a563c6892d34c6a9f5e5f0886f",
+          "sourceBytes": 154,
+          "lineCount": 3,
+          "finalLineLength": 1,
+          "maximumLineLength": 117,
+          "syntaxLine": 2,
+          "syntaxColumn": 103,
+          "syntaxAtFinalLine": false,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observed": "syntax_error_line_2_column_103",
+          "digest": "5021291b60f6d8a6c74458ef358cf46f8b90ea25332f024fd627db3129229eb5"
+        }
+      ],
+      "requestDigests": [
+        "b85bf23a7e9c418f43417daec11fe78d62e58974db864c5b819e749094dfd347"
+      ],
+      "responseDigests": [
+        "ddfe5d7c5e4e5b2cc7370490da3a5273898100edceed799b00845f02c8a3b7aa"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-2",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6897,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 6234,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "c07e699e85f3bb2d4fdcdbcb8fca4fd4648c311bfe0016b52485e73318c3d373",
+          "sourceDigest": "ac4fa2b3f1528b933fc1301e74f3593c5822e28fee4dc9837cdee5622362d868",
+          "sourceBytes": 157,
+          "lineCount": 3,
+          "finalLineLength": 1,
+          "maximumLineLength": 120,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "a658c9b906e125728fae6d23b34469ce2d0268d545eb5a1574003f7266fa395a"
+      ],
+      "responseDigests": [
+        "c07e699e85f3bb2d4fdcdbcb8fca4fd4648c311bfe0016b52485e73318c3d373"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-2",
+      "domain": "TEXT_AND_SIGNED_MODULAR_ARITHMETIC",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "publicAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "loopOutcome": "EXHAUSTED",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "failureClass": "SYNTAX_FAILURE",
+      "modelCandidateProduced": false,
+      "retainedSuppliedCandidate": true,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 7015,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 12,
+        "wallClockMs": 5711,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTAX_REJECTED",
+          "responseDigest": "25b58465169af61850cc9ebf49f7af478bc4c0f677c0fd08b07d96f4e37bf478",
+          "sourceDigest": "237d7192ef24a8b158417f8a72276356f970d7a563c6892d34c6a9f5e5f0886f",
+          "sourceBytes": 154,
+          "lineCount": 3,
+          "finalLineLength": 1,
+          "maximumLineLength": 117,
+          "syntaxLine": 2,
+          "syntaxColumn": 103,
+          "syntaxAtFinalLine": false,
+          "syntaxNearSourceEnd": true,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [
+        {
+          "category": "SOURCE_QUALITY_INVALID",
+          "path": "$.changes[0].replacement",
+          "observed": "syntax_error_line_2_column_103",
+          "digest": "5021291b60f6d8a6c74458ef358cf46f8b90ea25332f024fd627db3129229eb5"
+        }
+      ],
+      "requestDigests": [
+        "ee0b791993a76d73e26efda605ab4e9be8555f723c67e891b6250b423f196a35"
+      ],
+      "responseDigests": [
+        "25b58465169af61850cc9ebf49f7af478bc4c0f677c0fd08b07d96f4e37bf478"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 2,
+        "provisionedLifecycles": 2
+      }
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-1",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6164,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 4391,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "f4d67b0e7c49d136896faa3f91c263c861fb09ef19607afc0109312ce350674d",
+          "sourceDigest": "d83876bb3783953382cb9d6ad75920b8dbc74879591c5114eee60e40eb1994b7",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 74,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "1d5e3a3d29bed3d730eb1af27707cb90add4b5933d7661614419c00462b66ed7"
+      ],
+      "responseDigests": [
+        "f4d67b0e7c49d136896faa3f91c263c861fb09ef19607afc0109312ce350674d"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-1",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6548,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 7820,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "714cd2c0fdcbe8d1182ce2085d18a4406788d367303d5d89534e666da6a47510",
+          "sourceDigest": "d83876bb3783953382cb9d6ad75920b8dbc74879591c5114eee60e40eb1994b7",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 74,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "89e3ac943d4bc315d469f895cb977edcb4fefb75efb452cbc5ef6a08ffd0439d"
+      ],
+      "responseDigests": [
+        "714cd2c0fdcbe8d1182ce2085d18a4406788d367303d5d89534e666da6a47510"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-2",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6463,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 6366,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "acb72ab2e7077d993a0499db85b6d208cdb0711efc424753a14f86993ec2cb10",
+          "sourceDigest": "d83876bb3783953382cb9d6ad75920b8dbc74879591c5114eee60e40eb1994b7",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 74,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "b0c40da7202799bd7c6633d8264c2be8dd7b0c0b6acbebe9be07aeb9b8a81ba7"
+      ],
+      "responseDigests": [
+        "acb72ab2e7077d993a0499db85b6d208cdb0711efc424753a14f86993ec2cb10"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-2",
+      "domain": "POLYNOMIAL_ITERATION_AND_RESIDUAL",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 6207,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 6079,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "9712d947d5abe6cf67e739c8d9994409ed311a27e5ac25ec80b4d118631aad61",
+          "sourceDigest": "1fe9eae18832b3c442eabc998996ed6ca04a4da70c28acc187b8af8cbf2075e9",
+          "sourceBytes": 250,
+          "lineCount": 8,
+          "finalLineLength": 1,
+          "maximumLineLength": 63,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "8e3c6c21b9b5c879b612fc71219df4b89631a513c3e042869436636193efb678"
+      ],
+      "responseDigests": [
+        "9712d947d5abe6cf67e739c8d9994409ed311a27e5ac25ec80b4d118631aad61"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-1",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 5177,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 4990,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "e2a34aeb5ed05cc398a551797513c372874f1ed647df10e486f64bc9421f79b1",
+          "sourceDigest": "b7a8913bb64ea766e54c58a5959306889bcdbf87bc9d30618e14b67fb4ca9628",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 102,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "08ba1e5576bd38b8037a5c930e9d668c0dd7d995123ac5e7f0f2253b560eea02"
+      ],
+      "responseDigests": [
+        "e2a34aeb5ed05cc398a551797513c372874f1ed647df10e486f64bc9421f79b1"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-1",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 5140,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 4407,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "3f3f44001881d1672f750e4457a2b61d348fb842728c21fe8769ee6e6306ee9f",
+          "sourceDigest": "b7a8913bb64ea766e54c58a5959306889bcdbf87bc9d30618e14b67fb4ca9628",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 102,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "d921a709f5770201542603e7c1662febcecf777d73a94debaefdf813539c0cf0"
+      ],
+      "responseDigests": [
+        "3f3f44001881d1672f750e4457a2b61d348fb842728c21fe8769ee6e6306ee9f"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-2",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "variant": "SOURCE_BOUND_SELECTION",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 5092,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 9566,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "b3369d174f94174cfbf81ef9d104a4ee6a463c7f7e13dfd57e15b117edd1c115",
+          "sourceDigest": "b7a8913bb64ea766e54c58a5959306889bcdbf87bc9d30618e14b67fb4ca9628",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 102,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "edb1078295d86be8ee2b75ffdc741eb466bcda3ce6cb5e5e32978225a2a99e57"
+      ],
+      "responseDigests": [
+        "b3369d174f94174cfbf81ef9d104a4ee6a463c7f7e13dfd57e15b117edd1c115"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-2",
+      "domain": "STATEFUL_SIGNAL_RECURRENCE",
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "publicAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "loopOutcome": "FUNCTIONALLY_REPAIRED_VERIFIED",
+      "loopReason": "bounded_repair_functionally_verified",
+      "failureClass": null,
+      "modelCandidateProduced": true,
+      "retainedSuppliedCandidate": false,
+      "suppliedFunctionalAcceptance": true,
+      "refactorSelections": [],
+      "sourceOrigin": "MODEL_EMITTED_OR_NO_REPAIR",
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 5174,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 18,
+        "wallClockMs": 3767,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "inspections": [
+        {
+          "outcome": "SYNTACTICALLY_VALID",
+          "responseDigest": "1eff674aa0a58018c387664176cd5c177e30534c124ac78e4ba31ba1b3920104",
+          "sourceDigest": "b7a8913bb64ea766e54c58a5959306889bcdbf87bc9d30618e14b67fb4ca9628",
+          "sourceBytes": 225,
+          "lineCount": 7,
+          "finalLineLength": 1,
+          "maximumLineLength": 102,
+          "syntaxLine": null,
+          "syntaxColumn": null,
+          "syntaxAtFinalLine": null,
+          "syntaxNearSourceEnd": null,
+          "representation": "LINES",
+          "rawSourcePersisted": false,
+          "authorityGranted": false
+        }
+      ],
+      "failureCodes": [],
+      "requestDigests": [
+        "812b224e368742cbfac3fde634b8596f1a7410b7764b6d20f8ca1a718652435b"
+      ],
+      "responseDigests": [
+        "1eff674aa0a58018c387664176cd5c177e30534c124ac78e4ba31ba1b3920104"
+      ],
+      "cleanup": {
+        "sourceUnchanged": true,
+        "cleanupVerified": true,
+        "lifecycleTerminations": 3,
+        "provisionedLifecycles": 3
+      }
+    }
+  ],
+  "accountingCorrection": {
+    "kind": "TERMINAL_DELIVERY_OUTCOME_OVERRIDDEN_BY_RETAINED_SUPPLIED_QUALITY",
+    "rows": [
+      {
+        "id": "BATCH-ENERGY-BILL-REPEAT-1",
+        "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+        "rawFailureClass": "QUALITY_REJECTION",
+        "correctedFailureClass": "PROVIDER_FAILURE",
+        "basis": "One failed live HTTP attempt; no response digest or executed model repair; terminal nvidia_http_attempt_budget_exhausted reason. Earlier quality-rejected E3 supplied algorithm is not a live repair.",
+        "providerSubtype": "NOT_RETAINED_IN_RAW_REPORT",
+        "timeoutInference": "CONSISTENT_WITH_65000MS_PROVIDER_BOUND_NOT_AUTHORITATIVELY_RECORDED"
+      }
+    ],
+    "acceptanceChanged": false,
+    "modelFunctionalOrQualityCreditChanged": false,
+    "rawReportChanged": false,
+    "implementation": "Runner prioritizes terminal provider category or structured failed-dispatch counters, distinguishes zero-dispatch budget denial, and attributes quality only to the model-owned candidate. Eleven regression assertions cover precedence."
+  },
+  "correctedSummaries": [
+    {
+      "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+      "selected": 8,
+      "attempted": 8,
+      "executedModelCandidates": 5,
+      "fullAccepted": 5,
+      "functionallyAccepted": 5,
+      "qualityAccepted": 5,
+      "ungradedModelCandidates": 3,
+      "sourceSelectionOffers": 0,
+      "sourceSelectionUses": 0,
+      "failures": {
+        "PROVIDER_FAILURE": 1,
+        "TRUNCATION": 1,
+        "SYNTAX_FAILURE": 1
+      },
+      "resources": {
+        "logicalCalls": 8,
+        "physicalCalls": 8,
+        "httpAttempts": 8,
+        "reportedTokens": 51095,
+        "unknownUsageCalls": 1,
+        "toolCalls": 21,
+        "toolWorkUnits": 126,
+        "wallClockMs": 155104,
+        "providerFailures": 1,
+        "retries": 0
+      }
+    },
+    {
+      "variant": "SOURCE_BOUND_SELECTION",
+      "selected": 8,
+      "attempted": 8,
+      "executedModelCandidates": 5,
+      "fullAccepted": 5,
+      "functionallyAccepted": 5,
+      "qualityAccepted": 5,
+      "ungradedModelCandidates": 3,
+      "sourceSelectionOffers": 6,
+      "sourceSelectionUses": 0,
+      "failures": {
+        "SYNTAX_FAILURE": 3
+      },
+      "resources": {
+        "logicalCalls": 8,
+        "physicalCalls": 8,
+        "httpAttempts": 8,
+        "reportedTokens": 51336,
+        "unknownUsageCalls": 0,
+        "toolCalls": 21,
+        "toolWorkUnits": 126,
+        "wallClockMs": 107770,
+        "providerFailures": 0,
+        "retries": 0
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-1",
+      "tier": "DEVELOPMENT",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": false,
+          "failureClass": "PROVIDER_FAILURE"
+        },
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "BATCH-ENERGY-BILL-REPEAT-2",
+      "tier": "DEVELOPMENT",
+      "providerStable": true,
+      "matchedRealizedCompute": false,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": true,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        },
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": false,
+          "failureClass": "TRUNCATION"
+        }
+      ]
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-1",
+      "tier": "DEVELOPMENT",
+      "providerStable": true,
+      "matchedRealizedCompute": false,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "SIGNED-TEXT-BUCKET-REPEAT-2",
+      "tier": "DEVELOPMENT",
+      "providerStable": true,
+      "matchedRealizedCompute": false,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": false,
+          "failureClass": "SYNTAX_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": true,
+          "failureClass": null
+        }
+      ]
+    },
+    {
+      "id": "HORNER-RESIDUAL-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": true,
+      "actionableTreatmentExercised": true,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        }
+      ]
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": false,
+      "actionableTreatmentExercised": false,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": true,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": true,
+          "failureClass": null
+        }
+      ]
+    },
+    {
+      "id": "SATURATING-RECURRENCE-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentExercised": false,
+      "actionableTreatmentExercised": false,
+      "pairedQualityRepairOpportunity": true,
+      "sameFirstCandidate": true,
+      "treatmentNoMoreMeasuredCompute": true,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "SOURCE_BOUND_SELECTION",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "EVALUATION_ORDER_SOURCE_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        }
+      ]
+    }
+  ],
+  "aggregateResources": {
+    "logicalCalls": 16,
+    "physicalCalls": 16,
+    "httpAttempts": 16,
+    "reportedTokens": 102431,
+    "unknownUsageCalls": 1,
+    "toolCalls": 42,
+    "toolWorkUnits": 252,
+    "wallClockMs": 262874,
+    "providerFailures": 1,
+    "retries": 0
+  },
+  "assessment": {
+    "efficacyCriterionMet": false,
+    "acceptanceGain": 0,
+    "providerStablePairs": 7,
+    "matchedRealizedComputePairs": 4,
+    "actualSourceSelectionCount": 0,
+    "sourceSelectionOpportunityArms": 6,
+    "selectedSourceEfficacy": "UNIDENTIFIABLE_UNEXERCISED",
+    "cognitiveGain": "NOT_DEMONSTRATED",
+    "freshGeneralization": "NOT_TESTED_EXPOSED_SUPPLIED_ALGORITHMS",
+    "fullBenchmarkScore": false,
+    "defaultOrBroadPromotion": false,
+    "firstAttemptCodingClaim": false
+  },
+  "diagnosis": {
+    "observed": "Every live treatment output re-emitted source or failed delivery/syntax; none used the offered selection branch.",
+    "hypothesis": "The generic prompt example and complete-file repair instructions still emphasize PROPOSE_EDIT even when an exact reference selection is available. Contract coherence is a falsifiable interface hypothesis, not a proven cause or cognitive deficiency.",
+    "next": "Inspect and test request/schema/example coherence on development requests before fresh unseeded capability transfer. Do not force or auto-apply proposal acceptance.",
+    "qualityPolicyApplicability": "UNCHANGED_PENDING_OPERATOR_DECISION"
+  },
+  "verificationAtCleanupCheckpoint": {
+    "candidate": "294d03e7759929debd98c82db489f8402b573b58",
+    "runtimeFilesIdenticalToFrozenCandidate": true,
+    "local": {
+      "suites": 109,
+      "checks": 12737,
+      "failures": 0,
+      "semanticTestDefinitions": 4521,
+      "manifestDigest": "11f54f5d977c2846b2bcb159c6f14fb5669ffa551f2554a53141ef099b3b4b58"
+    },
+    "linuxCI": {
+      "runId": 38045222141,
+      "jobId": 114193277856,
+      "conclusion": "SUCCESS",
+      "suites": 109,
+      "checks": 12737,
+      "failures": 0,
+      "semanticTestDefinitions": 4521,
+      "manifestDigest": "49e76acc6a5fd7577eb28df5feb30f7aed4e9ca5ae64db1fc948df0cdf57ba83",
+      "typescript": {
+        "version": "5.8.3",
+        "baseline": 0,
+        "current": 0,
+        "new": 0
+      },
+      "secretFindings": 0,
+      "buildSeconds": 14.44
+    }
+  },
+  "frozenCandidateCI": {
+    "runId": 38045170913,
+    "jobId": 114193124696,
+    "conclusion": "FAILURE",
+    "failedCheck": "GENERATED_BASELINE_CLASSIFICATION_OUT_OF_DATE",
+    "suites": 109,
+    "checks": 12737,
+    "failures": 0,
+    "buildSeconds": 14.51,
+    "correction": "294d03 updates inventory and removes one-shot push trigger only; no runtime changes; subsequent CI passed."
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "proposal is not authority",
+      "source/evidence-bound provenance",
+      "fail-closed request freshness",
+      "generator/detector separation"
+    ],
+    "supporting": [
+      "cumulative original-state quality",
+      "bounded model and executor budgets",
+      "truthful host/model source ownership",
+      "critical falsification outranks positive votes"
+    ],
+    "deferred": [
+      "fresh unseeded generalization",
+      "production promotion",
+      "SEC003 deployment",
+      "protected benchmarks",
+      "recursion/device/biological expansion"
+    ],
+    "conflicts": [
+      "Legacy generic edit-only exemplar may conflict with opt-in wire selection; activation hypothesis not yet experimentally isolated."
+    ],
+    "superseded": [
+      "Reserializing host proposals as the only wire option"
+    ],
+    "historicalResultsPreserved": true
+  },
+  "security": {
+    "authorityDelta": "NONE",
+    "defaultUltraChanged": false,
+    "productionChanged": false,
+    "credentialPersisted": false,
+    "rawModelReasoningPersisted": false,
+    "rawSourcePersisted": false,
+    "sourceRepositoryMutation": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "pluginGap": {
+    "searchedPreviously": "sandbox code interpreter Linux",
+    "newConnections": 0,
+    "relevantQuotaEnforcingBenchmarkRunnerVerified": false,
+    "searchExhaustive": false,
+    "existingGitHubUsed": true
+  },
+  "limitations": [
+    "Four exposed unique tasks, two repeats, sixteen supplied E3 algorithms. No new blind benchmark evidence.",
+    "Ten accepted model repairs are not ten independent domains.",
+    "Token usage is a 102431 reported lower bound; one call has unknown usage.",
+    "Seven provider-stable and four realized-compute-matched pairs; no universal compute match.",
+    "Finite literal oracle success is not semantic-equivalence proof or general reasoning superiority.",
+    "Wire branch offered is not source selection performed.",
+    "Node candidate execution is not a proven hostile-code/network sandbox."
+  ],
+  "postAccountingCorrectionVerification": {
+    "candidateParent": "294d03e7759929debd98c82db489f8402b573b58",
+    "worktreeState": "DIRTY_WITH_EXPLICIT_ACCOUNTING_AND_RECEIPT_EDITS",
+    "targetedIntegrationChecks": 971,
+    "targetedFailures": 0,
+    "typescriptVersion": "5.8.3",
+    "globalCurrentDiagnostics": 0,
+    "scopedEvaluatorAndIntegrationDiagnostics": 0,
+    "liveModelCalls": 0,
+    "experimentalOutcomesChanged": false
+  },
+  "goalStatus": "ACTIVE_UNACHIEVED"
+}

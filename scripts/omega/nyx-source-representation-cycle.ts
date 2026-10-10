@@ -279,7 +279,9 @@ for (const [index, task] of selectedTasks.entries()) {
     const lastFailure = priorFailure?.cognitionEvidence.evidenceId === loopResult?.lastCognitionEvidence?.evidenceId ? priorFailure : undefined;
     const failureClass = classifyRepresentationFailure({accepted,infrastructureFailure,
       reason:loopResult?.reason??"infrastructure_failure",latestSchemaFailure:lastFailure,
-      qualityRejected:last?.candidateAdmission?.decision==="REJECTED",publicFailed:last?.functionallyPassed===false,
+      latestProviderFailure:loopResult?.lastCognitionEvidence?.providerFailureCategory,
+      latestDelivery:loopResult?.lastCognitionEvidence?.delivery,
+      qualityRejected:lastModel?.candidateAdmission?.decision==="REJECTED",publicFailed:lastModel?.functionallyPassed===false,
       privateFailure:score?.failure??null});
     const result = {id: task.id, tier: task.tier, domain: task.domain, variant, preserveProviderArrayBounds,
       ...(conditionalRepair?{conditionalRepair:true,suppliedCandidateDigest:contentHash((task as ConditionalRepairTask).suppliedCandidate),
@@ -327,6 +329,8 @@ for (const [index, task] of selectedTasks.entries()) {
         mutationRepairCount:Math.max(0,(loopResult?.iterations.length??0)-1)}:{}),
       repairedAccepted: accepted && (usage.logicalCalls > 1 || (loopResult?.iterations.length ?? 0) > 1),
       loopOutcome: loopResult?.outcome ?? "INFRASTRUCTURE_FAILURE", loopReason: loopResult?.reason ?? "INTEGRATION_THROW",
+      terminalProviderFailure:loopResult?.lastCognitionEvidence?.providerFailureCategory??null,
+      terminalProviderDelivery:loopResult?.lastCognitionEvidence?.delivery??null,
       failureClass,
       infrastructureFailure, inspections, usage, candidateIterations: loopResult?.iterations.length ?? 0,
       toolUsageComplete: !infrastructureFailure,

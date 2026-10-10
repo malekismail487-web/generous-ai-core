@@ -31,7 +31,35 @@ also explicitly distinguishes syntactic and semantic diagnostics. Ω coverage is
 **PARTIAL / JUST-IN-TIME**: proposal ≠ authority, implemented ≠ verified,
 generator/detector separation, source-bound provenance and critical falsification.
 Production/SEC-003, protected benchmarks, biological expansion, recursion and
-policy-applicability changes remain deferred. Live results are pending.
+policy-applicability changes remain deferred.
+
+The frozen live run at `d9ecacb3` completed: **5/8 accepted repairs in each arm**,
+with **zero actual reference selections** despite six offered treatment catalogs.
+The mechanism was therefore unexercised; it earned no efficacy or cognitive
+promotion. Treatment had three syntax rejections. Control had one syntax
+rejection, one truncation and one provider failure with unknown token usage.
+Only seven pairs were provider-stable and four met the declared realized-compute
+tolerance. No task family won in both repeats. The generic edit-only exemplar
+and complete-file instructions are now a contract-coherence hypothesis to test,
+not a reason to auto-apply references or relax any acceptance check.
+
+Total: 16 live calls/HTTP attempts, 102,431 reported tokens plus one unknown-usage
+call, 42 verifier executions, no retries, and 262,874 ms summed task-arm wall
+time. The 16 supplied E3 fixture interactions remain separate. Source integrity
+and owned cleanup passed. The downloaded artifact SHA256, report, final task logs,
+all 20 frozen source hashes and unchanged exposed task identities agree; see the
+[receipt](../../../docs/omega/evidence/nyx-source-bound-selection-d9ecacb3.json).
+
+The raw report mislabeled the failed delivery attempt as quality rejection of
+the retained supplied algorithm. It is preserved; the receipt explicitly
+corrects that row to provider failure without changing acceptance. Future
+accounting uses the terminal provider category/delivery counters and model-owned
+candidate; a zero-dispatch budget refusal stays separate from provider failure.
+The frozen candidate's CI failed only on stale generated inventory after its
+109 suites / 12,737 checks and build passed. `294d03e7` corrected inventory and
+removed the launch trigger without changing runtime files; its CI passed the
+same suites/checks, TypeScript 5.8.3 zero, secret scan and build. This is
+reliability/evaluation support, **not a capability gain or frontier score**.
 
 ### Conditional one-call quality repair: v2 versus v3 proposals
 
@@ -117,7 +145,8 @@ change or ≥80%-across-benchmarks claim is justified. These tasks are now expos
 conditional development; repeats or future reruns are not fresh generalization.
 The smallest next hypothesis is source/evidence-bound selection of host-computed
 proposals instead of model reserialization, still through ordinary typed Omega
-edits and every unchanged verifier. It is **not yet implemented or verified**.
+edits and every unchanged verifier. It was unimplemented at that checkpoint;
+the opt-in implementation and unexercised diagnostic are recorded above.
 
 ### Evaluation-order refactor proposal: fresh bounded comparison
 

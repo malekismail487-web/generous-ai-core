@@ -118,11 +118,22 @@ export function assessRepresentationCandidate(task: RepresentationTask, input: {
 /** Outcome accounting only: a finite repair limit is not itself the defect that consumed it. */
 export function classifyRepresentationFailure(input: {
   accepted: boolean; infrastructureFailure: boolean; reason: string;
+  latestProviderFailure?: string | null;
+  latestDelivery?: {httpAttempts:number;rateLimitedResponses:number;transientUnavailableResponses:number;timedOutAttempts:number};
   latestSchemaFailure?: { reason: string; diagnostics: readonly {category:string;observed:string}[] };
   qualityRejected: boolean; publicFailed: boolean; privateFailure: string|null;
 }) {
   if(input.accepted)return null;
   if(input.infrastructureFailure)return "INFRASTRUCTURE_FAILURE";
+  // The terminal provider receipt outranks a retained earlier candidate.
+  // Attempt-budget reasons alone need not contain the word "provider".
+  // A retry-budget refusal can have a null terminal category while preserving
+  // the failed physical attempt in its delivery counters. A zero-dispatch
+  // refusal is local exhaustion, not evidence that the provider failed.
+  if(input.latestProviderFailure || input.latestDelivery && input.latestDelivery.httpAttempts > 0
+    && [input.latestDelivery.rateLimitedResponses,input.latestDelivery.transientUnavailableResponses,
+      input.latestDelivery.timedOutAttempts].some(count=>count>0))return "PROVIDER_FAILURE";
+  if(input.reason.endsWith("nvidia_http_attempt_budget_exhausted"))return "RESOURCE_EXHAUSTION";
   if(/provider|transport|credential|capacity/.test(input.reason))return "PROVIDER_FAILURE";
   if(/wall_clock|outer_request_aborted/.test(input.reason))return "RESOURCE_EXHAUSTION";
   const failure=input.latestSchemaFailure;

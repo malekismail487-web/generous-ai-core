@@ -1158,6 +1158,24 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
     "actual wall-clock exhaustion remains a separate resource failure");
   check(classifyRepresentationFailure({...base,reason:"nvidia_provider_http_503"})==="PROVIDER_FAILURE",
     "failed provider repair is not concealed by a previous quality rejection");
+  for(const category of ["PROVIDER_TIMEOUT","PROVIDER_RATE_LIMIT","PROVIDER_SERVER_ERROR","PROVIDER_TRANSPORT_ERROR"])
+    check(classifyRepresentationFailure({...base,reason:"repair_cognition_nvidia_http_attempt_budget_exhausted",
+      latestProviderFailure:category})==="PROVIDER_FAILURE",
+      "structured terminal delivery failure outranks retained supplied-candidate quality rejection");
+  check(classifyRepresentationFailure({...base,qualityRejected:false,latestProviderFailure:null})==="INSUFFICIENT_EVIDENCE",
+    "an unrepaired supplied candidate does not manufacture a live-model quality failure");
+  check(classifyRepresentationFailure({...base,accepted:true,latestProviderFailure:"PROVIDER_TIMEOUT"})===null,
+    "a completed accepted result is not overridden by stale failure metadata");
+  check(classifyRepresentationFailure({...base,infrastructureFailure:true,latestProviderFailure:"PROVIDER_TIMEOUT"})==="INFRASTRUCTURE_FAILURE",
+    "an evaluator infrastructure failure remains separately attributable");
+  const delivery={httpAttempts:1,rateLimitedResponses:0,transientUnavailableResponses:0,timedOutAttempts:0};
+  for(const counter of ["rateLimitedResponses","transientUnavailableResponses","timedOutAttempts"])
+    check(classifyRepresentationFailure({...base,reason:"repair_cognition_nvidia_http_attempt_budget_exhausted",
+      latestProviderFailure:null,latestDelivery:{...delivery,[counter]:1}})==="PROVIDER_FAILURE",
+      "null-category retry-budget refusal preserves structured failed-dispatch attribution");
+  check(classifyRepresentationFailure({...base,reason:"repair_cognition_nvidia_http_attempt_budget_exhausted",
+    latestDelivery:{...delivery,httpAttempts:0}})==="RESOURCE_EXHAUSTION",
+    "zero-dispatch shared-budget denial is not a provider or quality failure");
   check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"NON_JSON",diagnostics:[]}})==="SCHEMA_FAILURE",
     "latest malformed response is not concealed by earlier rejected candidate");
   check(classifyRepresentationFailure({...base,latestSchemaFailure:{reason:"OUTPUT_TRUNCATED",diagnostics:[]}})==="TRUNCATION",
