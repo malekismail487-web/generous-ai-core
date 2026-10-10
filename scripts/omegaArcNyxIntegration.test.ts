@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { RUNTIME_REVIEW_TRANSFER_TASKS, runtimeReviewTransferConfiguration } from "./omega/benchmarks/runtimeReviewTransferTasks";
+import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
+  evaluationOrderWireControlVerified } from "./omega/benchmarks/evaluationOrderTransferTasks";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
 import { arcCorePredecessorSource, NYX_ARC_CORE_REFINEMENT } from "./omega/nyx-arc-core-refinement";
 import { readFile } from "node:fs/promises";
@@ -980,7 +982,40 @@ representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(
     check(!localRefactorWireControlVerified("GUARDED_REFACTOR_PROPOSALS",controls),"missing phase, wrong state and malformed proposal count fail wire verification");
   rejects(()=>localRefactorTransferConfiguration("AUTO_APPLY"),"unrecognized proposal comparison cannot grant authority");
 }
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS]) {
+{
+  const {localRefactorGuidance:controlMode,...control}=evaluationOrderTransferConfiguration("GUARDED_V2_CONTROL");
+  const {localRefactorGuidance:treatmentMode,...treatment}=evaluationOrderTransferConfiguration("EVALUATION_ORDER_PROPOSALS");
+  check(controlMode==="GUARDED_PROPOSALS" && treatmentMode==="EVALUATION_ORDER_PROPOSALS"
+    && theoryDigest(control)===theoryDigest(treatment),"evaluation-order comparison changes only opt-in proposal grammar");
+  for(const [variant,version] of [["GUARDED_V2_CONTROL","nyx-local-refactor-proposals/2"],
+    ["EVALUATION_ORDER_PROPOSALS","nyx-local-refactor-proposals/3"]]) {
+    const empty={qualityRepairPhase:false,localProposalsPresented:false,localProposalCount:0,localProposalVersion:null};
+    const active={qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1,localProposalVersion:version};
+    check(evaluationOrderWireControlVerified(variant,[empty,{...empty,qualityRepairPhase:true},active]),
+      "recorded control phase and exact proposal version verify both arms, including no-op coverage");
+    for(const invalid of [[],[{...active,qualityRepairPhase:false}],[{...active,localProposalCount:0}],
+      [{...active,localProposalVersion:"future/99"}],[{...empty,localProposalVersion:version}],
+      [{...active,localProposalCount:NaN}]])
+      check(!evaluationOrderWireControlVerified(variant,invalid),"unbound phase, changed version and malformed count fail closed");
+  }
+  rejects(()=>evaluationOrderTransferConfiguration("AUTO_APPLY"),"comparison cannot request automatic mutation");
+}
+// Test-only reference witnesses establish oracle feasibility; none is a model seed.
+representationReferences["QUOTE-DISCOUNT-TAX"] = "export function transform(input){return Math.round((input.price*input.quantity*(1-input.discountPercent/100)*(1+input.taxPercent/100)+input.fee)*100)/100;}";
+representationReferences["QUADRATIC-DRAG-UNITS"] = "export function transform(input){const speed=input.speedKmh/3.6;return Math.round(0.5*input.density*speed*speed*input.dragCoefficient*input.area*1000)/1000;}";
+representationReferences["NOISY-CHANNEL-CAPACITY"] = "export function transform(input){const rate=input.bandwidth*Math.log2(1+input.signal/input.noise)*input.efficiency-input.overhead;return Math.round(Math.max(0,rate)*1000)/1000;}";
+representationReferences["ROOT-MEAN-SQUARE"] = "export function transform(input){if(!input.length)return null;let total=0;for(const value of input)total+=value*value;return Math.round(Math.sqrt(total/input.length)*1000)/1000;}";
+for(const task of EVALUATION_ORDER_TRANSFER_TASKS) {
+  const reference = new Function(representationReferences[task.id].replace("export function","return function")) as () => (input:unknown) => unknown;
+  for(const example of [...task.publicCases,...task.privateCases]) {
+    const value=structuredClone(example.input),before=theoryDigest(value);
+    check(theoryDigest(reference()(value))===theoryDigest(example.expected) && before===theoryDigest(value),
+      "fresh literal expectations agree with a test-only witness while preserving inputs");
+  }
+  check(task.privateCases.every(example=>!task.publicCases.some(publicCase=>theoryDigest(publicCase.input)===theoryDigest(example.input))),
+    "private transfer cases remain distinct from public examples");
+}
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

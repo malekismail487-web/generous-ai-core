@@ -1147,6 +1147,40 @@ function schemaKeys(value: unknown): string[] {
   try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-LOCAL-REFACTOR",maxPromptBytes:50000,maxOutputTokens:1024,
     provider:provider(transportFor(intent())),localRefactorGuidance:"AUTOMATIC_APPROVAL" as never});} catch {invalidLocal=true;}
   check(invalidLocal,"unknown local refactor mode fails before inference");
+  const orderedSource = "export function add(a,b){const first=a+b;const second=first*2;const third=second/2;const fourth=third+0;const fifth=fourth*1;const result=fifth+0;return result;}";
+  const orderedRequest = {...localRequest,
+    files:[{relativePath:"src/math.mjs",content:orderedSource,contentSha256:hash(orderedSource)}],
+    candidateQualityFeedback:{...localRequest.candidateQualityFeedback,
+      findings:[{dimension:"UNNECESSARY_COMPLEXITY",code:"DECLARATION_DELTA",
+        paths:["src/math.mjs"],measurement:{observed:6,limit:4}}]}};
+  const orderedPayloads:any[]=[];
+  for (const mode of ["GUARDED_PROPOSALS","EVALUATION_ORDER_PROPOSALS"] as const) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"ORDERED-REFACTOR-ABLATION",
+      maxPromptBytes:50000,maxOutputTokens:1024,qualityRepairGuidance:"STRUCTURE_SITES",
+      structuralBudgetGuidance:"PUBLIC_ORIGINAL_STATE",localRefactorGuidance:mode,
+      provider:provider(async(url,init)=>{orderedPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);})});
+    await instance.proposeRepair(originalRequest);
+    await instance.proposeRepair(orderedRequest);
+  }
+  check(isDeepStrictEqual(orderedPayloads[0],orderedPayloads[2]),
+    "evaluation-order extension preserves the exact first-candidate wire");
+  const {localRefactorProposals:orderedControl,...orderedControlBase}=getPrompt(orderedPayloads[1]);
+  const {localRefactorProposals:orderedTreatment,...orderedTreatmentBase}=getPrompt(orderedPayloads[3]);
+  check(orderedControl.version==="nyx-local-refactor-proposals/2"
+    && orderedTreatment.version==="nyx-local-refactor-proposals/3"
+    && orderedTreatment.proposals[0].operations.some((operation:any)=>operation.kind==="ADJACENT_FIRST_EVALUATED_USE")
+    && orderedTreatment.proposals[0].after.declarations<orderedControl.proposals[0].after.declarations,
+    "host opt-in exposes a separately versioned proposal with additional measured binding reduction");
+  check(isDeepStrictEqual(orderedControlBase,orderedTreatmentBase)
+    && isDeepStrictEqual(withoutMessages(orderedPayloads[1]),withoutMessages(orderedPayloads[3]))
+    && !orderedTreatment.authorityGranted && !orderedTreatment.hiddenEvidenceUsed,
+    "only reviewed local proposal changes; model, budgets, grammar, evidence and authority remain unchanged");
+  for(const invalid of [request(),{...orderedRequest,observation:observation("TEST_FAIL")},
+    {...orderedRequest,files:[{...orderedRequest.files[0],contentSha256:"0".repeat(64)}]},
+    {...orderedRequest,allowedMutationPaths:[]}])
+    check(nyxLocalRefactorGuidance(invalid,true)===null,
+      "new proposal grammar preserves failed-observation, stale-source and unauthorized-context rejection");
   const noOpportunitySource = "export function add(a,b){const values=[a,b];let sum=0,count=0,minimum=Infinity,maximum=-Infinity;for(const value of values){sum+=value;count++;minimum=Math.min(minimum,value);maximum=Math.max(maximum,value);}return sum;}";
   const noOpportunity={...localRequest,files:[{relativePath:"src/math.mjs",content:noOpportunitySource,contentSha256:hash(noOpportunitySource)}],
     candidateQualityFeedback:{...localRequest.candidateQualityFeedback,findings:[{dimension:"UNNECESSARY_COMPLEXITY",code:"DECLARATION_DELTA",
@@ -1259,6 +1293,82 @@ function schemaKeys(value: unknown): string[] {
     "bounded AST inventory refuses resource-heavy valid source without executing it");
   check(proposeNyxLocalRefactors("src/deep.mjs","function subject(){return "+"(".repeat(2000)+"1"+")".repeat(2000)+";}")===null,
     "deeply nested parsing failure is contained as no proposal, not a crashed cognition process");
+}
+
+{
+  // Independently execute trusted development witnesses. No model source or
+  // reserved evaluation answers enter these effect-order checks.
+  const run = (source: string, input: unknown) => new Function("return (" + source + ")")()(input);
+  const ordered = (source: string) => proposeNyxLocalRefactors("src/ordered.mjs", source, true);
+  const makeInput = (throwAt: string | null = null) => {
+    const trace: string[] = [];
+    const record = (event: string) => { trace.push(event); if (throwAt === event) throw Error(event); };
+    return { trace, input: {
+      get value() { record("value"); return { x: 2, [Symbol.toPrimitive]() { record("coerce"); return 2; } }; },
+      other() { record("other"); return 3; },
+      yes() { record("yes"); return 7; }, no() { record("no"); return 9; },
+    } };
+  };
+  const outcome = (source: string, throwAt: string | null) => {
+    const { input, trace } = makeInput(throwAt);
+    try { return { value: run(source, input), error: null, trace }; }
+    catch (error) { return { value: null, error: (error as Error).message, trace }; }
+  };
+  for (const source of [
+    "function subject(input){const value=input.value;return value+input.other();}",
+    "function subject(input){const value=input.value;const computed=value+input.other();return computed;}",
+    "function subject(input){const value=input.value;return value?input.yes():input.no();}",
+    "function subject(input){const value=input.value;return -value;}",
+    "function subject(input){const value=input.value;return value.x;}",
+    "function subject(input){const value=input.value;return (value).x+input.other();}",
+  ]) {
+    const proposal = ordered(source)!;
+    check(proposal?.operations.some(operation => operation.kind === "ADJACENT_FIRST_EVALUATED_USE")
+      && proposal.after.declarations < proposal.before.declarations && !proposal.authorityGranted,
+      "optional ordered-use proposer removes a real redundant binding without mutation authority");
+    for (const throwAt of [null, "value", "other", "coerce", "yes", "no"]) {
+      check(isDeepStrictEqual(outcome(source, throwAt), outcome(proposal.proposedSource, throwAt)),
+        "ordered-use proposal preserves getter/call/coercion traces and synchronous exceptions on development witnesses");
+    }
+  }
+  const simple = "function subject(input){const value=input.value;return value+1;}";
+  check(proposeNyxLocalRefactors("src/ordered.mjs", simple) === null && ordered(simple) !== null,
+    "new rule is explicitly opt-in; historical proposer behavior is unchanged");
+  for (const source of [
+    "function subject(input){const value=input.value;return input.other()+value;}",
+    "function subject(input){const value=input.value;return input.other()&&value;}",
+    "function subject(input){const value=input.value;return input.other()?value:0;}",
+    "function subject(input){const value=input.value;return value+value;}",
+    "function subject(input){const method=input.method;return method();}",
+    "function subject(input){const value=input.value;return typeof value;}",
+    "function subject(input){const value=input.value;return ()=>value;}",
+    "function subject(input){const value=input.value;input.other();return value+1;}",
+    "function subject(input){const value=input.value;const {result}=value;return result+1;}",
+    "function subject(input){const value=input.value;return {value};}",
+    "function subject(input){const value=input.value;return [value];}",
+    "function subject(input){const value=input.value;return (value=7);}",
+    "function subject(input){const value=input.value;return ++value;}",
+    "function subject(input){const value=input.value;return delete value;}",
+    "function subject(){const value=()=>1;return value.name.length;}",
+    "async function subject(input){const value=await input;return value+1;}",
+    "function* subject(input){const value=yield input;return value+1;}",
+    "function subject(input){const value=input.value; /* preserve */ return value+1;}",
+  ]) check(ordered(source) === null,
+    "ordered-use proposer refuses delayed/conditional/repeated evaluation, calls, captures, inferred names, suspension and unsupported syntax");
+  check(proposeNyxLocalRefactors("src/ordered.mjs", simple, "YES" as never) === null,
+    "unrecognized ordered-use option cannot turn on a rewrite");
+  const operatorCases = ["+", "-", "*", "/", "%", "**", "<<", ">>", ">>>", "&", "|", "^", "<", "===", "&&", "||", "??", ","];
+  for (const operator of operatorCases) {
+    const source = `function subject(input){const value=input;return value ${operator} 2;}`;
+    const proposal = ordered(source)!;
+    check(proposal !== null, "first operand is recognized in supported ordinary binary operators");
+    for (const value of [-3, -0, 0, 1, 2, 8, NaN, undefined, null, true, "3"]) {
+      check(Object.is(run(source, value), run(proposal.proposedSource, value)),
+        "supported first-operand substitution preserves finite values, NaN and signed zero");
+    }
+  }
+  const deep = "function subject(input){const value=input;return " + "(".repeat(18) + "value" + ")".repeat(18) + "+1;}";
+  check(ordered(deep) === null, "ordered-use grammar has a finite expression traversal bound");
 }
 
 {

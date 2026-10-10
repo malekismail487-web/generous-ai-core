@@ -467,7 +467,7 @@ export interface NyxNemotronEngineeringCognitionConfig {
   /** Experimental lexical context for quality-only repairs; no new authority or approval. */
   readonly behaviorRepairGuidance?: "BINDING_USES";
   /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */
-  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";
+  readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -694,7 +694,8 @@ export class NyxNemotronEngineeringCognition {
     if (config.behaviorRepairGuidance !== undefined && config.behaviorRepairGuidance !== "BINDING_USES") {
       throw new Error("nyx_behavior_repair_guidance_invalid");
     }
-    if (config.localRefactorGuidance !== undefined && config.localRefactorGuidance !== "GUARDED_PROPOSALS") {
+    if (config.localRefactorGuidance !== undefined
+      && !["GUARDED_PROPOSALS", "EVALUATION_ORDER_PROPOSALS"].includes(config.localRefactorGuidance)) {
       throw new Error("nyx_local_refactor_guidance_invalid");
     }
     if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
@@ -744,7 +745,7 @@ export class NyxNemotronEngineeringCognition {
     this.#rejectedSourceWindow = null;
     const qualityFeedback = request.candidateQualityFeedback;
     const localRefactorProposals = this.#config.localRefactorGuidance && qualityFeedback
-      ? nyxLocalRefactorGuidance(request) : null;
+      ? nyxLocalRefactorGuidance(request, this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS") : null;
     const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);
     const sourceLanguageContracts = request.files.map((file) => Object.freeze({ target: file.relativePath,
       mutationAllowed: request.allowedMutationPaths.includes(file.relativePath),

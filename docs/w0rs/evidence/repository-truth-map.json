@@ -2327,6 +2327,12 @@
       ]
     },
     {
+      "name": "NYX_EVALUATION_ORDER_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_EVALUATOR_PYTHON",
       "files": [
         "scripts/omega/nyx-text-benchmark-epoch.ts"

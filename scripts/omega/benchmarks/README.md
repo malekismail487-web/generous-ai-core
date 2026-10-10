@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Evaluation-order refactor proposal: fresh bounded comparison
+
+An opt-in `EVALUATION_ORDER_PROPOSALS` mode extends the existing v2 local
+proposer with one lexical rule: a single-use temporary may be substituted when
+it is the first unconditionally evaluated value in the adjacent statement.
+Getters, calls, coercion order and exceptions must remain observable in the same
+order. Captures, repeated uses, conditional/right-hand evaluation, callee uses,
+suspension and unsupported syntax are not covered by this rule. Its evaluation
+order rationale follows the
+[ECMAScript algorithm](https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-evaluatestringornumericbinaryexpression),
+not an assumption that arbitrary expressions are pure.
+
+The output is an optional, source/evidence-bound v3 proposal, **not a certified
+transform, automatic edit or authority grant**. NYX must review it and emit an
+ordinary typed intent; Omega and the unchanged original-state quality and
+functional checks still judge that intent. Omitted configuration retains v2
+behavior. The quality-policy applicability finding below remains unresolved;
+no policy version, threshold or original stub has been changed.
+
+The prospective comparison uses the same Super model, temperature zero,
+native reasoning disabled, strict generation schema, two calls/candidates,
+three tool calls, 8,192 output tokens, 155-second task-arm limit and 10% realized
+compute tolerance. Control uses existing v2 proposals; treatment adds only the
+new grammar. Four fresh unseeded tasks cover decimal composition, physical
+units, logarithmic rates and nonlinear statistics. There are eight public and
+25 private cases; they are not 33 independent tasks. Source and task identities
+freeze before first inference, and private expected values are evaluator-only.
+Provider instability, first-attempt differences, repair opportunities,
+proposal coverage and functional regressions must be reported separately.
+Unexercised treatment or unmatched compute cannot establish mechanism gains.
+
+The implementation and oracle witnesses are development-only E3 work. Live
+E4 outcome and cognitive promotion remain **unproven pending the frozen run**.
+Default Ultra, all official benchmark outcomes, production, SEC-003 and
+authority remain unchanged. This small transfer study cannot establish ≥80%
+across the agreed benchmarks.
+
 ### Quality-policy applicability: reproduced baseline-formatting discrepancy
 
 Before another live model run, a separate development diagnostic reproduced a

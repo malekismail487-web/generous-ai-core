@@ -245,6 +245,17 @@ const runtimeReviewRefinement: Record<string, readonly (readonly [string, string
 ],
 };
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after] of [
+    ['  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";',
+      '  readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS";'],
+    ['    if (config.localRefactorGuidance !== undefined && config.localRefactorGuidance !== "GUARDED_PROPOSALS") {',
+      '    if (config.localRefactorGuidance !== undefined\n      && !["GUARDED_PROPOSALS", "EVALUATION_ORDER_PROPOSALS"].includes(config.localRefactorGuidance)) {'],
+    ['      ? nyxLocalRefactorGuidance(request) : null;',
+      '      ? nyxLocalRefactorGuidance(request, this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS") : null;'],
+  ]) {
+    if (current.split(after).length !== 2) throw Error("arc_evaluation_order_refinement_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   for (const [before, after] of runtimeReviewRefinement[path] ?? []) {
     if (current.split(after).length !== 2) throw Error("arc_runtime_review_hunk_mismatch");
     current = current.split(after).join(before);
