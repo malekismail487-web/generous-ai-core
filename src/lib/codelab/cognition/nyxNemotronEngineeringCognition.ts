@@ -741,6 +741,8 @@ export class NyxNemotronEngineeringCognition {
       && candidateWindow.objectiveDigest === sha256(request.objective) ? candidateWindow : null;
     this.#rejectedSourceWindow = null;
     const qualityFeedback = request.candidateQualityFeedback;
+    const localRefactorProposals = this.#config.localRefactorGuidance && qualityFeedback
+      ? nyxLocalRefactorGuidance(request) : null;
     const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);
     const sourceLanguageContracts = request.files.map((file) => Object.freeze({ target: file.relativePath,
       mutationAllowed: request.allowedMutationPaths.includes(file.relativePath),
@@ -775,8 +777,7 @@ export class NyxNemotronEngineeringCognition {
         ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),
       ...(this.#config.behaviorRepairGuidance && qualityFeedback
         ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),
-      ...(this.#config.localRefactorGuidance && qualityFeedback
-        ? { localRefactorProposals: nyxLocalRefactorGuidance(request) } : {}),
+      ...(localRefactorProposals ? { localRefactorProposals } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

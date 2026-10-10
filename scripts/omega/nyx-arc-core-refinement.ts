@@ -224,7 +224,8 @@ const cognitionLocalRefactorRefinement: readonly (readonly [string, string])[] =
   ["", 'import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";\n'],
   ["", '  /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */\n  readonly localRefactorGuidance?: "GUARDED_PROPOSALS";\n'],
   ["", '    if (config.localRefactorGuidance !== undefined && config.localRefactorGuidance !== "GUARDED_PROPOSALS") {\n      throw new Error("nyx_local_refactor_guidance_invalid");\n    }\n'],
-  ["", '      ...(this.#config.localRefactorGuidance && qualityFeedback\n        ? { localRefactorProposals: nyxLocalRefactorGuidance(request) } : {}),\n'],
+  ["", '    const localRefactorProposals = this.#config.localRefactorGuidance && qualityFeedback\n      ? nyxLocalRefactorGuidance(request) : null;\n'],
+  ["", '      ...(localRefactorProposals ? { localRefactorProposals } : {}),\n'],
 ];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;

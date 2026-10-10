@@ -13,12 +13,13 @@ export function localRefactorWireControlVerified(variant: string, controls: read
 }[]): boolean {
   localRefactorTransferConfiguration(variant);
   return controls.length > 0 && controls.every(control => typeof control.qualityRepairPhase === "boolean"
-    && control.localProposalsPresented === (variant === "GUARDED_REFACTOR_PROPOSALS" && control.qualityRepairPhase)
+    && control.localProposalsPresented === (variant === "GUARDED_REFACTOR_PROPOSALS" && control.qualityRepairPhase && control.localProposalCount! > 0)
     && Number.isSafeInteger(control.localProposalCount) && control.localProposalCount! >= 0
     && (control.localProposalsPresented || control.localProposalCount === 0));
 }
 
-// Frozen before first inference. Literal private expectations remain evaluator-only.
+// Frozen before first inference at 8b17b103; now exposed development tasks, not fresh holdouts.
+// Literal private expectations remain evaluator-only. Do not rerun as fresh evidence.
 // These are new tasks, not repaired variants of the exposed binding-feedback corpus.
 export const LOCAL_REFACTOR_TRANSFER_TASKS: readonly RepresentationTask[] = [
   { id:"STABLE-KEYED-BAG-DIFFERENCE",tier:"DEVELOPMENT",domain:"MULTISET_RECONCILIATION",

@@ -1,5 +1,61 @@
 # NYX benchmark capability program
 
+### Concrete local refactor transfer: zero actionable coverage, not promoted
+
+The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38024882912)
+at `8b17b103` completed four new objectives in both arms. The
+[receipt](../../../docs/omega/evidence/nyx-local-refactor-transfer-8b17b103.json)
+verifies the artifact SHA256, log/report/freeze agreement, all 18 source hashes,
+actual model controls, source preservation and owned cleanup. Control achieved
+**2/4 full acceptance, 3/4 functional acceptance**; treatment achieved
+**1/4 full acceptance, 3/4 functional acceptance**. Control used 28,865 tokens
+and six calls; treatment used 35,891 tokens and seven calls. Three pairs were
+within 10% realized calls/tokens/verifier work; all four were provider-stable.
+
+The pure bounded proposer offered adjacent return-temporary elimination,
+primitive-constant substitution and opposite-boolean-return simplification,
+not automatic rewriting or a new compiler. Both arms kept identical first-edit
+configuration, native-none Super model, original-state quality limits, grammar,
+execution/private oracle, authority and finite budgets. However, **none of the
+three treatment repair prompts contained an applicable proposal**. This is a
+coverage/integration falsification, not evidence that executed local refactors
+improve cognition. The graph pair began with the same candidate; control alone
+repaired its declaration excess. Other first-candidate differences occurred
+before treatment exposure. No broad causal claim follows from this single epoch.
+
+All 13 source emissions were valid and untruncated, with zero provider,
+infrastructure, schema or unknown-usage failures. Bag difference remained 4/5
+private cases in both arms; median remained quality-rejected in both arms.
+Neither the exact source-level hidden defect nor its cause is invented from
+aggregate pass counts. First attempts and repairs remain separate; no hidden
+answers or scores reached cognition. All four test-only references passed the
+unchanged real lifecycle, execution, private and quality gates. These objectives
+are now exposed development tasks, not future fresh holdouts.
+
+Development tests reproduce observable anonymous-function naming under the
+[ECMAScript binding rules](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations)
+and verify single-evaluation boolean conversion against
+[ToBoolean](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toboolean).
+Guards also reject captures, writes, dynamic scope, disposal bindings,
+unsupported typed syntax and resource-heavy inputs. They are not a complete
+whole-program equivalence proof. A post-epoch supporting correction now omits
+the entire proposal field when there is no applicable rewrite: its provider
+payload equals the simpler control exactly. Proposal v2 remains experimental,
+opt-in and unpromoted. No additional live rerun was launched.
+
+Frozen-candidate Linux CI passed **109 suites / 12,063 checks**, TypeScript 5.8.3
+zero, build, package smoke, secrets and inventories. Windows Device Guard
+blocked the local build executable; it was not bypassed. Pure-helper profiling
+on a 6,519-byte authored program measured median 5.21 ms / p95 12.27 ms over 50
+samples, not end-to-end matched host CPU. Default Ultra, production and authority
+remain unchanged. Plugin discovery established no quota-capable benchmark
+environment and changed no connection or permission.
+
+Next inspect existing bounded runtime observations and whole-function structural
+repair on separate development programs. A future comparison must exercise an
+actual mechanism on new objectives; added prompt detail, empty proposal coverage,
+test volume and infrastructure are not cognitive gains.
+
 ### Binding-use repair transfer: no acceptance gain, not promoted
 
 The [frozen live run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38022952653)

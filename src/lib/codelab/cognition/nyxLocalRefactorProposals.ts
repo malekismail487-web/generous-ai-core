@@ -183,7 +183,8 @@ export function nyxLocalRefactorGuidance(request: NyxRepairCognitionRequest) {
     const proposal = proposeNyxLocalRefactors(source.path, file.content);
     return proposal ? [proposal] : [];
   });
-  return Object.freeze({ version: "nyx-local-refactor-proposals/1", evidenceRef: context.evidenceRef,
+  if (!proposals.length) return null;
+  return Object.freeze({ version: "nyx-local-refactor-proposals/2", evidenceRef: context.evidenceRef,
     passingObservationRef: context.passingObservationRef, evidenceScope: context.evidenceScope,
     proposals: Object.freeze(proposals),
     instruction: "These are optional concrete local refactor proposals for the current passing candidate. Review their guards and the objective; if appropriate, use their proposedSource as the starting point of an ordinary PROPOSE_EDIT. They do not apply themselves or satisfy the task automatically. If they do not meet every unchanged cumulative quality bound, make a coherent further correction. Never change tests, thresholds, targets or tools. Preserve behavior and verify through Omega; public passing is not hidden acceptance.",

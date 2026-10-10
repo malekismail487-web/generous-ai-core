@@ -1147,6 +1147,20 @@ function schemaKeys(value: unknown): string[] {
   try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-LOCAL-REFACTOR",maxPromptBytes:50000,maxOutputTokens:1024,
     provider:provider(transportFor(intent())),localRefactorGuidance:"AUTOMATIC_APPROVAL" as never});} catch {invalidLocal=true;}
   check(invalidLocal,"unknown local refactor mode fails before inference");
+  const noOpportunitySource = "export function add(a,b){const values=[a,b];let sum=0,count=0,minimum=Infinity,maximum=-Infinity;for(const value of values){sum+=value;count++;minimum=Math.min(minimum,value);maximum=Math.max(maximum,value);}return sum;}";
+  const noOpportunity={...localRequest,files:[{relativePath:"src/math.mjs",content:noOpportunitySource,contentSha256:hash(noOpportunitySource)}],
+    candidateQualityFeedback:{...localRequest.candidateQualityFeedback,findings:[{dimension:"UNNECESSARY_COMPLEXITY",code:"DECLARATION_DELTA",
+      paths:["src/math.mjs"],measurement:{observed:5,limit:4}}]}};
+  check(nyxLocalRefactorGuidance(noOpportunity)===null,"no applicable guarded rewrite produces no cosmetic repair context");
+  const inactivePayloads:unknown[]=[];
+  for(const enabled of [false,true]) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"EMPTY-PROPOSAL-IDENTITY",maxPromptBytes:50000,maxOutputTokens:1024,
+      qualityRepairGuidance:"STRUCTURE_SITES",provider:provider(async(url,init)=>{inactivePayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);}),...(enabled?{localRefactorGuidance:"GUARDED_PROPOSALS" as const}:{})});
+    await instance.proposeRepair(noOpportunity);
+  }
+  check(isDeepStrictEqual(inactivePayloads[0],inactivePayloads[1]),
+    "empirical empty-coverage correction preserves the exact simpler-control wire when the proposer cannot help");
   check(validRevision.decision === "PROPOSED" && validRevision.hypothesis?.parentHypothesisId === prior.hypothesisId,
     "quality-driven revision requires a passing candidate with bound proposal, application, and E3 admission evidence");
   const citedQuality = await evaluate(intent({ evidenceRefs: [qualityEvidenceId] }), {

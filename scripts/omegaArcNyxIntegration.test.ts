@@ -965,12 +965,13 @@ representationReferences["DIRECTED-HOP-DISTANCES"] = `export function transform(
     && !Object.hasOwn(control,"behaviorRepairGuidance"),"falsified binding-inventory intervention is not silently promoted into new control");
   check(localRefactorWireControlVerified("GUARDED_REFACTOR_PROPOSALS",[
     {qualityRepairPhase:false,localProposalsPresented:false,localProposalCount:0},
-    {qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:0},
+    {qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0},
     {qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1}]),
     "valid empty proposal coverage is distinct from exercised actionable repair");
   check(localRefactorWireControlVerified("QUALITY_SITES_CONTROL",[
     {qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0}]),"simpler control has no proposal source or compute");
-  for(const controls of [[],[{qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0}],
+  for(const controls of [[],[{qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:1}],
+    [{qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:0}],
     [{qualityRepairPhase:false,localProposalsPresented:true,localProposalCount:1}],
     [{qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:-1}],
     [{qualityRepairPhase:true,localProposalsPresented:true}]])
