@@ -21,6 +21,8 @@ import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarT
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./omega/benchmarks/nativeReasoningTransferTasks";
 import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
+import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
+  behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -845,7 +847,72 @@ representationReferences["WEIGHTED-INTERVAL-OPTIMUM"] = `export function transfo
       "missing phase or changed guidance cannot establish a valid wire control");
   rejects(() => originalBudgetWireControlVerified("UNKNOWN",[]),"unknown wire arm rejected rather than reported verified");
 }
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS]) {
+representationReferences["ORDERED-RUN-FOLD"] = `export function transform(input) {
+  const rows = [];
+  for (const [symbol, count] of input) {
+    if (count === 0) continue;
+    if (rows.length && rows[rows.length - 1][0] === symbol) rows[rows.length - 1][1] += count;
+    else rows.push([symbol, count]);
+  }
+  return rows;
+}`;
+representationReferences["ORDER-PRESERVING-INTERLEAVE"] = `export function transform(input) {
+  if (input.left.length + input.right.length !== input.merged.length) return false;
+  const possible = Array(input.right.length + 1).fill(false);
+  for (let left = 0; left <= input.left.length; left++) {
+    possible[0] = input.left.slice(0, left) === input.merged.slice(0, left);
+    for (let right = 1; right <= input.right.length; right++) {
+      possible[right] = (possible[right] && input.left[left - 1] === input.merged[left + right - 1])
+        || (possible[right - 1] && input.right[right - 1] === input.merged[left + right - 1]);
+    }
+  }
+  return possible[input.right.length];
+}`;
+representationReferences["HISTOGRAM-MAX-RECTANGLE"] = `export function transform(input) {
+  const stack = [];
+  let maximum = 0;
+  for (let index = 0; index <= input.length; index++) {
+    while (stack.length && input[stack[stack.length - 1]] > (input[index] ?? 0)) {
+      const popped = stack.pop();
+      maximum = Math.max(maximum, input[popped] * (index - (stack.length ? stack[stack.length - 1] : -1) - 1));
+    }
+    stack.push(index);
+  }
+  return maximum;
+}`;
+representationReferences["DEPENDENCY-CRITICAL-FINISH"] = `export function transform(input) {
+  const remaining = Array(input.durations.length).fill(0);
+  const finish = input.durations.slice();
+  const ready = [];
+  for (const [, to] of input.edges) remaining[to]++;
+  for (let node = 0; node < remaining.length; node++) if (remaining[node] === 0) ready.push(node);
+  for (let cursor = 0; cursor < ready.length; cursor++) {
+    for (const [from, to] of input.edges) {
+      if (from === ready[cursor]) {
+        finish[to] = Math.max(finish[to], finish[from] + input.durations[to]);
+        if (--remaining[to] === 0) ready.push(to);
+      }
+    }
+  }
+  return ready.length === input.durations.length ? Math.max(0, ...finish) : null;
+}`;
+{
+  const control=behaviorRepairTransferConfiguration("QUALITY_SITES_CONTROL");
+  const {behaviorRepairGuidance,...treatment}=behaviorRepairTransferConfiguration("BINDING_USES");
+  check(behaviorRepairGuidance==="BINDING_USES" && JSON.stringify(control)===JSON.stringify(treatment),
+    "fresh binding-use ablation changes one quality-only host prompt option");
+  check(control.structuralBudgetGuidance==="PUBLIC_ORIGINAL_STATE" && control.qualityRepairGuidance==="STRUCTURE_SITES",
+    "both arms retain identical original-state and site guidance, grammar and native-none configuration");
+  check(behaviorRepairWireControlVerified("BINDING_USES",[{qualityRepairPhase:false,bindingUsesPresented:false},
+    {qualityRepairPhase:true,bindingUsesPresented:true}]),"binding context appears only in quality repair phase");
+  check(behaviorRepairWireControlVerified("QUALITY_SITES_CONTROL",[{qualityRepairPhase:true,bindingUsesPresented:false}]),
+    "control receives no treatment after rejection");
+  for(const controls of [[],[{bindingUsesPresented:true}],[{qualityRepairPhase:false,bindingUsesPresented:true}],
+    [{qualityRepairPhase:true,bindingUsesPresented:false}]]) check(!behaviorRepairWireControlVerified("BINDING_USES",controls),
+      "unknown phase, omitted required context or unsolicited treatment cannot establish valid comparison");
+  rejects(()=>behaviorRepairTransferConfiguration("RELAX_QUALITY"),"unknown binding arm fails closed");
+}
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import ts from "typescript";
 import { measureEngineeringStructure } from "../assurance/engineeringQualityOracle";
 import type { NyxRepairCognitionRequest } from "./nyxNemotronEngineeringCognition";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2, OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
@@ -29,6 +30,112 @@ export function originalStateQualityBudget(request: NyxRepairCognitionRequest) {
     scope: "SINGLE_ORIGINAL_AUTHORIZED_TARGET_NOT_A_NEW_ADMISSION_POLICY",
     accounting: "Count each function, method, arrow/callback, and each variable-statement declarator. Parameters and loop-header bindings do not count as variable statements. Multiple variables on one line still count separately. Complexity includes control nodes and &&, ||, ??; nesting is AST control depth, not indentation.",
     discipline: "Design a coherent algorithm within every total before emitting code. Avoid unnecessary intermediate representations, repeated traversals and redundant bindings. Do not golf identifiers, hide work in giant expressions/state objects, delete required behavior, change tests, or evade a detector. Preserve all functional requirements. This explanation does not establish correctness: Omega must remeasure and execute the complete candidate.",
+    hiddenEvidenceUsed: false, authorityGranted: false });
+}
+
+/** Bounded lexical facts, not liveness, purity, alias analysis or refactoring approval. */
+export function measureBindingUses(path: string, source: string) {
+  if (Buffer.byteLength(source, "utf8") > 12000 || !/\.(?:[cm]?[jt]s|tsx|jsx)$/.test(path)) return null;
+  const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true,
+    /\.[cm]?js$|\.jsx$/.test(path) ? ts.ScriptKind.JS : /\.tsx$/.test(path) ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  if (((file as ts.SourceFile & { parseDiagnostics?: readonly ts.Diagnostic[] }).parseDiagnostics ?? []).length) return null;
+  // The checker binds lexical symbols only. Its host never reads another file,
+  // loads libraries/imports, resolves modules, evaluates source or runs tools.
+  const program = ts.createProgram([path], { noLib: true, noResolve: true, allowJs: true }, {
+    getSourceFile: name => name === path ? file : undefined, getDefaultLibFileName: () => "",
+    writeFile: () => { throw Error("binding_summary_write_forbidden"); },
+    getCurrentDirectory: () => "", getDirectories: () => [], fileExists: name => name === path,
+    readFile: name => name === path ? source : undefined, getCanonicalFileName: name => name,
+    useCaseSensitiveFileNames: () => true, getNewLine: () => "\n",
+  });
+  const checker = program.getTypeChecker();
+  const owner = (node: ts.Node): ts.Node => {
+    for (let parent = node.parent; parent; parent = parent.parent) if (ts.isFunctionLike(parent)) return parent;
+    return file;
+  };
+  const declarations: ts.VariableDeclaration[] = [];
+  const identifiers: ts.Identifier[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node)) declarations.push(node);
+    if (ts.isIdentifier(node)) identifiers.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  let unresolvedBindings = 0;
+  const bindings = declarations.slice(0, 32).flatMap(declaration => {
+    if (!ts.isIdentifier(declaration.name)) { unresolvedBindings++; return []; }
+    const symbol = checker.getSymbolAtLocation(declaration.name);
+    if (!symbol) { unresolvedBindings++; return []; }
+    const reads: ts.Identifier[] = [];
+    const writes: ts.Identifier[] = [];
+    let memberUses = 0;
+    for (const identifier of identifiers) {
+      if (identifier === declaration.name) continue;
+      const parent = identifier.parent;
+      const reference = ts.isShorthandPropertyAssignment(parent)
+        ? checker.getShorthandAssignmentValueSymbol(parent) : checker.getSymbolAtLocation(identifier);
+      if (reference !== symbol) continue;
+      const assignment = ts.isBinaryExpression(parent) && parent.left === identifier
+        && parent.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
+        && parent.operatorToken.kind <= ts.SyntaxKind.LastAssignment;
+      const update = (ts.isPrefixUnaryExpression(parent) || ts.isPostfixUnaryExpression(parent))
+        && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(parent.operator);
+      if (assignment || update) writes.push(identifier);
+      if (!assignment || parent.operatorToken.kind !== ts.SyntaxKind.EqualsToken) reads.push(identifier);
+      if ((ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent))
+        && parent.expression === identifier) memberUses++;
+    }
+    const initializerHazards = new Set<string>();
+    const inspect = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) || ts.isNewExpression(node)) initializerHazards.add("CALL_OR_CONSTRUCTION");
+      if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) initializerHazards.add("PROPERTY_READ_MAY_HAVE_GETTER");
+      if (ts.isAwaitExpression(node) || ts.isYieldExpression(node)) initializerHazards.add("SUSPENSION");
+      if (ts.isDeleteExpression(node) || ts.isBinaryExpression(node)
+        && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment
+        || (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node))
+          && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) initializerHazards.add("STATE_UPDATE");
+      ts.forEachChild(node, inspect);
+    };
+    if (declaration.initializer) inspect(declaration.initializer);
+    const position = file.getLineAndCharacterOfPosition(declaration.getStart(file));
+    const list = declaration.parent;
+    return [Object.freeze({ name: declaration.name.text, line: position.line + 1, column: position.character + 1,
+      declarationKind: ts.isVariableDeclarationList(list) && list.flags & ts.NodeFlags.Const ? "CONST"
+        : ts.isVariableDeclarationList(list) && list.flags & ts.NodeFlags.Let ? "LET" : "VAR",
+      countedByQualityDetector: ts.isVariableDeclarationList(list) && ts.isVariableStatement(list.parent),
+      readReferences: reads.length, directWriteReferences: writes.length, memberUses,
+      capturedReferences: [...new Set([...reads, ...writes])].filter(node => owner(node) !== owner(declaration)).length,
+      initializerHazards: Object.freeze([...initializerHazards].sort()),
+      initializerKind: declaration.initializer ? ts.SyntaxKind[declaration.initializer.kind] : null })];
+  });
+  return Object.freeze({ bindings: Object.freeze(bindings), complete: declarations.length <= 32 && unresolvedBindings === 0,
+    totalVariableDeclarations: declarations.length, unresolvedBindings, maxBindings: 32,
+    scope: "LEXICAL_REFERENCE_COUNTS_NOT_SEMANTIC_EQUIVALENCE",
+    referenceLimitations: "Direct writes exclude destructuring/for-target assignment and alias mutation; memberUses is not a mutation or purity proof." });
+}
+
+export function behaviorPreservingQualityGuidance(request: NyxRepairCognitionRequest) {
+  const measured = measuredQualityRepairGuidance(request, true);
+  const feedback = request.candidateQualityFeedback;
+  const prior = request.priorHypotheses.at(-1);
+  if (!measured || !feedback || prior?.hypothesisId !== feedback.hypothesisId
+    || prior.disposition !== "PARTIALLY_SUPPORTED" || !prior.verificationEvidenceRefs.includes(feedback.evidenceId)
+    || feedback.applicationId !== request.observation.applicationId || feedback.proposalDigest !== request.observation.proposalDigest
+    || !["TEST_PASS", "BUILD_PASS", "TYPECHECK_PASS"].includes(request.observation.state)
+    || request.observation.epistemicState !== "SUPPORTED") return null;
+  const paths = [...new Set(measured.corrections.flatMap(correction => correction.measurements.map(item => item.path)))];
+  const sources = paths.flatMap(path => {
+    const files = request.files.filter(file => file.relativePath === path);
+    if (files.length !== 1 || createHash("sha256").update(files[0].content).digest("hex") !== files[0].contentSha256) return [];
+    const uses = measureBindingUses(path, files[0].content);
+    return uses ? [{ path, sourceDigest: files[0].contentSha256, ...uses }] : [];
+  });
+  if (sources.length !== paths.length) return null;
+  return Object.freeze({ version: "nyx-behavior-preserving-quality-repair/1", evidenceRef: feedback.evidenceId,
+    passingObservationRef: `OBSERVATION:${request.observation.observationId}`, sources: Object.freeze(sources),
+    evidenceScope: "AVAILABLE_PUBLIC_CHECKS_PASSED_NOT_FULL_CORRECTNESS_OR_HIDDEN_ACCEPTANCE",
+    instruction: "This is a quality refactor of a candidate that passed available checks, not evidence that its algorithm should be replaced. Identify each binding's semantic role before removing it. Keep persistent accumulators/cursors and evaluation order; calls/getters/updates cannot be freely repeated or moved. A single lexical read does not prove safe inlining; zero reads does not prove safe deletion. Captured and member-used values may hold shared state. Prefer removing a genuinely redundant representation or composing an equivalent operation. If replacing the algorithm, rederive every objective invariant and challenge the replacement with boundary cases. Meet every original-state structural limit, preserve public behavior and exports, and rerun the unchanged verifier. Do not pack unrelated state, exploit loop-header counting, golf code or lower acceptance thresholds.",
+    limitations: "No purity, alias, control-flow, dynamic property, exception, timing or equivalence proof. Missing bindings and an incomplete summary must not be treated as unused. The source remains authoritative; runtime verification remains mandatory.",
     hiddenEvidenceUsed: false, authorityGranted: false });
 }
 

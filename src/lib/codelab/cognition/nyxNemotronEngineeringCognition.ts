@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { isAbsolute } from "node:path";
-import { measuredQualityRepairGuidance, originalStateQualityBudget } from "./nyxMeasuredQualityGuidance";
+import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxLengthBoundedDecisionRequiredProviderSchema } from "./nyxDecisionRequiredSchema";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
@@ -461,6 +461,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly qualityRepairGuidance?: "MEASURED_STRUCTURE" | "STRUCTURE_SITES";
   /** Host-only first-candidate explanation; no parser, admission or authority changes. */
   readonly structuralBudgetGuidance?: "PUBLIC_ORIGINAL_STATE";
+  /** Experimental lexical context for quality-only repairs; no new authority or approval. */
+  readonly behaviorRepairGuidance?: "BINDING_USES";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -684,6 +686,9 @@ export class NyxNemotronEngineeringCognition {
     if (config.structuralBudgetGuidance !== undefined && config.structuralBudgetGuidance !== "PUBLIC_ORIGINAL_STATE") {
       throw new Error("nyx_structural_budget_guidance_invalid");
     }
+    if (config.behaviorRepairGuidance !== undefined && config.behaviorRepairGuidance !== "BINDING_USES") {
+      throw new Error("nyx_behavior_repair_guidance_invalid");
+    }
     if (config.structuredOutputMode !== undefined && config.structuredOutputMode !== "STRICT_LOCAL") {
       throw new Error("nyx_structured_output_mode_invalid");
     }
@@ -762,6 +767,8 @@ export class NyxNemotronEngineeringCognition {
         ? { measuredQualityRepair: measuredQualityRepairGuidance(request, this.#config.qualityRepairGuidance === "STRUCTURE_SITES") } : {}),
       ...(this.#config.structuralBudgetGuidance && !qualityFeedback && request.priorHypotheses.length === 0
         ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),
+      ...(this.#config.behaviorRepairGuidance && qualityFeedback
+        ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),
       observation: { observationId: request.observation.observationId, state: request.observation.state,
         baselineComparison: request.observation.baselineComparison, candidateAttribution: request.observation.candidateAttribution,
         attributionConfidence: request.observation.attributionConfidence, epistemicState: request.observation.epistemicState,

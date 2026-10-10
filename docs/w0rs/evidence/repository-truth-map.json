@@ -2291,6 +2291,12 @@
       ]
     },
     {
+      "name": "NYX_BEHAVIOR_REPAIR_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_BOUNDED_CONTRACT_COMPARISON",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"

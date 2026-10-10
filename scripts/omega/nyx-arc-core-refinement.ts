@@ -213,8 +213,19 @@ const cognitionOriginalBudgetRefinement: readonly (readonly [string, string])[] 
   ["", '    if (config.structuralBudgetGuidance !== undefined && config.structuralBudgetGuidance !== "PUBLIC_ORIGINAL_STATE") {\n      throw new Error("nyx_structural_budget_guidance_invalid");\n    }\n'],
   ["", '      ...(this.#config.structuralBudgetGuidance && !qualityFeedback && request.priorHypotheses.length === 0\n        ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),\n'],
 ];
+const cognitionBehaviorRepairRefinement: readonly (readonly [string, string])[] = [
+  ['import { measuredQualityRepairGuidance, originalStateQualityBudget } from "./nyxMeasuredQualityGuidance";\n',
+    'import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";\n'],
+  ["", '  /** Experimental lexical context for quality-only repairs; no new authority or approval. */\n  readonly behaviorRepairGuidance?: "BINDING_USES";\n'],
+  ["", '    if (config.behaviorRepairGuidance !== undefined && config.behaviorRepairGuidance !== "BINDING_USES") {\n      throw new Error("nyx_behavior_repair_guidance_invalid");\n    }\n'],
+  ["", '      ...(this.#config.behaviorRepairGuidance && qualityFeedback\n        ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),\n'],
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (!changes[path]) return current;
+  if (path === cognitivePath) for (const [before, after] of cognitionBehaviorRepairRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_cognition_behavior_repair_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of cognitionOriginalBudgetRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_cognition_original_budget_hunk_mismatch");
     current = current.split(after).join(before);

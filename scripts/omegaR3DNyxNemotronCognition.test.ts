@@ -3,7 +3,8 @@ import { isDeepStrictEqual } from "node:util";
 import Ajv from "ajv";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxInformativeProviderStringSchema, nyxLengthBoundedDecisionRequiredProviderSchema } from "../src/lib/codelab/cognition/nyxDecisionRequiredSchema";
-import { measuredQualityRepairGuidance, originalStateQualityBudget } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
+import { measuredQualityRepairGuidance, originalStateQualityBudget, measureBindingUses,
+  behaviorPreservingQualityGuidance } from "../src/lib/codelab/cognition/nyxMeasuredQualityGuidance";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -1076,6 +1077,44 @@ function schemaKeys(value: unknown): string[] {
   const validRevision = await evaluate(intent({ failureInterpretation: "Visible behavior passed but the candidate failed static quality admission." }), {
     observation: passingObservation, priorHypotheses, candidateQualityFeedback: feedback,
   });
+  const behavior = behaviorPreservingQualityGuidance(measuredRequest)!;
+  check(behavior.sources[0].bindings.length === 5 && behavior.sources[0].complete
+    && behavior.sources[0].sourceDigest === hash(crowded) && !behavior.authorityGranted && !behavior.hiddenEvidenceUsed,
+    "quality-only lexical guidance bound to currently passing source and public evidence");
+  check(behavior.evidenceScope.includes("NOT_FULL_CORRECTNESS") && behavior.limitations.includes("No purity")
+    && behavior.instruction.includes("zero reads does not prove safe deletion"),
+    "passing public execution and lexical counts are never a semantic equivalence certificate");
+  for (const invalid of [
+    {...measuredRequest, observation: observation("TEST_FAIL")},
+    {...measuredRequest, priorHypotheses: []},
+    {...measuredRequest, priorHypotheses: [{...priorHypotheses[0],disposition:"FALSIFIED" as const}]},
+    {...measuredRequest, candidateQualityFeedback:{...measuredRequest.candidateQualityFeedback!,applicationId:"OTHER"}},
+    {...measuredRequest, files:[{...measuredRequest.files[0],contentSha256:"0".repeat(64)}]},
+    {...measuredRequest, files:[...measuredRequest.files,...measuredRequest.files]},
+  ]) check(behaviorPreservingQualityGuidance(invalid) === null,
+    "stale, unbound, falsified, failed or ambiguous source cannot assert a quality-only preservation context");
+  const behaviorPayloads: any[] = [];
+  for (const enabled of [false,true]) {
+    const instance = NyxNemotronEngineeringCognition.create({cognitionId:"BEHAVIOR-QUALITY-ABLATION",
+      provider:provider(async(url,init)=>{behaviorPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(intent())(url,init);}),maxPromptBytes:50000,maxOutputTokens:1024,
+      qualityRepairGuidance:"STRUCTURE_SITES",structuralBudgetGuidance:"PUBLIC_ORIGINAL_STATE",
+      ...(enabled?{behaviorRepairGuidance:"BINDING_USES" as const}:{})});
+    await instance.proposeRepair(originalRequest);
+    await instance.proposeRepair(measuredRequest);
+  }
+  check(JSON.stringify(behaviorPayloads[0]) === JSON.stringify(behaviorPayloads[2]),
+    "binding-use ablation keeps first-candidate wire identical");
+  const {behaviorPreservingQualityRepair,...behaviorBase}=getPrompt(behaviorPayloads[3]);
+  check(isDeepStrictEqual(behaviorPreservingQualityRepair,behavior)
+    && isDeepStrictEqual(behaviorBase,getPrompt(behaviorPayloads[1]))
+    && isDeepStrictEqual(withoutMessages(behaviorPayloads[1]),withoutMessages(behaviorPayloads[3])),
+    "quality-only ablation adds exactly lexical context, not provider grammar, model or compute controls");
+  let invalidBehavior=false;
+  try {NyxNemotronEngineeringCognition.create({cognitionId:"INVALID-BEHAVIOR",provider:provider(transportFor(intent())),
+    maxPromptBytes:50000,maxOutputTokens:1024,behaviorRepairGuidance:"AUTO_REWRITE" as never});}
+  catch {invalidBehavior=true;}
+  check(invalidBehavior,"unrecognized behavior mode fails before inference");
   check(validRevision.decision === "PROPOSED" && validRevision.hypothesis?.parentHypothesisId === prior.hypothesisId,
     "quality-driven revision requires a passing candidate with bound proposal, application, and E3 admission evidence");
   const citedQuality = await evaluate(intent({ evidenceRefs: [qualityEvidenceId] }), {
@@ -1105,6 +1144,51 @@ function schemaKeys(value: unknown): string[] {
   check([wrongProposal, wrongApplication, unreferencedEvidence, feedbackOnFailure].every((result) => result.decision === "REJECTED"
     && result.reason.includes("nyx_cognition_quality_feedback_invalid")) && calls === 0,
   "forged, unbound, unreferenced, or failure-state quality feedback is inert before provider invocation");
+}
+
+{
+  // Trusted, authored development programs only, never arbitrary model code.
+  // Independent execution reproduces why apparently smaller edits can regress.
+  const run = (body:string,...args:unknown[]) => new Function("return ("+body+")")()(...args);
+  const effect = "function subject(next) { const sample = next(); return sample + sample; }";
+  const inlined = "function subject(next) { return next() + next(); }";
+  const counter = () => {let value=0;return () => ++value;};
+  check(run(effect,counter()) === 2 && run(inlined,counter()) === 3,
+    "development reproduction: removing a repeated effectful binding changes behavior");
+  const sample=measureBindingUses("src/effect.mjs",effect)!.bindings[0];
+  check(sample.readReferences === 2 && sample.initializerHazards.includes("CALL_OR_CONSTRUCTION"),
+    "lexical summary identifies repeated use and unknown call effects without claiming an inline is safe");
+  const getter = "function subject(input) { const value = input.value; return value + value; }";
+  const getterInlined = "function subject(input) { return input.value + input.value; }";
+  const input = () => {let value=0;return {get value(){return ++value;}};};
+  check(run(getter,input()) === 2 && run(getterInlined,input()) === 3
+    && measureBindingUses("src/getter.mjs",getter)!.bindings[0].initializerHazards.includes("PROPERTY_READ_MAY_HAVE_GETTER"),
+    "property reads can have side effects; getters are not certified pure by syntax");
+  const state = "function subject(items) { let total=0; for(const item of items) total+=item; return total; }";
+  const reset = "function subject(items) { let total=0; for(const item of items) total=item; return total; }";
+  check(run(state,[2,3])===5 && run(reset,[2,3])===3,"development reproduction: replacing an accumulator update destroys a passing algorithm");
+  const stateUses=measureBindingUses("src/state.mjs",state)!;
+  check(stateUses.bindings[0].directWriteReferences === 1 && stateUses.bindings[0].readReferences === 2
+    && !stateUses.bindings[1].countedByQualityDetector,
+    "persistent state reads and compound writes are counted, while existing loop-header policy is only described");
+  const capture=measureBindingUses("src/capture.mjs","function subject() { let cursor=0; const next=()=>++cursor; return [next(),next()]; }")!;
+  check(capture.bindings[0].capturedReferences===1 && capture.bindings[0].directWriteReferences===1,
+    "captured state use cannot be mistaken for an unused binding");
+  const shadow=measureBindingUses("src/shadow.mjs","function subject() { const value=1; {const value=2; use(value);} return {value}; }")!;
+  check(shadow.bindings.length===2 && shadow.bindings.every(binding=>binding.readReferences===1),
+    "checker resolves shadowed bindings and shorthand values without name-based correlation");
+  const member=measureBindingUses("src/member.mjs","function subject() {const values=[]; values.push(1); return values;}")!.bindings[0];
+  check(member.memberUses===1 && member.readReferences===2 && member.directWriteReferences===0,
+    "member use is reported separately, not incorrectly treated as a complete write inventory");
+  const destructured=measureBindingUses("src/data.mjs","function subject(input) {const {x}=input; return x;}")!;
+  check(!destructured.complete && destructured.unresolvedBindings===1,"unsupported destructured bindings explicitly make inventory partial");
+  const bounded=measureBindingUses("src/bounded.mjs","function subject() {"+Array.from({length:40},(_,i)=>`const v${i}=${i};`).join("")+"return 0;}")!;
+  check(bounded.bindings.length===32 && !bounded.complete && bounded.totalVariableDeclarations===40,
+    "bounded summary cannot present omitted bindings as unused");
+  for (const [path,source] of [["source.txt",state],["src/x.mjs","function {"],["src/x.mjs"," ".repeat(12001)]])
+    check(measureBindingUses(path,source)===null,"unknown syntax, oversized or malformed source fails closed without filesystem access");
+  check(Object.isFrozen(capture) && Object.isFrozen(capture.bindings) && Object.isFrozen(capture.bindings[0]),
+    "binding summary is immutable and cannot change an authority or verification result");
 }
 
 {
