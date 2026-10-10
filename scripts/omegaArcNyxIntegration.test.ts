@@ -19,7 +19,8 @@ import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./omega/benchmarks/boundedContr
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./omega/benchmarks/patternRepairTransferTasks";
 import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarTransferTasks";
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./omega/benchmarks/nativeReasoningTransferTasks";
-import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration } from "./omega/benchmarks/originalBudgetTransferTasks";
+import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
+  originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
 import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
@@ -828,6 +829,21 @@ representationReferences["WEIGHTED-INTERVAL-OPTIMUM"] = `export function transfo
     && control.providerIntentShape === "DECISION_REQUIRED_FIELDS_AND_LENGTHS",
     "both arms preserve source-site repair, native-none allocation and length-bounded grammar");
   rejects(() => originalBudgetTransferConfiguration("RELAX_QUALITY"), "unknown budget arm cannot weaken admission");
+  check(originalBudgetWireControlVerified("ORIGINAL_BUDGET",[
+    {initialCandidateState:true,originalBudgetPresented:true},
+    {initialCandidateState:true,originalBudgetPresented:true},
+    {initialCandidateState:false,originalBudgetPresented:false}]),
+    "protocol correction or capacity retry stays pre-candidate without confusing physical dispatch with phase");
+  check(originalBudgetWireControlVerified("STRUCTURE_SITES_CONTROL",[
+    {initialCandidateState:true,originalBudgetPresented:false},
+    {initialCandidateState:false,originalBudgetPresented:false}]),
+    "control cannot receive treatment guidance in either phase");
+  for (const controls of [[],[{originalBudgetPresented:true}],
+    [{initialCandidateState:false,originalBudgetPresented:true}],
+    [{initialCandidateState:true,originalBudgetPresented:false}]])
+    check(!originalBudgetWireControlVerified("ORIGINAL_BUDGET",controls),
+      "missing phase or changed guidance cannot establish a valid wire control");
+  rejects(() => originalBudgetWireControlVerified("UNKNOWN",[]),"unknown wire arm rejected rather than reported verified");
 }
 for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));

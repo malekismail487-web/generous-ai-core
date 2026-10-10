@@ -10,6 +10,15 @@ export function originalBudgetTransferConfiguration(variant: string) {
     ...(variant === "ORIGINAL_BUDGET" ? { structuralBudgetGuidance: "PUBLIC_ORIGINAL_STATE" as const } : {}) };
 }
 
+/** A protocol correction/retry is still pre-candidate; physical call index is not a phase. */
+export function originalBudgetWireControlVerified(variant: string, controls: readonly {
+  initialCandidateState?: boolean; originalBudgetPresented?: boolean;
+}[]): boolean {
+  originalBudgetTransferConfiguration(variant); // Fail closed on unknown arms.
+  return controls.length > 0 && controls.every(control => typeof control.initialCandidateState === "boolean"
+    && control.originalBudgetPresented === (variant === "ORIGINAL_BUDGET" && control.initialCandidateState));
+}
+
 // Frozen before inference. Literal expectations and reference implementations
 // are evaluator-owned, not available evidence or feedback to NYX. These are
 // development transfer tasks, not external benchmark scores or replication.

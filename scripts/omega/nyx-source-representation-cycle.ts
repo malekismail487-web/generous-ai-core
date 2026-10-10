@@ -21,7 +21,8 @@ import { BOUNDED_CONTRACT_TRANSFER_TASKS } from "./benchmarks/boundedContractTra
 import { PATTERN_REPAIR_TRANSFER_TASKS } from "./benchmarks/patternRepairTransferTasks";
 import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./benchmarks/lengthGrammarTransferTasks";
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./benchmarks/nativeReasoningTransferTasks";
-import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration } from "./benchmarks/originalBudgetTransferTasks";
+import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
+  originalBudgetWireControlVerified } from "./benchmarks/originalBudgetTransferTasks";
 
 if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
   throw Error("source_representation_cycle_requires_injected_secret_and_explicit_network");
@@ -97,7 +98,8 @@ for (const [index, task] of selectedTasks.entries()) {
     const started = Date.now(); const deadline = Math.min(globalDeadline, started + frozen.wallClockMsPerTask);
     const captures: {content: string | null; finishReason: string | null}[] = [];
     const observedInferenceControls: {model: unknown; maxTokens: unknown; temperature: unknown;
-      effort: unknown; reasoningBudget: unknown; schemaDigest: string; originalBudgetPresented?: boolean}[] = [];
+      effort: unknown; reasoningBudget: unknown; schemaDigest: string;
+      initialCandidateState?: boolean; originalBudgetPresented?: boolean}[] = [];
     const baseProvider = NvidiaNimProvider.create({providerId: `NYX-REPRESENTATION-${representation}`, model,
       authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
       maxPromptBytes: 64000, maxOutputTokens: frozen.maxOutputTokens, timeoutMs: frozen.providerTimeoutMs,
@@ -106,10 +108,13 @@ for (const [index, task] of selectedTasks.entries()) {
         if (nativeReasoningComparison || originalBudgetComparison) {
           // Only safe numeric/configuration fields: never persist messages, headers or reasoning.
           const body = JSON.parse(String(init.body));
+          const prompt = originalBudgetComparison ? JSON.parse(body.messages[1].content) : null;
           observedInferenceControls.push({model:body.model,maxTokens:body.max_tokens,temperature:body.temperature,
             effort:body.reasoning_effort,reasoningBudget:body.reasoning_budget??null,
             schemaDigest:theoryDigest(body.response_format), ...(originalBudgetComparison?{
-              originalBudgetPresented:JSON.parse(body.messages[1].content).originalStructuralBudget?.version
+              initialCandidateState:prompt.hypothesisHistory.length===0
+                && prompt.activeRepairDriver.kind==="EXECUTION_OBSERVATION",
+              originalBudgetPresented:prompt.originalStructuralBudget?.version
                 ==="nyx-original-state-quality-budget/1"}:{})});
         }
         const response = await fetch(url, init);
@@ -198,9 +203,8 @@ for (const [index, task] of selectedTasks.entries()) {
           &&observedInferenceControls.every(c=>c.model===model&&c.maxTokens===frozen.maxOutputTokens&&c.temperature===0
             &&c.effort===(variant==="NATIVE_BOUNDED_REASONING"?"high":"none")
             &&c.reasoningBudget===(variant==="NATIVE_BOUNDED_REASONING"?2048:null)),
-        ...(originalBudgetComparison?{originalBudgetControlVerified:observedInferenceControls.length>0
-          && observedInferenceControls[0].originalBudgetPresented===(variant==="ORIGINAL_BUDGET")
-          && observedInferenceControls.slice(1).every(c=>c.originalBudgetPresented===false)}:{})}:{}),
+        ...(originalBudgetComparison?{originalBudgetControlVerified:
+          originalBudgetWireControlVerified(variant,observedInferenceControls)}:{})}:{}),
       representation, accepted, functionalAccepted, qualityAccepted, publicAccepted, score,
       firstCallAccepted: accepted && usage.logicalCalls === 1 && loopResult?.iterations.length === 1,
       repairedAccepted: accepted && (usage.logicalCalls > 1 || (loopResult?.iterations.length ?? 0) > 1),

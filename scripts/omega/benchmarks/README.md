@@ -1,5 +1,41 @@
 # NYX benchmark capability program
 
+### Original-budget transfer: one acceptance gain, no general promotion
+
+The [frozen run](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38020783952)
+at `5a44bb78` completed all four fresh tasks in both arms. The
+[receipt](../../../docs/omega/evidence/nyx-original-budget-transfer-5a44bb78.json)
+verifies the artifact/log agreement, 17 frozen source hashes, actual native-none
+wire controls and cleanup. Control finished **3/4 functional, 0/4 full acceptance**;
+budget treatment **1/4 functional, 1/4 full acceptance**. Treatment solved the
+join on its first call (5,051 tokens); control spent two calls/11,083 tokens and
+failed. That is one fresh no-more-measured-compute acceptance gain, not replicated
+or general cognitive improvement. The one 10%-realized-matched pair, scheduling,
+had no accepted solution. No global promotion is justified.
+
+There were 15 physical calls, 82,628 reported tokens, no unknown usage, provider
+or infrastructure failures, and 15 syntactically valid, untruncated sources.
+One control framing interaction failed semantic counterexample constraints;
+source validity is not intent validity. Subsequent treatment repairs broke
+previously passing framing and scheduling behavior. Affine treatment produced
+no valid private artifact: the exact cause is unknown and unreached hidden
+checks are not scored as reasoning failures. Preserve every first/repaired
+outcome, not best-of successes. These tasks are now exposed.
+
+Linux CI passed 109 suites/11,881 checks, TypeScript zero, production build,
+package smoke and inventories. A prospective receipt check now distinguishes
+pre-candidate phase from physical call number during correction/retry; original
+frozen evidence is unchanged. Default Ultra, authority, leases and production
+remain unchanged. Next reproduce preservation failures on separate development
+tasks before selecting a general refactoring correction.
+
+Plugin discovery did not establish a quota-capable runner. Docker's
+[official storage-option documentation](https://docs.docker.com/reference/cli/docker/container/run/#set-storage-driver-options-per-container---storage-opt)
+requires XFS with `pquota` for `overlay2` writable-layer size limits. No new
+account, permissions, charges or infrastructure changes were made; official
+writable TerminalBench/SWE profiles still need an approved, empirically proven
+quota environment rather than a removed boundary.
+
 ### Original structural budget: fresh transfer experiment
 
 `NYX_ORIGINAL_BUDGET_TRANSFER=1` compares existing source-site repair guidance
