@@ -33,11 +33,14 @@ import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
 import { V3_FRESH_BUDGET_EPOCH, V3_FRESH_BUDGET_TASKS, v3FreshBudgetTasks,
   v3FreshBudgetWireVerified, observeV3AdmissionPolicy } from "./omega/benchmarks/v3FreshBudgetTransferTasks";
+import { V3_NATIVE_REASONING_TASKS, V3_NATIVE_REASONING_EPOCH, v3NativeReasoningTasks,
+  v3NativeReasoningConfiguration, v3NativeWireVerified } from "./omega/benchmarks/v3NativeReasoningTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
   localRefactorWireControlVerified } from "./omega/benchmarks/localRefactorTransferTasks";
-import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure } from "./omega/benchmarks/sourceRepresentationTasks";
+import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepresentationArtifact,assessRepresentationCandidate,classifyRepresentationFailure,
+  type RepresentationTask } from "./omega/benchmarks/sourceRepresentationTasks";
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
@@ -45,6 +48,45 @@ import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapaci
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
 const rejects = (body: () => unknown, label: string) => { try { body(); check(false, label); } catch { check(true, label); } };
+{
+  const tasks = v3NativeReasoningTasks();
+  check(tasks.length===8&&new Set(tasks.map(task=>task.id)).size===8,
+    "fresh V3 native reasoning epoch freezes four unique domains with two declared repeats");
+  const historicalIds=new Set([...SOURCE_REPRESENTATION_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,
+    ...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,
+    ...PUBLIC_FAILURE_REPAIR_TASKS].map(task=>task.id));
+  check(V3_NATIVE_REASONING_TASKS.every(task=>!historicalIds.has(task.id)),
+    "fresh fixture identity cannot overwrite a historical task's test-only witness or outcomes");
+  check(V3_NATIVE_REASONING_EPOCH.reasoningReservationTokens===2048
+    &&V3_NATIVE_REASONING_EPOCH.sharedOutputCapTokens===8192,
+    "native reasoning consumes the unchanged output cap rather than adding a hidden budget");
+  for(const variant of ["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]) {
+    const config = v3NativeReasoningConfiguration(variant);
+    check(config.qualityRepairGuidance==="STRUCTURE_SITES"&&config.structuralBudgetGuidance==="PUBLIC_ORIGINAL_STATE"
+      &&config.providerIntentShape==="DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "native comparison preserves identical public feedback and strict source grammar");
+    const initial = {initialCandidateState:true,originalBudgetPresented:true,
+      originalBudgetVersion:"nyx-original-state-quality-budget/2",originalBudgetPolicyId:"omega-public-static-candidate/3",
+      publicAdmissionPolicyId:"omega-public-static-candidate/3",legacyLineApplicabilityPresent:false};
+    const after = {...initial,initialCandidateState:false,originalBudgetPresented:false,
+      originalBudgetVersion:null,originalBudgetPolicyId:null};
+    check(v3NativeWireVerified(variant,[initial,after]),"fresh native wire binds V3 before and after candidates");
+    for(const invalid of [{...initial,publicAdmissionPolicyId:"omega-public-static-candidate/2"},
+      {...initial,legacyLineApplicabilityPresent:true},{...initial,originalBudgetPresented:false},
+      {...after,originalBudgetVersion:initial.originalBudgetVersion},{}])
+      check(!v3NativeWireVerified(variant,[invalid]),"native policy, applicability and budget provenance drift fail closed");
+    check(!v3NativeWireVerified(variant,[]),"empty native controls are not observed configuration evidence");
+  }
+  rejects(()=>v3NativeReasoningConfiguration("RELAXED_QUALITY"),"unknown native arm cannot expand authority");
+  const witnesses = [
+    ["DECIMAL-COEFFICIENT-QUANTIZATION-V3",0,"0"], ["DECIMAL-COEFFICIENT-QUANTIZATION-V3",1,"2"],
+    ["DECIMAL-COEFFICIENT-QUANTIZATION-V3",5,"10.00"], ["PLANAR-RECTANGLE-AREA",5,21],
+    ["MAXIMUM-INTERVAL-REWARD",2,12], ["FINITE-LANGUAGE-DISTINCTION",0,""],
+    ["FINITE-LANGUAGE-DISTINCTION",3,"aa"],
+  ] as const;
+  for(const [id,index,expected] of witnesses) check(V3_NATIVE_REASONING_TASKS.find(task=>task.id===id)?.privateCases[index].expected===expected,
+    "independent oracle agrees with a hand-computed boundary case");
+}
 const input = { train: [{ input: [[1, 2]], output: [[2, 3]] }, { input: [[3], [0]], output: [[4], [1]] }],
   test: [{ input: [[8, 9]] }] };
 const correct = 'export function transform(input) {\n  const output = input.map(row => row.map(color => (color + 1) % 10));\n  return { attempt_1: output, attempt_2: output };\n}\n';
@@ -1242,7 +1284,64 @@ representationReferences["PRIORITY-STABLE-ROW-IDS"] = `export function transform
   const rank = new Map(input.order.map((key,index)=>[key,index]));
   return input.rows.slice().sort((a,b)=>(rank.get(a.key) ?? input.order.length) - (rank.get(b.key) ?? input.order.length)).map(row=>row.id);
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS]) {
+// Test-only witnesses, never supplied to live cognition. Distinct oracle algorithms
+// (digit arithmetic/cell enumeration/subsets/word enumeration) are in the fixture module.
+representationReferences["DECIMAL-COEFFICIENT-QUANTIZATION-V3"] = `export function transform(input) {
+  const coefficient = BigInt(input.coefficient);
+  const negative = coefficient < 0n;
+  let units = negative ? -coefficient : coefficient;
+  if (input.places < input.scale) {
+    const divisor = 10n ** BigInt(input.scale - input.places);
+    const remainder = units % divisor;
+    units /= divisor;
+    if (remainder * 2n > divisor || (remainder * 2n === divisor && units % 2n === 1n)) units++;
+  } else units *= 10n ** BigInt(input.places - input.scale);
+  const digits = String(units).padStart(input.places + 1, '0');
+  const fixed = input.places ? digits.slice(0, -input.places) + '.' + digits.slice(-input.places) : digits;
+  return (negative && units !== 0n ? '-' : '') + fixed;
+}`;
+representationReferences["PLANAR-RECTANGLE-AREA"] = `export function transform(input) {
+  const xs = [...new Set(input.flatMap(rectangle => [rectangle[0], rectangle[2]]))].sort((a,b)=>a-b);
+  const ys = [...new Set(input.flatMap(rectangle => [rectangle[1], rectangle[3]]))].sort((a,b)=>a-b);
+  let area = 0;
+  for (let x = 1; x < xs.length; x++) {
+    for (let y = 1; y < ys.length; y++) {
+      if (input.some(rectangle => Math.min(rectangle[0],rectangle[2]) <= xs[x-1]
+        && Math.max(rectangle[0],rectangle[2]) >= xs[x]
+        && Math.min(rectangle[1],rectangle[3]) <= ys[y-1]
+        && Math.max(rectangle[1],rectangle[3]) >= ys[y])) area += (xs[x]-xs[x-1])*(ys[y]-ys[y-1]);
+    }
+  }
+  return area;
+}`;
+representationReferences["MAXIMUM-INTERVAL-REWARD"] = `export function transform(input) {
+  const jobs = input.slice().sort((a,b)=>a.end-b.end);
+  const best = [0];
+  for (let index = 0; index < jobs.length; index++) {
+    let previous = index - 1;
+    while (previous >= 0 && jobs[previous].end > jobs[index].start) previous--;
+    best.push(Math.max(best[index], jobs[index].reward + best[previous+1]));
+  }
+  return best[jobs.length];
+}`;
+representationReferences["FINITE-LANGUAGE-DISTINCTION"] = `export function transform(input) {
+  const queue = [[0,0,'']];
+  const seen = new Set(['0,0']);
+  for (let cursor = 0; cursor < queue.length; cursor++) {
+    const [left,right,word] = queue[cursor];
+    if (input.left.accepting.includes(left) !== input.right.accepting.includes(right)) return word;
+    for (let symbol = 0; symbol < 2; symbol++) {
+      const next = [input.left.transitions[left][symbol],input.right.transitions[right][symbol]];
+      const identity = next.join(',');
+      if (!seen.has(identity)) {
+        seen.add(identity);
+        queue.push([...next, word + (symbol === 0 ? 'a' : 'b')]);
+      }
+    }
+  }
+  return null;
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1268,6 +1367,11 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
+  if(V3_NATIVE_REASONING_TASKS.some(fresh=>fresh.id===task.id)) {
+    const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
+    for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
+      "new task independent oracle matches test-only reference without adapter canonicalization");
+  }
   const referenceIntent=JSON.parse(intent(source));
   referenceIntent.causalHypothesis="The supplied test-only reference implements the stated domain rule.";
   referenceIntent.invariant="Preserve inputs and compute the stated result for all valid arguments.";
@@ -1275,20 +1379,75 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
     maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||V3_FRESH_BUDGET_TASKS.some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
     initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
     availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
   if(result.outcome!=="FUNCTIONALLY_REPAIRED_VERIFIED")console.error(JSON.stringify({task:task.id,
-    referenceAdmission:result.iterations.at(-1)?.candidateAdmission?.findings,reason:result.reason}));
+    referenceAdmission:result.iterations.at(-1)?.candidateAdmission?.findings,reason:result.reason,
+    referenceDiagnostics:result.cognitionFailures.flatMap(item=>item.diagnostics.map(d=>({category:d.category,observed:d.observed}))),
+    publicDiagnostics:result.iterations.at(-1)?.verifications[0]?.observation.diagnostics.filter(d=>!d.message.startsWith("ENGINEERING_PREDICTIONS"))}));
   check(result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"
     && scoreRepresentationArtifact(task,result.iterations.at(-1)?.verifications[0].execution.evidence.stdout??"").accepted,
     `${task.id} test-only reference passes real bounded execution, unchanged quality admission and private scorer: ${result.reason}`);
   const cleanup = await session.close();
   check(cleanup.sourceUnchanged && cleanup.cleanupVerified && cleanup.lifecycleTerminations === cleanup.provisionedLifecycles,
     `${task.id} existing owned lifecycle closes without leaked capability or source mutation`);
+}
+// Separate, synthesized development reproductions. These are E3 test doubles,
+// not recovered raw NYX source, not evidence of native reasoning efficacy, and
+// never sent to either live arm. An incorrect quality refactor can pass public
+// checks and admission while the independent private scorer still rejects it.
+for(const development of [
+  { task:{id:"DEV-CROSS-CHUNK-CARRY",tier:"DEVELOPMENT",domain:"ORDERED_STATE_PRESERVATION",
+      objective:"Return cumulative sums across all integer chunks, in stream order. Preserve inputs.",
+      publicCases:[{input:[[1,2]],expected:[1,3]}],privateCases:[{input:[[1],[2]],expected:[1,3]},{input:[[],[3],[-1]],expected:[3,2]}]} satisfies RepresentationTask,
+    body:"let total=0; return data12.flat().map(value=>total+=value);",
+    bad:"export function transform(input) { return input.flatMap(group=>{let total=0;return group.map(value=>total+=value);}); }" },
+  { task:{id:"DEV-PER-STEP-SATURATION",tier:"DEVELOPMENT",domain:"NONLINEAR_UPDATE_ORDER",
+      objective:"Add each value to initial in order and clamp to [-3,3] after EACH update. Empty values returns initial. Preserve inputs.",
+      publicCases:[{input:{initial:0,values:[1,1]},expected:2}],privateCases:[{input:{initial:0,values:[10,-10]},expected:-3},{input:{initial:8,values:[]},expected:8}]} satisfies RepresentationTask,
+    body:"let state=data12.initial; for(const value of data12.values) state=Math.max(-3,Math.min(3,state+value)); return state;",
+    bad:"export function transform(input) { if(!input.values.length)return input.initial; return Math.max(-3,Math.min(3,input.values.reduce((sum,value)=>sum+value,input.initial))); }" },
+]) {
+  // Deliberately redundant identity chain produces a provenance-bound declaration rejection.
+  const first = `export function transform(input) { const data0=input; ${Array.from({length:12},(_,i)=>`const data${i+1}=data${i};`).join("\n")} ${development.body} }`;
+  const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(development.task),"a".repeat(40),Date.now()+60000,12000);
+  let calls=0,qualityDriverObserved=false;
+  try {
+    const baseline=await session.baseline();
+    const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"E3-SEMANTIC-REGRESSION-REPRODUCTION",
+      provider:provider(async(_url,init)=>{
+        const body=JSON.parse(String(init.body)); const prompt=JSON.parse(body.messages[1].content);
+        qualityDriverObserved ||= prompt.activeRepairDriver.kind==="QUALITY_REJECTION";
+        const next=JSON.parse(intent(calls++===0?first:development.bad));
+        next.causalHypothesis="Synthesized development refactor changes state placement or update ordering.";
+        return reply(JSON.stringify(next));
+      }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
+    const loop=R3BoundedRepairLoop.create({loopId:development.task.id,evaluatorVersion:"E3-REPRODUCTION/1",observerIdentity:"E3-REPRODUCTION",
+      candidateAdmissionPolicyId:V3_NATIVE_REASONING_EPOCH.admissionPolicyId,cognition,
+      candidateBuilder:{builderIdentity:"EXISTING-OMEGA-R3",prepare:h=>session.prepare(h)},maxIterations:2,maxModelInteractions:2,
+      maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+    const result=await loop.run({schemaVersion:1,repairRequestId:development.task.id,objective:development.task.objective,
+      initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
+      availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
+    const prior=result.iterations[0],last=result.iterations.at(-1);
+    check(calls===2&&qualityDriverObserved&&prior.functionallyPassed&&prior.candidateAdmission?.decision==="REJECTED"
+      &&scoreRepresentationArtifact(development.task,prior.verifications[0].execution.evidence.stdout).accepted,
+      "separate development reproduction begins with correct but quality-rejected code and a real quality repair request");
+    check(last?.functionallyPassed&&last.candidateAdmission?.decision==="ADMITTED"
+      &&!scoreRepresentationArtifact(development.task,last.verifications[0].execution.evidence.stdout).accepted,
+      "behavior-destroying quality refactor is a private semantic failure despite valid emission and public success");
+    check(!assessRepresentationCandidate(development.task,{publicAccepted:last?.functionallyPassed===true,
+      qualityAccepted:last?.candidateAdmission?.decision==="ADMITTED",verificationStdout:last?.verifications[0].execution.evidence.stdout??null,
+      loopVerified:result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"}).accepted,
+      "independent final acceptance cannot be replaced by the repair loop's public-pass label");
+  } finally {
+    const cleanup=await session.close();
+    check(cleanup.sourceUnchanged&&cleanup.cleanupVerified,"synthesized semantic reproduction preserves source and cleans lifecycle");
+  }
 }
 {
   const base={accepted:false,infrastructureFailure:false,reason:"repair_iteration_budget_exhausted",

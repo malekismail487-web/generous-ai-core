@@ -1,5 +1,39 @@
 # NYX benchmark capability program
 
+### V3 native-reasoning transfer — frozen experiment (2026-10-11)
+
+Two synthesized, separate E3 development reproductions exercised the actual
+quality-repair driver: relocating cumulative state and moving saturation out of
+an update loop can turn a correct quality-rejected implementation into a
+public-passing, quality-admitted but privately incorrect candidate. These test
+doubles are not recovered NYX source, live reasoning evidence, or model seeds.
+The final independent scorer rejects them; no acceptance check was weakened.
+
+The next frozen comparison reuses **existing** bounded native Super reasoning
+(`none` versus `high`, 2,048 reserved reasoning tokens inside the same 8,192
+output cap). Both arms use identical V3 original-state applicability, public
+structural budget, post-rejection declaration-site feedback, grammar, authority
+and private exact oracle. Four new unseeded fixtures cover coefficient rounding,
+planar rectangle area, optimal interval reward and finite-language distinction;
+two predeclared repeats each. New fixture instances do not imply novel algorithm
+families: rounding in particular has earlier development relatives. No reserved
+external benchmark content is used. Test-only feasible witnesses are not supplied
+to live cognition; evaluator algorithms differ from the witnesses.
+
+Shared caps are two logical/physical calls including retries, two iterations,
+three verifier executions and 155 seconds per arm, 45 minutes per epoch.
+Report first-attempt, repaired and behavior-regressed outcomes separately.
+Equal caps are **not** equal realized compute; calls, reported tokens and
+scheduled verifier/scorer work must match within 10% before calling a pair
+compute-matched. Success requires both repeats improving in two distinct domains
+without paired acceptance regression. No default change, cognitive promotion,
+production authority, new cognition layer or hostile-code sandbox claim.
+
+Ω coverage: hypothesis-driven bounded diagnosis–repair–transfer, independent
+acceptance, evidence over confidence, original-state quality comparison and
+capability/authority separation. Broader benchmark promotion and blocked
+production/security work remain deferred. **PARTIAL / JUST-IN-TIME** coverage.
+
 ### Public exception comparison — no demonstrated gain (2026-10-11)
 
 Frozen candidate `8369a997f1197d4a3b74178aca510686d7ed2290`,

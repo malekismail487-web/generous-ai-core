@@ -25,6 +25,8 @@ import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./benchmarks/originalBudgetTransferTasks";
 import { V3_FRESH_BUDGET_EPOCH, v3FreshBudgetTasks,
   v3FreshBudgetWireVerified, observeV3AdmissionPolicy } from "./benchmarks/v3FreshBudgetTransferTasks";
+import { V3_NATIVE_REASONING_EPOCH, v3NativeReasoningTasks, v3NativeReasoningConfiguration,
+  v3NativeWireVerified } from "./benchmarks/v3NativeReasoningTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./benchmarks/behaviorRepairTransferTasks";
 import { PUBLIC_FAILURE_REPAIR_EPOCH, publicFailureRepairTasks, publicFailureRepairConfiguration,
@@ -45,10 +47,12 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
   throw Error("source_representation_cycle_clean_candidate_required");
 const original = theoryDigest(git("ls-files", "-s"));
 const nativeReasoningComparison = process.env.NYX_NATIVE_REASONING_TRANSFER === "1";
+const v3NativeReasoningComparison = process.env.NYX_V3_NATIVE_REASONING_TRANSFER === "1";
+if (v3NativeReasoningComparison && !nativeReasoningComparison) throw Error("v3_native_epoch_requires_native_comparison_only");
 const originalBudgetComparison = process.env.NYX_ORIGINAL_BUDGET_TRANSFER === "1";
 const v3FreshBudgetComparison = process.env.NYX_V3_FRESH_BUDGET_TRANSFER === "1";
 const publicFailureComparison = process.env.NYX_PUBLIC_FAILURE_REPAIR_COMPARISON === "1";
-const versionedAdmissionComparison = v3FreshBudgetComparison || publicFailureComparison;
+const versionedAdmissionComparison = v3FreshBudgetComparison || publicFailureComparison || v3NativeReasoningComparison;
 if (v3FreshBudgetComparison && !originalBudgetComparison) throw Error("v3_fresh_epoch_requires_original_budget_only");
 const behaviorRepairComparison = process.env.NYX_BEHAVIOR_REPAIR_TRANSFER === "1";
 const localRefactorComparison = process.env.NYX_LOCAL_REFACTOR_TRANSFER === "1";
@@ -60,7 +64,7 @@ if(sourceSelectionComparison&&!conditionalRepair) throw Error("source_selection_
 if (conditionalRepair && !evaluationOrderComparison) throw Error("conditional_repair_requires_v2_v3_comparison");
 const concreteRefactorComparison = localRefactorComparison || evaluationOrderComparison;
 const qualityMechanismComparison = behaviorRepairComparison || concreteRefactorComparison;
-const budgetGuidanceComparison = originalBudgetComparison || qualityMechanismComparison || runtimeReviewComparison || publicFailureComparison;
+const budgetGuidanceComparison = originalBudgetComparison || qualityMechanismComparison || runtimeReviewComparison || publicFailureComparison || v3NativeReasoningComparison;
 const decisionContractComparison = process.env.NYX_DECISION_CONTRACT_COMPARISON === "1";
 const boundedContractComparison = process.env.NYX_BOUNDED_CONTRACT_COMPARISON === "1";
 const patternTransfer = process.env.NYX_PATTERN_TRANSFER_TASKS === "1";
@@ -77,9 +81,9 @@ const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
 if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison,originalBudgetComparison,behaviorRepairComparison,localRefactorComparison,runtimeReviewComparison,evaluationOrderComparison,publicFailureComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
 const variants=publicFailureComparison?["OPAQUE_EXCEPTION_CONTROL","PUBLIC_EXCEPTION_CLASS"]:sourceSelectionComparison?["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"]:evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
 const selectedTasks = conditionalRepair?CONDITIONAL_REFACTOR_REPAIR_TASKS.flatMap(task=>[1,2].map(repeat=>({...task,id:`${task.id}-REPEAT-${repeat}`}))):evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
-const epochTasks = publicFailureComparison ? publicFailureRepairTasks() : v3FreshBudgetComparison ? v3FreshBudgetTasks() : selectedTasks;
+const epochTasks = v3NativeReasoningComparison ? v3NativeReasoningTasks() : publicFailureComparison ? publicFailureRepairTasks() : v3FreshBudgetComparison ? v3FreshBudgetTasks() : selectedTasks;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
-  taskCorpus:publicFailureComparison?PUBLIC_FAILURE_REPAIR_EPOCH.version:v3FreshBudgetComparison?V3_FRESH_BUDGET_EPOCH.version:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
+  taskCorpus:v3NativeReasoningComparison?V3_NATIVE_REASONING_EPOCH.version:publicFailureComparison?PUBLIC_FAILURE_REPAIR_EPOCH.version:v3FreshBudgetComparison?V3_FRESH_BUDGET_EPOCH.version:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
   providerTimeoutMs: 65000, logicalCallsPerTask: conditionalRepair?1:2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
   wallClockMsPerTask: 155000, globalWallClockMs: versionedAdmissionComparison?2700000:1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
@@ -99,6 +103,11 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
     evaluationAccountingVersion:"nyx-v3-admission-observation/1",
     epoch:V3_FRESH_BUDGET_EPOCH, suppliedCandidates:false, modelCallsMaximum:32,
     comparisonAgainstV2:"NOT_COMPARABLE_NOT_REGRADED", broadPromotion:"NONE"}:{}),
+  ...(v3NativeReasoningComparison?{epoch:V3_NATIVE_REASONING_EPOCH,qualityPolicy:V3_NATIVE_REASONING_EPOCH.admissionPolicyId,
+    evaluationAccountingVersion:"nyx-v3-admission-observation/1",modelCallsMaximum:32,
+    suppliedCandidates:false,preCandidateGuidance:"IDENTICAL_PUBLIC_ORIGINAL_STATE_V2",
+    postQualityGuidance:"IDENTICAL_STRUCTURE_SITES",defaultChanged:false,broadPromotion:"NONE",
+    wireSettingEvidence:"REQUEST_CONFIGURATION_NOT_PROOF_OF_INTERNAL_REASONING_OR_EFFICACY"}:{}),
   ...(publicFailureComparison?{epoch:PUBLIC_FAILURE_REPAIR_EPOCH,qualityPolicy:PUBLIC_FAILURE_REPAIR_EPOCH.admissionPolicyId,
     evaluationAccountingVersion:"nyx-v3-admission-observation/1",modelCallsMaximum:32,
     initialRepository:"IDENTICAL_SUPPLIED_FAULTY_IMPLEMENTATION_NOT_NYX_GENERATED",
@@ -147,6 +156,8 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   ...(budgetGuidanceComparison ? ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts"] : []),
   ...(v3FreshBudgetComparison?["src/lib/codelab/assurance/candidateQualityApplicability.ts",
     "scripts/omega/benchmarks/v3FreshBudgetTransferTasks.ts"]:[]),
+  ...(v3NativeReasoningComparison?["src/lib/codelab/assurance/candidateQualityApplicability.ts",
+    "scripts/omega/benchmarks/v3NativeReasoningTransferTasks.ts","scripts/omega/benchmarks/v3FreshBudgetTransferTasks.ts"]:[]),
   ...(publicFailureComparison?["src/lib/codelab/assurance/candidateQualityApplicability.ts",
     "scripts/omega/benchmarks/publicFailureRepairTasks.ts","scripts/omega/benchmarks/publicExecutionFailures.ts",
     "src/lib/codelab/observation/r3EngineeringObservation.ts"]:[]),
@@ -199,12 +210,12 @@ for (const [index, task] of epochTasks.entries()) {
             schemaDigest:theoryDigest(body.response_format), ...(runtimeReviewComparison?{
               postCandidatePhase:prompt.hypothesisHistory.length>0,passReviewPhase:prompt.activeRepairDriver.kind==="SCOPED_PASS_REVIEW",
               publicRuntimeSampleCount:prompt.observation.diagnostics.filter((d:any)=>d.code==="PUBLIC_RUNTIME_SAMPLE").length,
-              promptDigest:theoryDigest(body.messages)}:{}), ...(originalBudgetComparison?{
+              promptDigest:theoryDigest(body.messages)}:{}), ...(originalBudgetComparison||v3NativeReasoningComparison?{
               initialCandidateState:prompt.hypothesisHistory.length===0
                 && prompt.activeRepairDriver.kind==="EXECUTION_OBSERVATION",
               originalBudgetPresented:prompt.originalStructuralBudget?.version
-                ===(v3FreshBudgetComparison?V3_FRESH_BUDGET_EPOCH.originalBudgetVersion:"nyx-original-state-quality-budget/1"),
-              ...(v3FreshBudgetComparison?{originalBudgetVersion:prompt.originalStructuralBudget?.version??null,
+                ===(v3FreshBudgetComparison||v3NativeReasoningComparison?V3_FRESH_BUDGET_EPOCH.originalBudgetVersion:"nyx-original-state-quality-budget/1"),
+              ...(v3FreshBudgetComparison||v3NativeReasoningComparison?{originalBudgetVersion:prompt.originalStructuralBudget?.version??null,
                 originalBudgetPolicyId:prompt.originalStructuralBudget?.staticPolicyId??null,
                 publicAdmissionPolicyId:prompt.constraints.publicStaticAdmission.policyId,
                 legacyLineApplicabilityPresent:Object.hasOwn(prompt.constraints.publicStaticAdmission.tinySingleChangedFileRule,"atMostNonblankOriginalLines")}: {})}:{}), ...(behaviorRepairComparison?{
@@ -262,6 +273,7 @@ for (const [index, task] of epochTasks.entries()) {
         ...(["MEASURED_STRUCTURE","STRUCTURE_SITES"].includes(variant)
           ?{qualityRepairGuidance:variant as "MEASURED_STRUCTURE"|"STRUCTURE_SITES"}:{}),
         ...(nativeReasoningComparison?nativeReasoningTransferConfiguration(variant):{}),
+        ...(v3NativeReasoningComparison?v3NativeReasoningConfiguration(variant):{}),
         ...(behaviorRepairComparison?behaviorRepairTransferConfiguration(variant):{}),
         ...(publicFailureComparison?publicFailureRepairConfiguration(variant):{}),
         ...(localRefactorComparison?localRefactorTransferConfiguration(variant):{}),
@@ -313,7 +325,7 @@ for (const [index, task] of epochTasks.entries()) {
     const qualityAccepted = lastModel?.candidateAdmission?.decision === "ADMITTED";
     const publicAccepted = lastModel?.functionallyPassed === true;
     const perIteration=loopResult?.iterations.map(i=>({iteration:i.iteration,publicAccepted:i.functionallyPassed,
-      ...(qualityMechanismComparison||runtimeReviewComparison||publicFailureComparison?{candidateSourceDigest:i.hypothesis.changes[0]?.replacementContentHash??null}:{}),
+      ...(qualityMechanismComparison||runtimeReviewComparison||publicFailureComparison||v3NativeReasoningComparison?{candidateSourceDigest:i.hypothesis.changes[0]?.replacementContentHash??null}:{}),
       quality:i.candidateAdmission?.decision??null,qualityFindings:i.candidateAdmission?.findings??[],
       ...(versionedAdmissionComparison?{staticPolicyId:i.candidateAdmission?.staticPolicyId??null,
         applicability:i.candidateAdmission?.applicability??null}:{}),
@@ -351,6 +363,13 @@ for (const [index, task] of epochTasks.entries()) {
           &&observedInferenceControls.every(c=>c.model===model&&c.maxTokens===frozen.maxOutputTokens&&c.temperature===0
             &&c.effort===(variant==="NATIVE_BOUNDED_REASONING"?"high":"none")
             &&c.reasoningBudget===(variant==="NATIVE_BOUNDED_REASONING"?2048:null)),
+        ...(v3NativeReasoningComparison?{v3NativeControlVerified:v3NativeWireVerified(variant,observedInferenceControls),
+          admissionPolicyObservation:observeV3AdmissionPolicy(perIteration),
+          publicPolicyControlVerified:observedInferenceControls.every(control=>control.publicAdmissionPolicyId===V3_NATIVE_REASONING_EPOCH.admissionPolicyId
+            &&control.legacyLineApplicabilityPresent===false),
+          initialCandidateMeetsFunctionalAndQuality:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="ADMITTED",
+          functionalRegressionsAfterQualityRejection:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="REJECTED"
+            &&perIteration.length>1&&!perIteration.at(-1)?.functionalAccepted}:{}),
         ...(runtimeReviewComparison?{runtimeReviewControlVerified:observedInferenceControls.length>0&&observedInferenceControls.every(c=>
           typeof c.postCandidatePhase==="boolean"&&typeof c.passReviewPhase==="boolean"
           &&Number.isSafeInteger(c.publicRuntimeSampleCount)&&c.publicRuntimeSampleCount!>=0&&c.publicRuntimeSampleCount!<=4
@@ -411,6 +430,7 @@ const pairs = tasks.map(task => {
     && (!originalBudgetComparison || r.inferenceControlVerified === true && r.originalBudgetControlVerified === true)
     && (!versionedAdmissionComparison || ["OBSERVED","NOT_REACHED"].includes(r.admissionPolicyObservation?.state)&&r.publicPolicyControlVerified===true)
     && (!publicFailureComparison || r.inferenceControlVerified===true&&r.publicFailureControlVerified===true)
+    && (!v3NativeReasoningComparison || r.inferenceControlVerified===true&&r.v3NativeControlVerified===true)
     && (!behaviorRepairComparison || r.inferenceControlVerified === true && r.behaviorRepairControlVerified === true)
     && (!concreteRefactorComparison || r.inferenceControlVerified === true && r.localRefactorControlVerified === true)
     && (!conditionalRepair || r.fixtureReady===true&&r.fixtureInteractions===1&&r.fixtureEvidence[0]?.evidenceClass==="E3")
@@ -448,7 +468,7 @@ const pairs = tasks.map(task => {
 });
 const sourceUnchanged = original === theoryDigest(git("ls-files", "-s")) && !git("status", "--porcelain");
 const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, results, pairs, sourceUnchanged,
-  hypothesis: publicFailureComparison ? "Bounded public native exception classes improve repair of fresh supplied faulty repositories over opaque exceptions under identical model, V3 policy, private oracle, authority and shared caps. This is not unseeded implementation, an official benchmark, or a frontier-capability claim." : sourceSelectionComparison
+  hypothesis: v3NativeReasoningComparison ? "Existing bounded native reasoning improves full acceptance or prevents behavior-destroying quality repair on fresh unseeded tasks under identical corrected V3 policy, grammar, feedback, authority and shared caps. Realized extra compute must be reported, not called compute-matched merely because caps match. Previous exposed/V2 results are not regraded." : publicFailureComparison ? "Bounded public native exception classes improve repair of fresh supplied faulty repositories over opaque exceptions under identical model, V3 policy, private oracle, authority and shared caps. This is not unseeded implementation, an official benchmark, or a frontier-capability claim." : sourceSelectionComparison
     ? "Explicit selection of the same current v3 host proposal reduces reserialization failure and improves one-call conditional quality repair over source emission. This exposed supplied-algorithm diagnostic cannot establish model-generated source, independent reasoning or fresh generalization."
     : conditionalRepair
     ? "Optional v3 proposals improve one-call behavior-preserving cumulative-quality repair over v2, conditioned on an identical predeclared supplied algorithm that passes functional checks but fails unchanged quality admission. This is not first-attempt coding or fresh unseeded generalization."
@@ -503,7 +523,9 @@ const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, resul
       unknownUsageCalls: rows.reduce((n, r) => n + (r.usage?.unknownUsageCalls ?? 0), 0)};}),
   evidence: "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
   authorship: "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED", benchmarkTasksUsed: false,
-  staticAdmissionAndParserUnchanged: !v3FreshBudgetComparison,
+  staticAdmissionAndParserUnchanged: !v3FreshBudgetComparison&&!v3NativeReasoningComparison,
+  ...(v3NativeReasoningComparison?{staticAdmissionWithinEpochIdentical:true,historicalV2EvidenceUnchanged:true,
+    diagnosisScope:"NATIVE_REASONING_EFFICACY_UNDER_AUTHORIZED_V3_NOT_V3_COGNITIVE_GAIN"}:{}),
   ...(v3FreshBudgetComparison?{staticAdmissionWithinEpochIdentical:true, historicalV2EvidenceUnchanged:true,
     diagnosisScope:"QUALITY_GUIDANCE_EFFICACY_UNDER_AUTHORIZED_V3_NOT_V3_COGNITIVE_GAIN"}:{}),
   rawSourcePersisted: false, grantsAuthority: false, broadPromotion: false};
