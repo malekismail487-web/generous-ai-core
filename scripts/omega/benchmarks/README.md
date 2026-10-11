@@ -44,6 +44,46 @@ benchmark superiority and new cognitive layers. Conflict addressed: separate
 initial model outputs previously confounded attribution; shared observed source
 refines evaluation without weakening acceptance. **PARTIAL / JUST-IN-TIME**.
 
+Terminal result: frozen candidate `ba26a0e86f340f167d917bbdc1a2bdb746c8f785`,
+run `38170264255`, **no promotion**. All four live initial attempts completed:
+one syntax rejection before application, three graded candidates, two passing
+finite functional checks and one fully accepted. The final-line syntax error
+had `finish=stop`; it is not proof of transport truncation, and unreached
+functional tests are not graded reasoning failures.
+
+Three exact-source pairs executed (six arm stages); the fourth pair remained
+unexecuted after invalid initial source. Both arms accepted only the same
+already-correct shared first candidate. Each made two live repairs, neither
+fully accepted. For one problem both repaired functional correctness but
+violated complexity 18 > 12, nesting 5 > 4 and declaration delta 15 > 12.
+For another, structural quality repair **destroyed previously correct behavior**:
+private cases fell from 12/12 to 7/12 (V3) and 4/12 (V4); public checks failed.
+These valid-but-wrong repairs are semantic failures, not provider delivery.
+
+Zero proposal prompts, zero selections and zero qualifying V4 gains. Three
+executed pairs matched repair compute, but a dormant mechanism earns no credit.
+The unexecuted pair's aggregate `providerStable=false` denotes missing paired
+coverage, not failed delivery. Eight unique live calls used 62,932 reported
+tokens, zero unknown-usage calls, zero retries/provider failures/truncations;
+23 verifier executions plus 156 private-scorer work units are accounted.
+All owned sandboxes cleaned up; source integrity is preserved. The trigger
+was removed after confirming this one run; no frozen epoch is rerun for credit.
+
+Clean Linux CI: 109 suites / 13,822 checks, zero failures; TypeScript 5.8.3 zero,
+build, package smoke, inventory and 1,347-file secret scan passed. Local checks
+also passed (13,829), including seven additional checks in unrelated UI edits
+that were deliberately excluded from the commit. Archive SHA256
+`7d5f95101e8ad173bd6c3af5889af1e87da078571840472f3120a0adbc7c33d5`;
+CRC, source/task/freeze hashes and report/log agreement were independently
+checked. The sanitized [custody receipt](../../../docs/omega/evidence/nyx-shared-guarded-ba26a0e.json)
+preserves every original per-iteration outcome and E3/E4 distinction.
+
+Next general investigation: reproduce behavior-destroying quality repair on
+separate development domains, then evaluate a narrowly source-anchored repair
+correction on fresh tasks. No task-specific algorithm, threshold relaxation,
+extra cognitive layer, stale success accumulation or default promotion.
+This epoch improves causal evaluation, **not demonstrated NYX cognition**.
+
 ### Versioned guarded refactor coverage correction (2026-10-11)
 
 The separately reproduced coverage gaps now have an **opt-in** correction:
