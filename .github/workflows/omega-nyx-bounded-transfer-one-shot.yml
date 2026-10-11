@@ -1,7 +1,5 @@
 name: Omega NYX bounded public exception repair comparison
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
 permissions:
   contents: read
