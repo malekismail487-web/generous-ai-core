@@ -2369,6 +2369,12 @@
       ]
     },
     {
+      "name": "NYX_FUNCTION_BODY_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_LENGTH_CONTRACT_PROBE",
       "files": [
         "scripts/omega/nyx-bounded-contract-probe.ts"

@@ -1,5 +1,68 @@
 # NYX benchmark capability program
 
+### Source-bound function-body emission — frozen experiment, no promotion yet
+
+`nyx-source-bound-function-body/1` is a narrow opt-in emission representation,
+not a new reasoner or authority. The model proposes statements inside one
+observed named exported function. A request/objective/source-bound reference
+preserves the exact signature and surrounding module text. Literal expansion
+then passes through the existing intent compiler, Omega R3, cumulative
+original-state V3 admission and public/private checks. The host supplies no
+algorithm, balances no braces and repairs no invalid model source. Unsupported
+modules fail closed; defaults and historical V2/V3 results stay unchanged.
+
+The separate approved V3 policy (`omega-public-static-candidate/3`) classifies
+original syntax instead of formatting. It distinguishes a from-scratch throw
+stub from an existing tiny function. Both experiment arms pin that same policy;
+no complexity, scope, provenance, security or functional threshold is relaxed.
+
+Fresh same-author tasks cover dependency finish times, signed polygon area,
+16-bit one's-complement checksum and stable discrete seat allocation. Four
+distinct objectives have two predeclared repeats each (eight pairs / 16 arm
+executions, not eight independent problems). Private oracles are detached from
+model evidence; separately written test witnesses establish feasibility through
+real R3 execution and cleanup, never seed live candidates. Task sources and all
+runtime dependencies are frozen before live inference. Public pretraining
+exposure is unknown; this is not a vendor benchmark or independent E5 evidence.
+
+Control emits complete files; treatment emits function bodies. Both use the same
+Super model, temperature zero, hosted grammar, high native reasoning capped at
+2,048 within the shared 8,192-output cap, two calls/candidates per arm including
+retries, three verifier executions, 12-KB patch limit, 48-KB prompt limit,
+65-second provider timeout, 155-second task lease and 45-minute epoch. Actual
+tokens, calls and verifier work determine the predeclared 10% compute-match
+test. Equal caps alone do not establish equal compute. First attempts and
+repairs remain separate. Promotion requires matched full-acceptance wins in
+both repeats of at least two domains with no paired regression; a partial or
+provider-unstable run cannot silently satisfy this requirement.
+
+The edit surfaces intentionally differ: body emission cannot move helpers
+outside the original function, while control retains the original file envelope.
+Prompt and schema digests are reported, not claimed identical. This limitation
+precludes a broad cognitive-superiority claim. A new diagnostic distinguishes
+an observed private-execution/result-serialization exception from unclassified
+artifact-schema failure without regrading either. Prior unsaved failures cannot
+be retrospectively assigned an exact source cause.
+
+Tests cover nested-export/boundary escape, stale bindings before/after async
+validation, syntax/truncation/volume failure, strict schemas, receipt mismatch,
+CRLF preservation and unchanged historical source inversion. The AST review
+caught a permissive nested-export parse and now rejects it explicitly. The
+existing Node executor is not certified as a hostile-code/network sandbox.
+No production, repository-write or general network authority is granted.
+The temporary one-shot push trigger is removed once the frozen run is confirmed.
+Local preflight: 109 suites / 13,495 checks / zero failures; TypeScript 5.8.3
+global ratchet and scoped compile zero; production build, package, inventory
+and secret scan pass. These certify implementation/regression behavior only.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: typed source-bound proposals,
+original-state quality and evidence-gated execution. Supporting: falsification,
+freshness, genealogy, matched controls and reproducibility. Deferred: default
+promotion, broad benchmark claims, recursion and additional brain layers.
+Conflict retained: narrower body scope can restrict quality refactoring; the
+comparison reports this rather than weakening admission. Superseded inference:
+every source/serialization failure is a reasoning failure.
+
 ### Structural contribution feedback — no demonstrated repair gain (2026-10-11)
 
 Frozen candidate `f92d915e94a7b7376b55ee0f027c0ae29b7d6b2e`,

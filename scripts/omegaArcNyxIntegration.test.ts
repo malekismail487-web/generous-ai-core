@@ -15,6 +15,7 @@ import { readFile } from "node:fs/promises";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NyxNemotronEngineeringCognition } from "../src/lib/codelab/cognition/nyxNemotronEngineeringCognition";
+import { buildNyxFunctionBodyCatalog, resolveNyxFunctionBody, withNyxFunctionBodySchema } from "../src/lib/codelab/cognition/nyxFunctionBodyEmission";
 import { createArcAdapter, arcRepositoryFiles, extractArcArtifact, classifyArcLoopFailure, arcInferenceConfiguration, inferUsage } from "./omega/benchmarks/nyxArcAdapter";
 import { contentHash, R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySession";
 import { runCampaign } from "./omega/benchmarks/campaign";
@@ -40,6 +41,8 @@ import { STRUCTURAL_CONTRIBUTION_TASKS, structuralContributionTasks, structuralC
   structuralContributionWireVerified } from "./omega/benchmarks/structuralContributionTransferTasks";
 import { NATIVE_LOCAL_EMISSION_TASKS, nativeLocalEmissionTasks, nativeLocalEmissionConfiguration,
   nativeLocalEmissionWireVerified } from "./omega/benchmarks/nativeLocalEmissionTasks";
+import { FUNCTION_BODY_TRANSFER_TASKS, functionBodyTransferTasks, functionBodyTransferConfiguration,
+  functionBodyWireVerified } from "./omega/benchmarks/functionBodyTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -49,10 +52,31 @@ import { SOURCE_REPRESENTATION_TASKS, representationRepositoryFiles, scoreRepres
 import {inspectDiagnosticArray,inspectSourceLiteral,sourceLiteralEnvelope,sourceLiteralStructureDigest,SOURCE_LITERAL_PROBES,SOURCE_LITERAL_DIAGNOSTIC} from "./omega/nyx-structured-array-diagnostic";
 import {R3BoundedRepairLoop} from "../src/lib/codelab/engine/r3BoundedRepairLoop";
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
+import { inspectNyxSourceEmission } from "./omega/nyx-source-emission-diagnostics";
 
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
 const rejects = (body: () => unknown, label: string) => { try { body(); check(false, label); } catch { check(true, label); } };
+{
+  const fresh=functionBodyTransferTasks();
+  check(fresh.length===8&&new Set(fresh.map(task=>task.id)).size===8
+    &&new Set(FUNCTION_BODY_TRANSFER_TASKS.map(task=>task.domain)).size===4,
+    "body transfer freezes four domains with two declared repeats, not eight independent tasks");
+  for(const arm of ["COMPLETE_FILE_CONTROL","SOURCE_BOUND_BODY"]) {
+    const {sourceEditScope,...shared}=functionBodyTransferConfiguration(arm);
+    check(theoryDigest(shared)===theoryDigest(v3NativeReasoningConfiguration("NATIVE_BOUNDED_REASONING"))
+      &&sourceEditScope===(arm==="SOURCE_BOUND_BODY"?"FUNCTION_BODY":undefined),
+      "body transfer changes only edit serialization, not model inference or quality policy");
+    const wire={initialCandidateState:true,originalBudgetPresented:true,originalBudgetVersion:"nyx-original-state-quality-budget/2",
+      originalBudgetPolicyId:"omega-public-static-candidate/3",publicAdmissionPolicyId:"omega-public-static-candidate/3",legacyLineApplicabilityPresent:false,
+      hostedSchemaPresent:true,bodyEmissionVersion:arm==="SOURCE_BOUND_BODY"?"nyx-source-bound-function-body/1":null,bodyEntryCount:arm==="SOURCE_BOUND_BODY"?1:0};
+    check(functionBodyWireVerified(arm,[wire]),"body wire evidence proves actual mode with unchanged V3 policy");
+    for(const wrong of [{...wire,bodyEntryCount:5},{...wire,hostedSchemaPresent:false},
+      {...wire,bodyEmissionVersion:"unknown"},{...wire,originalBudgetPolicyId:"omega-public-static-candidate/2"}])
+      check(!functionBodyWireVerified(arm,[wrong]),"body, delivery and policy drift cannot be silently admitted");
+  }
+  rejects(()=>functionBodyTransferConfiguration("UNKNOWN"),"unrecognized body comparison arm cannot broaden capabilities");
+}
 {
   const tasks=nativeLocalEmissionTasks();
   check(tasks.length===8&&new Set(tasks.map(task=>task.id)).size===8
@@ -223,6 +247,102 @@ function provider(transport: NvidiaNimTransport, model=spec("CURRENT_NYX").model
 }
 const reply = (content: string, finish = "stop") => new Response(JSON.stringify({ choices: [{ message: { content }, finish_reason: finish }],
   usage: { prompt_tokens: 300, completion_tokens: 100, total_tokens: 400 } }), { status: 200 });
+{
+  const source = '// Module documentation\nexport function evaluate(value) {\n  throw Error("pending");\n}\n// Preserve this trailer\n';
+  const bodyRequest = (text=source) => ({cognitionRequestId:"DEV-BODY-BINDING",objective:"Implement evaluate without changing its public interface.",
+    observation:{observationId:"DEV-OBSERVATION"},files:[{relativePath:"src/value.mjs",content:text,contentSha256:contentHash(text)}],
+    allowedMutationPaths:["src/value.mjs"],maxChanges:1,maxPatchBytes:12000,sourceQualityConstraints:{maxLineLength:120}});
+  const makeIntent = (catalog:NonNullable<ReturnType<typeof buildNyxFunctionBodyCatalog>>, lines:string[]) => ({decision:"PROPOSE_EDIT",
+    changes:[{target:catalog.entries[0].target,replacement:{bodyRef:catalog.entries[0].bodyRef,lines,lineEnding:catalog.entries[0].lineEnding}}]});
+  const req=bodyRequest(), catalog=buildNyxFunctionBodyCatalog(req as never)!;
+  check(catalog.entries[0].functionName==="evaluate"&&catalog.authorityGranted===false&&Object.isFrozen(catalog.entries),
+    "body emission observes the actual function identity without granting authority");
+  const resolved=await resolveNyxFunctionBody(makeIntent(catalog,["  return value * 2;"]),catalog,req as never);
+  const resultSource=(resolved?.value?.changes as {replacement:{lines:string[];lineEnding:string}}[])[0].replacement.lines.join("\n");
+  check(resolved?.evidence.outcome==="RESOLVED"&&resultSource.startsWith(catalog.entries[0].prefix)
+    &&resultSource.endsWith(catalog.entries[0].suffix)&&resultSource.includes("return value * 2"),
+    "body expansion is literal and preserves exact signature, comments and trailer");
+  check(resolved?.evidence.acceptanceGranted===false&&resolved.evidence.authorityGranted===false,
+    "a syntax-valid body is an ordinary unapproved candidate, not self-certification");
+  const content=JSON.stringify(makeIntent(catalog,["  return value * 2;"]));
+  const diagnosticInput={content,finishReason:"stop",providerResponseDigest:contentHash(content),expectedTarget:"src/value.mjs",
+    representation:"LINES" as const,functionBodyEmission:resolved!.evidence};
+  const inspection=await inspectNyxSourceEmission(diagnosticInput);
+  check(inspection.outcome==="SOURCE_BODY_RESOLVED"&&inspection.sourceDigest===contentHash(resultSource)
+    &&inspection.sourceBytes===null&&inspection.authorityGranted===false,
+    "body diagnostic reports bound expanded digest without inventing source metrics or authority");
+  check((await inspectNyxSourceEmission({...diagnosticInput,functionBodyEmission:undefined})).outcome==="SOURCE_BODY_REFUSED",
+    "unverified body text cannot appear as a resolved source merely because it carries a reference");
+  check((await inspectNyxSourceEmission({...diagnosticInput,functionBodyEmission:{...resolved!.evidence,inputDigest:"a".repeat(64)}})).outcome==="SOURCE_BODY_REFUSED",
+    "body diagnostics reject a receipt from another input without reclassifying it as a reasoning failure");
+  check((await inspectNyxSourceEmission({...diagnosticInput,finishReason:"length"})).outcome==="TRUNCATED",
+    "truncation takes precedence over a supplied body receipt");
+  for(const lines of [["}"],["} export function injected() { return 1;"],["return {"],["return `unterminated"],
+    ["export function renamed() {}"],["return 1;\nreturn 2;"],["return 1;\u2028"],["return 1;\u2029"],["x".repeat(12001)]]) {
+    const invalid=await resolveNyxFunctionBody(makeIntent(catalog,lines),catalog,req as never);
+    check(invalid?.value===null&&invalid.evidence.outcome==="REFUSED","body representation rejects syntax, delimiter escape, embedded terminators and volume excess");
+  }
+  for(const change of [{...req,objective:"Changed objective"},{...req,cognitionRequestId:"Changed request"},
+    {...req,maxPatchBytes:11999},{...req,allowedMutationPaths:[]},bodyRequest(source.replace("evaluate","renamed"))])
+    check((await resolveNyxFunctionBody(makeIntent(catalog,["return 1;"]),catalog,change as never))?.value===null,
+      "body references bind source, request, objective, resource limits and current scope");
+  const mutatedIntent=makeIntent(catalog,["return 1;"]);
+  mutatedIntent.changes[0].replacement.bodyRef="BODY-"+"0".repeat(64);
+  check((await resolveNyxFunctionBody(mutatedIntent,catalog,req as never))?.value===null,"invented body reference fails closed");
+  const asynchronousRequest=bodyRequest();
+  const pending=resolveNyxFunctionBody(makeIntent(catalog,["return value;"]),catalog,asynchronousRequest as never);
+  asynchronousRequest.objective="Changed while parsing";
+  check((await pending)?.value===null,"body request is rebound after asynchronous syntax validation");
+  for(const unsupported of ["export const evaluate = value => value;","export function f() {}\nexport function g() {}",
+    "function evaluate(value) { return value; }","export function evaluate( {",source.replace("\n", "\r\n")])
+    check(buildNyxFunctionBodyCatalog(bodyRequest(unsupported) as never)===null,"unsupported module or mixed line endings cannot silently broaden body edits");
+  const crlf=bodyRequest(source.replace(/\n/g,"\r\n")), crlfCatalog=buildNyxFunctionBodyCatalog(crlf as never)!;
+  const crlfResult=await resolveNyxFunctionBody(makeIntent(crlfCatalog,["  return value;"]),crlfCatalog,crlf as never);
+  check(crlfResult?.evidence.outcome==="RESOLVED"&&crlfResult.value?.changes[0].replacement.lineEnding==="CRLF",
+    "body wire preserves CRLF without embedded carriage returns in individual lines");
+  const schema={type:"object",additionalProperties:false,properties:{decision:{enum:["PROPOSE_EDIT"]},changes:{type:"array",items:{type:"object",
+    properties:{target:{type:"string"},replacement:{type:"object",properties:{lines:{type:"array"},lineEnding:{enum:["LF","CRLF"]}},required:["lines","lineEnding"],additionalProperties:false}},required:["target","replacement"],additionalProperties:false}}},required:["decision","changes"]};
+  const transformed=withNyxFunctionBodySchema(schema,catalog) as typeof schema;
+  check(transformed.properties.changes.items.properties.replacement.required.includes("bodyRef")
+    &&transformed.additionalProperties===false&&!schema.properties.changes.items.properties.replacement.required.includes("bodyRef"),
+    "body schema replaces only wire shape without mutating original strict contract");
+  check(withNyxFunctionBodySchema(schema,null)===schema,"default source schema is byte-for-byte unchanged when body emission is absent");
+  rejects(()=>withNyxFunctionBodySchema({type:"object",properties:{decision:{enum:["NO_ACTION"]}}},catalog),
+    "body schema cannot silently fall back when the edit contract is absent");
+  rejects(()=>withNyxFunctionBodySchema({...schema,additionalProperties:true},catalog),
+    "body schema refuses an open-ended root rather than weakening the protocol");
+}
+{
+  const task:RepresentationTask={id:"DEV-BODY-END-TO-END",tier:"DEVELOPMENT",domain:"BOUND_SOURCE_EMISSION",
+    objective:"Implement transform(input) for {values,scale}: return a new array of every value multiplied by scale, without input mutation. Preserve the export.",
+    publicCases:[{input:{values:[2,3],scale:4},expected:[8,12]}],privateCases:[{input:{values:[],scale:-1},expected:[]},{input:{values:[-2,0],scale:0.5},expected:[-1,0]}]};
+  const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task),"a".repeat(40),Date.now()+60000,12000);
+  try {
+    const baseline=await session.baseline();
+    const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"DEV-BODY-REAL-OMEGA",provider:provider(async(_url,init)=>{
+      const prompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content),entry=prompt.functionBodyEmission.entries[0];
+      check(entry.functionName==="transform"&&entry.target==="src/transform.mjs","cognition exposes current source binding, not a model-invented scaffold");
+      return reply(JSON.stringify({decision:"PROPOSE_EDIT",diagnosis:"The observed function is an unimplemented stub.",
+        causalHypothesis:"An elementwise scaling preserves order and covers empty arrays.",evidenceRefs:["OBJECTIVE","FILE:src/transform.mjs"],
+        invariant:"Preserve all input values and return independently owned results.",expectedResult:"Public scaling examples pass.",
+        counterexamples:["Empty arrays and fractional negative scales"],changes:[{target:entry.target,replacement:{bodyRef:entry.bodyRef,
+          lines:["  return input.values.map(value => value * input.scale);"],lineEnding:entry.lineEnding}}]}));
+    }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",sourceEditScope:"FUNCTION_BODY",intentCompilationMode:"SAFE_CANONICALIZATION",
+      providerIntentShape:"DECISION_REQUIRED_FIELDS_AND_LENGTHS"});
+    const loop=R3BoundedRepairLoop.create({loopId:"DEV-BODY-REAL-OMEGA",evaluatorVersion:"DEV-BODY-1",observerIdentity:"DEV-BODY-OBSERVER",cognition,
+      candidateAdmissionPolicyId:"omega-public-static-candidate/3",candidateBuilder:{builderIdentity:"DEV-BODY-EXISTING-R3",prepare:h=>session.prepare(h)},
+      maxIterations:1,maxModelInteractions:1,maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+    const result=await loop.run({schemaVersion:1,repairRequestId:"DEV-BODY-REAL-OMEGA",objective:task.objective,initialObservation:baseline.observation,
+      initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],availableEvidence:[],allowedVerificationToolIds:["TEST"],
+      baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
+    check(result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"&&result.iterations[0].cognitionEvidence.functionBodyEmission?.outcome==="RESOLVED"
+      &&scoreRepresentationArtifact(task,result.iterations[0].verifications[0].execution.evidence.stdout).accepted,
+      "body emission composes with existing Omega real execution, V3 admission and private oracle");
+  } finally {
+    const cleanup=await session.close();
+    check(cleanup.sourceUnchanged&&cleanup.cleanupVerified,"body emission end-to-end fixture preserves source and cleans existing owned lifecycle");
+  }
+}
 const intent = (source: string) => JSON.stringify({ decision: "PROPOSE_EDIT", diagnosis: "The placeholder has no transformation.",
   causalHypothesis: "Each cell must map its color by one modulo ten.", evidenceRefs: ["OBJECTIVE", "FILE:src/examples.mjs"],
   invariant: "Preserve shape and input; transform each cell consistently.", failureInterpretation: "The prior candidate used a wrong color map.",
@@ -1538,6 +1658,45 @@ representationReferences["BOUNDED-COIN-COMBINATIONS"] = String.raw`export functi
   }
   return ways[input.amount];
 }`;
+representationReferences["DEPENDENCY-FINISH-TIMES"] = `export function transform(input) {
+  const jobs = new Map(input.map(job => [job.id, job]));
+  const memo = new Map();
+  function finish(id) {
+    if (!memo.has(id)) {
+      const job = jobs.get(id);
+      memo.set(id, job.duration + Math.max(0, ...job.needs.map(finish)));
+    }
+    return memo.get(id);
+  }
+  return input.map(job => finish(job.id));
+}`;
+representationReferences["POLYGON-SIGNED-AREA"] = `export function transform(input) {
+  let signed = 0;
+  for (let i = 0; i < input.length; i++) {
+    const a = input[i], b = input[(i + 1) % input.length];
+    signed += a[0] * b[1] - a[1] * b[0];
+  }
+  return [signed, signed === 0 ? "DEGENERATE" : signed > 0 ? "CCW" : "CW"];
+}`;
+representationReferences["INTERNET-WORD-CHECKSUM"] = `export function transform(input) {
+  let sum = 0;
+  for (let i = 0; i < input.length; i += 2) sum += input[i] * 256 + (input[i + 1] ?? 0);
+  while (sum > 65535) sum = (sum & 65535) + Math.floor(sum / 65536);
+  return 65535 - sum;
+}`;
+representationReferences["STABLE-SEAT-APPORTIONMENT"] = `export function transform(input) {
+  const total = input.weights.reduce((sum, value) => sum + value, 0);
+  if (!total) return input.weights.map(() => 0);
+  const result = input.weights.map(weight => Math.floor(input.seats * weight / total));
+  const remainder = input.weights.map((weight, index) => input.seats * weight - result[index] * total);
+  let left = input.seats - result.reduce((sum, value) => sum + value, 0);
+  while (left--) {
+    const index = remainder.indexOf(Math.max(...remainder));
+    result[index]++;
+    remainder[index] = -1;
+  }
+  return result;
+}`;
 representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function transform(input) {
   const width = input[0].length, cells = input.flat(), distance = cells.map(() => Infinity);
   if (cells[0] === null || cells.at(-1) === null) return null;
@@ -1554,7 +1713,7 @@ representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function tra
   }
   return Number.isFinite(distance.at(-1)) ? distance.at(-1) : null;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS]) {
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1580,7 +1739,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
-  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS].some(fresh=>fresh.id===task.id)) {
+  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS].some(fresh=>fresh.id===task.id)) {
     const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
     for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
       "new task independent oracle matches test-only reference without adapter canonicalization");
@@ -1589,10 +1748,16 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   referenceIntent.causalHypothesis="The supplied test-only reference implements the stated domain rule.";
   referenceIntent.invariant="Preserve inputs and compute the stated result for all valid arguments.";
   referenceIntent.counterexamples=["Empty input and boundary values"];
-  const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
-    maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
+  const bodyTask=FUNCTION_BODY_TRANSFER_TASKS.some(fresh=>fresh.id===task.id);
+  const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async(_url,init)=>{
+    if (!bodyTask) return reply(JSON.stringify(referenceIntent));
+    const prompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content),entry=prompt.functionBodyEmission.entries[0];
+    return reply(JSON.stringify({...referenceIntent,changes:[{target:entry.target,replacement:{bodyRef:entry.bodyRef,
+      lines:source.slice(source.indexOf("{")+1,source.lastIndexOf("}")).trim().split("\n"),lineEnding:entry.lineEnding}}]}));
+  }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
+    ...(bodyTask?{sourceEditScope:"FUNCTION_BODY" as const}:{})});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,

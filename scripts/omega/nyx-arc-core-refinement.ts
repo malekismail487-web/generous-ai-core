@@ -453,7 +453,93 @@ const qualityApplicabilityV3AdmissionRefinement: Record<string, readonly (readon
     ]
   ]
 };
+const functionBodyEmissionRefinement: readonly (readonly [string, string, number])[] = [
+  [
+    "",
+    "import { buildNyxFunctionBodyCatalog, resolveNyxFunctionBody, withNyxFunctionBodySchema,\n  type NyxFunctionBodyEvidence } from \"./nyxFunctionBodyEmission\";\n",
+    1
+  ],
+  [
+    "",
+    "  readonly functionBodyEmission?: NyxFunctionBodyEvidence;\n",
+    1
+  ],
+  [
+    "",
+    "  /** Opt-in representation only: preserves an observed sole-function scaffold, never authorizes an edit. */\n  readonly sourceEditScope?: \"FUNCTION_BODY\";\n",
+    1
+  ],
+  [
+    "",
+    "    if (config.sourceEditScope !== undefined && (config.sourceEditScope !== \"FUNCTION_BODY\"\n      || this.#sourceRepresentation !== \"LINES\" || config.localRefactorSelection || config.experimentVariant === \"MINIMAL_REFERENCE\")) {\n      throw Error(\"nyx_function_body_configuration_invalid\");\n    }\n",
+    1
+  ],
+  [
+    "",
+    "    const functionBodyCatalog = this.#config.sourceEditScope === \"FUNCTION_BODY\" ? buildNyxFunctionBodyCatalog(request) : null;\n    if (this.#config.sourceEditScope && !functionBodyCatalog) return this.#result(\"BLOCKED\", \"nyx_function_body_target_unsupported\",\n      request, null, null, null, [diagnostic(\"UNSUPPORTED_FILE_TARGET\", \"$request\", \"sole named exported function\", \"unsupported_body_target\")]);\n",
+    1
+  ],
+  [
+    "",
+    "      ...(functionBodyCatalog ? { functionBodyEmission: functionBodyCatalog } : {}),\n",
+    1
+  ],
+  [
+    "",
+    "    if (functionBodyCatalog) {\n      const entry = functionBodyCatalog.entries[0];\n      const example = promptObject.minimalExample as { changes?: unknown };\n      example.changes = [{ target: entry.target, replacement: {\n        bodyRef: entry.bodyRef, lines: [\"  // Supply the implementation statements here.\"], lineEnding: entry.lineEnding } }];\n      promptObject.constraints.repairDiscipline += \" In this request sourceEditScope is FUNCTION_BODY: the explicit functionBodyEmission contract overrides only full-file serialization. Its bound signature and surrounding text are not emitted or changed.\";\n    }\n",
+    1
+  ],
+  [
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: withNyxRefactorSelectionSchema(this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: withNyxFunctionBodySchema(withNyxRefactorSelectionSchema(this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    1
+  ],
+  [
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection) },\n",
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection), functionBodyCatalog) },\n",
+    1
+  ],
+  [
+    "    const compiled = await compileNyxRepairIntent(selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n",
+    "    const functionBody = await resolveNyxFunctionBody(parsed, functionBodyCatalog, request);\n    if (functionBody?.value === null) return this.#result(\"COGNITION_ERROR\", \"nyx_function_body_intent_invalid\", request, null, null,\n      completion.evidence, [diagnostic(\"SEMANTIC_REPAIR_INVALID\", \"$.changes\", \"fresh syntax-valid function-body emission\", functionBody.evidence.reason)],\n      undefined, feedbackPresented, undefined, functionBody.evidence);\n    const compiled = await compileNyxRepairIntent(functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n",
+    1
+  ],
+  [
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    1
+  ],
+  [
+    "        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    "        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    1
+  ],
+  [
+    "      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence);\n",
+    "      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    2
+  ],
+  [
+    "    rejectedSourceFeedbackPresented = false, refactorSelection?: NyxRefactorSelectionEvidence): NyxRepairCognitionResult {\n",
+    "    rejectedSourceFeedbackPresented = false, refactorSelection?: NyxRefactorSelectionEvidence,\n    functionBodyEmission?: NyxFunctionBodyEvidence): NyxRepairCognitionResult {\n",
+    1
+  ],
+  [
+    "      intentCompilation: intentCompilation ?? null, ...(refactorSelection ? { refactorSelection } : {}) })).slice(0, 32)}`,\n",
+    "      intentCompilation: intentCompilation ?? null, ...(refactorSelection ? { refactorSelection } : {}),\n      ...(functionBodyEmission ? { functionBodyEmission } : {}) })).slice(0, 32)}`,\n",
+    1
+  ],
+  [
+    "",
+    "      ...(functionBodyEmission ? { functionBodyEmission } : {}),\n",
+    1
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after, count] of functionBodyEmissionRefinement) {
+    if (current.split(after).length !== count + 1) throw Error("arc_function_body_emission_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const addition of [
     'import { structuralContributionGuidance } from "./nyxStructuralContributionGuidance";\n',
     '  /** Experimental source-bound explanation; no detector, authority or default change. */\n  readonly structuralContributionGuidance?: "CONTROL_SITES";\n',
