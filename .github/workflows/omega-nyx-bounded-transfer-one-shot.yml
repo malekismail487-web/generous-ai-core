@@ -1,7 +1,5 @@
 name: Omega NYX fresh guarded quality-repair comparison
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
 permissions:
   contents: read
