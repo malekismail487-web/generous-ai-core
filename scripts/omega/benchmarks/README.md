@@ -1,6 +1,36 @@
 # NYX benchmark capability program
 
-### Public exception diagnostic experiment — frozen before inference
+### Public exception comparison — no demonstrated gain (2026-10-11)
+
+Frozen candidate `8369a997f1197d4a3b74178aca510686d7ed2290`,
+[run 38111213127](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38111213127).
+The existing opaque-feedback control accepted **8/8** repairs (7 first-call,
+1 repaired); class-enriched feedback accepted **7/8** (7 first-call, 0 repaired).
+Four unique supplied faulty repositories × two repeats; these are small
+debugging tasks, not eight independent problems or frontier benchmark scores.
+Six pairs matched realized compute; all six were acceptance ties. The single
+treatment failure was in an unmatched pair. **No reproducible treatment gain;
+no promotion or default change.**
+
+18 logical/physical/HTTP calls, 73,541 reported tokens, zero unknown-usage,
+provider, syntax or truncation failures. 33 verification executions, 255
+scheduled tool-work units and 97 private-scorer work units; 99,044 ms summed arm
+wall time, not inference latency alone. All 16 arm runs completed and all
+disposable environments were cleaned with source integrity preserved.
+
+The remaining failure was a valid-source candidate failing public execution,
+followed by the exact same source rejected as `no_op_repair`. Its private output
+artifact was not produced: eight unreached private cases are **not** eight wrong
+answers. The specific runtime cause is not recoverable from the retained
+digest-only record, so do not invent one. Preserve this result; investigate
+general repeated-strategy/behavior-preserving repair on separate development
+tasks rather than retune this now-exposed question.
+
+Artifact ZIP SHA256 `7af4317d284e40619c913595fb1b6d2f70d35cbead5ff5ff8ebe873e90a46551`;
+CRC/member bounds, decoded report hash, freeze/task/final-log agreement and 21
+frozen source hashes verified. Clean CI passed **109 suites / 12,963 checks**;
+TypeScript 5.8.3 remains zero. Full sanitized evidence:
+[receipt](../../../docs/omega/evidence/nyx-public-exception-8369a997.json).
 
 `NYX-PUBLIC-EXCEPTION-DIAGNOSTIC-001` corrects an independently reproduced
 interface gap: the existing R3 verifier erased native runtime classes before
@@ -10,7 +40,7 @@ lazy stack formatting invalidated the initial location-extraction assumption.
 Private exception feedback remains opaque. Omission preserves the exact
 predecessor fixture bytes, and all acceptance and authority gates are unchanged.
 
-The next frozen comparison uses four new supplied faulty repositories, two
+The frozen comparison used four new supplied faulty repositories, two
 predeclared repeats, two arms, identical Super configuration and V3 admission.
 The only changed variable is public exception logging. This measures bounded
 existing-function debugging, not from-scratch code generation or any external
@@ -20,7 +50,8 @@ Omega still pins and executes it. Shared limits: two logical/physical calls per 
 155 seconds per arm and 45 minutes per epoch; at most 32 physical calls.
 Calls, reported tokens and scheduled verifier work must agree within 10% for a
 matched comparison. These are compute proxies, not total host CPU measurements.
-No efficacy claim exists before terminal evidence; default Ultra is unchanged.
+The diagnostic visibility correction is verified, but efficacy is not;
+default Ultra is unchanged.
 
 Ω coverage: evidence-bound failure observation and bounded diagnosis–repair;
 supporting principles are generator/detector separation, original-state quality
