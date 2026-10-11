@@ -326,7 +326,28 @@ const cognitionSelectionRefinement: readonly (readonly [string, string, number])
     1
   ]
 ];
+const selectionCoherenceRefinement: readonly (readonly [string, string, number])[] = [
+  [
+    "        repairDiscipline: \"For PROPOSE_EDIT, cite admitted evidence, state one causal hypothesis and invariant, predict the verifier-visible effect, and challenge the proposal with 1..maxCounterexamples structurally relevant cases. Return complete files with readable multiline formatting, preserve public exports and unrelated behavior, obey each target's exact sourceLanguageContract, and do not target or mention hidden evaluators.\",\n",
+    "        repairDiscipline: refactorSelection\n          ? \"For SELECT_LOCAL_REFACTOR, independently review the listed source and guards against the objective; cite its FILE, quality evidence and passing observation; state the causal hypothesis, invariant, expected result and counterexamples. Emit the exact reviewed proposalRef as selectedProposalRef and omit changes: do not rewrite selected source. The example illustrates representation, not a recommendation. If no listed proposal is suitable, use ordinary PROPOSE_EDIT with complete readable files or another available action. No selection certifies behavior, quality or authority; all existing gates still apply. Do not target or mention hidden evaluators.\"\n          : \"For PROPOSE_EDIT, cite admitted evidence, state one causal hypothesis and invariant, predict the verifier-visible effect, and challenge the proposal with 1..maxCounterexamples structurally relevant cases. Return complete files with readable multiline formatting, preserve public exports and unrelated behavior, obey each target's exact sourceLanguageContract, and do not target or mention hidden evaluators.\",\n",
+    1
+  ],
+  [
+    "      minimalExample: { decision: \"PROPOSE_EDIT\", diagnosis: \"bounded symptom and cause distinction\",\n",
+    "      ...(refactorSelection ? { exampleIsNotRecommendation: true } : {}),\n      minimalExample: refactorSelection ? { decision: \"SELECT_LOCAL_REFACTOR\",\n        diagnosis: \"The current candidate passed public execution but was rejected by the quality check.\",\n        causalHypothesis: \"A reviewed listed transformation may address the reported quality finding without changing required behavior.\",\n        evidenceRefs: [\"OBJECTIVE\", `FILE:${refactorSelection.proposals[0].path}`,\n          refactorSelection.evidenceRef, refactorSelection.passingObservationRef],\n        invariant: \"Preserve the objective, public exports, inputs, and observable evaluation order.\",\n        expectedResult: \"Execute the proposed candidate and reassess it under the unchanged functional and quality checks.\",\n        counterexamples: [\"Check a boundary input and whether observable calls or coercions retain their original evaluation order.\"],\n        selectedProposalRef: refactorSelection.proposals[0].proposalRef,\n      } : { decision: \"PROPOSE_EDIT\", diagnosis: \"bounded symptom and cause distinction\",\n",
+    1
+  ],
+  [
+    "        : NYX_REPAIR_SYSTEM_INSTRUCTION },\n",
+    "        : NYX_REPAIR_SYSTEM_INSTRUCTION + (refactorSelection\n          ? \" When the request offers SELECT_LOCAL_REFACTOR, complete source is already listed for your independent review. You may propose that exact source using its current reference without re-emitting source; this is still an ordinary unapproved edit proposal. Do not copy the example blindly or assume a proposal passes verification.\" : \"\") },\n",
+    1
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after, count] of selectionCoherenceRefinement) {
+    if (current.split(after).length !== count + 1) throw Error("arc_selection_coherence_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after, count] of cognitionSelectionRefinement) {
     if (current.split(after).length !== count + 1) throw Error("arc_cognition_selection_hunk_mismatch");
     current = current.split(after).join(before);

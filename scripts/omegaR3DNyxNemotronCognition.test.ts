@@ -1197,6 +1197,34 @@ function schemaKeys(value: unknown): string[] {
     check(result.decision==="COGNITION_ERROR"&&!result.hypothesis&&!result.omegaAuthorityGranted,
       "resolved source cannot bypass ordinary reasoning, hidden-target, schema or authority validation");
   }
+  const selectionPayload=selectionPayloads[1] as {messages:{content:string}[];response_format:{json_schema:{schema:Record<string,unknown>}}};
+  const selectionPrompt=JSON.parse(selectionPayload.messages[1].content);
+  const selectionExample=selectionPrompt.minimalExample;
+  check(selectionExample.decision==="SELECT_LOCAL_REFACTOR"&&selectionExample.changes===undefined
+    &&selectionExample.selectedProposalRef===selection.proposals[0].proposalRef
+    &&selectionPrompt.exampleIsNotRecommendation===true,
+    "active selection example matches the offered representation without endorsing or applying a proposal");
+  check(new Ajv().compile(selectionPayload.response_format.json_schema.schema)(selectionExample),
+    "independent AJV verifies active request-specific example against the exact hosted grammar");
+  const expandedExample=resolveNyxRefactorSelection(selectionExample,selection,localRequest,"TEXT",false)!;
+  const illustrated=await NyxNemotronEngineeringCognition.create({cognitionId:"SELECTION-EXAMPLE-CONTRACT",
+    maxPromptBytes:50000,maxOutputTokens:1024,localRefactorGuidance:"GUARDED_PROPOSALS",
+    localRefactorSelection:"SOURCE_BOUND_REFERENCES",provider:provider(transportFor(JSON.stringify(selectionExample)))}).proposeRepair(localRequest);
+  check(expandedExample.evidence.outcome==="RESOLVED"
+    &&illustrated.decision==="PROPOSED"&&illustrated.hypothesis?.applyAuthorized===false,
+    "the illustrated source-free wire request resolves through the ordinary strict intent contract");
+  check(selectionExample.evidenceRefs.includes(selection.evidenceRef)
+    &&selectionExample.evidenceRefs.includes(selection.passingObservationRef)
+    &&selectionPrompt.constraints.repairDiscipline.includes("omit changes")
+    &&selectionPrompt.constraints.repairDiscipline.includes("no listed proposal is suitable"),
+    "selection example cites exact admitted evidence and explicitly preserves alternate repair choice");
+  const inactivePrompt=JSON.parse((selectionPayloads[0] as {messages:{content:string}[]}).messages[1].content);
+  check(inactivePrompt.minimalExample.decision==="PROPOSE_EDIT"
+    &&inactivePrompt.exampleIsNotRecommendation===undefined,
+    "omitted selection retains the existing complete-source example and ordinary instruction");
+  check(selectionPayload.messages[0].content.includes("without re-emitting source")
+    &&!((selectionPayloads[0] as {messages:{content:string}[]}).messages[0].content.includes("without re-emitting source")),
+    "active selection system instruction agrees with source-free wire branch; omitted opt-in is unchanged");
   const mutatedRequest=structuredClone(localRequest);
   const racing=NyxNemotronEngineeringCognition.create({cognitionId:"SELECTION-RACE",maxPromptBytes:50000,maxOutputTokens:1024,
     localRefactorGuidance:"GUARDED_PROPOSALS",localRefactorSelection:"SOURCE_BOUND_REFERENCES",provider:provider(async(url,init)=>{

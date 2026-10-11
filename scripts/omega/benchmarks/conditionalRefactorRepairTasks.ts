@@ -58,18 +58,21 @@ export function lastConditionalModelCandidate<T extends {readonly iteration:numb
 export function sourceSelectionWireControlVerified(variant: string, controls: readonly {
   qualityRepairPhase?: boolean; localProposalsPresented?: boolean; localProposalVersion?: string|null;
   localProposalCount?: number; selectionBranchOffered?: boolean; selectionBindingDigest?: string|null;
+  selectionExampleDecision?: string;
 }[]) {
   if (!["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"].includes(variant)||!controls.length) return false;
   return controls.every(control => {
     const count=control.localProposalCount;
     if(control.qualityRepairPhase!==true||!Number.isSafeInteger(count)||count!<0||count!>8) return false;
     if(count===0) return control.localProposalsPresented===false&&control.localProposalVersion===null
-      &&control.selectionBranchOffered===false&&control.selectionBindingDigest===null;
+      &&control.selectionBranchOffered===false&&control.selectionBindingDigest===null
+      &&control.selectionExampleDecision==="PROPOSE_EDIT";
     const selected=variant==="SOURCE_BOUND_SELECTION";
     return control.localProposalsPresented===true&&control.localProposalVersion===(selected
       ?"nyx-source-bound-refactor-selection/1":"nyx-local-refactor-proposals/3")
       &&control.selectionBranchOffered===selected&&(selected?/^[a-f0-9]{64}$/.test(control.selectionBindingDigest??"")
-        :control.selectionBindingDigest===null);
+        :control.selectionBindingDigest===null)
+      &&control.selectionExampleDecision===(selected?"SELECT_LOCAL_REFACTOR":"PROPOSE_EDIT");
   });
 }
 

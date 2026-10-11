@@ -1,5 +1,32 @@
 # NYX benchmark capability program
 
+### Selection contract coherence: bounded activation hypothesis
+
+After the unexercised `d9ecacb3` diagnostic below, the opt-in selector now has a
+request-bound source-free example and system/user instructions consistent with
+that wire representation. Independent AJV validates the exact example against
+the hosted grammar; the ordinary local intent parser also validates its resolved
+edit. The example is explicitly **not a recommendation** or certification.
+Review remains required; unsuitable proposals can be rejected or replaced by an
+ordinary edit. Omitted opt-in and no-offer requests remain byte-identical.
+
+The next frozen **exposed activation diagnostic** retains the same four tasks,
+two repeats, source-emission control, Super model, one live call/HTTP attempt,
+token/tool/candidate limits, original stub and exact functional/quality oracle.
+The only mechanism is coherent source-selection prompting; no task-specific
+answer, forced selection, automatic edit or new cognitive layer is introduced.
+Record the actual example decision at the provider boundary, resolved-selection
+coverage, source origin, failures and realized compute separately. All prior
+first-attempt and conditional outcomes remain preserved. No default or broad
+promotion is authorized; activated host proposal selection would establish an
+interface effect, not novel cognition. Fresh unseeded transfer remains required.
+Results are pending. Ω coverage remains **PARTIAL / JUST-IN-TIME**.
+
+Local contract verification: 109 suites / 12,756 checks / zero failures;
+TypeScript 5.8.3 remains zero. No live inference is launched by this checkpoint.
+The subsequent approved applicability-policy correction is a separate versioned
+change; it must not silently regrade this diagnostic or any frozen v2 result.
+
 ### Source-bound proposal selection: exposed diagnostic, not cognitive promotion
 
 The conditional v3 failure below exposed model reserialization of already

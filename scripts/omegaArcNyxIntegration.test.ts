@@ -1008,13 +1008,14 @@ for(const variant of ["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"
   const selected=variant==="SOURCE_BOUND_SELECTION";
   const active={qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1,
     localProposalVersion:selected?"nyx-source-bound-refactor-selection/1":"nyx-local-refactor-proposals/3",
-    selectionBranchOffered:selected,selectionBindingDigest:selected?"a".repeat(64):null};
+    selectionBranchOffered:selected,selectionBindingDigest:selected?"a".repeat(64):null,
+    selectionExampleDecision:selected?"SELECT_LOCAL_REFACTOR":"PROPOSE_EDIT"};
   const empty={qualityRepairPhase:true,localProposalsPresented:false,localProposalCount:0,localProposalVersion:null,
-    selectionBranchOffered:false,selectionBindingDigest:null};
+    selectionBranchOffered:false,selectionBindingDigest:null,selectionExampleDecision:"PROPOSE_EDIT"};
   check(sourceSelectionWireControlVerified(variant,[active,empty]),"recorded v3 reference or emission control is bound to its actual wire branch");
   for(const bad of [[],[{...active,qualityRepairPhase:false}],[{...active,localProposalCount:9}],
     [{...active,selectionBranchOffered:!selected}],[{...empty,selectionBindingDigest:"forged"}],
-    [{...active,localProposalVersion:"future"}]])
+    [{...active,localProposalVersion:"future"}],[{...active,selectionExampleDecision:"NO_ACTION"}]])
     check(!sourceSelectionWireControlVerified(variant,bad),"missing, stale, out-of-scope and contradictory selection wire evidence fails closed");
 }
 check(!sourceSelectionWireControlVerified("AUTO_APPLY",[]),"unknown reference-control arm never verifies");

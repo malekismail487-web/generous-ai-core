@@ -104,6 +104,7 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
     maximumLocalRefactorOperations:8,localRefactorCost:"BOUNDED_HOST_AST_NO_EXTRA_MODEL_OR_EXECUTION_CALLS",
     firstAttemptDifferences:"NO_TREATMENT_PRESENT_BEFORE_QUALITY_REJECTION_NOT_CAUSAL_MECHANISM_GAINS"}:{}),
   ...(sourceSelectionComparison?{sourceSelectionPolicy:"nyx-source-bound-refactor-selection/1",
+    sourceSelectionPromptPolicy:"nyx-source-selection-contract/2",
     postQualityGuidance:{EVALUATION_ORDER_SOURCE_CONTROL:"V3_PROPOSALS_MODEL_EMITS_SOURCE",SOURCE_BOUND_SELECTION:"SAME_V3_PROPOSALS_EXPLICIT_REQUEST_BOUND_SELECTION_OPTION"},
     sourceOrigin:"HOST_PROPOSAL_IF_SELECTED_NOT_MODEL_GENERATED",
     claimScope:"EXPOSED_CONDITIONAL_EMISSION_DIAGNOSTIC_NOT_COGNITIVE_GAIN_OR_FRESH_GENERALIZATION"}:{}),
@@ -155,7 +156,7 @@ for (const [index, task] of selectedTasks.entries()) {
       postCandidatePhase?:boolean; passReviewPhase?:boolean; publicRuntimeSampleCount?:number; promptDigest?:string;
       qualityRepairPhase?: boolean; bindingUsesPresented?: boolean; localProposalsPresented?: boolean;
       localProposalCount?: number; localProposalVersion?: string | null; localProposalIdentities?: readonly unknown[];
-      selectionBranchOffered?:boolean;selectionBindingDigest?:string|null}[] = [];
+      selectionBranchOffered?:boolean;selectionBindingDigest?:string|null;selectionExampleDecision?:string}[] = [];
     const baseProvider = NvidiaNimProvider.create({providerId: `NYX-REPRESENTATION-${representation}`, model,
       authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM", credentialSource: nvidiaNimCredentialFromEnvironment(process.env),
       maxPromptBytes: 64000, maxOutputTokens: frozen.maxOutputTokens, timeoutMs: frozen.providerTimeoutMs,
@@ -187,7 +188,8 @@ for (const [index, task] of selectedTasks.entries()) {
                 operations:proposal.operations.map((operation:any)=>operation.kind),before:proposal.before,after:proposal.after})),
               ...(sourceSelectionComparison?{selectionBranchOffered:(body.response_format.json_schema.schema.anyOf??[])
                 .some((branch:any)=>branch.properties?.decision?.enum?.includes("SELECT_LOCAL_REFACTOR")),
-                selectionBindingDigest:prompt.localRefactorProposals?.bindingDigest??null}:{} )}:{} )});
+                selectionBindingDigest:prompt.localRefactorProposals?.bindingDigest??null,
+                selectionExampleDecision:prompt.minimalExample?.decision}:{} )}:{} )});
         }
         const response = await fetch(url, init);
         if (response.ok) try {
