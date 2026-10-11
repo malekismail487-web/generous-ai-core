@@ -1,7 +1,5 @@
 name: Omega NYX source-bound function-body comparison
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
 permissions:
   contents: read
