@@ -5,6 +5,7 @@ import { OMEGA_STRUCTURAL_REPAIR_APPLICABILITY } from "../assurance/candidateQua
 import { isAbsolute } from "node:path";
 import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";
 import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";
+import { structuralContributionGuidance } from "./nyxStructuralContributionGuidance";
 import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactorSelectionSchema,
   type NyxRefactorSelectionEvidence } from "./nyxSourceBoundRefactorSelection";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
@@ -484,6 +485,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly qualityRepairGuidance?: "MEASURED_STRUCTURE" | "STRUCTURE_SITES";
   /** Host-only first-candidate explanation; no parser, admission or authority changes. */
   readonly structuralBudgetGuidance?: "PUBLIC_ORIGINAL_STATE";
+  /** Experimental source-bound explanation; no detector, authority or default change. */
+  readonly structuralContributionGuidance?: "CONTROL_SITES";
   /** Experimental lexical context for quality-only repairs; no new authority or approval. */
   readonly behaviorRepairGuidance?: "BINDING_USES";
   /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */
@@ -710,6 +713,9 @@ export class NyxNemotronEngineeringCognition {
     if (config.qualityRepairGuidance !== undefined && !["MEASURED_STRUCTURE", "STRUCTURE_SITES"].includes(config.qualityRepairGuidance)) {
       throw new Error("nyx_quality_repair_guidance_invalid");
     }
+    if (config.structuralContributionGuidance !== undefined && config.structuralContributionGuidance !== "CONTROL_SITES") {
+      throw new Error("nyx_structural_contribution_guidance_invalid");
+    }
     if (config.structuralBudgetGuidance !== undefined && config.structuralBudgetGuidance !== "PUBLIC_ORIGINAL_STATE") {
       throw new Error("nyx_structural_budget_guidance_invalid");
     }
@@ -813,6 +819,8 @@ export class NyxNemotronEngineeringCognition {
         ? { measuredQualityRepair: measuredQualityRepairGuidance(request, this.#config.qualityRepairGuidance === "STRUCTURE_SITES") } : {}),
       ...(this.#config.structuralBudgetGuidance && !qualityFeedback && request.priorHypotheses.length === 0
         ? { originalStructuralBudget: originalStateQualityBudget(request) } : {}),
+      ...(this.#config.structuralContributionGuidance === "CONTROL_SITES" && qualityFeedback
+        ? { structuralContributions: structuralContributionGuidance(request) } : {}),
       ...(this.#config.behaviorRepairGuidance && qualityFeedback
         ? { behaviorPreservingQualityRepair: behaviorPreservingQualityGuidance(request) } : {}),
       ...(refactorSelection ? { localRefactorProposals: refactorSelection,

@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Structural contribution feedback — bounded fresh experiment (2026-10-11)
+
+Following the V3 native comparison's correctness gains without quality gains,
+the next opt-in correction supplies a digest-bound map of control and short-circuit
+contributions after a real public-passing quality rejection. The existing feedback
+listed declaration locations but only aggregate complexity/nesting. The new map
+reconciles exactly with the unchanged detector, includes nested callbacks, exposes
+bounded-list incompleteness, and cannot authorize or certify a replacement.
+No source is executed to produce it. Default cognition and Ultra are unchanged.
+
+Fresh unseeded tasks: directed maximum flow, exact signed postfix arithmetic,
+escaped chunk-field parsing and non-coprime congruence solving; four unique tasks,
+two predeclared repeats. Independent oracle algorithms are checked against test-only
+feasible witnesses through existing R3/V3 and private scoring. Witnesses are never
+supplied to live cognition. Local passing tests establish implementation correctness,
+**not improved cognition**. Earlier frozen tasks/results remain untouched.
+
+Both arms use the same Super model, high native reasoning/2,048-token reservation
+inside the same 8,192 output cap, strict grammar, original-state limits, source scope,
+public/private checks and finite budgets (two calls/iterations, three verifier runs,
+155 seconds per arm, 45 minutes/32 physical calls maximum). First attempts and repairs
+remain separate; first-attempt differences cannot be caused by post-rejection feedback.
+Promotion requires repair wins in both repeats of two domains with identical first
+candidates, exercised maps, matched realized compute and no paired acceptance regression.
+Equal caps are not equal actual compute. No benchmark-score or frontier promotion claim.
+
+Development validation caught an incorrect test assumption: safe canonicalization can
+change emitted source, so guidance must bind the actually admitted source, not the
+pre-canonicalization string. The corrected test preserves that stronger binding.
+Bounded map parsing, omitted contributions and phase gating are tested separately.
+
+Ω coverage: actionable detector feedback, behavior-preserving repair, provenance,
+independent acceptance and capability/authority separation. Generalization/promotion
+and blocked external benchmark runners remain deferred. **PARTIAL / JUST-IN-TIME**.
+This follows behavior-preserving [refactoring discipline](https://refactoring.com/),
+not changing metrics or deleting necessary behavior to obtain acceptance.
+
 ### V3 native-reasoning transfer — partial correctness, no promotion (2026-10-11)
 
 Frozen candidate `db290f55f445e78211c61f1aa54ce7e8615ad4f3`,

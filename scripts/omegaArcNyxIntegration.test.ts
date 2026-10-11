@@ -5,6 +5,7 @@ import { EVALUATION_ORDER_TRANSFER_TASKS, evaluationOrderTransferConfiguration,
 import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastConditionalModelCandidate, sourceSelectionWireControlVerified }
   from "./omega/benchmarks/conditionalRefactorRepairTasks";
 import { proposeNyxLocalRefactors } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
+import { measureStructuralContributions, structuralContributionGuidance } from "../src/lib/codelab/cognition/nyxStructuralContributionGuidance";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
 import { publicExecutionFailure } from "./omega/benchmarks/publicExecutionFailures";
 import { PUBLIC_FAILURE_REPAIR_TASKS, PUBLIC_FAILURE_REPAIR_EPOCH, publicFailureRepairTasks,
@@ -35,6 +36,8 @@ import { V3_FRESH_BUDGET_EPOCH, V3_FRESH_BUDGET_TASKS, v3FreshBudgetTasks,
   v3FreshBudgetWireVerified, observeV3AdmissionPolicy } from "./omega/benchmarks/v3FreshBudgetTransferTasks";
 import { V3_NATIVE_REASONING_TASKS, V3_NATIVE_REASONING_EPOCH, v3NativeReasoningTasks,
   v3NativeReasoningConfiguration, v3NativeWireVerified } from "./omega/benchmarks/v3NativeReasoningTransferTasks";
+import { STRUCTURAL_CONTRIBUTION_TASKS, structuralContributionTasks, structuralContributionConfiguration,
+  structuralContributionWireVerified } from "./omega/benchmarks/structuralContributionTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -48,6 +51,69 @@ import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapaci
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
 const rejects = (body: () => unknown, label: string) => { try { body(); check(false, label); } catch { check(true, label); } };
+{
+  const source = 'export function transform(input) {\n for (const item of input) {\n if (item.a && (item.b || item.c)) return item.values.some(value => value ? true : false);\n }\n return input.length ?? 0;\n}\n';
+  const map = measureStructuralContributions("src/transform.mjs", source)!;
+  check(map.complexity===7&&map.totalDecisionContributions===6&&map.maxNesting===3,
+    "development reproduction: nested callbacks and short-circuits count toward whole-file complexity");
+  check(map.complete&&map.sites.length===6&&map.sites.filter(site=>site.category==="SHORT_CIRCUIT").length===3,
+    "complete control and short-circuit location map reconciles to unchanged detector");
+  check(map.sites.every(site=>site.line>0&&site.column>0&&site.contribution===1)
+    &&map.sites.find(site=>site.kind==="ConditionalExpression")?.functionLine===3,
+    "source positions and nested function ownership are explicit, not indentation guesses");
+  check(map.sourceDigest===contentHash(source)&&map.baseContribution===1,
+    "structural explanation is digest-bound to current source and includes file base");
+  check(Object.isFrozen(map)&&Object.isFrozen(map.sites)&&map.sites.every(Object.isFrozen),
+    "contribution facts cannot be mutated after construction");
+  const many=measureStructuralContributions("a.js",'function f(x) { '+Array.from({length:60},()=> 'if(x) x--;').join(' ')+'return x;}')!;
+  check(!many.complete&&many.sites.length===48&&many.omittedContributions===12&&many.complexity===61,
+    "bounded map reports omitted contributions rather than inventing complete coverage");
+  check(measureStructuralContributions("a.js","export function { ")===null,
+    "malformed source is not a complexity explanation");
+  check(measureStructuralContributions("a.txt","if(a)b();")===null,
+    "unsupported source type fails closed");
+  check(measureStructuralContributions("a.js"," ".repeat(12001))===null,
+    "source byte bound is independent of line count");
+  check(measureStructuralContributions("a.js",'let x=['+'0,'.repeat(2600)+'0];')===null,
+    "AST node bound rejects oversized explanations without executing source");
+  check(measureStructuralContributions("a.ts","export function f(x: number) { return x > 0 ? 1 : 0; }")?.complexity===2,
+    "typed source uses proper parser kind without filesystem or library access");
+  check(measureStructuralContributions({toString(){throw Error("unsafe_path")}} as any,"return 1;")===null,
+    "unsafe path objects are not coerced or invoked");
+  check(structuralContributionGuidance({candidateQualityFeedback:null} as any)===null,
+    "absence of a real quality rejection cannot trigger structural repair context");
+}
+{
+  const tasks=structuralContributionTasks();
+  check(tasks.length===8&&new Set(tasks.map(task=>task.id)).size===8
+    &&new Set(STRUCTURAL_CONTRIBUTION_TASKS.map(task=>task.domain)).size===4,
+    "structure-map transfer freezes four unique domains and two repeats, not eight independent tasks");
+  check(!STRUCTURAL_CONTRIBUTION_TASKS.some(task=>[...V3_NATIVE_REASONING_TASKS,...V3_FRESH_BUDGET_TASKS,
+    ...PUBLIC_FAILURE_REPAIR_TASKS,...SOURCE_REPRESENTATION_TASKS].some(previous=>previous.id===task.id)),
+    "fresh transfer identities cannot regrade or overwrite frozen prior tasks");
+  for(const variant of ["DECLARATION_SITES_CONTROL","ALL_STRUCTURE_SITES"]) {
+    const config=structuralContributionConfiguration(variant);
+    check(config.comparisonInferencePolicy==="REASONING_JSON"&&config.comparisonReasoningBudgetTokens===2048,
+      "control and treatment share identical native reasoning compute caps");
+    check(config.qualityRepairGuidance==="STRUCTURE_SITES"&&config.structuralBudgetGuidance==="PUBLIC_ORIGINAL_STATE"
+      &&config.providerIntentShape==="DECISION_REQUIRED_FIELDS_AND_LENGTHS",
+      "map does not replace existing strict grammar or original-state budget");
+    const initial={initialCandidateState:true,originalBudgetPresented:true,
+      originalBudgetVersion:"nyx-original-state-quality-budget/2",originalBudgetPolicyId:"omega-public-static-candidate/3",
+      publicAdmissionPolicyId:"omega-public-static-candidate/3",legacyLineApplicabilityPresent:false,
+      qualityRepairPhase:false,structuralMapVersion:null,structuralMapSources:0};
+    const repair={...initial,initialCandidateState:false,originalBudgetPresented:false,originalBudgetVersion:null,
+      originalBudgetPolicyId:null,qualityRepairPhase:true,
+      structuralMapVersion:variant==="ALL_STRUCTURE_SITES"?"nyx-structural-contribution-guidance/1":null,
+      structuralMapSources:variant==="ALL_STRUCTURE_SITES"?1:0};
+    check(structuralContributionWireVerified(variant,[initial,repair]),"map wire is phase-bound under identical V3 policy");
+    check(!structuralContributionWireVerified(variant,[{...initial,structuralMapVersion:"nyx-structural-contribution-guidance/1",
+      structuralMapSources:1}]),"premature map cannot confound first-attempt comparison");
+    check(!structuralContributionWireVerified(variant,[{...repair,qualityRepairPhase:undefined}]),
+      "unknown repair phase is insufficient comparison evidence");
+  }
+  rejects(()=>structuralContributionConfiguration("RELAXED"),"unknown map arm cannot silently alter comparison");
+}
 {
   const tasks = v3NativeReasoningTasks();
   check(tasks.length===8&&new Set(tasks.map(task=>task.id)).size===8,
@@ -447,6 +513,61 @@ for (const [reason, expected] of [["truncated", "TRUNCATION"], ["provider_timeou
 // Independent test-only solutions validate the experiment's oracle and real execution path.
 // These sources never enter a model prompt or the downloaded benchmark corpus.
 const representationReferences: Record<string, string> = {
+  "DIRECTED-CAPACITY-FLOW": `export function transform(input) {
+    const capacity=Array.from({length:input.nodes},()=>Array(input.nodes).fill(0));
+    for(const [a,b,value] of input.edges) capacity[a][b]+=value;
+    let total=0;
+    while(true) {
+      const parent=Array(input.nodes).fill(-1), queue=[0], volume=Array(input.nodes).fill(0);
+      parent[0]=0; volume[0]=Infinity;
+      for(let i=0;i<queue.length;i++) for(let v=0;v<input.nodes;v++) {
+        if(capacity[queue[i]][v]>0 && parent[v]===-1) {
+          parent[v]=queue[i]; volume[v]=Math.min(volume[queue[i]],capacity[queue[i]][v]); queue.push(v);
+        }
+      }
+      if(parent[input.nodes-1]===-1) break;
+      for(let v=input.nodes-1;v!==0;v=parent[v]) {
+        capacity[parent[v]][v]-=volume[input.nodes-1]; capacity[v][parent[v]]+=volume[input.nodes-1];
+      }
+      total+=volume[input.nodes-1];
+    }
+    return total;
+  }`,
+  "SIGNED-POSTFIX-ARITHMETIC": `export function transform(input) {
+    const stack=[], operations={'+':(a,b)=>a+b,'-':(a,b)=>a-b,'*':(a,b)=>a*b,'/':(a,b)=>a/b};
+    for(const token of input) {
+      if(/^-?(?:0|[1-9]\\d*)$/.test(token)) stack.push(BigInt(token));
+      else {
+        if(!Object.hasOwn(operations,token)||stack.length<2) return null;
+        const right=stack.pop(),left=stack.pop();
+        if(token==='/'&&right===0n) return null;
+        stack.push(operations[token](left,right));
+      }
+    }
+    return stack.length===1?stack[0].toString():null;
+  }`,
+  "ESCAPED-CHUNK-FIELDS": `export function transform(input) {
+    const fields=['']; let escaped=false;
+    for(const chunk of input) for(const symbol of chunk) {
+      if(escaped) { fields[fields.length-1]+=symbol; escaped=false; continue; }
+      if(symbol==='\\\\') { escaped=true; continue; }
+      if(symbol==='|') fields.push(''); else fields[fields.length-1]+=symbol;
+    }
+    if(escaped) fields[fields.length-1]+='\\\\';
+    return fields;
+  }`,
+  "NONCOPRIME-CONGRUENCE-SYSTEM": `export function transform(input) {
+    let residue=0,modulus=1;
+    for(const item of input) {
+      let a=modulus,b=item.modulus;
+      while(b) { const remainder=a%b; a=b; b=remainder; }
+      const nextModulus=modulus/a*item.modulus;
+      while(residue<nextModulus && residue%item.modulus!==(item.residue%item.modulus+item.modulus)%item.modulus) residue+=modulus;
+      if(residue>=nextModulus) return null;
+      modulus=nextModulus;
+    }
+    return {residue,modulus};
+  }`,
   "TEXT-PROTOCOL-TOKEN": `export function transform(input) {
     const escaped = ${JSON.stringify({"\\":"\\\\",'"':'\\"',"\n":"\\n","\r":"\\r","\t":"\\t"})};
     return String.fromCharCode(34) + Array.from(input, c => escaped[c] ?? c).join("") + String.fromCharCode(34);
@@ -1341,7 +1462,7 @@ representationReferences["FINITE-LANGUAGE-DISTINCTION"] = `export function trans
   }
   return null;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS]) {
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1367,7 +1488,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
-  if(V3_NATIVE_REASONING_TASKS.some(fresh=>fresh.id===task.id)) {
+  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS].some(fresh=>fresh.id===task.id)) {
     const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
     for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
       "new task independent oracle matches test-only reference without adapter canonicalization");
@@ -1379,7 +1500,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
     maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
@@ -1422,10 +1543,18 @@ for(const development of [
       provider:provider(async(_url,init)=>{
         const body=JSON.parse(String(init.body)); const prompt=JSON.parse(body.messages[1].content);
         qualityDriverObserved ||= prompt.activeRepairDriver.kind==="QUALITY_REJECTION";
+        check(prompt.activeRepairDriver.kind==="QUALITY_REJECTION"
+          ?prompt.structuralContributions?.version==="nyx-structural-contribution-guidance/1"
+            &&prompt.structuralContributions.sources[0].sourceDigest===contentHash(prompt.admittedEvidence
+              .find((e:any)=>e.kind==="FILE"&&e.target==="src/transform.mjs").content)
+            &&prompt.structuralContributions.authorityGranted===false
+          :!Object.hasOwn(prompt,"structuralContributions"),
+          "opt-in map is absent initially and bound to the actually admitted source, not pre-canonicalization emission");
         const next=JSON.parse(intent(calls++===0?first:development.bad));
         next.causalHypothesis="Synthesized development refactor changes state placement or update ordering.";
         return reply(JSON.stringify(next));
-      }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
+      }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
+      structuralContributionGuidance:"CONTROL_SITES"});
     const loop=R3BoundedRepairLoop.create({loopId:development.task.id,evaluatorVersion:"E3-REPRODUCTION/1",observerIdentity:"E3-REPRODUCTION",
       candidateAdmissionPolicyId:V3_NATIVE_REASONING_EPOCH.admissionPolicyId,cognition,
       candidateBuilder:{builderIdentity:"EXISTING-OMEGA-R3",prepare:h=>session.prepare(h)},maxIterations:2,maxModelInteractions:2,

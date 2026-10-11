@@ -454,6 +454,15 @@ const qualityApplicabilityV3AdmissionRefinement: Record<string, readonly (readon
   ]
 };
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const addition of [
+    'import { structuralContributionGuidance } from "./nyxStructuralContributionGuidance";\n',
+    '  /** Experimental source-bound explanation; no detector, authority or default change. */\n  readonly structuralContributionGuidance?: "CONTROL_SITES";\n',
+    '    if (config.structuralContributionGuidance !== undefined && config.structuralContributionGuidance !== "CONTROL_SITES") {\n      throw new Error("nyx_structural_contribution_guidance_invalid");\n    }\n',
+    '      ...(this.#config.structuralContributionGuidance === "CONTROL_SITES" && qualityFeedback\n        ? { structuralContributions: structuralContributionGuidance(request) } : {}),\n',
+  ]) {
+    if (current.split(addition).length !== 2) throw Error("arc_structural_contribution_refinement_hunk_mismatch");
+    current = current.split(addition).join("");
+  }
   for (const [before, after] of qualityApplicabilityV3AdmissionRefinement[path] ?? []) {
     if (current.split(after).length !== 2) throw Error("arc_quality_applicability_v3_admission_hunk_mismatch");
     current = current.split(after).join(before);

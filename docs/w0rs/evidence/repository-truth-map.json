@@ -2542,6 +2542,12 @@
       ]
     },
     {
+      "name": "NYX_STRUCTURAL_CONTRIBUTION_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_TEXT_CAPACITY_SCHEDULING",
       "files": [
         "scripts/omega/nyx-text-benchmark-epoch.ts"
