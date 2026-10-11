@@ -1,5 +1,49 @@
 # NYX benchmark capability program
 
+### Shared live-candidate causal repair epoch (2026-10-11)
+
+The earlier unseeded comparison had different first sources in every pair and
+zero guarded selections. It cannot establish causal repair gain. This fresh
+epoch freezes two new tasks (exact signed rational prefixes and vector-clock
+causal frontiers), two declared repeats, independent private oracles, unchanged
+`omega-public-static-candidate/3` and the same existing R3 execution loop.
+
+One **live** NYX first attempt is generated per task, without an authored
+algorithm. Its exact source is transiently replayed into both disposable arms
+using the existing supplied-candidate composition. Replays are E3 parse/apply/
+reverification, not new E4 generations; the replay hypothesis context is
+evaluator-supplied, not the original private model reasoning. Any subsequent
+repair is live E4. V3 and V4 both offer source-bound selection; only the guarded
+proposal grammar/version differs. First-attempt and repaired outcomes remain
+separate. Private answers never enter model feedback, source is never persisted,
+and source-bound selected replacements remain **host-proposed/model-selected**.
+
+Each arm is charged the full common inference plus at most one repair; unique
+epoch usage counts the common call once. The 8,192 shared output cap includes
+2,048 native reasoning tokens, temperature zero, labeled Super, 12,000-byte
+single-file scope, finite calls/verifier work and 155-second charged arm budget.
+All E3 replay/tool/private-scorer work is counted. Realized matching compares
+repair-only calls/tokens/verifier-plus-scorer work within the predeclared 10%
+tolerance, so a large common call cannot mask extra repair compute. Idle
+cross-arm time is recorded at epoch level, never used to renew a lease.
+
+Credit requires identical, functionally correct but quality-rejected initial
+source; stable observed live origin; actual bound selection; matched repair
+compute; both repeats winning in both domains without paired regression.
+Zero exposure, authored E3 common source, missing cleanup, changed wire/bounds
+or incomplete coverage earns no promotion. These same-author synthetic tasks
+are not an external benchmark; pretraining exposure is unknown. Unseeded
+replication is still required before broader promotion. Existing Node execution
+is **not proven hostile-code or network isolation**. Defaults/authority are
+unchanged; all previous receipts and failures remain preserved.
+
+Ω Plan Coverage: directly implements independent outcome judgment, provenance,
+counterfactual compute accounting and original-state quality repair; supports
+generator/detector separation and bounded leases; defers production, external
+benchmark superiority and new cognitive layers. Conflict addressed: separate
+initial model outputs previously confounded attribution; shared observed source
+refines evaluation without weakening acceptance. **PARTIAL / JUST-IN-TIME**.
+
 ### Versioned guarded refactor coverage correction (2026-10-11)
 
 The separately reproduced coverage gaps now have an **opt-in** correction:

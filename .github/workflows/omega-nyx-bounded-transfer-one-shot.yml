@@ -1,5 +1,7 @@
-name: Omega NYX fresh guarded quality-repair comparison
+name: Omega NYX shared live candidate guarded-repair comparison
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
 permissions:
   contents: read
@@ -8,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   bounded-contract-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-guarded-fresh-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-shared-guarded-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -31,15 +33,12 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
           npm run typecheck:ratchet
-          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-representation-cycle.ts scripts/omegaArcNyxIntegration.test.ts
-      - name: Fresh unseeded engineering under identical V3 admission and shared budgets
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-shared-guarded-repair.ts scripts/omegaArcNyxIntegration.test.ts
+      - name: One live common candidate per fresh task with honest E3 replays and bounded live repairs
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
-          NYX_NATIVE_REASONING_TRANSFER: '1'
-          NYX_V3_NATIVE_REASONING_TRANSFER: '1'
-          NYX_FRESH_GUARDED_REPAIR: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-shared-guarded-repair.ts
       - name: Preserve sanitized evidence including rejected candidates
         if: always()
         uses: actions/upload-artifact@v4

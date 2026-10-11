@@ -45,6 +45,11 @@ import { FUNCTION_BODY_TRANSFER_TASKS, functionBodyTransferTasks, functionBodyTr
   functionBodyWireVerified } from "./omega/benchmarks/functionBodyTransferTasks";
 import { GUARDED_REPAIR_FRESH_TASKS, guardedRepairFreshTasks, guardedRepairFreshConfiguration,
   guardedRepairFreshWireVerified, guardedRepairPairAssessment } from "./omega/benchmarks/guardedRepairFreshTasks";
+import { SHARED_GUARDED_REPAIR_TASKS, SHARED_GUARDED_REPAIR_EPOCH, sharedGuardedRepairTasks,
+  sharedGuardedRepairConfiguration, sharedGuardedWireVerified, sharedGuardedPairAssessment,
+  type SharedGuardedWireControl } from "./omega/benchmarks/sharedGuardedRepairTasks";
+import { executeSharedGuardedStage, inspectSharedGuardedCaptures, sharedGuardedStageBounds,
+  SHARED_GUARDED_LIMITS } from "./omega/nyx-shared-guarded-repair";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -1771,7 +1776,40 @@ representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function tra
   }
   return Number.isFinite(distance.at(-1)) ? distance.at(-1) : null;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS]) {
+// Independent test-only witnesses, NEVER supplied to shared live generation.
+// Euclidean GCD + incremental reduction contrasts with binary GCD + prefix products.
+representationReferences["EXACT-RATIONAL-PREFIX-BALANCES"] = `function gcd(a, b) {
+  while (b) [a, b] = [b, a % b];
+  return a < 0n ? -a : a;
+}
+export function transform(input) {
+  let numerator = 0n, denominator = 1n;
+  const prefixes = [];
+  for (const [n, d] of input) {
+    numerator = numerator * BigInt(d) + BigInt(n) * denominator;
+    denominator *= BigInt(d);
+    const divisor = gcd(numerator, denominator);
+    numerator /= divisor;
+    denominator /= divisor;
+    if (denominator < 0n) { numerator = -numerator; denominator = -denominator; }
+    prefixes.push(numerator.toString() + "/" + denominator.toString());
+  }
+  return [prefixes.at(-1) ?? "0/1", prefixes];
+}`;
+// Direct coordinate comparisons contrast with the oracle's finite downset embedding.
+representationReferences["VECTOR-CLOCK-CAUSAL-FRONTIER"] = `function precedes(a, b) {
+  return a.every((value, index) => value <= b[index]) && a.some((value, index) => value < b[index]);
+}
+export function transform(input) {
+  const frontier = input.filter(a => !input.some(b => precedes(a.clock, b.clock))).map(event => event.id).sort();
+  let equal = 0, incomparable = 0;
+  for (let i = 0; i < input.length; i++) for (let j = i + 1; j < input.length; j++) {
+    if (input[i].clock.every((value, index) => value === input[j].clock[index])) equal++;
+    else if (!precedes(input[i].clock, input[j].clock) && !precedes(input[j].clock, input[i].clock)) incomparable++;
+  }
+  return [frontier, incomparable, equal];
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS,...SHARED_GUARDED_REPAIR_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1797,7 +1835,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
-  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS].some(fresh=>fresh.id===task.id)) {
+  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS,...SHARED_GUARDED_REPAIR_TASKS].some(fresh=>fresh.id===task.id)) {
     const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
     for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
       "new task independent oracle matches test-only reference without adapter canonicalization");
@@ -1815,7 +1853,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
     ...(bodyTask?{sourceEditScope:"FUNCTION_BODY" as const}:{})});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS,...SHARED_GUARDED_REPAIR_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
@@ -2314,6 +2352,81 @@ for(const probe of SOURCE_LITERAL_PROBES) {
   check(observations[1].some(message=>message.includes("error-class=TYPE_ERROR"))
     && observations[1].some(message=>message==="FAIL private-input execution-error"),
     "existing observer carries sanitized public class while private failure stays opaque");
+}
+{
+  const tasks=sharedGuardedRepairTasks();
+  check(tasks.length===4&&new Set(tasks.map(task=>task.id)).size===4
+    &&SHARED_GUARDED_REPAIR_EPOCH.uniqueTasks===2&&SHARED_GUARDED_REPAIR_EPOCH.predeclaredRepeats===2
+    &&SHARED_GUARDED_REPAIR_EPOCH.authoredCandidates===false,"shared epoch freezes two new domains and two repeats without algorithm seeds");
+  const control=sharedGuardedRepairConfiguration("V3_CONTROL"),treatment=sharedGuardedRepairConfiguration("V4_COVERAGE");
+  const {localRefactorGuidance:_a,...a}=control,{localRefactorGuidance:_b,...b}=treatment;
+  check(theoryDigest(a)===theoryDigest(b)&&control.localRefactorGuidance==="EVALUATION_ORDER_PROPOSALS"
+    &&treatment.localRefactorGuidance==="EXTENDED_EVALUATION_ORDER_PROPOSALS",
+    "shared repair changes guarded grammar only, retaining model guidance and source-bound selection in both arms");
+  rejects(()=>sharedGuardedRepairConfiguration("RELAX_QUALITY"),"unknown shared repair arm cannot relax admission");
+  check(SHARED_GUARDED_LIMITS.physicalCallsPerPairMaximum===3&&SHARED_GUARDED_LIMITS.defaultChanged===false
+    &&!SHARED_GUARDED_LIMITS.hostileCodeSandbox&&SHARED_GUARDED_LIMITS.candidateNetworkIsolation==="NOT_PROVEN",
+    "one unique common inference and bounded one-call repairs preserve explicit sandbox limitations");
+  const initial:SharedGuardedWireControl={model:SHARED_GUARDED_LIMITS.model,maxTokens:8192,temperature:0,effort:"high",reasoningBudget:2048,
+    initialCandidateState:true,publicAdmissionPolicyId:SHARED_GUARDED_REPAIR_EPOCH.admissionPolicyId,legacyLineApplicabilityPresent:false,
+    originalBudgetPresented:true,originalBudgetVersion:"nyx-original-state-quality-budget/2",
+    originalBudgetPolicyId:SHARED_GUARDED_REPAIR_EPOCH.admissionPolicyId,qualityRepairPhase:false,
+    localProposalCount:0,localProposalVersion:null,proposerVersion:null,selectionBranchOffered:false,selectionBindingDigest:null,
+    promptDigest:"a".repeat(64),schemaDigest:"b".repeat(64)};
+  check(sharedGuardedWireVerified("SHARED_INITIAL",[initial]),"one common call binds same V3 original structural budget and native reasoning");
+  for(const invalid of [{...initial,maxTokens:16384},{...initial,model:"other"},{...initial,originalBudgetPresented:false},
+    {...initial,legacyLineApplicabilityPresent:true},{...initial,reasoningBudget:4096},{...initial,promptDigest:"missing"}])
+    check(!sharedGuardedWireVerified("SHARED_INITIAL",[invalid]),"common wire drift cannot qualify a matched comparison");
+  for(const variant of ["V3_CONTROL","V4_COVERAGE"] as const){
+    const repair={...initial,initialCandidateState:false,originalBudgetPresented:false,originalBudgetVersion:null,
+      originalBudgetPolicyId:null,qualityRepairPhase:true,localProposalCount:1,selectionBranchOffered:true,
+      localProposalVersion:variant==="V3_CONTROL"?"nyx-source-bound-refactor-selection/1":"nyx-source-bound-refactor-selection/2",
+      proposerVersion:variant==="V3_CONTROL"?null:"nyx-local-refactor-proposals/4",selectionBindingDigest:"c".repeat(64)};
+    check(sharedGuardedWireVerified(variant,[repair]),"shared repair validates the exercised version and bound strict selection branch");
+    for(const invalid of [{...repair,qualityRepairPhase:false},{...repair,localProposalCount:9},{...repair,selectionBranchOffered:false},
+      {...repair,originalBudgetPresented:true},{...repair,selectionBindingDigest:"stale"},{...repair,proposerVersion:"unknown"}])
+      check(!sharedGuardedWireVerified(variant,[invalid]),"phase/version/authority/budget drift fails closed before attribution");
+    check(!sharedGuardedWireVerified(variant,[repair,repair]),"additional repair calls cannot masquerade as the one-call matched budget");
+  }
+  const first={candidateSourceDigest:"d".repeat(64),functionalAccepted:true,quality:"REJECTED"};
+  const base={accepted:false,perIteration:[first]},next={accepted:true,perIteration:[first],guardedSelectionReceipts:[{outcome:"RESOLVED"}]};
+  const common={sourceDigest:first.candidateSourceDigest,liveEvidenceClass:"E4",stable:true};
+  check(sharedGuardedPairAssessment(common,base,next,true).qualifyingQualityRepairGain,
+    "causal credit binds both replayed sources to a single observed live rejected candidate");
+  for(const invalid of [{...common,liveEvidenceClass:"E3"},{...common,sourceDigest:"e".repeat(64)},{...common,stable:false}])
+    check(!sharedGuardedPairAssessment(invalid,base,next,true).qualifyingQualityRepairGain,
+      "authored source, unrelated initial source and unstable common inference never earn live repair credit");
+  check(!sharedGuardedPairAssessment(common,base,next,false).qualifyingQualityRepairGain
+    &&!sharedGuardedPairAssessment(common,base,{...next,guardedSelectionReceipts:[]},true).qualifyingQualityRepairGain,
+    "compute mismatch or zero selection exposure cannot promote guarded repair");
+  const malformed='{ "decision":';
+  const inspected=await inspectSharedGuardedCaptures([{content:malformed,finishReason:"stop"}],{
+    liveEvidence:[{responseDigest:contentHash(malformed)}] as any,guardedSelectionReceipts:[]});
+  check(inspected[0].outcome==="NON_JSON_CONTENT"&&inspected[0].rawSourcePersisted===false,
+    "malformed response remains a sanitized serialization outcome rather than crashing the epoch");
+  const truncated=await inspectSharedGuardedCaptures([{content:malformed,finishReason:"length"}],{liveEvidence:[],guardedSelectionReceipts:[]});
+  check(truncated[0].outcome==="TRUNCATED","truncation remains distinct from JSON/schema/hidden-case failure");
+  const task=SHARED_GUARDED_REPAIR_TASKS[0],source=representationReferences[task.id];
+  const initialStage=await executeSharedGuardedStage(task,"a".repeat(40),Date.now()+60000,"SHARED_INITIAL",
+    provider(async()=>reply(intent(source)),SHARED_GUARDED_LIMITS.model));
+  check(initialStage.row.accepted&&initialStage.returnedSource===source&&initialStage.row.evidenceClass!=="E4"
+    &&sharedGuardedStageBounds(initialStage.row),"real Omega lifecycle and private scorer accept the E3 witness without claiming live cognition");
+  for(const variant of ["V3_CONTROL","V4_COVERAGE"] as const){
+    let dispatched=0;
+    const replay=await executeSharedGuardedStage(task,"a".repeat(40),Date.now()+60000,variant,
+      provider(async()=>{dispatched++;throw Error("unexpected_new_call");},SHARED_GUARDED_LIMITS.model),source);
+    check(replay.row.accepted&&dispatched===0&&replay.row.usage.physicalCalls===0&&replay.row.replayInteractions===1
+      &&replay.row.retainedReplayWithoutLiveRepair&&replay.row.evidenceClass!=="E4"&&sharedGuardedStageBounds(replay.row),
+      "accepted common source is independently reverified and honestly labeled as retained E3, not a successful live repair");
+    check(replay.row.perIteration[0].candidateSourceDigest===contentHash(source)&&replay.returnedSource===null
+      &&!JSON.stringify(replay.row).includes(source),"each arm starts from exact shared source without persisting raw candidate text");
+    check(!sharedGuardedStageBounds({...replay.row,usage:{...replay.row.usage,physicalCalls:2}})
+      &&!sharedGuardedStageBounds({...replay.row,cleanup:null}),"excess dispatch or missing cleanup disqualifies stage evidence");
+  }
+  const expired=await executeSharedGuardedStage(task,"a".repeat(40),Date.now()-1,"SHARED_INITIAL",
+    provider(async()=>{throw Error("expired_must_not_invoke");},SHARED_GUARDED_LIMITS.model));
+  check(expired.row.infrastructureFailure&&expired.row.usage.physicalCalls===0&&expired.returnedSource===null,
+    "expired sandbox creation returns bounded infrastructure evidence without model dispatch or lease renewal");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
