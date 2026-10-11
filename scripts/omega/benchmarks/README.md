@@ -1,6 +1,41 @@
 # NYX benchmark capability program
 
-### Source-bound function-body emission — frozen experiment, no promotion yet
+### Source-bound function-body emission — promotion rejected (2026-10-11)
+
+Terminal [run 38148420917](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38148420917)
+at frozen candidate `f0227b8cd53b49e96992755f6c6f692857783924`:
+complete-file control retained functional acceptance **8/8**, full acceptance
+**7/8**; body emission retained functional acceptance **5/8**, full acceptance
+**4/8**. Reported tokens were **66,529 versus 102,523** (+54.1%). Eight pairs
+were provider-stable, three matched realized compute, and none qualified as a
+treatment gain; three pairs regressed full acceptance. No promotion or default
+change. These are four distinct tasks with two repeats, not a benchmark score.
+
+All first generated candidates passed the finite private cases. Control had six
+first-call full acceptances and one accepted quality repair. Body had three
+first-call full acceptances and one interface recovery before its first candidate
+was generated, **zero accepted quality-only repairs**, and three functional
+regressions after quality rejection. Two regressions also failed public tests;
+one passed public tests and quality but failed the private oracle. The narrowing
+of helper placement may contribute; this epoch does not isolate that cause.
+
+All 16 arm executions were attempted; 15 final artifacts were graded and one
+was ungraded due to an observed private-execution/result-serialization exception.
+Twenty-two per-iteration scores remain separate. Across 23 calls / 169,052
+reported tokens, usage was fully known; no provider failure, retry or truncation
+occurred. One body boundary/syntax rejection was recovered within the original
+budget. There were 38 verifier executions; cleanup and original source integrity
+passed. Artifact CRC, SHA256, frozen task/source/configuration and log/report
+agreement were verified. Linux CI passed the same 109 suites / 13,495 checks,
+TypeScript 5.8.3 zero, build and secret scan. Archive SHA256:
+`06ab126fd2259b9f1f6ae66780247eb408184c5a39c053023bbe7739ab61a137`.
+[Sanitized custody receipt](../../../docs/omega/evidence/nyx-function-body-f0227b8c.json).
+
+Next general investigation: use already-built guarded source-bound refactor
+selection after a live-generated candidate's quality rejection, on new unseeded
+objectives. Preserve the complete-file envelope and exact original-state gates;
+require actual post-rejection proposal exposure before causal credit. Do not
+repair against private cases, seed the algorithm or add another reasoning layer.
 
 `nyx-source-bound-function-body/1` is a narrow opt-in emission representation,
 not a new reasoner or authority. The model proposes statements inside one
