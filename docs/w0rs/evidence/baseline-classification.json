@@ -8558,6 +8558,7 @@
           "src/lib/codelab/agent/reducer.ts",
           "src/lib/codelab/agent/types.ts",
           "src/lib/codelab/assurance/authorityGraph.ts",
+          "src/lib/codelab/assurance/candidateQualityApplicability.ts",
           "src/lib/codelab/cli/nyxChatProtocol.ts",
           "src/lib/codelab/cli/nyxChatSession.ts",
           "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts",

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { validCandidateEngineeringPolicyId, type CandidateEngineeringPolicyId } from "../assurance/candidateEngineeringAdmission";
 import { isAbsolute } from "node:path";
 import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";
 import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";
@@ -94,6 +95,8 @@ export interface NyxPriorHypothesis {
 }
 
 export interface NyxRepairCognitionRequest {
+  /** Trusted host's admission policy, never chosen from model output. Omission retains V2. */
+  readonly candidateAdmissionPolicyId?: CandidateEngineeringPolicyId;
   readonly theoryResearchContext?: TheoryResearchContext;
   readonly schemaVersion: 1;
   readonly cognitionRequestId: string;
@@ -953,6 +956,9 @@ export class NyxNemotronEngineeringCognition {
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
     const issues: string[] = [];
+    if (request.candidateAdmissionPolicyId !== undefined && !validCandidateEngineeringPolicyId(request.candidateAdmissionPolicyId)) {
+      issues.push("nyx_cognition_admission_policy_invalid");
+    }
     if (request.theoryResearchContext && (!validTheoryResearchContext(request.theoryResearchContext,
       request.objective, request.observation?.candidateCommit)
       || request.allowedMutationPaths?.some((path) => !request.theoryResearchContext!.assignment.scope.includes(path)))) {

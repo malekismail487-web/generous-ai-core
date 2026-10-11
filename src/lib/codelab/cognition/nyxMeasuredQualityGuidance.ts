@@ -2,11 +2,11 @@ import { createHash } from "node:crypto";
 import ts from "typescript";
 import { measureEngineeringStructure } from "../assurance/engineeringQualityOracle";
 import type { NyxRepairCognitionRequest } from "./nyxNemotronEngineeringCognition";
-import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2, OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
-  OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES } from "../assurance/candidateEngineeringAdmission";
+import { originalCandidateQualityPolicy, validCandidateEngineeringPolicyId } from "../assurance/candidateEngineeringAdmission";
 
 /** Explain the existing single-target policy before its first candidate, never authorize it. */
 export function originalStateQualityBudget(request: NyxRepairCognitionRequest) {
+  if (request.candidateAdmissionPolicyId !== undefined && !validCandidateEngineeringPolicyId(request.candidateAdmissionPolicyId)) return null;
   // After a candidate, current files are NOT the original quality baseline.
   // Bound post-rejection measurements remain the existing repair guidance's job.
   if (request.priorHypotheses.length || request.candidateQualityFeedback !== null
@@ -18,10 +18,12 @@ export function originalStateQualityBudget(request: NyxRepairCognitionRequest) {
   const measurement = measureEngineeringStructure(target, source, true);
   if (!measurement.parseable) return null;
   const originalNonblankLines = source.split(/\r?\n/).filter(line => line.trim()).length;
-  const tinySingleTarget = originalNonblankLines <= OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES;
-  const policy = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2;
-  const addedDeclarations = tinySingleTarget ? OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS : policy.maxAddedDeclarations;
-  return Object.freeze({ version: "nyx-original-state-quality-budget/1", target,
+  const originalPolicy = originalCandidateQualityPolicy({ [target]: source }, [target], request.candidateAdmissionPolicyId);
+  const tinySingleTarget = originalPolicy.tinyRepair;
+  const policy = originalPolicy.policy;
+  const addedDeclarations = policy.maxAddedDeclarations;
+  return Object.freeze({ version: originalPolicy.applicability ? "nyx-original-state-quality-budget/2" : "nyx-original-state-quality-budget/1", target,
+    ...(originalPolicy.applicability ? { staticPolicyId: policy.policyId, applicability: originalPolicy.applicability } : {}),
     evidenceRef: `FILE:${target}`, originalSourceDigest: files[0].contentSha256,
     originalNonblankLines, tinySingleTarget, originalMeasurement: measurement,
     maximumCandidateTotals: Object.freeze({ declarations: measurement.declarations + addedDeclarations,

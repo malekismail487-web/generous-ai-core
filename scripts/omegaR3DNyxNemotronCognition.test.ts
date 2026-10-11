@@ -1040,6 +1040,26 @@ function schemaKeys(value: unknown): string[] {
     contentSha256:hash(largerOriginal)}]}))!;
   check(!largerBudget.tinySingleTarget && largerBudget.maximumCandidateTotals.declarations === 14,
     "non-tiny original uses existing general declaration delta rather than imposing a new rule");
+  const v3BudgetRequest = request({candidateAdmissionPolicyId:"omega-public-static-candidate/3", files:[{relativePath:"src/math.ts",
+    content:largerOriginal, contentSha256:hash(largerOriginal)}]});
+  const v3TinyBudget = originalStateQualityBudget(v3BudgetRequest)!;
+  check(v3TinyBudget.version === "nyx-original-state-quality-budget/2" && v3TinyBudget.staticPolicyId === "omega-public-static-candidate/3"
+    && v3TinyBudget.applicability?.classification === "TINY_EXISTING_FUNCTION_REPAIR" && v3TinyBudget.maximumCandidateTotals.declarations === 6,
+    "new host-selected V3 guidance uses the same structural applicability as admission, not the legacy line count");
+  const stub = 'export function add(a,b) {\n throw new Error("absent");\n}\n';
+  const v3StubBudget = originalStateQualityBudget(request({candidateAdmissionPolicyId:"omega-public-static-candidate/3",
+    files:[{relativePath:"src/math.ts",content:stub,contentSha256:hash(stub)}]}))!;
+  check(v3StubBudget.applicability?.classification === "FROM_SCRATCH_THROW_STUB" && v3StubBudget.maximumCandidateTotals.declarations === 13
+    && v3StubBudget.maximumCandidateTotals.complexity === 9 && v3StubBudget.maximumCandidateTotals.maxNesting === 4,
+    "V3 guidance allows the declared implementation budget while preserving every absolute/delta complexity bound");
+  let invalidPolicyCalls = 0;
+  const policyCognition = NyxNemotronEngineeringCognition.create({cognitionId:"V3-ADMISSION-POLICY",
+    maxPromptBytes:50000,maxOutputTokens:1024,structuralBudgetGuidance:"PUBLIC_ORIGINAL_STATE",
+    provider:provider(async(url,init)=>{invalidPolicyCalls++;return transportFor(intent())(url,init);})});
+  const invalidPolicy = {...v3BudgetRequest,candidateAdmissionPolicyId:"omega-public-static-candidate/999" as never};
+  const rejectedPolicy = await policyCognition.proposeRepair(invalidPolicy);
+  check(originalStateQualityBudget(invalidPolicy) === null && rejectedPolicy.decision === "REJECTED" && invalidPolicyCalls === 0,
+    "an unsupported host policy fails closed before model inference or budget guidance");
   for (const invalid of [
     {...originalRequest, priorHypotheses},
     {...originalRequest, candidateQualityFeedback: feedback},

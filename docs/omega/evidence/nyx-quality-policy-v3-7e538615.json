@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "receiptVersion": "nyx-quality-policy-applicability/2",
+  "chunkId": "NYX-QUALITY-POLICY-APPLICABILITY-V3-001",
+  "outcome": "APPROVED_VERSIONED_APPLICABILITY_CORRECTION_VERIFIED_IN_ISOLATION",
+  "policyId": "omega-public-static-candidate/3",
+  "approval": "EXPLICIT_OPERATOR_APPROVAL_FOR_NEW_POLICY_VERSION_ONLY",
+  "evaluationState": {
+    "commit": "7e53861513514a6a034ec542780441afd013a62c",
+    "worktreeState": "DIRTY",
+    "scope": "LOCAL_DIRTY_SOURCE_IDENTITIES_PINNED_NOT_A_LIVE_MODEL_BENCHMARK",
+    "sourceDigestNormalization": "UTF8_LF"
+  },
+  "sourceDigests": {
+    "src/lib/codelab/assurance/candidateQualityApplicability.ts": "024baeae0611a2415dbaadeb1667cc92a30d80b05ba89173d6ccfde288fb8019",
+    "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "60d63e36cd19654d3130c8200096ddd190e165014be17daa169c0c474f1525c0",
+    "src/lib/codelab/assurance/engineeringQualityOracle.ts": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+    "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "efaf4eee2ecefbbee51304d41b16b06a45f29144655ff3782ea8e0206557de76",
+    "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "07a23d982eb61105997d6eb3147e34d37fc3a1523cbfff0d378e6a8e1685e870",
+    "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "4cc293f6ac9eb3b6b852b78c964767df022082d470097ffeea80ae3cf46b778c",
+    "scripts/omegaCandidateEngineeringAdmission.test.ts": "9fdcdca5c78b0d1955e0c621d5cc72167bb8c457a001099e40ba5114b524cbec",
+    "scripts/omegaR3DNyxNemotronCognition.test.ts": "3fdda7dd3472f5825bc50f4ba4e4540b711809a8a845556da799a500023833cd",
+    "scripts/omegaR3EBoundedRepairLoop.test.ts": "06cdbe90f0fe31607fa45d4d86838e799d1aab0421e15aea65b312b7f20a579b",
+    "scripts/omegaArcNyxIntegration.test.ts": "ba73e12cdafa0195dd652f7d816959defa92c4533fb1be8604a4968976e9ba9e",
+    "scripts/omega/nyx-arc-core-refinement.ts": "128e140a4e8e3b0d92d46a2b197213e00475561836312bc4ae2aa866519f36df"
+  },
+  "evidenceClass": "E3",
+  "evidenceIndependence": "SAME_AUTHOR_METAMORPHIC_DEVELOPMENT_CHECKS_WITH_INDEPENDENT_FINITE_FUNCTIONAL_ORACLE",
+  "applicability": {
+    "version": "omega-original-syntax-applicability/1",
+    "maxOriginalBytes": 65536,
+    "maxTinyFunctionNodes": 40,
+    "fromScratchThrowStubAddedDeclarations": 12,
+    "tinyExistingFunctionAddedDeclarations": 4,
+    "generalAddedDeclarations": 12,
+    "unclassifiedSingleSourceAddedDeclarations": 4,
+    "supportedSingleFunctionForms": [
+      "FUNCTION_DECLARATION",
+      "FUNCTION_EXPRESSION",
+      "ARROW",
+      "DEFAULT_FUNCTION_EXPORT"
+    ],
+    "inferenceScope": "ORIGINAL_SYNTAX_NOT_SEMANTIC_EQUIVALENCE_OR_AUTHORITY",
+    "noTaskSpecificRules": true,
+    "formattingInvariance": "WHITESPACE_AND_COMMENTS_WITHIN_RESOURCE_CAP_NOT_SEMANTICS_CHANGING_ASI_OR_ARBITRARY_EQUIVALENCE"
+  },
+  "diagnostic": {
+    "schemaVersion": 1,
+    "evidenceClass": "E3",
+    "evidenceIndependence": "SAME_AUTHOR_METAMORPHIC_DEVELOPMENT_CHECKS_WITH_INDEPENDENT_FINITE_FUNCTIONAL_ORACLE",
+    "policyId": "omega-public-static-candidate/3",
+    "originalDecisions": [
+      "REJECTED",
+      "ADMITTED",
+      "ADMITTED",
+      "REJECTED"
+    ],
+    "newStubDecisions": [
+      "ADMITTED",
+      "ADMITTED",
+      "ADMITTED",
+      "ADMITTED"
+    ],
+    "newTinyRepairDecisions": [
+      "REJECTED",
+      "REJECTED",
+      "REJECTED",
+      "REJECTED"
+    ],
+    "checkedCases": 882,
+    "candidateEvaluations": 1764,
+    "functionalFailures": 0,
+    "inputMutationFailures": 0,
+    "modelCalls": 0,
+    "frozenResultsRegraded": false,
+    "cognitiveGainEstablished": false,
+    "authorityGranted": false
+  },
+  "legacyDiagnosticExactlyPreserved": true,
+  "verification": {
+    "suiteVersion": "omega-institutional-suite/95",
+    "tools": {
+      "node": "v24.19.0",
+      "typescript": "5.8.3"
+    },
+    "aggregate": {
+      "discoveredSuites": 109,
+      "executedSuites": 109,
+      "passedSuites": 109,
+      "failedSuites": 0,
+      "passedChecks": 12827,
+      "failedChecks": 0,
+      "semanticTestDefinitions": 4563
+    },
+    "manifestDigest": "a9958206f6649a1d41bd1475f798fed7454c6d8d0d06dff8e892e989207e1bdd",
+    "affectedSuites": [
+      {
+        "suiteId": "OMEGA-ARC-NYX-INTEGRATION",
+        "file": "scripts/omegaArcNyxIntegration.test.ts",
+        "status": "PASSED",
+        "passedChecks": 977,
+        "failedChecks": 0,
+        "sourceDigest": "ba73e12cdafa0195dd652f7d816959defa92c4533fb1be8604a4968976e9ba9e",
+        "testIdentityDigest": "4107723452f239d996f3945df02cc3aed2edd31400655b965ce6188d72381187"
+      },
+      {
+        "suiteId": "OMEGA-CANDIDATE-ENGINEERING-ADMISSION",
+        "file": "scripts/omegaCandidateEngineeringAdmission.test.ts",
+        "status": "PASSED",
+        "passedChecks": 120,
+        "failedChecks": 0,
+        "sourceDigest": "9fdcdca5c78b0d1955e0c621d5cc72167bb8c457a001099e40ba5114b524cbec",
+        "testIdentityDigest": "b665a42ccc35d62f1508b0a41a524c09653f6237cd6535863aaf967fed4050f5"
+      },
+      {
+        "suiteId": "OMEGA-NYX-ADMISSION-GUIDANCE",
+        "file": "scripts/omegaNyxAdmissionGuidance.test.ts",
+        "status": "PASSED",
+        "passedChecks": 59,
+        "failedChecks": 0,
+        "sourceDigest": "65b73092525b0c992008a1257fda719b4eebbf519e3ce4d7875134ee91011c43",
+        "testIdentityDigest": "1bf47319a472b0a2bc2780fb3b9dd646d7b6e36d9b1030be3a917b274ec799c5"
+      },
+      {
+        "suiteId": "OMEGA-R3-D-NYX-NEMOTRON-COGNITION",
+        "file": "scripts/omegaR3DNyxNemotronCognition.test.ts",
+        "status": "PASSED",
+        "passedChecks": 790,
+        "failedChecks": 0,
+        "sourceDigest": "3fdda7dd3472f5825bc50f4ba4e4540b711809a8a845556da799a500023833cd",
+        "testIdentityDigest": "cb347d3e00c2329d2100866a11cbd77da85d7fc45ab1e08407230819410ad0ef"
+      },
+      {
+        "suiteId": "OMEGA-R3-E-BOUNDED-REPAIR-LOOP",
+        "file": "scripts/omegaR3EBoundedRepairLoop.test.ts",
+        "status": "PASSED",
+        "passedChecks": 186,
+        "failedChecks": 0,
+        "sourceDigest": "06cdbe90f0fe31607fa45d4d86838e799d1aab0421e15aea65b312b7f20a579b",
+        "testIdentityDigest": "213b8cfcb6a1762db2064f892f1ccb58bf17271cff81fd0429a554b66b8db592"
+      }
+    ],
+    "globalTypeScript": {
+      "version": "5.8.3",
+      "baseline": 0,
+      "current": 0,
+      "new": 0,
+      "exitCode": 0
+    },
+    "scopedTypeScriptExitCode": 0,
+    "productionBuild": {
+      "exitCode": 0,
+      "durationSeconds": 9.62,
+      "preExistingWarningsPreserved": true
+    },
+    "inventoryCheck": "PASSED",
+    "secretScan": {
+      "textFiles": 1326,
+      "findings": 0
+    },
+    "intermediateRegression": {
+      "aggregate": {
+        "discoveredSuites": 109,
+        "executedSuites": 109,
+        "passedSuites": 108,
+        "failedSuites": 1,
+        "passedChecks": 12816,
+        "failedChecks": 1,
+        "semanticTestDefinitions": 4558
+      },
+      "manifestDigest": "31583bab0f04ee5c1242234b8c8fd1a088653b623782a00c241dcb17deaaf664",
+      "failure": "MISSING_EXACT_POLICY_SOURCE_INVERSION_REGISTRATION",
+      "correction": "REGISTER_EXACT_REVIEWED_HUNKS_WITHOUT_REBASELINING_FROZEN_IDENTITIES",
+      "disposition": "FIXED_AND_FULLY_RERUN"
+    },
+    "testAssumptionsCorrected": [
+      "LINE_BREAK_AFTER_RETURN_IS_NOT_SEMANTICS_PRESERVING",
+      "STRUCTURAL_BOUNDARY_FIXTURE_MUST_EXERCISE_EXACT_NODE_CUTOFF"
+    ],
+    "siblingHazardsChecked": [
+      "SHADOWED_ERROR_NAME",
+      "DEFAULT_PARAMETER_EFFECT",
+      "DESTRUCTURING_DEFAULT_EFFECT",
+      "ASYNC_OR_GENERATOR",
+      "CALL_DEPENDENT_THROW",
+      "CONSTANT_RETURN_IS_NOT_AN_UNIMPLEMENTED_STUB",
+      "UNKNOWN_POLICY",
+      "MODEL_CANNOT_SELECT_POLICY",
+      "CALLER_MUTATION_CANNOT_SWITCH_ACTIVE_POLICY",
+      "CUMULATIVE_ORIGINAL_BASELINE",
+      "NEW_UNSAFE_RUNTIME",
+      "SYNTAX",
+      "PUBLIC_INPUT_OWNERSHIP",
+      "ABSOLUTE_COMPLEXITY",
+      "NESTING",
+      "PROVENANCE",
+      "SCOPE",
+      "MISSING_REPOSITORY_HELPER"
+    ]
+  },
+  "resourceUsage": {
+    "liveModelCalls": 0,
+    "liveModelTokens": 0,
+    "liveProviderRequests": 0
+  },
+  "preservation": {
+    "frozenResultsRegraded": false,
+    "V2DefaultUnchanged": true,
+    "defaultUltraConfigurationUnchanged": true,
+    "functionalOracleUnchanged": true,
+    "securityAndProvenanceUnchanged": true,
+    "absoluteComplexityLimitsUnchanged": true,
+    "leaseSemanticsUnchanged": true,
+    "originalStateQualityComparison": true,
+    "rollbackUnchanged": true,
+    "SEC003Unchanged": true,
+    "productionUnchanged": true,
+    "authorityIncrease": false
+  },
+  "promotion": {
+    "evaluationValidityCorrection": true,
+    "cognitiveGainEstablished": false,
+    "broadBenchmarkImprovementEstablished": false,
+    "nextRequirement": "FRESH_MATCHED_COMPARISON_WITH_SAME_V3_ORACLE_IN_BOTH_ARMS"
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "ORIGINAL_STATE_QUALITY",
+      "VERSIONED_EVIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "EXPLICIT_AUTHORITY_BOUNDARY"
+    ],
+    "supporting": [
+      "METAMORPHIC_FALSIFICATION",
+      "DETECTOR_VALIDATION",
+      "EXACT_SOURCE_GENEALOGY"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "PRODUCTION_PROMOTION",
+      "TOTAL_CORPUS_RECONCILIATION"
+    ],
+    "conflicts": [
+      "V2_LINE_COUNT_APPLICABILITY_IS_FORMAT_SENSITIVE"
+    ],
+    "supersededOperationalApproaches": [
+      "LINE_COUNT_CLASSIFICATION_FOR_EXPLICIT_NEW_V3_EPOCHS_ONLY"
+    ]
+  }
+}

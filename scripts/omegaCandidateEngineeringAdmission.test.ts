@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import ts from "typescript";
 import { admitStaticEngineeringCandidate, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V1,
+  OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3,
+  originalCandidateQualityPolicy, type CandidateEngineeringPolicyId,
   OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
   validPublicQualityObligations, type CandidateEngineeringAdmissionRequest } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NYX_ENGINEERING_QUALITY_V5 } from "./omega/nyx-quality-v5-fixtures";
@@ -8,6 +10,7 @@ import type { NyxRepairHypothesis } from "../src/lib/codelab/cognition/nyxNemotr
 import type { R2GPatchProposal } from "../src/lib/codelab/executor/r2PatchProposal";
 import type { R3AApplyResult, R3AEvent } from "../src/lib/codelab/executor/r3DisposablePatchApplication";
 import { measureEngineeringStructure } from "../src/lib/codelab/assurance/engineeringQualityOracle";
+import { classifyCandidateQualityApplicability, OMEGA_STRUCTURAL_REPAIR_APPLICABILITY } from "../src/lib/codelab/assurance/candidateQualityApplicability";
 
 let passed = 0;
 let failed = 0;
@@ -415,10 +418,10 @@ check(extraApplicationTransition.decision !== "ADMITTED",
     "stub formatting does not change original declaration, complexity or nesting measurements");
   check(measureEngineeringStructure(PATH, candidate).declarations === 6,
     "readable witness has one function and five ordinary named variable bindings, not declaration packing");
-  const review = (before: string, after: string) => admitStaticEngineeringCandidate({
+  const review = (before: string, after: string, policyId: CandidateEngineeringPolicyId = "omega-public-static-candidate/2") => admitStaticEngineeringCandidate({
     ...fixture(before, after), objective: OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT,
     publicQualityObligations: [immutableObligation],
-  });
+  }, policyId);
   const outcomes = originals.map(before => review(before, candidate));
   check(outcomes[0].decision === "REJECTED" && outcomes[3].decision === "REJECTED"
     && outcomes[0].findings.length === 1 && outcomes[0].findings[0].code === "DECLARATION_DELTA"
@@ -444,6 +447,35 @@ check(extraApplicationTransition.decision !== "ADMITTED",
     check(review(original, 'export function transform(input) { return ; invalid syntax here }\n')
       .decision !== "ADMITTED", "formatting discrepancy cannot waive syntax rejection");
   }
+  const v3Outcomes = originals.map(before => review(before, candidate, "omega-public-static-candidate/3"));
+  check(v3Outcomes.every(value => value.decision === "ADMITTED" && value.staticPolicyId === "omega-public-static-candidate/3"
+    && value.applicability?.classification === "FROM_SCRATCH_THROW_STUB"),
+    "approved V3 treats every original throw-stub format as implementation from scratch, not a tiny existing repair");
+  check(new Set(v3Outcomes.map(value => value.appliedPolicyDigest)).size === 1
+    && new Set(v3Outcomes.map(value => value.qualityBaselineDigest)).size === originals.length,
+    "V3 applicability is format invariant while evidence preserves each exact original source identity");
+  const tinyOriginals = originals.map(before => before.replace(/throw new Error\([\s\S]*?\);/, "return input.values.length;"));
+  const tinyV3 = tinyOriginals.map(before => review(before, candidate, "omega-public-static-candidate/3"));
+  check(tinyV3.every(value => value.decision === "REJECTED" && value.applicability?.classification === "TINY_EXISTING_FUNCTION_REPAIR"
+    && value.findings.some(finding => finding.code === "DECLARATION_DELTA" && finding.measurement?.limit === 4)),
+    "V3 keeps the strict four-declaration delta for an actual tiny existing function across formats");
+  const excessive = `export function transform(input) {\n${Array.from({length: 13}, (_, index) =>
+    `  const value${index} = ${index};`).join("\n")}\n  return input.values.length;\n}\n`;
+  for (const original of originals) {
+    for (const source of [
+      'export function transform(input) { return fetch("https://example.invalid"); }\n',
+      'export function transform(input) { input.values.sort(); return 0; }\n',
+      'export function transform(input) { return ; invalid syntax here }\n',
+      excessive,
+      `export function transform(input) {\n${Array.from({length:13}, (_, index) =>
+        `  if (input.target === ${index}) return ${index};`).join("\n")}\n  return 0;\n}\n`,
+      `export function transform(input) { ${"if (input.target) { ".repeat(5)}return 0; ${"} ".repeat(5)} }\n`,
+    ]) check(review(original, source, "omega-public-static-candidate/3").decision !== "ADMITTED",
+      "V3 stub applicability cannot waive unsafe runtime, ownership, syntax, declaration, absolute complexity or nesting checks");
+  }
+  check(JSON.stringify(admitStaticEngineeringCandidate(fixture())) === JSON.stringify(admitStaticEngineeringCandidate(fixture(), "omega-public-static-candidate/2"))
+    && clean.staticPolicyId === "omega-public-static-candidate/2" && !("applicability" in clean),
+    "omitted policy retains the exact V2 evidence object and frozen results, not a retroactive regrade");
   console.log(`NYX_QUALITY_APPLICABILITY_DIAGNOSTIC ${JSON.stringify({
     schemaVersion: 1, evidenceClass: "E3", evidenceIndependence: "SAME_AUTHOR_DEVELOPMENT_FIXTURE_SHARED_STATIC_ORACLE",
     study: "BASELINE_FORMATTING_METAMORPHIC_COUNTEREXAMPLE", originalNonblankLines: originals.map(source =>
@@ -462,6 +494,87 @@ check(extraApplicationTransition.decision !== "ADMITTED",
     feasibilityScope: "WITNESS_IS_CORRECT_NOT_PROOF_THAT_TINY_LIMIT_IS_UNSATISFIABLE",
     authorityGranted: false,
   })}`);
+  console.log(`NYX_QUALITY_APPLICABILITY_V3 ${JSON.stringify({ schemaVersion: 1, evidenceClass: "E3",
+    evidenceIndependence: "SAME_AUTHOR_METAMORPHIC_DEVELOPMENT_CHECKS_WITH_INDEPENDENT_FINITE_FUNCTIONAL_ORACLE",
+    policyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId,
+    originalDecisions: outcomes.map(value => value.decision), newStubDecisions: v3Outcomes.map(value => value.decision),
+    newTinyRepairDecisions: tinyV3.map(value => value.decision), checkedCases,
+    candidateEvaluations: checkedCases * transforms.length, functionalFailures, inputMutationFailures,
+    modelCalls: 0, frozenResultsRegraded: false, cognitiveGainEstablished: false, authorityGranted: false })}`);
+}
+
+// General shape/boundary controls: no task names or expected answers feed applicability.
+{
+  const v3 = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId;
+  const classify = (source: string, path = PATH) => classifyCandidateQualityApplicability({[path]: source}, [path]);
+  for (const source of [
+    'export function fail() { throw "absent"; }',
+    'export function fail(x: number): number { throw new Error("absent"); }',
+  ]) check(classify(source).classification === "FROM_SCRATCH_THROW_STUB", "V3 recognizes bounded literal throw stubs without objective or task identity");
+  for (const source of [
+    'export function fail(Error) { throw new Error("absent"); }',
+    'export function fail(x = sideEffect()) { throw new Error("absent"); }',
+    'export function fail({x = sideEffect()}) { throw "absent"; }',
+    'export function Error() { throw new Error("absent"); }',
+    'export async function fail() { throw new Error("absent"); }',
+    'export function fail() { return 0; }',
+    'export function fail() { return missing(); }',
+    'export function fail() {}',
+    'export function fail() { throw new Error(message()); }',
+  ]) check(classify(source).classification !== "FROM_SCRATCH_THROW_STUB", "V3 does not infer stub status from constants, empty bodies, shadowed names, effects or asynchronous functions");
+  for (const source of ['import { Error } from "./other"; export function fail() { throw new Error("absent"); }',
+    'export function a(){return 1;} export function b(){return 2;}', 'export const f = () => 0, other = 1;']) {
+    check(classify(source).classification === "GENERAL_CHANGE", "V3 ambiguous multi-declaration/program shapes retain general applicability, not invented semantics");
+  }
+  check(classify('export function fail() {').classification === "UNCLASSIFIED_SOURCE"
+    && classify('text', 'src/data.txt').classification === "UNCLASSIFIED_SOURCE"
+    && classify(' '.repeat(65_537)).classification === "UNCLASSIFIED_SOURCE",
+    "malformed, unsupported and excessive original source cannot claim recognized stub applicability");
+  check(originalCandidateQualityPolicy({[PATH]: 'export function fail() {'}, [PATH], v3).policy.maxAddedDeclarations === 4,
+    "V3 unclassified original source uses a conservative budget, never a stub exception");
+  const compact = 'export function score(x) { return x * 2; }';
+  const formats = [compact, 'export function score(\nx\n) {\n return x *\n 2;\n}', '// heading\n'+compact+'\n// footer', compact.replace('{', '{\n/* comment */')];
+  const classifications = formats.map(source => classify(source));
+  check(classifications.every(value => JSON.stringify(value) === JSON.stringify(classifications[0])),
+    "V3 tiny-function classification is invariant to whitespace, wrapping and comments");
+  check(formats.every(source => originalCandidateQualityPolicy({[PATH]:source},[PATH],v3).policy.maxAddedDeclarations === 4),
+    "V3 cannot widen the tiny-function budget by padding source with comments or line breaks");
+  for (const source of ['export const score = x => x * 2;', 'export const score = function(x){return x * 2;};',
+    'export default x => x * 2;']) {
+    check(classify(source).classification === "TINY_EXISTING_FUNCTION_REPAIR"
+      && originalCandidateQualityPolicy({[PATH]:source},[PATH],v3).policy.maxAddedDeclarations === 4,
+      "V3 retains the tiny-existing repair limit for arrows, function expressions and default exports, not only named function declarations");
+  }
+  check(classify('export const absent = x => {throw new Error("absent");};').classification === "FROM_SCRATCH_THROW_STUB",
+    "V3 recognizes the same narrow throw-stub shape in an arrow without claiming that all constant-return functions are stubs");
+  const sizes = Array.from({length: 20}, (_, length) => classify(`function score(x) {\n${Array.from({length}, (_, i) =>
+    `x += ${i};`).join('\n')}\nreturn x + 1;\n}`));
+  check(sizes.some(value => value.originalNodeCount === OMEGA_STRUCTURAL_REPAIR_APPLICABILITY.maxTinyFunctionNodes)
+    && sizes.filter(value => value.originalNodeCount !== null).every(value => value.classification ===
+      (value.originalNodeCount! <= 40 ? "TINY_EXISTING_FUNCTION_REPAIR" : "GENERAL_CHANGE")),
+    "V3 structural-size boundary is explicit and deterministic, not a source-line proxy");
+  const {policyId: _oldId, ...oldAbsolute} = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2;
+  const {policyId: _newId, ...newAbsolute} = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3;
+  check(JSON.stringify(oldAbsolute) === JSON.stringify(newAbsolute), "V3 retains every base absolute quality/security resource threshold");
+  const invalid = admitStaticEngineeringCandidate(fixture(), "omega-public-static-candidate/999" as CandidateEngineeringPolicyId);
+  check(invalid.decision === "INSUFFICIENT_EVIDENCE" && invalid.staticPolicyId === null
+    && invalid.findings.some(value => value.code === "ADMISSION_POLICY_UNSUPPORTED"),
+    "unknown future admission policy fails closed without silent coercion to a known version");
+  check(admitStaticEngineeringCandidate({...fixture(),candidateAdmissionPolicyId:v3}).staticPolicyId === "omega-public-static-candidate/2",
+    "candidate-controlled fields cannot select the host admission policy or alter legacy default acceptance");
+  const cumulativeV3 = admitStaticEngineeringCandidate({...fixture(firstHeavyCandidate, revisedHeavyCandidate),
+    qualityBaselineFiles:{[PATH]: originalTinySource}}, v3);
+  check(cumulativeV3.decision === "REJECTED" && cumulativeV3.applicability?.classification === "TINY_EXISTING_FUNCTION_REPAIR"
+    && cumulativeV3.findings.some(value => value.code === "DECLARATION_DELTA" && value.measurement?.limit === 4),
+    "V3 still classifies cumulative repairs from the original state, never the larger previous rejected candidate");
+  for (const input of [
+    {...fixture(), allowedMutationPaths: []},
+    {...fixture(), application: {...fixture().application, authorityGranted:true}},
+    {...fixture(), lineage:{...fixture().lineage, hypothesisDigest:"0".repeat(64)}},
+    {...fixture(), objective, publicQualityObligations:[{...publicObligation, objectiveQuote:"hidden requirement"}]},
+  ]) check(admitStaticEngineeringCandidate(input,v3).decision !== "ADMITTED", "V3 policy cannot waive scope, authority provenance or public-obligation binding");
+  check(admitStaticEngineeringCandidate({...fixture(),objective,publicQualityObligations:[publicObligation]},v3)
+    .findings.some(value => value.code === "INVARIANT_FAILED"), "V3 still rejects an omitted required repository helper");
 }
 
 console.log(`Omega candidate engineering admission tests - passed: ${passed}, failed: ${failed}`);

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { NyxRepairHypothesis } from "../cognition/nyxNemotronEngineeringCognition";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult, R3AEvent } from "../executor/r3DisposablePatchApplication";
+import { classifyCandidateQualityApplicability, type CandidateQualityApplicability } from "./candidateQualityApplicability";
 import { assessEngineeringQuality, type EngineeringQualityDimension,
   type EngineeringQualityPolicy, type QualityDisposition, type QualityInvariant } from "./engineeringQualityOracle";
 
@@ -38,8 +39,35 @@ export const OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 = Object.freeze({
   policyId: "omega-public-static-candidate/2",
 } as const);
 
+/** Explicit opt-in. V2 remains the default for frozen harnesses and callers. */
+export const OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3 = Object.freeze({
+  ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
+  policyId: "omega-public-static-candidate/3",
+} as const);
+export type CandidateEngineeringPolicyId = typeof OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId
+  | typeof OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId;
+export function validCandidateEngineeringPolicyId(value: unknown): value is CandidateEngineeringPolicyId {
+  return value === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId || value === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId;
+}
+
 export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES = 3;
 export const OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS = 4;
+/** Shared admission/guidance rule; baseline must be the original, not the last repair. */
+export function originalCandidateQualityPolicy(originals: Readonly<Record<string, string>>, reviewedPaths: readonly string[],
+  policyId: CandidateEngineeringPolicyId = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId) {
+  if (!validCandidateEngineeringPolicyId(policyId)) throw new Error("candidate_admission_policy_invalid");
+  const applicability = policyId === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId
+    ? classifyCandidateQualityApplicability(originals, reviewedPaths) : null;
+  const tinyRepair = applicability
+    ? ["TINY_EXISTING_FUNCTION_REPAIR", "UNCLASSIFIED_SOURCE"].includes(applicability.classification)
+    : reviewedPaths.length === 1 && (originals[reviewedPaths[0]]?.split(/\r?\n/).filter(line => line.trim()).length ?? Infinity)
+      <= OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES;
+  const base = policyId === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId
+    ? OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3 : OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2;
+  return Object.freeze({ policy: Object.freeze({ ...base,
+    maxAddedDeclarations: tinyRepair ? OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS : base.maxAddedDeclarations }),
+    tinyRepair, applicability });
+}
 /** Canonical caller-owned public requirement; no hidden assertions or inferred permissions. */
 export const OMEGA_PUBLIC_INPUT_IMMUTABILITY_REQUIREMENT = "Do not mutate input parameters.";
 
@@ -100,7 +128,8 @@ export interface CandidateEngineeringAdmissionResult {
   readonly reviewedPaths: readonly string[];
   readonly findings: readonly CandidateEngineeringAdmissionFinding[];
   readonly dimensionDispositions: Readonly<Partial<Record<EngineeringQualityDimension, QualityDisposition>>>;
-  readonly staticPolicyId: typeof OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId;
+  readonly staticPolicyId: CandidateEngineeringPolicyId | null;
+  readonly applicability?: CandidateQualityApplicability;
   readonly appliedPolicyDigest: string | null;
   readonly qualityBaselineDigest: string | null;
   readonly reviewScope: "PUBLIC_STATIC_CHANGED_FILES_ONLY";
@@ -340,6 +369,8 @@ function result(input: { readonly reviewId: string; readonly evaluatorVersion: s
   readonly changedPaths: readonly string[]; readonly findings: readonly CandidateEngineeringAdmissionFinding[];
   readonly reviewedPaths?: readonly string[]; readonly qualityBaselineDigest?: string | null;
   readonly appliedPolicyDigest?: string | null;
+  readonly staticPolicyId?: CandidateEngineeringPolicyId | null;
+  readonly applicability?: CandidateQualityApplicability;
   readonly dimensionDispositions?: Readonly<Partial<Record<EngineeringQualityDimension, QualityDisposition>>> }): CandidateEngineeringAdmissionResult {
   const body = { schemaVersion: 1 as const, reviewId: input.reviewId, evaluatorVersion: input.evaluatorVersion,
     candidateCommit: input.candidateCommit, decision: input.decision, lineage: input.lineage,
@@ -347,7 +378,8 @@ function result(input: { readonly reviewId: string; readonly evaluatorVersion: s
     reviewedPaths: Object.freeze([...(input.reviewedPaths ?? [])].sort()),
     findings: Object.freeze([...input.findings]),
     dimensionDispositions: Object.freeze({ ...(input.dimensionDispositions ?? {}) }),
-    staticPolicyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId,
+    staticPolicyId: input.staticPolicyId === undefined ? OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId : input.staticPolicyId,
+    ...(input.applicability ? { applicability: input.applicability } : {}),
     appliedPolicyDigest: input.appliedPolicyDigest ?? null,
     qualityBaselineDigest: input.qualityBaselineDigest ?? null,
     reviewScope: "PUBLIC_STATIC_CHANGED_FILES_ONLY" as const, functionalEvidenceConsidered: false as const };
@@ -362,9 +394,10 @@ function result(input: { readonly reviewId: string; readonly evaluatorVersion: s
  * proposal, and Omega application transcript. This is a static admission only:
  * execution and regression evidence remain separate mandatory gates.
  */
-function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngineeringAdmissionResult {
+function admitStaticEngineeringCandidateInternal(input: unknown, policyId: CandidateEngineeringPolicyId): CandidateEngineeringAdmissionResult {
+  const finish = (body: Parameters<typeof result>[0]) => result({ ...body, staticPolicyId: policyId });
   const contract = basicContractIssues(input);
-  if (contract.length > 0 || !isRecord(input)) return result({
+  if (contract.length > 0 || !isRecord(input)) return finish({
     reviewId: isRecord(input) && nonEmpty(input.reviewId) ? input.reviewId : "UNKNOWN",
     evaluatorVersion: isRecord(input) && nonEmpty(input.evaluatorVersion) ? input.evaluatorVersion : "UNKNOWN",
     candidateCommit: isRecord(input) && typeof input.candidateCommit === "string" && /^[0-9a-f]{40}$/.test(input.candidateCommit)
@@ -374,7 +407,7 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
   const request = input as unknown as CandidateEngineeringAdmissionRequest;
   const provenance = provenanceIssues(request);
   const changedPaths = [...new Set(request.application.changedPaths)].sort();
-  if (provenance.length > 0) return result({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
+  if (provenance.length > 0) return finish({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
     candidateCommit: request.candidateCommit, decision: "INSUFFICIENT_EVIDENCE", lineage: request.lineage,
     changedPaths, findings: provenance });
 
@@ -388,15 +421,9 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
       && qualityBaseline[path] !== request.candidateFiles[path]).sort();
   const baselineFiles = Object.fromEntries(reviewedPaths.map((path) => [path, qualityBaseline[path]]));
   const candidateFiles = Object.fromEntries(reviewedPaths.map((path) => [path, request.candidateFiles[path]]));
-  // A one-file repair of a tiny existing function should not need an entire new
-  // declaration forest. Larger files retain the broader, less false-positive-prone limit.
-  const tinySingleFileRepair = reviewedPaths.length === 1
-    && (qualityBaseline[reviewedPaths[0]]?.split(/\r?\n/).filter((line) => line.trim()).length ?? Infinity)
-      <= OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_NONBLANK_BASELINE_LINES;
-  const policy: EngineeringQualityPolicy = Object.freeze({ ...OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
+  const originalPolicy = originalCandidateQualityPolicy(qualityBaseline, reviewedPaths, policyId);
+  const policy: EngineeringQualityPolicy = Object.freeze({ ...originalPolicy.policy,
     allowedChangedPaths: Object.freeze([...request.allowedMutationPaths]), readonlyPaths: Object.freeze([]),
-    maxAddedDeclarations: tinySingleFileRepair ? OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS
-      : OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.maxAddedDeclarations,
     invariants: Object.freeze((request.publicQualityObligations ?? []).map((item) => item.invariant)) });
   const appliedPolicyDigest = sha256(canonical({ policy, publicQualityObligations: request.publicQualityObligations ?? [],
     objective: request.publicQualityObligations?.length ? request.objective : null }));
@@ -407,10 +434,11 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
       baselineFiles, candidateFiles, changedPaths: reviewedPaths, functionalAcceptance: "NOT_EVALUATED",
       regressionAcceptance: "NOT_EVALUATED", policy });
   } catch {
-    return result({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
+    return finish({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
     candidateCommit: request.candidateCommit, decision: "INSUFFICIENT_EVIDENCE", lineage: request.lineage,
       changedPaths, reviewedPaths, qualityBaselineDigest,
-      findings: [frozenFinding("CONTRACT", "STATIC_ANALYSIS_INPUT_INVALID")], appliedPolicyDigest });
+      findings: [frozenFinding("CONTRACT", "STATIC_ANALYSIS_INPUT_INVALID")], appliedPolicyDigest,
+      ...(originalPolicy.applicability ? { applicability: originalPolicy.applicability } : {}) });
   }
   const dimensionDispositions: Partial<Record<EngineeringQualityDimension, QualityDisposition>> = {};
   const findings: CandidateEngineeringAdmissionFinding[] = [];
@@ -421,17 +449,22 @@ function admitStaticEngineeringCandidateInternal(input: unknown): CandidateEngin
   }
   const staticInsufficient = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "INSUFFICIENT_EVIDENCE");
   const rejected = STATIC_DIMENSIONS.some((dimension) => dimensionDispositions[dimension] === "FAIL");
-  return result({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
+  return finish({ reviewId: request.reviewId, evaluatorVersion: request.evaluatorVersion,
     candidateCommit: request.candidateCommit, decision: rejected ? "REJECTED" : staticInsufficient ? "INSUFFICIENT_EVIDENCE" : "ADMITTED",
     lineage: request.lineage, changedPaths, reviewedPaths, qualityBaselineDigest,
-    findings, dimensionDispositions, appliedPolicyDigest });
+    findings, dimensionDispositions, appliedPolicyDigest,
+    ...(originalPolicy.applicability ? { applicability: originalPolicy.applicability } : {}) });
 }
 
-export function admitStaticEngineeringCandidate(input: unknown): CandidateEngineeringAdmissionResult {
-  try { return admitStaticEngineeringCandidateInternal(input); }
+export function admitStaticEngineeringCandidate(input: unknown,
+  policyId: CandidateEngineeringPolicyId = OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2.policyId): CandidateEngineeringAdmissionResult {
+  if (!validCandidateEngineeringPolicyId(policyId)) return result({ reviewId: "UNKNOWN", evaluatorVersion: "UNKNOWN",
+    candidateCommit: null, decision: "INSUFFICIENT_EVIDENCE", lineage: null, changedPaths: [], staticPolicyId: null,
+    findings: [frozenFinding("CONTRACT", "ADMISSION_POLICY_UNSUPPORTED")] });
+  try { return admitStaticEngineeringCandidateInternal(input, policyId); }
   catch {
     return result({ reviewId: "UNKNOWN", evaluatorVersion: "UNKNOWN", candidateCommit: null,
-      decision: "INSUFFICIENT_EVIDENCE", lineage: null, changedPaths: [],
+      decision: "INSUFFICIENT_EVIDENCE", lineage: null, changedPaths: [], staticPolicyId: policyId,
       findings: [frozenFinding("CONTRACT", "ADMISSION_INPUT_UNSAFE_OR_MALFORMED")] });
   }
 }

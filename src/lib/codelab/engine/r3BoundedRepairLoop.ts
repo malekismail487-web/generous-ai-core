@@ -3,8 +3,8 @@ import { NYX_DEFAULT_SOURCE_QUALITY_CONSTRAINTS, type NyxAvailableEvidence, type
   type NyxEngineeringFileContext, type NyxEvidenceRequest, type NyxNemotronEngineeringCognition,
   type NyxPriorCognitionFailure, type NyxPriorHypothesis, type NyxRepairCognitionEvidence, type NyxRepairHypothesis,
   type NyxSchemaDiagnostic } from "../cognition/nyxNemotronEngineeringCognition";
-import { admitStaticEngineeringCandidate, validPublicQualityObligations,
-  type CandidateEngineeringAdmissionResult, type PublicObjectiveQualityObligation } from "../assurance/candidateEngineeringAdmission";
+import { admitStaticEngineeringCandidate, validPublicQualityObligations, validCandidateEngineeringPolicyId,
+  type CandidateEngineeringPolicyId, type CandidateEngineeringAdmissionResult, type PublicObjectiveQualityObligation } from "../assurance/candidateEngineeringAdmission";
 import type { R2GPatchProposal } from "../executor/r2PatchProposal";
 import type { R3AApplyResult } from "../executor/r3DisposablePatchApplication";
 import type { R3BControlledEngineeringExecutor, R3BExecutionRequest, R3BExecutionResult } from "../executor/r3ControlledEngineeringExecution";
@@ -65,6 +65,8 @@ export interface OmegaRepairEvidenceProvider {
 }
 
 export interface R3BoundedRepairLoopConfig {
+  /** Explicit host selection for new epochs; omitted/frozen callers retain V2. */
+  readonly candidateAdmissionPolicyId?: CandidateEngineeringPolicyId;
   readonly theorySession?: TheoryInvestigationSession;
   readonly loopId: string;
   readonly evaluatorVersion: string;
@@ -266,10 +268,17 @@ function preparedCandidateValid(candidate: OmegaPreparedRepairCandidate, hypothe
 
 export class R3BoundedRepairLoop {
   readonly #config: R3BoundedRepairLoopConfig;
+  readonly #candidateAdmissionPolicyId: CandidateEngineeringPolicyId | undefined;
 
-  private constructor(config: R3BoundedRepairLoopConfig) { this.#config = config; }
+  private constructor(config: R3BoundedRepairLoopConfig) {
+    this.#config = config;
+    this.#candidateAdmissionPolicyId = config.candidateAdmissionPolicyId;
+  }
 
   static create(config: R3BoundedRepairLoopConfig): R3BoundedRepairLoop {
+    if (config.candidateAdmissionPolicyId !== undefined && !validCandidateEngineeringPolicyId(config.candidateAdmissionPolicyId)) {
+      throw new Error("bounded_repair_admission_policy_invalid");
+    }
     const maxModelInteractions = config.maxModelInteractions ?? config.maxIterations;
     const maxCognitionCorrections = config.maxCognitionCorrections ?? Math.max(0, config.maxIterations - 1);
     if (!config.loopId.trim() || !config.evaluatorVersion.trim() || !config.observerIdentity.trim()
@@ -345,6 +354,7 @@ export class R3BoundedRepairLoop {
         currentObservation.candidateCommit, request.allowedMutationPaths); }
       catch { return finish("BLOCKED", "theory_session_not_admitted", iterations, currentObservation); }
       const cognition = await this.#config.cognition.proposeRepair({ schemaVersion: 1,
+        ...(this.#candidateAdmissionPolicyId ? { candidateAdmissionPolicyId: this.#candidateAdmissionPolicyId } : {}),
         ...(theoryResearchContext ? { theoryResearchContext } : {}),
         cognitionRequestId: `${request.repairRequestId}-COGNITION-${cognitionCycle}`, objective: request.objective,
         observation: currentObservation, files: currentFiles, allowedMutationPaths: request.allowedMutationPaths,
@@ -458,7 +468,7 @@ export class R3BoundedRepairLoop {
       const functionallyPassed = verifications.length > 0 && verifications.every((item) => passing(item.observation));
       const candidateAdmission = functionallyPassed ? admitStaticEngineeringCandidate({ schemaVersion: 1,
         reviewId: `${request.repairRequestId}-CANDIDATE-ADMISSION-${iteration}`,
-        evaluatorVersion: `${this.#config.evaluatorVersion}/candidate-admission-2`,
+        evaluatorVersion: `${this.#config.evaluatorVersion}/candidate-admission-${this.#candidateAdmissionPolicyId?.endsWith("/3") ? "3" : "2"}`,
         candidateCommit: candidate.proposal.baseCandidateCommit,
         lineage: { hypothesisId: cognition.hypothesis.hypothesisId, hypothesisDigest: cognition.hypothesis.proposalDigest,
           proposalId: candidate.proposal.proposalId, proposalDigest: candidate.proposal.proposalDigest,
@@ -468,7 +478,7 @@ export class R3BoundedRepairLoop {
         qualityBaselineFiles: Object.freeze(Object.fromEntries(request.initialFiles.map((file) => [file.relativePath, file.content]))),
         candidateFiles: Object.freeze(Object.fromEntries(candidateContexts.map((file) => [file.relativePath, file.content]))),
         allowedMutationPaths: request.allowedMutationPaths, objective: request.objective,
-        publicQualityObligations: request.publicQualityObligations }) : null;
+        publicQualityObligations: request.publicQualityObligations }, this.#candidateAdmissionPolicyId) : null;
       const passed = functionallyPassed && candidateAdmission?.decision === "ADMITTED";
       const hypothesisDisposition = passed ? "SUPPORTED" as const
         : candidateAdmission?.decision === "INSUFFICIENT_EVIDENCE" ? "INSUFFICIENT_EVIDENCE" as const

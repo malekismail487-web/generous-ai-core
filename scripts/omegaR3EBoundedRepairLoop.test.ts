@@ -198,11 +198,34 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
   evidenceProvider?: OmegaRepairEvidenceProvider, maxWallClockMs = 30_000,
   theorySession?: TheoryInvestigationSession,
   interactionBudget?: { readonly maxModelInteractions: number; readonly maxCognitionCorrections: number;
-    readonly passedCandidateReview?: "ONCE_WITHIN_EXISTING_BUDGET" }): R3BoundedRepairLoop {
+    readonly passedCandidateReview?: "ONCE_WITHIN_EXISTING_BUDGET";
+    readonly candidateAdmissionPolicyId?: "omega-public-static-candidate/2" | "omega-public-static-candidate/3" }): R3BoundedRepairLoop {
   return R3BoundedRepairLoop.create({ loopId: `R3E-LOOP-${sequence}`, evaluatorVersion: "r3-e/1",
     observerIdentity: "OMEGA-R3E-OBSERVER", cognition: nyx, candidateBuilder, evidenceProvider, maxIterations, maxWallClockMs,
     ...interactionBudget,
     maxChangesPerIteration: 1, maxPatchBytesPerIteration: 1_000, maxDiagnosisCharacters: 1_000, theorySession });
+}
+
+{
+  const config = {loopId:"POLICY-SNAPSHOT",evaluatorVersion:"r3-e/1",observerIdentity:"OMEGA-POLICY-OBSERVER",
+    candidateBuilder:builder(),maxIterations:1,maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:1000,
+    maxDiagnosisCharacters:1000,candidateAdmissionPolicyId:"omega-public-static-candidate/3" as "omega-public-static-candidate/2" | "omega-public-static-candidate/3",
+    cognition:cognition(async()=>{config.candidateAdmissionPolicyId="omega-public-static-candidate/2";
+      return providerResponse(modelResponse(CORRECT_SOURCE));})};
+  const result = await R3BoundedRepairLoop.create(config).run(loopRequest());
+  check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && result.iterations[0].candidateAdmission?.staticPolicyId === "omega-public-static-candidate/3"
+    && result.iterations[0].candidateAdmission.evaluatorVersion.endsWith("candidate-admission-3"),
+    "new isolated repair epochs can explicitly select V3 without relabeling legacy admission or replacing functional verification");
+  check(config.candidateAdmissionPolicyId === "omega-public-static-candidate/2"
+    && result.iterations[0].candidateAdmission?.staticPolicyId === "omega-public-static-candidate/3",
+    "the loop snapshots the host policy at construction; caller mutation during inference cannot silently switch acceptance versions");
+  check(!result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority,
+    "the policy correction grants no source repository or production authority");
+  let rejected = false;
+  try { loop(cognition(async()=>new Response("{}")),builder(),1,undefined,30000,undefined,
+    {maxModelInteractions:1,maxCognitionCorrections:0,candidateAdmissionPolicyId:"unsupported" as never}); }
+  catch(error) { rejected = error instanceof Error && error.message === "bounded_repair_admission_policy_invalid"; }
+  check(rejected,"unknown repair-loop admission version is rejected at construction, not silently substituted");
 }
 
 {

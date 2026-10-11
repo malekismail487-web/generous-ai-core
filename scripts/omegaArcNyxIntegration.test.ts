@@ -62,6 +62,12 @@ for (const path of ["src/lib/codelab/cognition/nyxNemotronEngineeringCognition.t
   check(arcCorePredecessorSource(path, current + "// Unauthorized extra change\n") !== baseline,
     `${path} unrelated changes cannot hide in refinement`);
 }
+for (const path of ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts", "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts"]) {
+  const current = await readFile(path,"utf8");
+  const baseline = execFileSync("git",["show",`7e53861513514a6a034ec542780441afd013a62c:${path}`],{encoding:"utf8"});
+  check(arcCorePredecessorSource(path,current) === baseline, "V3 quality-policy refinement exactly reproduces the separately preserved V2 source");
+  check(arcCorePredecessorSource(path,current+"// unrelated change\n") !== baseline, "V3 policy registration cannot hide unrelated source changes or inherit frozen scores");
+}
 const spec = (arm: ArmSpec["arm"]): ArmSpec => ({ arm, version: "test", sourceDigest: theoryDigest(arm),
   inferenceMode: "SYNTHETIC_PROTOCOL_TEST", model: "nvidia/nemotron-3-ultra-550b-a55b", modelConfigDigest: digest,
   authorityDigest: digest, toolEnvelopeDigest: digest, supportedCapabilities: ["JSON_GRID_OUTPUT"] });

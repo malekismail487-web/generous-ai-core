@@ -1,5 +1,51 @@
 # NYX benchmark capability program
 
+### Approved V3 applicability correction (isolated opt-in, not cognitive promotion)
+
+The operator approved a **new** `omega-public-static-candidate/3` policy on
+2026-10-11. It uses the original syntax tree rather than nonblank source lines.
+A single unconditional literal/Error-message throw stub receives the existing
+general implementation budget (12 added declarations). An actual small single
+function receives the existing tiny-repair budget (four); the structural cutoff
+is 40 original AST nodes. Named functions, arrows, function expressions and
+default function exports are covered. Unsupported/malformed/oversized single
+source uses a conservative four-declaration budget, not a stub exception.
+Classification is whitespace/comment-invariant within the 65,536-byte input cap;
+it is a syntax applicability rule, not proof of semantics or general equivalence.
+No task identity, hidden case, reference answer or model confidence selects it.
+
+The host explicitly selects V3 when constructing a new isolated repair loop;
+the version is snapshotted and carried into admission/evidence. Guidance uses
+the same original-state rule. Omitted selection keeps **V2 and its exact evidence
+format**. Unknown policy versions fail closed. V2 results, frozen source hashes
+and prior failure records are not regraded; exact source-inversion checks retain
+historical reproducibility and reject unrelated modifications.
+
+All absolute limits remain unchanged: file/line/byte bounds, complexity 12,
+complexity delta eight, nesting four, general declaration delta 12. Public
+requirements, input ownership, API compatibility, syntax, type-safety, unsafe
+runtime access, provenance, scope, execution and cumulative original-state
+checks remain mandatory. No source repository or production authority is added.
+
+In the development witness, V2 still returns **REJECTED / ADMITTED / ADMITTED /
+REJECTED** for four equivalent throw-stub formats. V3 returns **ADMITTED** for all
+four; the same candidate still fails the tiny-existing-function budget for all
+four corresponding formats. The independent finite functional oracle retains
+882 cases / 1,764 candidate evaluations / zero wrong outputs or input mutations.
+This is an **evaluation-validity correction**, not a measured NYX reasoning gain,
+full benchmark score or evidence for an 80% frontier-benchmark claim. No live
+model calls are made. Fresh comparisons must pin the same V3 acceptance policy
+in both arms and account separately for interface/policy effects and cognition.
+Ω coverage: **PARTIAL / JUST-IN-TIME**; directly implemented original-state
+quality, evidence-version separation, explicit scope and no self-certification;
+supporting falsification/genealogy; cognitive promotion and production deferred.
+
+[Sanitized correction receipt](../../../docs/omega/evidence/nyx-quality-policy-v3-7e538615.json):
+109 suites / **12,827 checks / zero failures**, TypeScript 5.8.3 zero, build pass,
+inventory pass, secret scan zero. The broader run caught and corrected a missing
+exact source-inversion registration before the final full rerun; historical
+source digests and the prior diagnostic remain unchanged.
+
 ### Selection contract coherence: bounded activation hypothesis
 
 After the unexercised `d9ecacb3` diagnostic below, the opt-in selector now has a
