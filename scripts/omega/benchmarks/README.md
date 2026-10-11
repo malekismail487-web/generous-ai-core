@@ -1,6 +1,42 @@
 # NYX benchmark capability program
 
-### V3 native-reasoning transfer — frozen experiment (2026-10-11)
+### V3 native-reasoning transfer — partial correctness, no promotion (2026-10-11)
+
+Frozen candidate `db290f55f445e78211c61f1aa54ce7e8615ad4f3`,
+[run 38112681003](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38112681003).
+Full functional + quality acceptance was **3/8 in each arm**. Native reasoning
+increased functional acceptance from **3/8 to 6/8**, including correct geometry
+in both repeats where the control failed, but three correct final candidates
+still failed the unchanged structural limits. First-call full acceptance was
+2/8 control versus 3/8 native; accepted repairs were 1 versus 0.
+
+Control used 14 calls / 85,530 reported tokens; native used 13 / 103,945
+(21.5% more tokens). **Zero of eight pairs matched realized compute**; all eight
+had stable delivery and verified comparison controls. No reproducible full
+acceptance gain and the frozen efficacy criterion was not met. **No promotion
+or default change.** Partial functional gains with extra compute are not proof
+of a compute-matched cognitive improvement or an official benchmark score.
+
+16 selected/attempted arm runs, 14 final private artifacts graded and two
+ungraded; no unexecuted runs. Remaining terminal classes: five functional
+failures, two syntax-failed task runs and three quality rejections. Across 27
+logical/physical/HTTP calls there were 24 valid emissions, three syntax
+rejections, zero truncations, provider failures, retries or unknown-usage calls.
+40 verifier executions, 593 scheduled tool-work units, 309 private-scorer units;
+398,426 ms summed arm wall time. Native decimal's public-pass-to-fail repair was
+already privately incorrect before repair, not a regression from full correctness.
+All owned environments were cleaned and source integrity preserved.
+
+Artifact SHA256 `79b32f82abe36579ea6b403faf785ecd26454f43dd4ae6218159a66fd76fa858`;
+CRC/member bounds, report/log/freeze/task agreement and 20 frozen source hashes
+verified. Windows and clean Linux CI both passed **109 suites / 13,093 checks**;
+TypeScript 5.8.3 remains zero, build/package/security/inventory checks pass.
+Full sanitized [receipt](../../../docs/omega/evidence/nyx-v3-native-db290f55.json).
+
+Next general investigation: quality-constrained coherent algorithm redesign on
+separate development tasks, not more reasoning tokens, relaxed limits or seeds
+from these now-exposed solutions. Statement-level failure causes cannot be
+reconstructed from digest-only records; do not invent them.
 
 Two synthesized, separate E3 development reproductions exercised the actual
 quality-repair driver: relocating cumulative state and moving saturation out of
@@ -9,7 +45,7 @@ public-passing, quality-admitted but privately incorrect candidate. These test
 doubles are not recovered NYX source, live reasoning evidence, or model seeds.
 The final independent scorer rejects them; no acceptance check was weakened.
 
-The next frozen comparison reuses **existing** bounded native Super reasoning
+The frozen comparison reused **existing** bounded native Super reasoning
 (`none` versus `high`, 2,048 reserved reasoning tokens inside the same 8,192
 output cap). Both arms use identical V3 original-state applicability, public
 structural budget, post-rejection declaration-site feedback, grammar, authority
