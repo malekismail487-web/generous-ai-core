@@ -23,6 +23,8 @@ import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./benchmarks/lengthGrammarTransfe
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./benchmarks/nativeReasoningTransferTasks";
 import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./benchmarks/originalBudgetTransferTasks";
+import { V3_FRESH_BUDGET_EPOCH, v3FreshBudgetTasks,
+  v3FreshBudgetWireVerified } from "./benchmarks/v3FreshBudgetTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -42,6 +44,8 @@ if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") 
 const original = theoryDigest(git("ls-files", "-s"));
 const nativeReasoningComparison = process.env.NYX_NATIVE_REASONING_TRANSFER === "1";
 const originalBudgetComparison = process.env.NYX_ORIGINAL_BUDGET_TRANSFER === "1";
+const v3FreshBudgetComparison = process.env.NYX_V3_FRESH_BUDGET_TRANSFER === "1";
+if (v3FreshBudgetComparison && !originalBudgetComparison) throw Error("v3_fresh_epoch_requires_original_budget_only");
 const behaviorRepairComparison = process.env.NYX_BEHAVIOR_REPAIR_TRANSFER === "1";
 const localRefactorComparison = process.env.NYX_LOCAL_REFACTOR_TRANSFER === "1";
 const runtimeReviewComparison = process.env.NYX_RUNTIME_REVIEW_TRANSFER === "1";
@@ -69,10 +73,11 @@ const qualitySiteComparison=process.env.NYX_QUALITY_SITE_COMPARISON==="1";
 if([boundsComparison,localDeliveryComparison,qualityGuidanceComparison,qualitySiteComparison,decisionContractComparison,boundedContractComparison,nativeReasoningComparison,originalBudgetComparison,behaviorRepairComparison,localRefactorComparison,runtimeReviewComparison,evaluationOrderComparison].filter(Boolean).length>1)throw Error("comparison_variables_must_not_be_combined");
 const variants=sourceSelectionComparison?["EVALUATION_ORDER_SOURCE_CONTROL","SOURCE_BOUND_SELECTION"]:evaluationOrderComparison?["GUARDED_V2_CONTROL","EVALUATION_ORDER_PROPOSALS"]:runtimeReviewComparison?["SCOPED_REVIEW_CONTROL","RUNTIME_OBSERVATION_REVIEW"]:localRefactorComparison?["QUALITY_SITES_CONTROL","GUARDED_REFACTOR_PROPOSALS"]:behaviorRepairComparison?["QUALITY_SITES_CONTROL","BINDING_USES"]:originalBudgetComparison?["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]:nativeReasoningComparison?["NATIVE_NONE","NATIVE_BOUNDED_REASONING"]:boundedContractComparison?["DECISION_REQUIRED_FIELDS",boundedTreatment]:decisionContractComparison?["LEGACY_OPTIONAL_FIELDS","DECISION_REQUIRED_FIELDS"]:qualitySiteComparison?["MEASURED_STRUCTURE","STRUCTURE_SITES"]:qualityGuidanceComparison?["PUBLIC_METRICS","MEASURED_STRUCTURE"]:localDeliveryComparison?["HOSTED_BOUNDED","STRICT_LOCAL"]:boundsComparison?["LEGACY_OMITTED","CORRECTED_BOUNDED"]:["LINES","TEXT"];
 const selectedTasks = conditionalRepair?CONDITIONAL_REFACTOR_REPAIR_TASKS.flatMap(task=>[1,2].map(repeat=>({...task,id:`${task.id}-REPEAT-${repeat}`}))):evaluationOrderComparison?EVALUATION_ORDER_TRANSFER_TASKS:runtimeReviewComparison?RUNTIME_REVIEW_TRANSFER_TASKS:localRefactorComparison?LOCAL_REFACTOR_TRANSFER_TASKS:behaviorRepairComparison?BEHAVIOR_REPAIR_TRANSFER_TASKS:originalBudgetComparison?ORIGINAL_BUDGET_TRANSFER_TASKS:nativeReasoningComparison?NATIVE_REASONING_TRANSFER_TASKS:boundedContractComparison?(lengthTransfer?LENGTH_GRAMMAR_TRANSFER_TASKS:patternTransfer?PATTERN_REPAIR_TRANSFER_TASKS:BOUNDED_CONTRACT_TRANSFER_TASKS):decisionContractComparison?DECISION_CONTRACT_TRANSFER_TASKS:qualitySiteComparison?QUALITY_SITE_TRANSFER_TASKS:qualityGuidanceComparison?MEASURED_QUALITY_TRANSFER_TASKS:localDeliveryComparison?SOURCE_LITERAL_TRANSFER_TASKS:boundsComparison ? ARRAY_BOUND_TRANSFER_TASKS : SOURCE_REPRESENTATION_TASKS;
+const epochTasks = v3FreshBudgetComparison ? v3FreshBudgetTasks() : selectedTasks;
 const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningComparison?"PER_ARM_FROZEN_NATIVE":"CONSTRAINED_JSON", maxOutputTokens: localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison?4096:8192,
-  taskCorpus:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
+  taskCorpus:v3FreshBudgetComparison?V3_FRESH_BUDGET_EPOCH.version:conditionalRepair?"nyx-exposed-supplied-candidate-conditional-repair/2":evaluationOrderComparison?"nyx-evaluation-order-exposed-development/2":runtimeReviewComparison?"nyx-runtime-observation-exposed-development/2":localRefactorComparison?"nyx-local-refactor-exposed-development/2":behaviorRepairComparison?"nyx-behavior-repair-fresh-transfer/1":originalBudgetComparison?"nyx-original-budget-fresh-transfer/1":nativeReasoningComparison?"nyx-native-reasoning-fresh-transfer/1":lengthTransfer?"nyx-length-grammar-transfer/1":patternTransfer?"nyx-pattern-repair-transfer/1":"HISTORICAL_SELECTED_CORPUS",
   providerTimeoutMs: 65000, logicalCallsPerTask: conditionalRepair?1:2, candidateIterationsPerTask: 2, toolCallsPerTask: 3,
-  wallClockMsPerTask: 155000, globalWallClockMs: 1350000, maxPatchBytes: 12000,
+  wallClockMsPerTask: 155000, globalWallClockMs: v3FreshBudgetComparison?2700000:1350000, maxPatchBytes: 12000,
   maxPromptBytes: 48000, realizedTolerance: 0.1,
   ...(decisionGenerationComparison ? {physicalCallsPerTaskIncludingRetries: conditionalRepair?1:2, reasoningControl: "SUPER_HOSTED_NATIVE",
     ...(nativeReasoningComparison?{reasoningPolicies:{NATIVE_NONE:{effort:"none",budget:null},
@@ -86,6 +91,9 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
   publicFeedback: runtimeReviewComparison?"IDENTICAL_TESTS_AND_ADMISSION_PLUS_OPTIONAL_UNTRUSTED_PUBLIC_SAMPLES":"IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION", authority: "EXISTING_R3_ISOLATED_ONLY",
   ...(originalBudgetComparison?{postQualityGuidance:"IDENTICAL_STRUCTURE_SITES",preCandidateGuidance:{
     STRUCTURE_SITES_CONTROL:"EXISTING_PUBLIC_POLICY_ONLY",ORIGINAL_BUDGET:"PUBLIC_ORIGINAL_STATE"}}:{}),
+  ...(v3FreshBudgetComparison?{qualityPolicy:V3_FRESH_BUDGET_EPOCH.admissionPolicyId,
+    epoch:V3_FRESH_BUDGET_EPOCH, suppliedCandidates:false, modelCallsMaximum:32,
+    comparisonAgainstV2:"NOT_COMPARABLE_NOT_REGRADED", broadPromotion:"NONE"}:{}),
   ...(behaviorRepairComparison?{preCandidateGuidance:"IDENTICAL_PUBLIC_ORIGINAL_STATE",postQualityGuidance:{
     QUALITY_SITES_CONTROL:"STRUCTURE_SITES",BINDING_USES:"STRUCTURE_SITES_PLUS_LEXICAL_BINDING_USES"},
     firstAttemptDifferences:"NO_TREATMENT_PRESENT_BEFORE_QUALITY_REJECTION_NOT_CAUSAL_MECHANISM_GAINS"}:{}),
@@ -125,6 +133,8 @@ const sourceDigests = Object.fromEntries(await Promise.all([
   "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
   "src/lib/codelab/assurance/engineeringQualityOracle.ts",
   ...(budgetGuidanceComparison ? ["src/lib/codelab/assurance/candidateEngineeringAdmission.ts"] : []),
+  ...(v3FreshBudgetComparison?["src/lib/codelab/assurance/candidateQualityApplicability.ts",
+    "scripts/omega/benchmarks/v3FreshBudgetTransferTasks.ts"]:[]),
   ...(concreteRefactorComparison ? ["src/lib/codelab/cognition/nyxLocalRefactorProposals.ts"] : []),
   ...(conditionalRepair?["scripts/omega/benchmarks/conditionalRefactorRepairTasks.ts"]:[]),
   ...(sourceSelectionComparison?["src/lib/codelab/cognition/nyxSourceBoundRefactorSelection.ts"]:[]),
@@ -135,14 +145,14 @@ const sourceDigests = Object.fromEntries(await Promise.all([
     "scripts/omega/benchmarks/nyxArcAdapter.ts"] : [])
 ].map(async path => [path, contentHash(await readFile(path, "utf8"))])));
 const began = Date.now(); const globalDeadline = began + frozen.globalWallClockMs;
-const tasks = selectedTasks.map(t => ({id: t.id, tier: t.tier, domain: t.domain,
+const tasks = epochTasks.map(t => ({id: t.id, tier: t.tier, domain: t.domain,
   inputDigest: theoryDigest({objective: t.objective, publicCases: t.publicCases, privateInputs: t.privateCases.map(c => c.input),
     ...(conditionalRepair?{suppliedCandidateDigest:contentHash((t as ConditionalRepairTask).suppliedCandidate)}:{}),
     ...(runtimeReviewComparison?{publicRuntimeInputs:t.publicRuntimeInputs}:{})}),
   oracleDigest: theoryDigest(t.privateCases), fixtureDigest: theoryDigest(t)}));
 console.log(`NYX_REPRESENTATION_FREEZE ${JSON.stringify({candidate, frozen, sourceDigests, tasks, freezeDigest: theoryDigest({candidate, frozen, sourceDigests, tasks})})}`);
 const results: any[] = [];
-for (const [index, task] of selectedTasks.entries()) {
+for (const [index, task] of epochTasks.entries()) {
   // Balanced order, not selected by the model or observed outcome.
   for (const variant of (index % 2 ? variants.slice().reverse() : variants)) {
     const representation = boundsComparison||localDeliveryComparison||qualityGuidanceComparison||qualitySiteComparison||decisionGenerationComparison ? "LINES" : variant as "TEXT" | "LINES";
@@ -153,6 +163,8 @@ for (const [index, task] of selectedTasks.entries()) {
     const observedInferenceControls: {model: unknown; maxTokens: unknown; temperature: unknown;
       effort: unknown; reasoningBudget: unknown; schemaDigest: string;
       initialCandidateState?: boolean; originalBudgetPresented?: boolean;
+      originalBudgetVersion?:unknown; originalBudgetPolicyId?:unknown;
+      publicAdmissionPolicyId?:unknown; legacyLineApplicabilityPresent?:boolean;
       postCandidatePhase?:boolean; passReviewPhase?:boolean; publicRuntimeSampleCount?:number; promptDigest?:string;
       qualityRepairPhase?: boolean; bindingUsesPresented?: boolean; localProposalsPresented?: boolean;
       localProposalCount?: number; localProposalVersion?: string | null; localProposalIdentities?: readonly unknown[];
@@ -175,7 +187,11 @@ for (const [index, task] of selectedTasks.entries()) {
               initialCandidateState:prompt.hypothesisHistory.length===0
                 && prompt.activeRepairDriver.kind==="EXECUTION_OBSERVATION",
               originalBudgetPresented:prompt.originalStructuralBudget?.version
-                ==="nyx-original-state-quality-budget/1"}:{}), ...(behaviorRepairComparison?{
+                ===(v3FreshBudgetComparison?V3_FRESH_BUDGET_EPOCH.originalBudgetVersion:"nyx-original-state-quality-budget/1"),
+              ...(v3FreshBudgetComparison?{originalBudgetVersion:prompt.originalStructuralBudget?.version??null,
+                originalBudgetPolicyId:prompt.originalStructuralBudget?.staticPolicyId??null,
+                publicAdmissionPolicyId:prompt.constraints.publicStaticAdmission.policyId,
+                legacyLineApplicabilityPresent:Object.hasOwn(prompt.constraints.publicStaticAdmission.tinySingleChangedFileRule,"atMostNonblankOriginalLines")}: {})}:{}), ...(behaviorRepairComparison?{
               qualityRepairPhase:prompt.activeRepairDriver.kind==="QUALITY_REJECTION",
               bindingUsesPresented:prompt.behaviorPreservingQualityRepair?.version
                 ==="nyx-behavior-preserving-quality-repair/1"}:{}), ...(concreteRefactorComparison?{
@@ -232,6 +248,7 @@ for (const [index, task] of selectedTasks.entries()) {
       fixtureEvidence=composition?.fixtureEvidence??[];
       const loop = R3BoundedRepairLoop.create({loopId: `REPRESENTATION-${task.id}-${representation}`, evaluatorVersion: "source-representation-cycle/1",
         observerIdentity: "OMEGA-REPRESENTATION-OBSERVER", cognition:composition?.cognition??cognition,
+        ...(v3FreshBudgetComparison?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
         candidateBuilder: {builderIdentity: "OMEGA-REPRESENTATION-EXISTING-R3", prepare: h => session.prepare(h)},
         ...(runtimeReviewComparison?{passedCandidateReview:"ONCE_WITHIN_EXISTING_BUDGET" as const,
           ...(variant==="RUNTIME_OBSERVATION_REVIEW"?{publicRuntimeSamples:"BOUNDED_OBSERVATIONS" as const}:{})}:{}),
@@ -270,6 +287,8 @@ for (const [index, task] of selectedTasks.entries()) {
     const perIteration=loopResult?.iterations.map(i=>({iteration:i.iteration,publicAccepted:i.functionallyPassed,
       ...(qualityMechanismComparison||runtimeReviewComparison?{candidateSourceDigest:i.hypothesis.changes[0]?.replacementContentHash??null}:{}),
       quality:i.candidateAdmission?.decision??null,qualityFindings:i.candidateAdmission?.findings??[],
+      ...(v3FreshBudgetComparison?{staticPolicyId:i.candidateAdmission?.staticPolicyId??null,
+        applicability:i.candidateAdmission?.applicability??null}:{}),
       ...assessRepresentationCandidate(task,{publicAccepted:i.functionallyPassed===true,
         qualityAccepted:i.candidateAdmission?.decision==="ADMITTED",
         verificationStdout:i.verifications[0]?.execution.evidence.stdout??null,
@@ -313,7 +332,11 @@ for (const [index, task] of selectedTasks.entries()) {
           sampleObservationPrompts:observedInferenceControls.filter(c=>(c.publicRuntimeSampleCount??0)>0).length,
           retainedWithoutMutation:loopResult?.reason==="bounded_review_retained_independently_admitted_candidate"}:{}),
         ...(originalBudgetComparison?{originalBudgetControlVerified:
-          originalBudgetWireControlVerified(variant,observedInferenceControls)}:{}),
+          (v3FreshBudgetComparison?v3FreshBudgetWireVerified:originalBudgetWireControlVerified)(variant,observedInferenceControls),
+          ...(v3FreshBudgetComparison?{admissionPolicyControlVerified:perIteration.length>0&&perIteration.every(i=>i.staticPolicyId===V3_FRESH_BUDGET_EPOCH.admissionPolicyId),
+            publicPolicyControlVerified:observedInferenceControls.every(control=>control.publicAdmissionPolicyId===V3_FRESH_BUDGET_EPOCH.admissionPolicyId
+              &&control.legacyLineApplicabilityPresent===false),
+            initialCandidateMeetsFunctionalAndQuality:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="ADMITTED"}: {})}:{}),
         ...(behaviorRepairComparison?{behaviorRepairControlVerified:
           behaviorRepairWireControlVerified(variant,observedInferenceControls),
           qualityRepairPromptCount:observedInferenceControls.filter(control=>control.qualityRepairPhase).length,
@@ -351,6 +374,7 @@ const pairs = tasks.map(task => {
     && r.toolUsageComplete
     && (!runtimeReviewComparison || r.inferenceControlVerified===true&&r.runtimeReviewControlVerified===true)
     && (!originalBudgetComparison || r.inferenceControlVerified === true && r.originalBudgetControlVerified === true)
+    && (!v3FreshBudgetComparison || r.admissionPolicyControlVerified===true&&r.publicPolicyControlVerified===true)
     && (!behaviorRepairComparison || r.inferenceControlVerified === true && r.behaviorRepairControlVerified === true)
     && (!concreteRefactorComparison || r.inferenceControlVerified === true && r.localRefactorControlVerified === true)
     && (!conditionalRepair || r.fixtureReady===true&&r.fixtureInteractions===1&&r.fixtureEvidence[0]?.evidenceClass==="E3")
@@ -440,7 +464,10 @@ const report = {schemaVersion: 1, candidate, frozen, sourceDigests, tasks, resul
       unknownUsageCalls: rows.reduce((n, r) => n + (r.usage?.unknownUsageCalls ?? 0), 0)};}),
   evidence: "E4_LIVE_MODEL_AND_E3_LOCAL_OMEGA_AND_PRIVATE_EXACT_SCORER",
   authorship: "SAME_SESSION_NOT_INDEPENDENTLY_AUTHORED", benchmarkTasksUsed: false,
-  staticAdmissionAndParserUnchanged: true, rawSourcePersisted: false, grantsAuthority: false, broadPromotion: false};
+  staticAdmissionAndParserUnchanged: !v3FreshBudgetComparison,
+  ...(v3FreshBudgetComparison?{staticAdmissionWithinEpochIdentical:true, historicalV2EvidenceUnchanged:true,
+    diagnosisScope:"QUALITY_GUIDANCE_EFFICACY_UNDER_AUTHORIZED_V3_NOT_V3_COGNITIVE_GAIN"}:{}),
+  rawSourcePersisted: false, grantsAuthority: false, broadPromotion: false};
 await writeFile(join(process.env.RUNNER_TEMP || tmpdir(), `nyx-source-representation-${candidate}.json`), JSON.stringify(report, null, 2));
 console.log(`NYX_REPRESENTATION_CYCLE ${JSON.stringify(report)}`);
 if (!sourceUnchanged || results.some(r => r.cleanup && (!r.cleanup.sourceUnchanged || !r.cleanup.cleanupVerified))) process.exitCode = 1;

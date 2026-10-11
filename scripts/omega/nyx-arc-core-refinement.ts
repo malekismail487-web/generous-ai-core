@@ -347,7 +347,13 @@ const qualityApplicabilityV3Refinement: Record<string, readonly (readonly [strin
   "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": [
     [
       "",
-      "import { validCandidateEngineeringPolicyId, type CandidateEngineeringPolicyId } from \"../assurance/candidateEngineeringAdmission\";\n"
+      "import { validCandidateEngineeringPolicyId, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3,\n  type CandidateEngineeringPolicyId } from \"../assurance/candidateEngineeringAdmission\";\n"
+    ],
+    ["", "import { OMEGA_STRUCTURAL_REPAIR_APPLICABILITY } from \"../assurance/candidateQualityApplicability\";\n"],
+    ["", "export const NYX_PUBLIC_STATIC_QUALITY_GUIDANCE_V3 = Object.freeze({\n  ...NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,\n  policyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId,\n  tinySingleChangedFileRule: Object.freeze({\n    applicability: \"ORIGINAL_SYNTAX_NOT_NONBLANK_LINES\",\n    maxOriginalBytes: OMEGA_STRUCTURAL_REPAIR_APPLICABILITY.maxOriginalBytes,\n    maxTinyFunctionNodes: OMEGA_STRUCTURAL_REPAIR_APPLICABILITY.maxTinyFunctionNodes,\n    fromScratchThrowStubMaxAddedDeclarations: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.maxAddedDeclarations,\n    tinyExistingFunctionMaxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,\n    unclassifiedSingleSourceMaxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,\n  }),\n});\n"],
+    [
+      "        publicStaticAdmission: NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,\n",
+      "        publicStaticAdmission: request.candidateAdmissionPolicyId === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId\n          ? NYX_PUBLIC_STATIC_QUALITY_GUIDANCE_V3 : NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,\n"
     ],
     [
       "",

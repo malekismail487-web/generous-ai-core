@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { validCandidateEngineeringPolicyId, type CandidateEngineeringPolicyId } from "../assurance/candidateEngineeringAdmission";
+import { validCandidateEngineeringPolicyId, OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3,
+  type CandidateEngineeringPolicyId } from "../assurance/candidateEngineeringAdmission";
+import { OMEGA_STRUCTURAL_REPAIR_APPLICABILITY } from "../assurance/candidateQualityApplicability";
 import { isAbsolute } from "node:path";
 import { measuredQualityRepairGuidance, originalStateQualityBudget, behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance";
 import { nyxLocalRefactorGuidance } from "./nyxLocalRefactorProposals";
@@ -413,6 +415,18 @@ export const NYX_PUBLIC_STATIC_QUALITY_GUIDANCE = Object.freeze({
   interpretation: "These are public static admission bounds, not proof of functional correctness. A passing visible test does not waive them.",
   borrowedInputDiscipline: "When the objective forbids input mutation, imported or unknown helper returns are conservatively treated as possible input aliases. Allocate owned containers before in-place sorting/reversing; copy nested records before modifying their fields. Do not silence or bypass the detector.",
 });
+export const NYX_PUBLIC_STATIC_QUALITY_GUIDANCE_V3 = Object.freeze({
+  ...NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,
+  policyId: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId,
+  tinySingleChangedFileRule: Object.freeze({
+    applicability: "ORIGINAL_SYNTAX_NOT_NONBLANK_LINES",
+    maxOriginalBytes: OMEGA_STRUCTURAL_REPAIR_APPLICABILITY.maxOriginalBytes,
+    maxTinyFunctionNodes: OMEGA_STRUCTURAL_REPAIR_APPLICABILITY.maxTinyFunctionNodes,
+    fromScratchThrowStubMaxAddedDeclarations: OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.maxAddedDeclarations,
+    tinyExistingFunctionMaxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
+    unclassifiedSingleSourceMaxAddedDeclarations: OMEGA_TINY_SINGLE_FILE_REPAIR_MAX_ADDED_DECLARATIONS,
+  }),
+});
 export const NYX_REPAIR_SYSTEM_INSTRUCTION = "You are Νύξ engineering cognition running on NVIDIA Nemotron 3 Ultra. Act like a disciplined software engineer: diagnose causally, cite admitted evidence, state the invariant, challenge the repair with bounded counterexamples, and revise falsified or quality-rejected candidates instead of perturbing them. Produce complete, parseable, readable source that preserves unrelated behavior and repository conventions. If Omega supplies sanitized diagnostics from an invalid prior intent or a deterministic quality rejection, correct every listed violation without repeating it. Return only one strict JSON semantic engineering intent with no markdown or commentary. You propose; Omega authorizes.";
 export const NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST = sha256(canonical({
   version: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
@@ -776,7 +790,8 @@ export class NyxNemotronEngineeringCognition {
       constraints: { output: "JSON_SCHEMA", maxChanges: contract.bounds.changes, maxPatchBytes: contract.bounds.patchBytes,
         maxCounterexamples: contract.bounds.counterexamples, fieldBounds: contract.bounds,
         sourceQuality: request.sourceQualityConstraints,
-        publicStaticAdmission: NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,
+        publicStaticAdmission: request.candidateAdmissionPolicyId === OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V3.policyId
+          ? NYX_PUBLIC_STATIC_QUALITY_GUIDANCE_V3 : NYX_PUBLIC_STATIC_QUALITY_GUIDANCE,
         sourceRepresentation: contract.sourceRepresentation, sourceLinesPolicy: contract.sourceLinesPolicy,
         sourceLanguageContracts,
         omegaVerificationPlan: request.allowedVerificationToolIds,

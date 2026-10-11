@@ -2596,6 +2596,12 @@
       ]
     },
     {
+      "name": "NYX_V3_FRESH_BUDGET_TRANSFER",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "OMEGA_ALLOW_ISOLATED_CONTAINER_PREFLIGHT",
       "files": [
         "scripts/omega/nyx-container-preflight.ts"

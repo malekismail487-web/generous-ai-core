@@ -1703,5 +1703,26 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
   }
 }
 
+{
+  for (const guidance of [undefined,"PUBLIC_ORIGINAL_STATE"] as const) {
+    const prompts: any[] = [];
+    const host = NyxNemotronEngineeringCognition.create({cognitionId:"V3-GENERIC-POLICY-CONSISTENCY",
+      maxPromptBytes:50000,maxOutputTokens:1024,
+      ...(guidance?{structuralBudgetGuidance:guidance}:{}),
+      provider:provider(async(url,init)=>{prompts.push(JSON.parse(JSON.parse(String(init?.body)).messages[1].content));
+        return transportFor(intent())(url,init);})});
+    await host.proposeRepair(request({candidateAdmissionPolicyId:"omega-public-static-candidate/3"}));
+    const publicPolicy=prompts[0]?.constraints.publicStaticAdmission;
+    check(publicPolicy?.policyId==="omega-public-static-candidate/3"
+      &&publicPolicy.tinySingleChangedFileRule.applicability==="ORIGINAL_SYNTAX_NOT_NONBLANK_LINES"
+      &&!("atMostNonblankOriginalLines" in publicPolicy.tinySingleChangedFileRule),
+      "V3 generic prompt names the actual host policy and never contradicts it with V2 line-count applicability");
+    check(publicPolicy?.maxComplexityDelta===8&&publicPolicy?.maxCyclomaticComplexityPerChangedFile===12
+      &&publicPolicy?.maxNestingDepthPerChangedFile===4&&publicPolicy?.maxAddedDeclarations===12,
+      "V3 generic guidance preserves unchanged absolute and general structural limits in both arms");
+    check(Boolean(prompts[0]?.originalStructuralBudget)===Boolean(guidance),
+      "generic V3 policy consistency does not silently enable the optional exact original-state budget");
+  }
+}
 console.log(`Omega R3-D NYX Nemotron cognition tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) { console.error("FAILURES:"); for (const failure of failures) console.error(`  - ${failure}`); process.exit(1); }

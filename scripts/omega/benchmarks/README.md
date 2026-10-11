@@ -2543,3 +2543,37 @@ verifies artifact/log/source identity, cleanup and clean-candidate CI (109 suite
 is admitted. Next diagnostic must isolate quotation, backslash and control-character
 generation on generic synthetic data, not loosen JSON parsing or repair benchmark
 answers to force a passing result.
+
+## Fresh original-budget guidance comparison under V3
+
+`NYX_ORIGINAL_BUDGET_TRANSFER=1 NYX_V3_FRESH_BUDGET_TRANSFER=1` freezes
+four newly authored, unseeded tasks (graph components, exact rational prefixes,
+transaction visibility, JSON addressing), with two predeclared repeats in fresh
+sessions. This is eight pairs, not eight independent tasks. Both arms use
+`omega-public-static-candidate/3`, Super, temperature zero, hosted native effort
+none, the same strict grammar, public feedback, withheld oracle and authority.
+Only exact public original-state budget guidance before the first candidate
+differs. No host solution or supplied candidate enters inference.
+Preflight reproduced and repaired generic guidance that still named V2's
+line-count rule under a V3 host request. Both arms now receive identical generic
+V3 applicability guidance; only the optional exact target totals differ. Default
+V2 wire guidance and pinned predecessor sources remain byte-reproducible.
+
+Per task/arm: two logical/physical calls including retries, two candidates,
+8,192 output tokens per call, 65-second provider timeout, 155-second task lease,
+12,000 patch bytes, one `.mjs` mutation target. Whole epoch: at most 32 calls,
+45 minutes, 16 arm executions. The 50-minute CI envelope includes local preflight.
+Same caps do not imply matched realized compute: measured calls, known/unknown
+tokens and verifier-work proxy are reported separately, with a 10% paired
+tolerance. First-attempt and repaired results remain separate. A positive
+small-cohort signal requires both repeats winning in two distinct domains on
+provider-stable, matched-realized-compute pairs without paired acceptance loss.
+It does not certify a frontier benchmark, a default promotion or broad cognition.
+
+Existing R1/R2/R3 execution, scoring, cleanup and quality machinery are reused.
+Local witnesses establish feasibility but are test-only, not model seeds.
+Oracles and witnesses have different implementations where practical, but the
+same author/session; this is not independently authored assurance. Public
+pretraining exposure is unknown. Candidate Node execution is not a proven
+hostile-code/network sandbox. Historical V2 reports are preserved and never
+regraded as V3. The one-shot push trigger is removed once the run is confirmed.

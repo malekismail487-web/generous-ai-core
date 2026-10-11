@@ -28,6 +28,8 @@ import { LENGTH_GRAMMAR_TRANSFER_TASKS } from "./omega/benchmarks/lengthGrammarT
 import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration } from "./omega/benchmarks/nativeReasoningTransferTasks";
 import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
+import { V3_FRESH_BUDGET_EPOCH, V3_FRESH_BUDGET_TASKS, v3FreshBudgetTasks,
+  v3FreshBudgetWireVerified } from "./omega/benchmarks/v3FreshBudgetTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -1119,7 +1121,92 @@ for(const task of EVALUATION_ORDER_TRANSFER_TASKS) {
   check(task.privateCases.every(example=>!task.publicCases.some(publicCase=>theoryDigest(publicCase.input)===theoryDigest(example.input))),
     "private transfer cases remain distinct from public examples");
 }
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS]) {
+representationReferences["SCC-PARTITION-V3-FRESH"] = `
+function reachable(start, edges) {
+  const seen = new Set([start]);
+  for (const node of seen) for (const [from, to] of edges) {
+    if (from === node) seen.add(to);
+  }
+  return seen;
+}
+export function transform(input) {
+  const reaches = new Map(input.nodes.map(node => [node, reachable(node, input.edges)]));
+  const remaining = new Set(input.nodes);
+  const groups = [];
+  for (const node of remaining) {
+    const group = [...remaining].filter(other => reaches.get(node).has(other) && reaches.get(other).has(node)).sort();
+    groups.push(group);
+    for (const member of group) remaining.delete(member);
+  }
+  return groups.sort((a, b) => a[0] < b[0] ? -1 : 1);
+}`;
+representationReferences["RATIONAL-PREFIX-V3-FRESH"] = `
+function gcd(a, b) {
+  while (b !== 0n) {
+    const remainder = a % b;
+    a = b;
+    b = remainder;
+  }
+  return a;
+}
+export function transform(input) {
+  let numerator = 0n, denominator = 1n;
+  const result = [];
+  for (const term of input) {
+    const nextDenominator = denominator * BigInt(term.d);
+    const nextNumerator = numerator * BigInt(term.d) + BigInt(term.n) * denominator;
+    const divisor = gcd(nextNumerator < 0n ? -nextNumerator : nextNumerator, nextDenominator);
+    numerator = nextNumerator / divisor;
+    denominator = nextDenominator / divisor;
+    result.push([String(numerator), String(denominator)]);
+  }
+  return result;
+}`;
+representationReferences["TRANSACTION-VIEWS-V3-FRESH"] = `
+export function transform(events) {
+  let committed = new Map(), visible = committed;
+  const views = [];
+  for (const event of events) {
+    switch (event.op) {
+      case "begin": visible = new Map(committed); break;
+      case "set": visible.set(event.key, event.value); break;
+      case "delete": visible.delete(event.key); break;
+      case "commit": committed = visible; break;
+      case "rollback": visible = committed; break;
+      case "read": views.push([...visible].sort((a, b) => a[0] < b[0] ? -1 : 1)); break;
+    }
+  }
+  return views;
+}`;
+representationReferences["JSON-POINTER-V3-FRESH"] = `
+export function transform(input) {
+  let value = input.document;
+  for (const token of input.pointer === "" ? [] : input.pointer.slice(1).split("/")) {
+    const key = token.replace(/~1/g, "/").replace(/~0/g, "~");
+    if (value === null || typeof value !== "object") return {found:false};
+    if (Array.isArray(value) && !/^(0|[1-9][0-9]*)$/.test(key)) return {found:false};
+    if (!Object.hasOwn(value, key)) return {found:false};
+    value = value[key];
+  }
+  return {found:true,value:JSON.parse(JSON.stringify(value))};
+}`;
+check(v3FreshBudgetTasks().length===8 && new Set(v3FreshBudgetTasks().map(t=>t.id)).size===8,
+  "fresh V3 epoch freezes two uniquely identified repeats per four tasks before inference");
+check(new Set(V3_FRESH_BUDGET_TASKS.map(t=>t.domain)).size===4 && V3_FRESH_BUDGET_EPOCH.uniqueTasks===4,
+  "fresh V3 cohort has four bounded domains, not eight independent problems");
+for (const variant of ["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]) {
+  const before = {initialCandidateState:true,originalBudgetPresented:variant==="ORIGINAL_BUDGET",
+    originalBudgetVersion:variant==="ORIGINAL_BUDGET"?V3_FRESH_BUDGET_EPOCH.originalBudgetVersion:null,
+    originalBudgetPolicyId:variant==="ORIGINAL_BUDGET"?V3_FRESH_BUDGET_EPOCH.admissionPolicyId:null};
+  const after = {initialCandidateState:false,originalBudgetPresented:false,originalBudgetVersion:null,originalBudgetPolicyId:null};
+  check(v3FreshBudgetWireVerified(variant,[before,after]),"V3 wire binds correct version/policy only before the initial candidate");
+  check(!v3FreshBudgetWireVerified(variant,[{...before,originalBudgetPolicyId:"omega-public-static-candidate/2"}]),
+    "V3 wire rejects legacy policy or unexpected control-arm guidance");
+  check(!v3FreshBudgetWireVerified(variant,[{...after,originalBudgetVersion:V3_FRESH_BUDGET_EPOCH.originalBudgetVersion}]),
+    "post-candidate request cannot present stale original-budget guidance");
+}
+rejects(()=>v3FreshBudgetWireVerified("RELAX_QUALITY",[]),"unknown fresh V3 arm cannot claim protocol validity");
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1143,6 +1230,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
     maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
+    ...(V3_FRESH_BUDGET_TASKS.some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
