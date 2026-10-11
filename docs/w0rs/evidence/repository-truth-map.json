@@ -2363,6 +2363,12 @@
       ]
     },
     {
+      "name": "NYX_FRESH_GUARDED_REPAIR",
+      "files": [
+        "scripts/omega/nyx-source-representation-cycle.ts"
+      ]
+    },
+    {
       "name": "NYX_FRONTIER_VARIANT",
       "files": [
         "scripts/omega/nyx-frontier-reasoning-live-eval.ts"

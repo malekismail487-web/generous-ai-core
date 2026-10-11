@@ -1,5 +1,49 @@
 # NYX benchmark capability program
 
+### Predeclared guarded quality-repair transfer (2026-10-11)
+
+`nyx-guarded-repair-unseeded-transfer/1` tests the existing guarded refactor
+selection after a **live-generated**, functionally correct but quality-rejected
+candidate. Both arms receive the same v3 host refactor proposals; control emits
+complete source, treatment may explicitly select a current request-bound
+proposal. Both retain ordinary complete-file edits. No algorithm or initial
+candidate is supplied. No new runtime, cognitive layer, default or authority.
+
+Two new objectives—ordered affine pose composition and finite Markov-chain
+arrival reward—have two predeclared repeats each (four pairs / eight executions).
+Same-author exact private oracles differ from test-only implementation witnesses:
+basis-point evaluation versus coefficient composition; exhaustive state paths
+versus distribution propagation. Witnesses never enter either live prompt.
+Finite private acceptance is not proof of universal correctness or unseen
+pretraining. This is a small engineering transfer experiment, not a benchmark.
+
+Both arms pin Super, temperature zero, high native reasoning / 2,048 reservation
+inside an 8,192 shared output cap; two physical/logical calls, two candidates,
+three verifier executions, 155 seconds per execution and 45 minutes overall.
+V3 admission, original-state quality, strict parser, exact public/private checks,
+owned lifecycle, source integrity and authority stay unchanged. Tokens, calls,
+scheduled verifier work and host wall time are reported; host AST CPU is not
+separately profiled. Equal caps do not establish equal realized compute.
+
+Promotion requires qualifying post-rejection gains in **both repeats of both
+domains**, no paired acceptance regression, matched realized compute (existing
+10% tolerance), identical initially correct/quality-rejected source, and actual
+resolved selection. Pre-feedback differences or unexercised selection earn no
+causal credit. A selection expands an uncertified **host** proposal reviewed by
+the model; it is neither model-authored replacement source nor approval. E3
+integration tests verify syntax, cumulative quality, independent behavior and
+cleanup, not live cognition efficacy. The R3 Node runner is still not proven a
+hostile-code/network-isolating sandbox.
+
+Ω plan coverage: PARTIAL / JUST-IN-TIME. Directly implemented: generator/detector
+separation, source/evidence-bound proposals and cumulative original-state quality.
+Supporting: evidence-over-confidence, no self-certification, candidate/authority
+separation, finite repair and rollback ownership. Deferred: brain expansion,
+production promotion and broad benchmark superiority. Superseded experiment:
+function-body scope, whose negative frozen result remains below. No identified
+authority/evidence conflict; no historical result is regraded. Status: predeclared,
+not yet measured; no capability improvement claim.
+
 ### Source-bound function-body emission — promotion rejected (2026-10-11)
 
 Terminal [run 38148420917](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38148420917)

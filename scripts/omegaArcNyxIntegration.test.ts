@@ -43,6 +43,8 @@ import { NATIVE_LOCAL_EMISSION_TASKS, nativeLocalEmissionTasks, nativeLocalEmiss
   nativeLocalEmissionWireVerified } from "./omega/benchmarks/nativeLocalEmissionTasks";
 import { FUNCTION_BODY_TRANSFER_TASKS, functionBodyTransferTasks, functionBodyTransferConfiguration,
   functionBodyWireVerified } from "./omega/benchmarks/functionBodyTransferTasks";
+import { GUARDED_REPAIR_FRESH_TASKS, guardedRepairFreshTasks, guardedRepairFreshConfiguration,
+  guardedRepairFreshWireVerified, guardedRepairPairAssessment } from "./omega/benchmarks/guardedRepairFreshTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -57,6 +59,42 @@ import { inspectNyxSourceEmission } from "./omega/nyx-source-emission-diagnostic
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
 const rejects = (body: () => unknown, label: string) => { try { body(); check(false, label); } catch { check(true, label); } };
+{
+  const fresh=guardedRepairFreshTasks();
+  check(fresh.length===4&&new Set(fresh.map(task=>task.id)).size===4&&new Set(fresh.map(task=>task.domain)).size===2,
+    "guarded fresh repair has two distinct unseeded domains and two declared repeats, not four independent objectives");
+  for(const arm of ["GUARDED_SOURCE_CONTROL","GUARDED_SELECTION"]) {
+    const {localRefactorGuidance,localRefactorSelection,...shared}=guardedRepairFreshConfiguration(arm);
+    check(theoryDigest(shared)===theoryDigest(v3NativeReasoningConfiguration("NATIVE_BOUNDED_REASONING"))
+      &&localRefactorGuidance==="EVALUATION_ORDER_PROPOSALS"&&localRefactorSelection===(arm==="GUARDED_SELECTION"?"SOURCE_BOUND_REFERENCES":undefined),
+      "fresh repair arms expose the same guarded proposals and change only source-bound selection");
+    const initial={initialCandidateState:true,originalBudgetPresented:true,originalBudgetVersion:"nyx-original-state-quality-budget/2",
+      originalBudgetPolicyId:"omega-public-static-candidate/3",publicAdmissionPolicyId:"omega-public-static-candidate/3",legacyLineApplicabilityPresent:false,
+      qualityRepairPhase:false,localProposalsPresented:false,localProposalCount:0,localProposalVersion:null,selectionBranchOffered:false,selectionBindingDigest:null};
+    const repair={...initial,initialCandidateState:false,originalBudgetPresented:false,originalBudgetVersion:null,originalBudgetPolicyId:null,
+      qualityRepairPhase:true,localProposalsPresented:true,localProposalCount:1,
+      localProposalVersion:arm==="GUARDED_SELECTION"?"nyx-source-bound-refactor-selection/1":"nyx-local-refactor-proposals/3",
+      selectionBranchOffered:arm==="GUARDED_SELECTION",selectionBindingDigest:arm==="GUARDED_SELECTION"?"a".repeat(64):null};
+    check(guardedRepairFreshWireVerified(arm,[initial,repair]),"guarded fresh wire proves proposal phase and unchanged V3 policy");
+    for(const wrong of [{...repair,initialCandidateState:true},{...repair,qualityRepairPhase:false},{...repair,localProposalCount:9},
+      {...repair,selectionBranchOffered:!repair.selectionBranchOffered},{...repair,localProposalVersion:"unversioned"}])
+      check(!guardedRepairFreshWireVerified(arm,[initial,wrong]),"selection, phase, policy and proposal bound drift fail closed");
+  }
+  rejects(()=>guardedRepairFreshConfiguration("BROAD_WRITE"),"guarded fresh arm cannot silently invent authority");
+  const first={candidateSourceDigest:"a".repeat(64),functionalAccepted:true,quality:"REJECTED"};
+  const control={accepted:false,perIteration:[first]},treatment={accepted:true,perIteration:[first],guardedSelectionReceipts:[{outcome:"RESOLVED"}]};
+  check(guardedRepairPairAssessment(control,treatment,true).qualifyingQualityRepairGain,
+    "causal credit requires same correct rejected candidate, actual selection and matched realized compute");
+  for(const [baseline,next,matched] of [
+    [control,treatment,false],[{...control,accepted:true},treatment,true],
+    [control,{...treatment,perIteration:[{...first,candidateSourceDigest:"b".repeat(64)}]},true],
+    [control,{...treatment,perIteration:[{...first,functionalAccepted:false}]},true],
+    [control,{...treatment,perIteration:[{...first,quality:"ADMITTED"}]},true],
+    [control,{...treatment,guardedSelectionReceipts:[{outcome:"REFUSED"}]},true],
+    [undefined,treatment,true],[control,undefined,true],
+  ] as const) check(!guardedRepairPairAssessment(baseline,next,matched).qualifyingQualityRepairGain,
+    "unmatched compute, first-attempt differences, already accepted controls or missing selection cannot manufacture a repair gain");
+}
 {
   const fresh=functionBodyTransferTasks();
   check(fresh.length===8&&new Set(fresh.map(task=>task.id)).size===8
@@ -1697,6 +1735,26 @@ representationReferences["STABLE-SEAT-APPORTIONMENT"] = `export function transfo
   }
   return result;
 }`;
+representationReferences["AFFINE-POSE-ACCUMULATION"] = `export function transform(input) {
+  let combined = [1, 0, 0, 1, 0, 0];
+  for (const t of input.transforms) {
+    const [a, b, c, d, x, y] = combined;
+    combined = [t[0]*a+t[1]*c, t[0]*b+t[1]*d,
+      t[2]*a+t[3]*c, t[2]*b+t[3]*d,
+      t[0]*x+t[1]*y+t[4], t[2]*x+t[3]*y+t[5]];
+  }
+  return [combined, [combined[0]*input.point[0]+combined[1]*input.point[1]+combined[4],
+    combined[2]*input.point[0]+combined[3]*input.point[1]+combined[5]]];
+}`;
+representationReferences["FINITE-CHAIN-ARRIVAL-REWARD"] = `export function transform(input) {
+  let distribution = input.initial.slice(), reward = 0;
+  for (let step = 0; step < input.steps; step++) {
+    const next = input.initial.map((_, j) => distribution.reduce((sum, p, i) => sum+p*input.matrix[i][j], 0));
+    reward += next.reduce((sum, p, i) => sum+p*input.rewards[i], 0);
+    distribution = next;
+  }
+  return reward;
+}`;
 representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function transform(input) {
   const width = input[0].length, cells = input.flat(), distance = cells.map(() => Infinity);
   if (cells[0] === null || cells.at(-1) === null) return null;
@@ -1713,7 +1771,7 @@ representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function tra
   }
   return Number.isFinite(distance.at(-1)) ? distance.at(-1) : null;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS]) {
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1739,7 +1797,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
-  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS].some(fresh=>fresh.id===task.id)) {
+  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS].some(fresh=>fresh.id===task.id)) {
     const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
     for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
       "new task independent oracle matches test-only reference without adapter canonicalization");
@@ -1757,7 +1815,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   }),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",
     ...(bodyTask?{sourceEditScope:"FUNCTION_BODY" as const}:{})});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS,...FUNCTION_BODY_TRANSFER_TASKS,...GUARDED_REPAIR_FRESH_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
@@ -1773,6 +1831,65 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cleanup = await session.close();
   check(cleanup.sourceUnchanged && cleanup.cleanupVerified && cleanup.lifecycleTerminations === cleanup.provisionedLifecycles,
     `${task.id} existing owned lifecycle closes without leaked capability or source mutation`);
+}
+// Separate E3 integration reproduction, never an implementation seed for the live tasks.
+{
+  const task: RepresentationTask = {id:"DEV-GUARDED-ADDITION",tier:"DEVELOPMENT",domain:"GUARDED_SOURCE_SELECTION",
+    objective:"Return input.value plus thirteen without changing the input.",publicCases:[{input:{value:2},expected:15}],
+    privateCases:[{input:{value:-20},expected:-7},{input:{value:0},expected:13}]};
+  const first=`export function transform(input) { const a=input.value+1; ${Array.from({length:12},(_,i)=>
+    `const ${String.fromCharCode(98+i)}=${String.fromCharCode(97+i)}+1;`).join("\n")} return m; }`;
+  const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task),"a".repeat(40),Date.now()+60000,12000);
+  let calls=0,selectionOffered=false;
+  try {
+    const baseline=await session.baseline();
+    const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"E3-GUARDED-FRESH-COMPOSITION",
+      provider:provider(async(_url,init)=>{
+        const wire=JSON.parse(String(init.body)),prompt=JSON.parse(wire.messages[1].content);
+        const response=JSON.parse(intent(first));
+        if(calls++===0) {
+          check(!prompt.localRefactorProposals&&!(wire.response_format.json_schema.schema.anyOf??[]).some((branch:any)=>
+            branch.properties?.decision?.enum?.includes("SELECT_LOCAL_REFACTOR")),
+            "source-bound selection and proposals cannot guide the initial live engineering candidate");
+        } else {
+          const guidance=prompt.localRefactorProposals;
+          selectionOffered=prompt.activeRepairDriver.kind==="QUALITY_REJECTION"
+            &&guidance?.version==="nyx-source-bound-refactor-selection/1"&&guidance.proposals.length>0;
+          check(selectionOffered,"existing guarded mechanism composes after actual V3 quality rejection");
+          response.decision="SELECT_LOCAL_REFACTOR";
+          response.selectedProposalRef=guidance?.proposals[0]?.proposalRef;
+          response.evidenceRefs=["OBJECTIVE","FILE:src/transform.mjs",guidance?.evidenceRef,guidance?.passingObservationRef];
+          delete response.changes;
+        }
+        response.causalHypothesis="Inlining a single-use ordered addition chain reduces declarations without changing arithmetic.";
+        response.invariant="Preserve input ownership and add exactly thirteen for every numeric value.";
+        response.counterexamples=["Zero and negative input"];
+        return reply(JSON.stringify(response));
+      },"nvidia/nemotron-3-super-120b-a12b"),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",
+      intentCompilationMode:"SAFE_CANONICALIZATION",repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",
+      ...guardedRepairFreshConfiguration("GUARDED_SELECTION")});
+    const loop=R3BoundedRepairLoop.create({loopId:task.id,evaluatorVersion:"E3-GUARDED-COMPOSITION/1",observerIdentity:"E3-EXISTING-R3",
+      candidateAdmissionPolicyId:V3_NATIVE_REASONING_EPOCH.admissionPolicyId,cognition,
+      candidateBuilder:{builderIdentity:"EXISTING-OMEGA-R3",prepare:h=>session.prepare(h)},maxIterations:2,maxModelInteractions:2,
+      maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+    const result=await loop.run({schemaVersion:1,repairRequestId:task.id,objective:task.objective,
+      initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
+      availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
+    const prior=result.iterations[0],last=result.iterations.at(-1);
+    check(calls===2&&selectionOffered&&prior.functionallyPassed&&prior.candidateAdmission?.decision==="REJECTED"
+      &&scoreRepresentationArtifact(task,prior.verifications[0].execution.evidence.stdout).accepted,
+      "ordinary-loop test double begins with a real correct, cumulative-quality-rejected candidate");
+    check(last?.cognitionEvidence.refactorSelection?.outcome==="RESOLVED"
+      &&last.cognitionEvidence.refactorSelection.sourceOrigin==="HOST_PROPOSAL_MODEL_SELECTED"
+      &&!last.cognitionEvidence.refactorSelection.authorityGranted&&!last.cognitionEvidence.refactorSelection.acceptanceGranted,
+      "explicit source selection expands a host proposal, never authority or self-certification");
+    check(result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"&&last?.functionallyPassed&&last.candidateAdmission?.decision==="ADMITTED"
+      &&scoreRepresentationArtifact(task,last.verifications[0].execution.evidence.stdout).accepted,
+      "selected guarded source preserves independent private behavior while meeting original-state quality checks");
+  } finally {
+    const cleanup=await session.close();
+    check(cleanup.sourceUnchanged&&cleanup.cleanupVerified,"guarded composition closes only its owned disposable lifecycle");
+  }
 }
 // Separate, synthesized development reproductions. These are E3 test doubles,
 // not recovered raw NYX source, not evidence of native reasoning efficacy, and
