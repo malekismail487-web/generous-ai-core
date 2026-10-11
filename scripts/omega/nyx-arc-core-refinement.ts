@@ -535,7 +535,20 @@ const functionBodyEmissionRefinement: readonly (readonly [string, string, number
     1
   ]
 ];
+// Exact opt-in V4 inversion preserves the historical source binding; unrelated drift stays visible.
+const extendedOrderedRefactorRefinement: [string, string][] = [
+  ["  readonly localRefactorGuidance?: \"GUARDED_PROPOSALS\" | \"EVALUATION_ORDER_PROPOSALS\";", "  readonly localRefactorGuidance?: \"GUARDED_PROPOSALS\" | \"EVALUATION_ORDER_PROPOSALS\" | \"EXTENDED_EVALUATION_ORDER_PROPOSALS\";"],
+  ["      && ![\"GUARDED_PROPOSALS\", \"EVALUATION_ORDER_PROPOSALS\"].includes(config.localRefactorGuidance)) {", "      && ![\"GUARDED_PROPOSALS\", \"EVALUATION_ORDER_PROPOSALS\", \"EXTENDED_EVALUATION_ORDER_PROPOSALS\"].includes(config.localRefactorGuidance)) {"],
+  ["", "    const evaluationOrderRefactors = this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\"\n      || this.#config.localRefactorGuidance === \"EXTENDED_EVALUATION_ORDER_PROPOSALS\";\n    const extendedEvaluationOrderRefactors = this.#config.localRefactorGuidance === \"EXTENDED_EVALUATION_ORDER_PROPOSALS\";\n"],
+  ["      ? nyxLocalRefactorGuidance(request, this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\") : null;", "      ? nyxLocalRefactorGuidance(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;"],
+  ["      ? buildNyxRefactorSelection(request, this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\") : null;", "      ? buildNyxRefactorSelection(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;"],
+  ["      this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\");", "      evaluationOrderRefactors, extendedEvaluationOrderRefactors);"],
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after] of extendedOrderedRefactorRefinement) {
+    if (current.split(after).length !== 2) throw Error("arc_extended_ordered_refactor_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after, count] of functionBodyEmissionRefinement) {
     if (current.split(after).length !== count + 1) throw Error("arc_function_body_emission_hunk_mismatch");
     current = current.split(after).join(before);

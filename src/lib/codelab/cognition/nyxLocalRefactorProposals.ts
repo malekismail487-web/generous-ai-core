@@ -5,7 +5,7 @@ import { behaviorPreservingQualityGuidance } from "./nyxMeasuredQualityGuidance"
 import type { NyxRepairCognitionRequest } from "./nyxNemotronEngineeringCognition";
 
 type RefactorKind = "ADJACENT_RETURN_TEMPORARY" | "LOCAL_PRIMITIVE_CONSTANT" | "BOOLEAN_RETURN_BRANCH"
-  | "ADJACENT_FIRST_EVALUATED_USE";
+  | "ADJACENT_FIRST_EVALUATED_USE" | "ADJACENT_LET_RETURN_TEMPORARY" | "ADJACENT_FIRST_COLLECTION_VALUE";
 interface Edit { readonly start: number; readonly end: number; readonly replacement: string }
 interface Rewrite { readonly kind: RefactorKind; readonly edits: readonly Edit[]; readonly guard: string }
 const digest = (source: string) => createHash("sha256").update(source).digest("hex");
@@ -94,31 +94,45 @@ function valuePosition(node: ts.Identifier): boolean {
 }
 
 /** The reference must be evaluated unconditionally, before any other expression.
- * Calls, typeof, assignments, destructuring, collection construction and
- * suspension are deliberately outside this small evaluation-order grammar.
+ * Calls, typeof, assignments, destructuring and suspension remain excluded.
+ * V4 optionally admits the first array element / static object property value.
+ * Allocation itself is not a full observational-equivalence guarantee.
  */
-function firstEvaluatedValue(expression: ts.Expression, reference: ts.Identifier, depth = 0): boolean {
+function firstEvaluatedValue(expression: ts.Expression, reference: ts.Identifier, depth = 0,
+  includeExtendedEvaluationOrder = false): boolean {
   if (depth >= 16) return false;
   if (expression === reference) return true;
-  if (ts.isParenthesizedExpression(expression)) return firstEvaluatedValue(expression.expression, reference, depth + 1);
+  const first = (value: ts.Expression) => firstEvaluatedValue(value, reference, depth + 1, includeExtendedEvaluationOrder);
+  if (ts.isParenthesizedExpression(expression)) return first(expression.expression);
   if (ts.isBinaryExpression(expression)
     && !(expression.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
       && expression.operatorToken.kind <= ts.SyntaxKind.LastAssignment)) {
-    return firstEvaluatedValue(expression.left, reference, depth + 1);
+    return first(expression.left);
   }
-  if (ts.isConditionalExpression(expression)) return firstEvaluatedValue(expression.condition, reference, depth + 1);
+  if (ts.isConditionalExpression(expression)) return first(expression.condition);
   if (ts.isPrefixUnaryExpression(expression)
     && [ts.SyntaxKind.PlusToken, ts.SyntaxKind.MinusToken, ts.SyntaxKind.ExclamationToken,
       ts.SyntaxKind.TildeToken].includes(expression.operator)) {
-    return firstEvaluatedValue(expression.operand, reference, depth + 1);
+    return first(expression.operand);
   }
   if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
-    return firstEvaluatedValue(expression.expression, reference, depth + 1);
+    return first(expression.expression);
+  }
+  if (includeExtendedEvaluationOrder && ts.isArrayLiteralExpression(expression)) {
+    const element = expression.elements[0];
+    return !!element && !ts.isOmittedExpression(element) && !ts.isSpreadElement(element) && first(element);
+  }
+  if (includeExtendedEvaluationOrder && ts.isObjectLiteralExpression(expression)) {
+    const property = expression.properties[0];
+    return !!property && ts.isPropertyAssignment(property)
+      && (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) || ts.isNumericLiteral(property.name))
+      && property.name.text !== "__proto__" && first(property.initializer);
   }
   return false;
 }
 
-function findRewrite(path: string, source: string, includeEvaluationOrder: boolean): Rewrite | null {
+function findRewrite(path: string, source: string, includeEvaluationOrder: boolean,
+  includeExtendedEvaluationOrder: boolean): Rewrite | null {
   const parsed = parse(path, source);
   if (!parsed) return null;
   const { file, nodes, checker } = parsed;
@@ -126,7 +140,9 @@ function findRewrite(path: string, source: string, includeEvaluationOrder: boole
   const uncommented = (start: number, end: number) => !/\/\/|\/\*/.test(source.slice(start, end));
   for (const node of nodes) {
     if (ts.isVariableStatement(node) && ts.isBlock(node.parent) && owner(node)
-      && node.declarationList.flags & ts.NodeFlags.Const && node.declarationList.declarations.length === 1) {
+      && (node.declarationList.flags & ts.NodeFlags.Const
+        || includeExtendedEvaluationOrder && node.declarationList.flags & ts.NodeFlags.Let)
+      && node.declarationList.declarations.length === 1) {
       const declaration = node.declarationList.declarations[0];
       if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
       const symbol = checker.getSymbolAtLocation(declaration.name);
@@ -141,22 +157,30 @@ function findRewrite(path: string, source: string, includeEvaluationOrder: boole
       // binding is NOT equivalent; closures can also retain the removed binding.
       const initializerContainsFunction = nodes.some(other => other.pos >= declaration.initializer!.pos
         && other.end <= declaration.initializer!.end && (ts.isFunctionLike(other) || ts.isClassExpression(other)));
+      const initializerContainsSuspension = nodes.some(other => other.pos >= declaration.initializer!.pos
+        && other.end <= declaration.initializer!.end && (ts.isAwaitExpression(other) || ts.isYieldExpression(other)));
+      const mutable = !!(node.declarationList.flags & ts.NodeFlags.Let);
       if (next && ts.isReturnStatement(next) && next.expression && ts.isIdentifier(unwrap(next.expression))
         && refs.length === 1 && refs[0] === unwrap(next.expression) && !initializerContainsFunction
+        && (!mutable || !initializerContainsSuspension)
         && uncommented(node.getStart(file), next.end)) {
-        return { kind: "ADJACENT_RETURN_TEMPORARY", guard: "ONE_LEXICAL_RETURN_USE_ADJACENT_SAME_BLOCK_NO_CAPTURE_OR_INFERRED_FUNCTION_NAME",
+        return { kind: mutable ? "ADJACENT_LET_RETURN_TEMPORARY" : "ADJACENT_RETURN_TEMPORARY",
+          guard: mutable ? "LET_ONE_LEXICAL_RETURN_USE_ADJACENT_SAME_BLOCK_NO_WRITE_CAPTURE_NAME_OR_SUSPENSION"
+            : "ONE_LEXICAL_RETURN_USE_ADJACENT_SAME_BLOCK_NO_CAPTURE_OR_INFERRED_FUNCTION_NAME",
           edits: [{ start: node.getStart(file), end: next.end, replacement: `return (${text(declaration.initializer)});` }] };
       }
+      // V4 mutable bindings are admitted only for the direct adjacent return above.
+      if (mutable) continue;
       if (includeEvaluationOrder && next && refs.length === 1 && !initializerContainsFunction
-        && !nodes.some(other => other.pos >= declaration.initializer!.pos && other.end <= declaration.initializer!.end
-          && (ts.isAwaitExpression(other) || ts.isYieldExpression(other)))
+        && !initializerContainsSuspension
         && uncommented(node.getStart(file), next.end)) {
         const nextDeclaration = ts.isVariableStatement(next) && next.declarationList.declarations.length === 1
           ? next.declarationList.declarations[0] : null;
         const expression = ts.isReturnStatement(next) ? next.expression
           : nextDeclaration && ts.isIdentifier(nextDeclaration.name) ? nextDeclaration.initializer : undefined;
-        if (expression && firstEvaluatedValue(expression, refs[0])) {
-          return { kind: "ADJACENT_FIRST_EVALUATED_USE",
+        if (expression && firstEvaluatedValue(expression, refs[0], 0, includeExtendedEvaluationOrder)) {
+          return { kind: firstEvaluatedValue(expression, refs[0])
+              ? "ADJACENT_FIRST_EVALUATED_USE" : "ADJACENT_FIRST_COLLECTION_VALUE",
             guard: "ONE_LEXICAL_USE_FIRST_UNCONDITIONAL_VALUE_IN_NEXT_STATEMENT_SAME_BLOCK_NO_CAPTURE_NAME_OR_SUSPENSION",
             edits: [{ start: node.getStart(file), end: node.end, replacement: "" },
               { start: refs[0].getStart(file), end: refs[0].end, replacement: `(${text(declaration.initializer)})` }] };
@@ -188,13 +212,15 @@ function findRewrite(path: string, source: string, includeEvaluationOrder: boole
  * Language-level guards do not prove full observational equivalence: reflection,
  * stack traces, source introspection and unmodeled host behavior still require review.
  */
-export function proposeNyxLocalRefactors(path: string, source: string, includeEvaluationOrder = false) {
-  if (typeof includeEvaluationOrder !== "boolean") return null;
+export function proposeNyxLocalRefactors(path: string, source: string, includeEvaluationOrder = false,
+  includeExtendedEvaluationOrder = false) {
+  if (typeof includeEvaluationOrder !== "boolean" || typeof includeExtendedEvaluationOrder !== "boolean"
+    || includeExtendedEvaluationOrder && !includeEvaluationOrder) return null;
   if (!parse(path, source)) return null;
   let current = source;
   const operations = [];
   for (let step = 0; step < MAX_OPERATIONS; step++) {
-    const rewrite = findRewrite(path, current, includeEvaluationOrder);
+    const rewrite = findRewrite(path, current, includeEvaluationOrder, includeExtendedEvaluationOrder);
     if (!rewrite) break;
     const before = current;
     for (const edit of rewrite.edits.slice().sort((a, b) => b.start - a.start))
@@ -215,19 +241,22 @@ export function proposeNyxLocalRefactors(path: string, source: string, includeEv
     equivalence: "GUARDED_PROPOSAL_NOT_CERTIFIED_REQUIRES_EXECUTION_AND_REVIEW", authorityGranted: false });
 }
 
-export function nyxLocalRefactorGuidance(request: NyxRepairCognitionRequest, includeEvaluationOrder = false) {
-  if (typeof includeEvaluationOrder !== "boolean") return null;
+export function nyxLocalRefactorGuidance(request: NyxRepairCognitionRequest, includeEvaluationOrder = false,
+  includeExtendedEvaluationOrder = false) {
+  if (typeof includeEvaluationOrder !== "boolean" || typeof includeExtendedEvaluationOrder !== "boolean"
+    || includeExtendedEvaluationOrder && !includeEvaluationOrder) return null;
   // Reuse the existing passing-observation/source/evidence binding contract,
   // but do not ship the previously falsified binding-inventory intervention.
   const context = behaviorPreservingQualityGuidance(request);
   if (!context) return null;
   const proposals = context.sources.flatMap(source => {
     const file = request.files.find(file => file.relativePath === source.path)!;
-    const proposal = proposeNyxLocalRefactors(source.path, file.content, includeEvaluationOrder);
+    const proposal = proposeNyxLocalRefactors(source.path, file.content, includeEvaluationOrder, includeExtendedEvaluationOrder);
     return proposal ? [proposal] : [];
   });
   if (!proposals.length) return null;
-  return Object.freeze({ version: includeEvaluationOrder ? "nyx-local-refactor-proposals/3" : "nyx-local-refactor-proposals/2",
+  return Object.freeze({ version: includeExtendedEvaluationOrder ? "nyx-local-refactor-proposals/4"
+    : includeEvaluationOrder ? "nyx-local-refactor-proposals/3" : "nyx-local-refactor-proposals/2",
     evidenceRef: context.evidenceRef,
     passingObservationRef: context.passingObservationRef, evidenceScope: context.evidenceScope,
     proposals: Object.freeze(proposals),

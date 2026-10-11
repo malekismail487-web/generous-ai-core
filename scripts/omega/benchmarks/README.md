@@ -1,5 +1,46 @@
 # NYX benchmark capability program
 
+### Versioned guarded refactor coverage correction (2026-10-11)
+
+The separately reproduced coverage gaps now have an **opt-in** correction:
+`EXTENDED_EVALUATION_ORDER_PROPOSALS` exposes `nyx-local-refactor-proposals/4`
+and, if explicit source selection is configured,
+`nyx-source-bound-refactor-selection/2`. Historical V2/V3 proposals, V1
+selection digests, default NYX configuration and all frozen results remain
+unchanged. This is a proposal-grammar revision, **not** a quality-policy change.
+
+New coverage is deliberately narrow: a single-use adjacent `let` return with
+no writes/captures/suspension; or a const reference evaluated first in an array
+element or static object property value. Conditional/delayed/repeated reads,
+computed-first keys, shorthand/accessors, spread-first values, inferred function
+names, mutable collection uses, TDZ references and intervening statements stay
+excluded. The original source/AST/operation/depth bounds remain in force.
+Allocation timing, source introspection and unmodeled host behavior are not
+certified equivalent; review and unchanged Omega verification remain mandatory.
+
+Independent authored development witnesses compare values, signed zero, NaN,
+getters, calls, spread order and synchronous exceptions. Three separate real
+Omega repository reproductions use **identical initial candidates and two calls
+per arm**: historical V3 offers no repair and remains quality-rejected; V4
+selects one guarded operation, passes private/public cases and the unchanged
+original-state V3 quality gate. All owned lifecycles clean up and source remains
+unchanged. Async source changes, stale/version-crossing selections, mixed source
+and absent citations fail closed; initial inference wire remains identical.
+
+**Evidence class: E3, evaluator-authored test doubles.** This establishes usable
+repair coverage, not live-model reasoning improvement or benchmark promotion.
+The completed unseeded epoch below is preserved and must not be rerun for a
+promotion claim. Next: freeze fresh, unseeded tasks and compare the versioned
+mechanism against the historical control with unchanged acceptance and honest
+realized compute; zero exposure or extra compute earns no causal credit.
+
+Ω Plan Coverage: directly implements generator/detector separation, no
+self-certification, original-state quality repair and source-bound provenance;
+supporting principles are evidence-over-confidence and capability≠authority.
+Broad rewrites, full semantic-equivalence proof, hostile-code sandbox claims,
+new cognitive layers and production promotion are deferred. No identified
+authority/oracle conflict; coverage remains **PARTIAL / JUST-IN-TIME**.
+
 ### Guarded unseeded transfer — completed, treatment unexercised (2026-10-11)
 
 Terminal [run 38152411345](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38152411345)

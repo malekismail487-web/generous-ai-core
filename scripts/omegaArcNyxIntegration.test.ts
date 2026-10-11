@@ -1891,6 +1891,79 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
     check(cleanup.sourceUnchanged&&cleanup.cleanupVerified,"guarded composition closes only its owned disposable lifecycle");
   }
 }
+// Versioned proposer coverage through existing real Omega execution. These are
+// evaluator-authored E3 test doubles, never live reasoning or benchmark gains.
+for (const container of ["LET_RETURN", "ARRAY_FIRST", "OBJECT_FIRST"] as const) {
+  const wrap = (value: number) => container === "ARRAY_FIRST" ? [value, 0]
+    : container === "OBJECT_FIRST" ? { first: value, marker: 0 } : value;
+  const task: RepresentationTask = {id:`DEV-V4-${container}`,tier:"DEVELOPMENT",domain:"SOURCE_BOUND_COVERAGE",
+    objective:`Compute the sum of input.value plus k for every integer k from zero through eleven; return ${
+      container === "ARRAY_FIRST" ? "[sum,0]" : container === "OBJECT_FIRST" ? "{first:sum,marker:0}" : "sum"}. Preserve input.`,
+    publicCases:[{input:{value:2},expected:wrap(90)}],
+    privateCases:[{input:{value:-2},expected:wrap(42)},{input:{value:0},expected:wrap(66)},{input:{value:1},expected:wrap(78)}]};
+  const sum=Array.from({length:12},(_,index)=>`v${index}`).join("+");
+  const returned=container==="ARRAY_FIRST" ? "[result,0]" : container==="OBJECT_FIRST" ? "{first:result,marker:0}" : "result";
+  const first=`export function transform(input) { let ${Array.from({length:12},(_,index)=>
+    `v${index}=input.value+${index}`).join(",")}; ${container==="LET_RETURN"?"let":"const"} result=${sum}; return ${returned}; }`;
+  check(proposeNyxLocalRefactors("src/transform.mjs",first,true)===null
+    &&proposeNyxLocalRefactors("src/transform.mjs",first,true,true)?.operations.length===1,
+    "separate development coverage reproduction is absent in V3 and exactly one guarded operation in V4");
+  for (const extended of [false,true]) {
+    const session=await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task),"a".repeat(40),Date.now()+60000,12000);
+    let calls=0,proposalOffered=false;
+    try {
+      const baseline=await session.baseline();
+      const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"E3-VERSIONED-COVERAGE",
+        provider:provider(async(_url,init)=>{
+          const wire=JSON.parse(String(init.body)),prompt=JSON.parse(wire.messages[1].content);
+          const response=JSON.parse(intent(first));
+          if(calls++===0) check(!prompt.localRefactorProposals,
+            "neither version supplies a first-candidate algorithm, source seed or unrequested capability");
+          else {
+            const guidance=prompt.localRefactorProposals;
+            proposalOffered=!!guidance;
+            check(extended ? guidance?.version==="nyx-source-bound-refactor-selection/2"
+              &&guidance.proposerVersion==="nyx-local-refactor-proposals/4" : !guidance,
+              "only explicitly configured V4 exposes the independently reproduced grammar gap");
+            if(guidance) {
+              response.decision="SELECT_LOCAL_REFACTOR";response.selectedProposalRef=guidance.proposals[0].proposalRef;
+              response.evidenceRefs=["OBJECTIVE","FILE:src/transform.mjs",guidance.evidenceRef,guidance.passingObservationRef];
+              delete response.changes;
+            }
+          }
+          response.causalHypothesis="Remove the one-use adjacent result binding without changing evaluation order or arithmetic.";
+          response.invariant="Preserve the input and every ordered arithmetic value and output container.";
+          response.counterexamples=["Zero and negative values"];
+          return reply(JSON.stringify(response));
+        },"nvidia/nemotron-3-super-120b-a12b"),maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",
+        intentCompilationMode:"SAFE_CANONICALIZATION",repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",
+        ...guardedRepairFreshConfiguration("GUARDED_SELECTION"),
+        ...(extended?{localRefactorGuidance:"EXTENDED_EVALUATION_ORDER_PROPOSALS" as const}:{})});
+      const loop=R3BoundedRepairLoop.create({loopId:task.id,evaluatorVersion:"E3-V4-COVERAGE/1",observerIdentity:"E3-EXISTING-R3",
+        candidateAdmissionPolicyId:V3_NATIVE_REASONING_EPOCH.admissionPolicyId,cognition,
+        candidateBuilder:{builderIdentity:"EXISTING-OMEGA-R3",prepare:h=>session.prepare(h)},maxIterations:2,maxModelInteractions:2,
+        maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
+      const result=await loop.run({schemaVersion:1,repairRequestId:task.id,objective:task.objective,
+        initialObservation:baseline.observation,initialFiles:baseline.prepared.files,allowedMutationPaths:["src/transform.mjs"],
+        availableEvidence:[],allowedVerificationToolIds:["TEST"],baselineExecutions:[{toolId:"TEST",result:baseline.result}],observedAtEpochMs:Date.now()});
+      const prior=result.iterations[0],last=result.iterations.at(-1);
+      check(calls===2&&prior.functionallyPassed&&prior.candidateAdmission?.decision==="REJECTED"
+        &&scoreRepresentationArtifact(task,prior.verifications[0].execution.evidence.stdout).accepted,
+        "matched E3 comparison begins with the identical independently-correct but quality-rejected source");
+      check(extended ? proposalOffered&&result.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"
+        &&last?.candidateAdmission?.decision==="ADMITTED"&&last.cognitionEvidence.refactorSelection?.outcome==="RESOLVED"
+        &&scoreRepresentationArtifact(task,last.verifications[0].execution.evidence.stdout).accepted
+        :!proposalOffered&&last?.candidateAdmission?.decision==="REJECTED",
+        "extended grammar improves concrete development coverage through unchanged original-state quality and private verification");
+      check(!last?.cognitionEvidence.refactorSelection?.authorityGranted&&!last?.cognitionEvidence.refactorSelection?.acceptanceGranted,
+        "source-bound suggestion and model selection cannot certify themselves or grant execution authority");
+    } finally {
+      const cleanup=await session.close();
+      check(cleanup.sourceUnchanged&&cleanup.cleanupVerified&&cleanup.lifecycleTerminations===cleanup.provisionedLifecycles,
+        "all versioned development candidates remain disposable and release their exact owned lifecycles");
+    }
+  }
+}
 // Separate, synthesized development reproductions. These are E3 test doubles,
 // not recovered raw NYX source, not evidence of native reasoning efficacy, and
 // never sent to either live arm. An incorrect quality refactor can pass public

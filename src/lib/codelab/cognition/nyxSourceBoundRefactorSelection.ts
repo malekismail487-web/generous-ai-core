@@ -4,6 +4,7 @@ import { immutableTheoryValue } from "../research/theoryContracts";
 import type { NyxRepairCognitionRequest, NyxSourceRepresentation } from "./nyxNemotronEngineeringCognition";
 
 export const NYX_SOURCE_BOUND_SELECTION_POLICY = "nyx-source-bound-refactor-selection/1" as const;
+export const NYX_SOURCE_BOUND_SELECTION_POLICY_V2 = "nyx-source-bound-refactor-selection/2" as const;
 const SELECT = "SELECT_LOCAL_REFACTOR";
 
 function canonical(value: unknown): string {
@@ -17,20 +18,24 @@ const digest = (value: unknown) => createHash("sha256").update(canonical(value))
 /** Request-local proposal identities are descriptions, never capabilities or approvals.
  * Source remains visible for review; only its emission is avoided. No hidden oracle is used.
  */
-export function buildNyxRefactorSelection(request: NyxRepairCognitionRequest, evaluationOrder: boolean) {
-  const guidance = nyxLocalRefactorGuidance(request, evaluationOrder);
+export function buildNyxRefactorSelection(request: NyxRepairCognitionRequest, evaluationOrder: boolean,
+  extendedEvaluationOrder = false) {
+  const guidance = nyxLocalRefactorGuidance(request, evaluationOrder, extendedEvaluationOrder);
   if (!guidance) return null;
+  const policy = extendedEvaluationOrder ? NYX_SOURCE_BOUND_SELECTION_POLICY_V2 : NYX_SOURCE_BOUND_SELECTION_POLICY;
   const { signal: _signal, ...boundRequest } = request;
-  const bindingDigest = digest({ policy: NYX_SOURCE_BOUND_SELECTION_POLICY, evaluationOrder, request: boundRequest });
+  const bindingDigest = digest({ policy, evaluationOrder, request: boundRequest,
+    ...(extendedEvaluationOrder ? { extendedEvaluationOrder: true, proposerVersion: guidance.version } : {}) });
   const proposals = guidance.proposals.map(proposal => ({ ...proposal,
     proposalRef: `LOCAL-REFACTOR-${digest({ bindingDigest, proposal })}` }));
-  return immutableTheoryValue({ ...guidance, version: NYX_SOURCE_BOUND_SELECTION_POLICY, bindingDigest, proposals,
+  return immutableTheoryValue({ ...guidance, version: policy, bindingDigest, proposals,
+    ...(extendedEvaluationOrder ? { proposerVersion: guidance.version } : {}),
     instruction: "Review the objective, exact proposedSource, and guards. To propose one unchanged listed source, use SELECT_LOCAL_REFACTOR with selectedProposalRef and all ordinary repair reasoning fields; cite its FILE, passing observation, and quality evidence. Omit changes entirely. Alternatively use ordinary PROPOSE_EDIT for a different repair. A selection only expands to an ordinary edit proposal: syntax, scope, freshness, execution and unchanged cumulative quality admission remain mandatory. Nothing is applied or certified automatically.",
     semanticEquivalenceCertified: false, authorityGranted: false });
 }
 export type NyxRefactorSelectionCatalog = NonNullable<ReturnType<typeof buildNyxRefactorSelection>>;
 export interface NyxRefactorSelectionEvidence {
-  readonly policy: typeof NYX_SOURCE_BOUND_SELECTION_POLICY;
+  readonly policy: typeof NYX_SOURCE_BOUND_SELECTION_POLICY | typeof NYX_SOURCE_BOUND_SELECTION_POLICY_V2;
   readonly outcome: "RESOLVED" | "REFUSED";
   readonly reason: string;
   readonly bindingDigest: string | null;
@@ -65,12 +70,13 @@ export function withNyxRefactorSelectionSchema(schema: Readonly<Record<string, u
  * returned intent still goes through the existing compiler, parser and Omega gates.
  */
 export function resolveNyxRefactorSelection(input: unknown, catalog: NyxRefactorSelectionCatalog | null,
-  request: NyxRepairCognitionRequest, representation: NyxSourceRepresentation, evaluationOrder: boolean) {
+  request: NyxRepairCognitionRequest, representation: NyxSourceRepresentation, evaluationOrder: boolean,
+  extendedEvaluationOrder = false) {
   if (!input || typeof input !== "object" || Array.isArray(input)
     || (input as Record<string, unknown>).decision !== SELECT) return null;
   const raw = input as Record<string, unknown>;
   let current: NyxRefactorSelectionCatalog | null = null;
-  try { current = buildNyxRefactorSelection(request, evaluationOrder); } catch { /* changed host input fails closed */ }
+  try { current = buildNyxRefactorSelection(request, evaluationOrder, extendedEvaluationOrder); } catch { /* changed host input fails closed */ }
   const proposal = typeof raw.selectedProposalRef === "string"
     ? current?.proposals.find(item => item.proposalRef === raw.selectedProposalRef) : undefined;
   const cited = Array.isArray(raw.evidenceRefs) ? raw.evidenceRefs : [];
@@ -85,7 +91,8 @@ export function resolveNyxRefactorSelection(input: unknown, catalog: NyxRefactor
     replacement: representation === "TEXT" ? proposal!.proposedSource
       : { lines: proposal!.proposedSource.split(proposal!.proposedSource.includes("\r\n") ? "\r\n" : "\n"),
         lineEnding: proposal!.proposedSource.includes("\r\n") ? "CRLF" : "LF" } }] };
-  const evidence: NyxRefactorSelectionEvidence = immutableTheoryValue({ policy: NYX_SOURCE_BOUND_SELECTION_POLICY,
+  const evidence: NyxRefactorSelectionEvidence = immutableTheoryValue({
+    policy: extendedEvaluationOrder ? NYX_SOURCE_BOUND_SELECTION_POLICY_V2 : NYX_SOURCE_BOUND_SELECTION_POLICY,
     outcome: refusal ? "REFUSED" : "RESOLVED", reason: refusal ?? "current_proposal_expanded_not_authorized",
     bindingDigest: catalog?.bindingDigest ?? null,
     selectedProposalRef: proposal?.proposalRef ?? null, path: proposal?.path ?? null,

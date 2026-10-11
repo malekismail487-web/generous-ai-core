@@ -1321,6 +1321,64 @@ function schemaKeys(value: unknown): string[] {
     {...orderedRequest,allowedMutationPaths:[]}])
     check(nyxLocalRefactorGuidance(invalid,true)===null,
       "new proposal grammar preserves failed-observation, stale-source and unauthorized-context rejection");
+  const extendedSource = "export function add(a,b){const first=a,second=b,third=a,fourth=b,fifth=a;const value=a+b;return [value,0];}";
+  const extendedRequest = {...orderedRequest,files:[{relativePath:"src/math.mjs",content:extendedSource,
+    contentSha256:hash(extendedSource)}]};
+  const extendedGuide = nyxLocalRefactorGuidance(extendedRequest,true,true)!;
+  const extendedCatalog = buildNyxRefactorSelection(extendedRequest,true,true)!;
+  const extendedIntent = {...selectionIntent,selectedProposalRef:extendedCatalog.proposals[0].proposalRef,
+    evidenceRefs:["OBJECTIVE","FILE:src/math.mjs",extendedCatalog.evidenceRef,extendedCatalog.passingObservationRef]};
+  check(extendedGuide.version==="nyx-local-refactor-proposals/4"
+    &&extendedCatalog.version==="nyx-source-bound-refactor-selection/2"
+    &&extendedCatalog.proposerVersion==="nyx-local-refactor-proposals/4"
+    &&extendedGuide.proposals[0].operations[0].kind==="ADJACENT_FIRST_COLLECTION_VALUE",
+    "new proposal grammar and selection policy have explicit, distinct source-bound identities");
+  check(buildNyxRefactorSelection(extendedRequest,true)===null
+    &&resolveNyxRefactorSelection(extendedIntent,extendedCatalog,extendedRequest,"TEXT",true)?.evidence.outcome==="REFUSED",
+    "V4 selection cannot be replayed under the historical V3 proposal grammar");
+  check(isDeepStrictEqual(buildNyxRefactorSelection(orderedRequest,true),buildNyxRefactorSelection(orderedRequest,true,false)),
+    "explicitly omitted V4 preserves the historical source-selection catalog and digest exactly");
+  const oldCatalog = buildNyxRefactorSelection(orderedRequest,true)!;
+  check(resolveNyxRefactorSelection({...selectionIntent,selectedProposalRef:oldCatalog.proposals[0].proposalRef},
+    oldCatalog,orderedRequest,"TEXT",true,true)?.evidence.reason==="selection_request_changed",
+    "a historical selection cannot cross the versioned grammar boundary even for identical source");
+  const extendedSchema = withNyxRefactorSelectionSchema(ordinaryContract.providerSchema,extendedCatalog);
+  check(new Ajv().compile(extendedSchema)(extendedIntent),"independent strict-schema validation accepts the new source-free representation");
+  const extendedResolved = resolveNyxRefactorSelection(extendedIntent,extendedCatalog,extendedRequest,"TEXT",true,true)!;
+  check(extendedResolved.evidence.outcome==="RESOLVED"&&extendedResolved.evidence.policy==="nyx-source-bound-refactor-selection/2"
+    &&!extendedResolved.evidence.authorityGranted&&!extendedResolved.evidence.acceptanceGranted,
+    "V4 resolution remains an ordinary unauthorised edit proposal, not a quality or safety approval");
+  for (const invalid of [{...extendedIntent,changes:[]},{...extendedIntent,selectedProposalRef:"LOCAL-REFACTOR-stale"},
+    {...extendedIntent,evidenceRefs:["OBJECTIVE"]}])
+    check(resolveNyxRefactorSelection(invalid,extendedCatalog,extendedRequest,"LINES",true,true)?.value===null,
+      "extended selection preserves mixed-source, stale-reference and missing-custody refusal");
+  const extendedPayloads:any[]=[];
+  for (const mode of ["EVALUATION_ORDER_PROPOSALS","EXTENDED_EVALUATION_ORDER_PROPOSALS"] as const) {
+    const instance=NyxNemotronEngineeringCognition.create({cognitionId:"EXTENDED-GRAMMAR-COMPOSITION",
+      maxPromptBytes:50000,maxOutputTokens:1024,localRefactorGuidance:mode,localRefactorSelection:"SOURCE_BOUND_REFERENCES",
+      provider:provider(async(url,init)=>{extendedPayloads.push(JSON.parse(String(init?.body)));
+        return transportFor(JSON.stringify(extendedIntent))(url,init);})});
+    await instance.proposeRepair(originalRequest);
+    const result=await instance.proposeRepair(extendedRequest);
+    check(mode==="EXTENDED_EVALUATION_ORDER_PROPOSALS"
+      ?result.decision==="PROPOSED"&&result.evidence.refactorSelection?.policy==="nyx-source-bound-refactor-selection/2"
+        &&result.hypothesis?.applyAuthorized===false
+      :result.decision==="COGNITION_ERROR"&&!result.hypothesis,
+      "only explicit host opt-in resolves new coverage through the existing compiler and cognition contract");
+  }
+  check(isDeepStrictEqual(extendedPayloads[0],extendedPayloads[2]),
+    "V4 configuration does not change initial model requests, compute limits or initial source authority");
+  const extendedRaceRequest=structuredClone(extendedRequest);
+  const extendedRace=NyxNemotronEngineeringCognition.create({cognitionId:"EXTENDED-GRAMMAR-RACE",
+    maxPromptBytes:50000,maxOutputTokens:1024,localRefactorGuidance:"EXTENDED_EVALUATION_ORDER_PROPOSALS",
+    localRefactorSelection:"SOURCE_BOUND_REFERENCES",provider:provider(async(url,init)=>{
+      const prompt=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+      extendedRaceRequest.files[0].contentSha256="0".repeat(64);
+      return transportFor(JSON.stringify({...extendedIntent,selectedProposalRef:prompt.localRefactorProposals.proposals[0].proposalRef}))(url,init);})});
+  const extendedRaced=await extendedRace.proposeRepair(extendedRaceRequest);
+  check(extendedRaced.decision==="COGNITION_ERROR"&&!extendedRaced.hypothesis
+    &&extendedRaced.evidence.refactorSelection?.reason==="selection_request_changed",
+    "new grammar rechecks source custody after the real async inference boundary");
   const noOpportunitySource = "export function add(a,b){const values=[a,b];let sum=0,count=0,minimum=Infinity,maximum=-Infinity;for(const value of values){sum+=value;count++;minimum=Math.min(minimum,value);maximum=Math.max(maximum,value);}return sum;}";
   const noOpportunity={...localRequest,files:[{relativePath:"src/math.mjs",content:noOpportunitySource,contentSha256:hash(noOpportunitySource)}],
     candidateQualityFeedback:{...localRequest.candidateQualityFeedback,findings:[{dimension:"UNNECESSARY_COMPLEXITY",code:"DECLARATION_DELTA",
@@ -1509,6 +1567,85 @@ function schemaKeys(value: unknown): string[] {
   }
   const deep = "function subject(input){const value=input;return " + "(".repeat(18) + "value" + ")".repeat(18) + "+1;}";
   check(ordered(deep) === null, "ordered-use grammar has a finite expression traversal bound");
+}
+
+{
+  // Independent, trusted development execution: no frozen task solutions or model source.
+  const extended = (source: string) => proposeNyxLocalRefactors("src/development.mjs", source, true, true);
+  const observe = (source: string, throwAt: string | null) => {
+    const trace: string[] = [];
+    const event = (name: string) => { trace.push(name); if (name === throwAt) throw Error(name); };
+    const input = {
+      get value() { event("value"); return 3; },
+      other() { event("other"); return 7; },
+      key() { event("key"); return "later"; },
+      get values() { event("values"); return [8, 9]; },
+      get entries() { event("entries"); return { other: 7 }; },
+    };
+    try { return { value: new Function("return (" + source + ")")()(input), trace, error: null }; }
+    catch (error) { return { value: null, trace, error: (error as Error).message }; }
+  };
+  for (const source of [
+    "function subject(input){let value=input.value;return value;}",
+    "function subject(input){const value=input.value;return [value,input.other()];}",
+    "function subject(input){const value=input.value;return [value+input.other(),...input.values];}",
+    "function subject(input){const value=input.value;return {first:value,later:input.other()};}",
+    "function subject(input){const value=input.value;return {first:[value], [input.key()]:input.other()};}",
+    "function subject(input){const value=input.value;return {first:value,...input.entries};}",
+    "function subject(input){const value=input.value;const result=[value,input.other()];return result;}",
+  ]) {
+    const proposal = extended(source)!;
+    check(proposal !== null && proposal.after.declarations < proposal.before.declarations
+      && !proposal.authorityGranted && proposal.equivalence.includes("NOT_CERTIFIED"),
+      "opt-in V4 covers a separately reproduced binding gap without claiming equivalence or authority");
+    check(proposeNyxLocalRefactors("src/development.mjs", source, true) === null
+      || source.includes("const result="), "V3 does not silently inherit the extended collection or let grammar");
+    for (const throwAt of [null, "value", "other", "key", "values", "entries"])
+      check(isDeepStrictEqual(observe(source, throwAt), observe(proposal.proposedSource, throwAt)),
+        "V4 trusted witnesses preserve result, getter/call/spread order and synchronous exceptions");
+  }
+  for (const source of [
+    "function subject(input){let value=input.value;return [value];}",
+    "function subject(input){let value=input.value;value++;return value;}",
+    "function subject(input){var value=input.value;return value;}",
+    "function subject(input){let value=()=>1;return value;}",
+    "async function subject(input){let value=await input;return value;}",
+    "function* subject(input){let value=yield input;return value;}",
+    "function subject(input){let value=typeof value;return value;}",
+    "function subject(input){use(value);let value=input.value;return value;}",
+    "function subject(input){const value=input.value;return [input.other(),value];}",
+    "function subject(input){const value=input.value;return [,value];}",
+    "function subject(input){const value=input.value;return [...value];}",
+    "function subject(input){const value=input.value;return {value};}",
+    "function subject(input){const value=input.value;return {[input.key()]:value};}",
+    "function subject(input){const value=input.value;return {__proto__:value};}",
+    "function subject(input){const value=input.value;return {'__pr\\u006fto__':value};}",
+    "function subject(input){const value=input.value;return {...input.entries,first:value};}",
+    "function subject(input){const value=input.value;return {get first(){return value;}};}",
+    "function subject(input){const value=input.value;return [()=>value];}",
+    "function subject(input){const value=input.value;return [value,value];}",
+    "function subject(input){const value=input.value;return [input.other()?value:0];}",
+    "function subject(input){const value=input.value;return [value()];}",
+    "function subject(input){const value=input.value;return [++value];}",
+    "function subject(input){const value=input.value; /* retained */ return [value];}",
+    "function subject(input){const value=input.value;eval('value');return [value];}",
+  ]) check(extended(source) === null,
+    "V4 refuses changed ownership, writes, TDZ, captures, delayed/conditional uses and unsupported collection positions");
+  for (const suffix of ["[value,0]", "{first:value}", "[{first:value}]"])
+    for (const value of [-3, -0, 0, 2, NaN, null, undefined, "text", true]) {
+      const source = `function subject(input){const value=input;return ${suffix};}`;
+      const proposal = extended(source)!;
+      const execute = (code: string) => new Function("return (" + code + ")")()(value);
+      check(isDeepStrictEqual(execute(source), execute(proposal.proposedSource)),
+        "nested first-value containers preserve primitives, NaN, signed zero and nullish values without coercion");
+    }
+  const nested = "function subject(input){const value=input.value;return " + "[".repeat(18) + "value" + "]".repeat(18) + ";}";
+  check(extended(nested) === null, "extended nested-container traversal retains the original finite depth bound");
+  const shadow = "function subject(input){let value=input.value; {let value=input.other();keep(value);} return value;}";
+  check(extended(shadow) === null, "an intervening block is not an adjacent return despite similar binding names");
+  check(proposeNyxLocalRefactors("src/x.mjs", "function subject(input){let value=input;return value;}", false, true) === null
+    && proposeNyxLocalRefactors("src/x.mjs", "function subject(input){let value=input;return value;}", true, "YES" as never) === null,
+    "invalid or incomplete version flags cannot expand proposer applicability");
 }
 
 {

@@ -495,7 +495,7 @@ export interface NyxNemotronEngineeringCognitionConfig {
   /** Experimental lexical context for quality-only repairs; no new authority or approval. */
   readonly behaviorRepairGuidance?: "BINDING_USES";
   /** Experimental concrete proposals only; ordinary model intent and Omega admission remain mandatory. */
-  readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS";
+  readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS" | "EXTENDED_EVALUATION_ORDER_PROPOSALS";
   /** Opt-in emission path only. A selected host proposal is neither generated source nor approval. */
   readonly localRefactorSelection?: "SOURCE_BOUND_REFERENCES";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
@@ -732,7 +732,7 @@ export class NyxNemotronEngineeringCognition {
       throw new Error("nyx_behavior_repair_guidance_invalid");
     }
     if (config.localRefactorGuidance !== undefined
-      && !["GUARDED_PROPOSALS", "EVALUATION_ORDER_PROPOSALS"].includes(config.localRefactorGuidance)) {
+      && !["GUARDED_PROPOSALS", "EVALUATION_ORDER_PROPOSALS", "EXTENDED_EVALUATION_ORDER_PROPOSALS"].includes(config.localRefactorGuidance)) {
       throw new Error("nyx_local_refactor_guidance_invalid");
     }
     if (config.localRefactorSelection !== undefined && (config.localRefactorSelection !== "SOURCE_BOUND_REFERENCES"
@@ -785,10 +785,13 @@ export class NyxNemotronEngineeringCognition {
       && candidateWindow.objectiveDigest === sha256(request.objective) ? candidateWindow : null;
     this.#rejectedSourceWindow = null;
     const qualityFeedback = request.candidateQualityFeedback;
+    const evaluationOrderRefactors = this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS"
+      || this.#config.localRefactorGuidance === "EXTENDED_EVALUATION_ORDER_PROPOSALS";
+    const extendedEvaluationOrderRefactors = this.#config.localRefactorGuidance === "EXTENDED_EVALUATION_ORDER_PROPOSALS";
     const localRefactorProposals = this.#config.localRefactorGuidance && qualityFeedback
-      ? nyxLocalRefactorGuidance(request, this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS") : null;
+      ? nyxLocalRefactorGuidance(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;
     const refactorSelection = this.#config.localRefactorSelection
-      ? buildNyxRefactorSelection(request, this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS") : null;
+      ? buildNyxRefactorSelection(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;
     const functionBodyCatalog = this.#config.sourceEditScope === "FUNCTION_BODY" ? buildNyxFunctionBodyCatalog(request) : null;
     if (this.#config.sourceEditScope && !functionBodyCatalog) return this.#result("BLOCKED", "nyx_function_body_target_unsupported",
       request, null, null, null, [diagnostic("UNSUPPORTED_FILE_TARGET", "$request", "sole named exported function", "unsupported_body_target")]);
@@ -949,7 +952,7 @@ export class NyxNemotronEngineeringCognition {
       [diagnostic("UNEXPECTED_STRUCTURE", "$", "one JSON object", "non_json_content")], undefined,
       feedbackPresented); }
     const selected = resolveNyxRefactorSelection(parsed, refactorSelection, request, this.#sourceRepresentation,
-      this.#config.localRefactorGuidance === "EVALUATION_ORDER_PROPOSALS");
+      evaluationOrderRefactors, extendedEvaluationOrderRefactors);
     if (selected?.value === null) return this.#result("COGNITION_ERROR", "nyx_cognition_refactor_selection_invalid",
       request, null, null, completion.evidence,
       [diagnostic("STALE_TARGET_REFERENCE", "$", "current source-bound proposal without inline changes", selected.evidence.reason)],
