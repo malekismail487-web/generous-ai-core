@@ -1,8 +1,5 @@
 name: Omega NYX fresh structural contribution repair comparison
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-bounded-transfer-one-shot.yml]
   workflow_dispatch:
 permissions:
   contents: read
