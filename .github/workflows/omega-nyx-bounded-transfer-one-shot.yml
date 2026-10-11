@@ -1,8 +1,6 @@
 name: Omega NYX fresh V3 bounded native reasoning comparison
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:
