@@ -2822,3 +2822,50 @@ same author/session; this is not independently authored assurance. Public
 pretraining exposure is unknown. Candidate Node execution is not a proven
 hostile-code/network sandbox. Historical V2 reports are preserved and never
 regraded as V3. The one-shot push trigger is removed once the run is confirmed.
+## Native reasoning / hosted-versus-local source-emission comparison
+
+`NYX_NATIVE_LOCAL_EMISSION_TRANSFER=1` with the existing V3 native profile
+reuses `STRICT_LOCAL`: only hosted `response_format` is omitted. The same
+NYX prompt construction, strict JSON parsing, source compilation, syntax,
+provenance, authority, original-state V3 admission and exact private scorer
+remain mandatory. No extraction, syntax invention, answer-specific repair,
+new cognition, additional controller or quality relaxation is introduced.
+Independent run identities are retained; actual prompt digests are reported.
+
+Diagnosis from the prior structural-map epoch: one completed JSON response
+contained 40 bytes of incomplete one-line source; a second failed syntax at an
+interior location. Four other emissions ended with `finish_reason=length`.
+Those are not the same failure, and digest-only evidence cannot identify the
+exact faulty statements or prove the hosted grammar caused either one.
+
+Four new unseeded domains are frozen before live calls: quoted CSV records,
+escaped Unicode glob matching, bounded coin combinations and grid energy
+planning. Two repeats yield eight pairs, not eight independent domains.
+Different oracle and test-only witness algorithms establish feasibility;
+witnesses and private expected outputs never enter inference. Authorship is
+shared, pretraining exposure unknown, and this is not an external benchmark.
+
+Both arms use labeled Super, temperature zero, native effort high with 2,048
+reasoning tokens inside the same 8,192 output cap, two logical/physical calls
+including retries, two candidate iterations, three verifier executions,
+155-second leases and a 12,000-byte single-file mutation envelope. The epoch
+is capped at 32 calls and 45 minutes. Realized calls/tokens/verifier-work
+matching remains separate from identical limits; inference latency and total
+host CPU/GPU work are not established by the measured wall-clock proxy.
+Reliability requires fewer interface failures with stable coverage. Any
+efficacy signal requires both repeats winning in two domains under matched
+realized compute without paired acceptance loss. Neither establishes broad
+frontier cognition or default promotion. Candidate Node execution remains
+not a proven hostile-code/network sandbox. Historical outcomes are preserved.
+
+Research: NVIDIA's [Super inference reference](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-super-120b-a12b-infer)
+documents native reasoning controls and a shared output ceiling; it does not
+prove whether hosted grammar caused these observed source failures.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: generator requires detector,
+evidence outranks confidence, no self-certification. Supporting: bounded
+repair and original-state quality. Deferred: cognitive promotion, production,
+additional brain layers and authority. Potential conflict: hosted generation
+guidance differs from independent local validation; omit it experimentally,
+never substitute permissive extraction. Superseded approach: inferring all
+syntax failures are reasoning failures, or all ungraded output is incorrect.

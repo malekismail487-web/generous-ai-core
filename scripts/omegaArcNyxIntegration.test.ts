@@ -38,6 +38,8 @@ import { V3_NATIVE_REASONING_TASKS, V3_NATIVE_REASONING_EPOCH, v3NativeReasoning
   v3NativeReasoningConfiguration, v3NativeWireVerified } from "./omega/benchmarks/v3NativeReasoningTransferTasks";
 import { STRUCTURAL_CONTRIBUTION_TASKS, structuralContributionTasks, structuralContributionConfiguration,
   structuralContributionWireVerified } from "./omega/benchmarks/structuralContributionTransferTasks";
+import { NATIVE_LOCAL_EMISSION_TASKS, nativeLocalEmissionTasks, nativeLocalEmissionConfiguration,
+  nativeLocalEmissionWireVerified } from "./omega/benchmarks/nativeLocalEmissionTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -51,6 +53,33 @@ import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapaci
 let passed = 0, failed = 0;
 const check = (value: unknown, label: string) => { if (value) passed++; else { failed++; console.error(`FAIL ${label}`); } };
 const rejects = (body: () => unknown, label: string) => { try { body(); check(false, label); } catch { check(true, label); } };
+{
+  const tasks=nativeLocalEmissionTasks();
+  check(tasks.length===8&&new Set(tasks.map(task=>task.id)).size===8
+    &&new Set(NATIVE_LOCAL_EMISSION_TASKS.map(task=>task.domain)).size===4,
+    "native delivery comparison freezes four distinct domains and two declared repeats");
+  const history=[...STRUCTURAL_CONTRIBUTION_TASKS,...V3_NATIVE_REASONING_TASKS,...NATIVE_REASONING_TRANSFER_TASKS];
+  check(NATIVE_LOCAL_EMISSION_TASKS.every(task=>history.every(previous=>previous.id!==task.id)),
+    "new delivery epoch cannot overwrite exposed task identities");
+  for(const arm of ["HOSTED_NATIVE_CONTROL","STRICT_LOCAL_NATIVE"]) {
+    const config=nativeLocalEmissionConfiguration(arm);
+    const {structuredOutputMode,...common}=config;
+    check(theoryDigest(common)===theoryDigest(v3NativeReasoningConfiguration("NATIVE_BOUNDED_REASONING")),
+      "delivery experiment changes only existing hosted-output option, not reasoning or quality configuration");
+    check(structuredOutputMode===(arm==="STRICT_LOCAL_NATIVE"?"STRICT_LOCAL":undefined),
+      "local strict validation is not replaced by permissive extraction");
+    const wire={initialCandidateState:true,originalBudgetPresented:true,
+      originalBudgetVersion:"nyx-original-state-quality-budget/2",originalBudgetPolicyId:"omega-public-static-candidate/3",
+      publicAdmissionPolicyId:"omega-public-static-candidate/3",legacyLineApplicabilityPresent:false,
+      hostedSchemaPresent:arm==="HOSTED_NATIVE_CONTROL",promptDigest:"a".repeat(64)};
+    check(nativeLocalEmissionWireVerified(arm,[wire]),"observed emission wire binds V3 and explicit hosted-schema presence");
+    for(const invalid of [{...wire,hostedSchemaPresent:!wire.hostedSchemaPresent},{...wire,promptDigest:"invalid"},
+      {...wire,originalBudgetPresented:false},{...wire,publicAdmissionPolicyId:"omega-public-static-candidate/2"}])
+      check(!nativeLocalEmissionWireVerified(arm,[invalid]),"delivery, prompt and policy evidence cannot silently drift");
+    check(!nativeLocalEmissionWireVerified(arm,[]),"unobserved delivery cannot be certified");
+  }
+  rejects(()=>nativeLocalEmissionConfiguration("RELAXED"),"unknown delivery arm cannot weaken local checks");
+}
 {
   const source = 'export function transform(input) {\n for (const item of input) {\n if (item.a && (item.b || item.c)) return item.values.some(value => value ? true : false);\n }\n return input.length ?? 0;\n}\n';
   const map = measureStructuralContributions("src/transform.mjs", source)!;
@@ -1462,7 +1491,70 @@ representationReferences["FINITE-LANGUAGE-DISTINCTION"] = `export function trans
   }
   return null;
 }`;
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS]) {
+representationReferences["QUOTED-RECORD-FIELDS"] = String.raw`export function transform(input) {
+  const output = [];
+  let field = "", quoted = false;
+  for (let index = 0; index < input.length; index++) {
+    const char = input[index];
+    if (char === '"') {
+      if (quoted && input[index + 1] === '"') {
+        field += '"';
+        index++;
+      } else quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      output.push(field);
+      field = "";
+    } else field += char;
+  }
+  output.push(field);
+  return output;
+}`;
+representationReferences["UNICODE-LITERAL-GLOB"] = String.raw`export function transform(input) {
+  const text = Array.from(input.text);
+  const tokens = Array.from(input.pattern.matchAll(/\\[\s\S]|[\s\S]/gu), match => match[0]);
+  let row = text.map(() => false);
+  row.unshift(true);
+  for (const token of tokens) {
+    const next = [row[0] && token === "*"];
+    const literal = token.replace(/^\\(?=[\s\S])/u, "");
+    for (let index = 0; index < text.length; index++) {
+      next.push(token === "*" ? row[index + 1] || next[index] : row[index] && (token === "?" || text[index] === literal));
+    }
+    row = next;
+  }
+  return row[text.length];
+}`;
+representationReferences["BOUNDED-COIN-COMBINATIONS"] = String.raw`export function transform(input) {
+  let ways = Array(input.amount + 1).fill(0);
+  ways[0] = 1;
+  for (const coin of input.coins) {
+    const next = ways.map(() => 0);
+    for (let amount = 0; amount <= input.amount; amount++) {
+      for (let used = 0; used <= coin.count && used * coin.value <= amount; used++) {
+        next[amount] += ways[amount - used * coin.value];
+      }
+    }
+    ways = next;
+  }
+  return ways[input.amount];
+}`;
+representationReferences["GRID-MINIMUM-ENERGY"] = String.raw`export function transform(input) {
+  const width = input[0].length, cells = input.flat(), distance = cells.map(() => Infinity);
+  if (cells[0] === null || cells.at(-1) === null) return null;
+  const frontier = cells.map((value, index) => index);
+  distance[0] = 0;
+  while (frontier.length) {
+    frontier.sort((a, b) => distance[a] - distance[b]);
+    const node = frontier.shift();
+    for (const next of frontier) {
+      if (cells[next] === null) continue;
+      if (Math.abs(Math.floor(node / width) - Math.floor(next / width)) + Math.abs(node % width - next % width) !== 1) continue;
+      distance[next] = Math.min(distance[next], distance[node] + cells[next]);
+    }
+  }
+  return Number.isFinite(distance.at(-1)) ? distance.at(-1) : null;
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1488,7 +1580,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
       `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
   }
   const source=representationReferences[task.id];
-  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS].some(fresh=>fresh.id===task.id)) {
+  if([...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS].some(fresh=>fresh.id===task.id)) {
     const transform = new Function(source.replace("export function","return function"))() as (input: unknown)=>unknown;
     for(const test of [...task.publicCases,...task.privateCases]) check(theoryDigest(transform(structuredClone(test.input)))===theoryDigest(test.expected),
       "new task independent oracle matches test-only reference without adapter canonicalization");
@@ -1500,7 +1592,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
     maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||[...V3_FRESH_BUDGET_TASKS,...V3_NATIVE_REASONING_TASKS,...STRUCTURAL_CONTRIBUTION_TASKS,...NATIVE_LOCAL_EMISSION_TASKS].some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,

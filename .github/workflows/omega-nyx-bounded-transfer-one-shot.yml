@@ -1,5 +1,8 @@
-name: Omega NYX fresh structural contribution repair comparison
+name: Omega NYX native source-emission delivery comparison
 on:
+  push:
+    branches:
+      - sol/omega-institutional-spine
   workflow_dispatch:
 permissions:
   contents: read
@@ -8,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   bounded-contract-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-structure-map-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-native-local-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -37,7 +40,7 @@ jobs:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NYX_NATIVE_REASONING_TRANSFER: '1'
           NYX_V3_NATIVE_REASONING_TRANSFER: '1'
-          NYX_STRUCTURAL_CONTRIBUTION_TRANSFER: '1'
+          NYX_NATIVE_LOCAL_EMISSION_TRANSFER: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
       - name: Preserve sanitized evidence including rejected candidates
