@@ -1,5 +1,6 @@
 import { theoryDigest } from "../../../src/lib/codelab/research/theoryContracts";
 import { observePublicRuntimeSample } from "./publicRuntimeSamples";
+import { publicExecutionFailure } from "./publicExecutionFailures";
 
 export interface RepresentationTask {
   id: string; tier: "DEVELOPMENT" | "VALIDATION"; domain: string; objective: string;
@@ -39,7 +40,11 @@ export const SOURCE_REPRESENTATION_TASKS: readonly RepresentationTask[] = [
       {input: ["", "α", "\n", "😀"], expected: ["α", "😀"]}]},
 ];
 
-export function representationRepositoryFiles(task: RepresentationTask): Readonly<Record<string, string>> {
+export function representationRepositoryFiles(task: RepresentationTask,
+  options: { readonly publicExecutionDiagnostics?: "BOUNDED_CLASS_ONLY" } = {}): Readonly<Record<string, string>> {
+  if (Object.keys(options).some(key => key !== "publicExecutionDiagnostics")
+    || options.publicExecutionDiagnostics !== undefined && options.publicExecutionDiagnostics !== "BOUNDED_CLASS_ONLY"
+    || task.publicCases.length > 16) throw Error("public_execution_diagnostics_config_invalid");
   if (task.publicRuntimeInputs !== undefined && (!Array.isArray(task.publicRuntimeInputs)
     || task.publicRuntimeInputs.length < 1 || task.publicRuntimeInputs.length > 4)) throw Error("runtime_sample_task_bound_invalid");
   const runtimeSamples = task.publicRuntimeInputs ? `
@@ -71,7 +76,7 @@ function detachedResult(value,input) {
   };
   return inspect(value);
 }
-let failed=0;
+${options.publicExecutionDiagnostics ? `const publicExecutionFailure = ${publicExecutionFailure.toString()};\n` : ""}let failed=0;
 for(const [index,example] of examples.entries()) {
   try {
     const input=structuredClone(example.input); const actual=transform(input);
@@ -79,7 +84,9 @@ for(const [index,example] of examples.entries()) {
       ||!detachedResult(actual,input)) {
       console.error("FAIL public-example="+index); failed++;
     }
-  } catch {console.error("FAIL public-example="+index+" execution-error"); failed++;}
+  } ${options.publicExecutionDiagnostics
+    ? 'catch(error) {console.error(publicExecutionFailure(error,index)); failed++;}'
+    : 'catch {console.error("FAIL public-example="+index+" execution-error"); failed++;}'}
 }
 try {
   const results=inputs.map(original=>{const input=structuredClone(original); const value=transform(input);

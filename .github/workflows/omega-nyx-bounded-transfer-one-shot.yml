@@ -1,5 +1,7 @@
-name: Omega NYX bounded intent fresh engineering transfer
+name: Omega NYX bounded public exception repair comparison
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
 permissions:
   contents: read
@@ -8,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   bounded-contract-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-v3-fresh-budget-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-public-exception-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -32,11 +34,10 @@ jobs:
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBenchmarkCapabilityHarness.test.ts
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-representation-cycle.ts scripts/omegaArcNyxIntegration.test.ts
-      - name: Fresh unseeded original-budget comparison under identical V3 admission
+      - name: Fresh faulty repository comparison under identical V3 admission and bounded budgets
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
-          NYX_ORIGINAL_BUDGET_TRANSFER: '1'
-          NYX_V3_FRESH_BUDGET_TRANSFER: '1'
+          NYX_PUBLIC_FAILURE_REPAIR_COMPARISON: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-representation-cycle.ts
       - name: Preserve sanitized evidence including rejected candidates

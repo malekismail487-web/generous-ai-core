@@ -4429,6 +4429,8 @@
           "scripts/omega/benchmarks/originalBudgetTransferTasks.ts",
           "scripts/omega/benchmarks/patternRepairTransferTasks.ts",
           "scripts/omega/benchmarks/probabilityTransferTasks.ts",
+          "scripts/omega/benchmarks/publicExecutionFailures.ts",
+          "scripts/omega/benchmarks/publicFailureRepairTasks.ts",
           "scripts/omega/benchmarks/publicFailureWitness.ts",
           "scripts/omega/benchmarks/qualitySiteTransferTasks.ts",
           "scripts/omega/benchmarks/r3RepositorySession.ts",
@@ -5457,6 +5459,8 @@
       "evidence": {
         "firstPartyCodeReferences": [
           "scripts/omega/benchmarks/generalReasoningTasks.ts",
+          "scripts/omega/benchmarks/publicExecutionFailures.ts",
+          "scripts/omega/nyx-source-representation-cycle.ts",
           "scripts/omegaBenchmarkCapabilityHarness.test.ts",
           "scripts/omegaNyxEngineeringQualityAssurance.test.ts",
           "scripts/omegaPlanCoverageTraceability.test.ts",
@@ -8271,6 +8275,7 @@
           "scripts/omega/benchmarks/originalBudgetTransferTasks.ts",
           "scripts/omega/benchmarks/patternRepairTransferTasks.ts",
           "scripts/omega/benchmarks/probabilityTransferTasks.ts",
+          "scripts/omega/benchmarks/publicFailureRepairTasks.ts",
           "scripts/omega/benchmarks/runtimeReviewTransferTasks.ts",
           "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts",
           "scripts/omega/benchmarks/tasks.ts",

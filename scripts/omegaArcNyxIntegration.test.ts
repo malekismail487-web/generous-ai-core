@@ -6,6 +6,9 @@ import { CONDITIONAL_REFACTOR_REPAIR_TASKS, suppliedCandidateThenLive, lastCondi
   from "./omega/benchmarks/conditionalRefactorRepairTasks";
 import { proposeNyxLocalRefactors } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { observePublicRuntimeSample } from "./omega/benchmarks/publicRuntimeSamples";
+import { publicExecutionFailure } from "./omega/benchmarks/publicExecutionFailures";
+import { PUBLIC_FAILURE_REPAIR_TASKS, PUBLIC_FAILURE_REPAIR_EPOCH, publicFailureRepairTasks,
+  publicFailureRepairConfiguration, publicFailureRepairWireVerified, publicFailureContext } from "./omega/benchmarks/publicFailureRepairTasks";
 import { arcCorePredecessorSource, NYX_ARC_CORE_REFINEMENT } from "./omega/nyx-arc-core-refinement";
 import { readFile } from "node:fs/promises";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
@@ -1219,7 +1222,27 @@ check(observeV3AdmissionPolicy([{quality:null,staticPolicyId:V3_FRESH_BUDGET_EPO
   "a claimed policy invocation without a result fails observation integrity");
 check(observeV3AdmissionPolicy([{quality:"FORGED_PASS",staticPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}]).state==="MISMATCH",
   "invented admission result cannot pass policy controls");
-for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS]) {
+representationReferences["EXACT-INTEGER-PRODUCT"] = `export function transform(input) {
+  return String(BigInt(input.left) * BigInt(input.right));
+}`;
+representationReferences["OVERLAPPING-LITERAL-COUNT"] = `export function transform(input) {
+  let count = 0;
+  if (!input.needle.length) return 0;
+  for (let index = 0; index <= input.text.length - input.needle.length; index++) {
+    if (input.text.startsWith(input.needle, index)) count++;
+  }
+  return count;
+}`;
+representationReferences["CLOSED-INTEGER-RANGE"] = `export function transform(input) {
+  const values = [];
+  for (let next = input.start; next <= input.end; next++) values.push(next);
+  return values;
+}`;
+representationReferences["PRIORITY-STABLE-ROW-IDS"] = `export function transform(input) {
+  const rank = new Map(input.order.map((key,index)=>[key,index]));
+  return input.rows.slice().sort((a,b)=>(rank.get(a.key) ?? input.order.length) - (rank.get(b.key) ?? input.order.length)).map(row=>row.id);
+}`;
+for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);
   check(scoreRepresentationArtifact(task, marker(rows)).accepted, `${task.id} private exact scorer validates all cases`);
@@ -1232,9 +1255,18 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
     `${task.id} ambiguous candidate artifacts fail closed`);
   check(!representationRepositoryFiles(task)["tools/verify.mjs"].includes(JSON.stringify(task.privateCases)),
     `${task.id} withheld answer table absent from visible verifier`);
-  const session = await R3BenchmarkRepositorySession.create(representationRepositoryFiles(task), "a".repeat(40), Date.now() + 60000, 12000);
+  const publicFailureTask = PUBLIC_FAILURE_REPAIR_TASKS.find(fresh=>fresh.id===task.id);
+  const files=representationRepositoryFiles(task,publicFailureTask?{publicExecutionDiagnostics:"BOUNDED_CLASS_ONLY"}:{});
+  const session = await R3BenchmarkRepositorySession.create(publicFailureTask
+    ?{...files,"src/transform.mjs":publicFailureTask.initialSource}:files, "a".repeat(40), Date.now() + 60000, 12000);
   const baseline = await session.baseline();
   check(baseline.observation.state === "TEST_FAIL", `${task.id} real existing Omega execution observes initial failure`);
+  if(publicFailureTask) {
+    const category={"EXACT-INTEGER-PRODUCT":"TYPE_ERROR","OVERLAPPING-LITERAL-COUNT":"SYNTAX_ERROR",
+      "CLOSED-INTEGER-RANGE":"RANGE_ERROR","PRIORITY-STABLE-ROW-IDS":"REFERENCE_ERROR"}[task.id];
+    check(baseline.observation.diagnostics.some(d=>d.message.includes(`error-class=${category}`)),
+      `${task.id} supplied fault produces the predeclared public runtime class through existing execution`);
+  }
   const source=representationReferences[task.id];
   const referenceIntent=JSON.parse(intent(source));
   referenceIntent.causalHypothesis="The supplied test-only reference implements the stated domain rule.";
@@ -1243,7 +1275,7 @@ for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASK
   const cognition=NyxNemotronEngineeringCognition.create({cognitionId:"REFERENCE-ONLY",provider:provider(async()=>reply(JSON.stringify(referenceIntent))),
     maxPromptBytes:48000,maxOutputTokens:8192,sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION"});
   const loop=R3BoundedRepairLoop.create({loopId:"REFERENCE-ONLY",evaluatorVersion:"REFERENCE-ONLY",observerIdentity:"REFERENCE-ONLY",
-    ...(V3_FRESH_BUDGET_TASKS.some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
+    ...(publicFailureTask||V3_FRESH_BUDGET_TASKS.some(fresh=>fresh.id===task.id)?{candidateAdmissionPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}:{}),
     cognition,candidateBuilder:{builderIdentity:"REFERENCE-ONLY",prepare:h=>session.prepare(h)},maxIterations:1,maxModelInteractions:1,
     maxWallClockMs:30000,maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
   const result=await loop.run({schemaVersion:1,repairRequestId:"REFERENCE-ONLY",objective:task.objective,
@@ -1447,6 +1479,106 @@ for(const probe of SOURCE_LITERAL_PROBES) {
   check(sample(() => circular).status === "VALUE_UNAVAILABLE", "cycle and depth bounds apply before output traversal");
   check(theoryDigest(runtimeReviewTransferConfiguration("SCOPED_REVIEW_CONTROL"))
     === theoryDigest(runtimeReviewTransferConfiguration("RUNTIME_OBSERVATION_REVIEW")), "runtime comparison shares exact inference configuration");
+}
+{
+  const sensitive = "PRIVATE_SENTINEL_DO_NOT_EMIT";
+  check(publicFailureRepairTasks().length===8&&new Set(publicFailureRepairTasks().map(task=>task.id)).size===8,
+    "public diagnostic epoch has four unique tasks and two predeclared distinct repeats, not eight independent tasks");
+  check(theoryDigest(publicFailureRepairConfiguration("OPAQUE_EXCEPTION_CONTROL"))
+    ===theoryDigest(publicFailureRepairConfiguration("PUBLIC_EXCEPTION_CLASS")),
+    "public diagnostic arms have exactly identical cognition configuration");
+  const wire={publicExceptionClassCount:0,privateExceptionClassCount:0,publicAdmissionPolicyId:PUBLIC_FAILURE_REPAIR_EPOCH.admissionPolicyId,
+    contextPaths:["src/examples.mjs","src/inputs.mjs","src/transform.mjs"]};
+  check(publicFailureContext([...wire.contextPaths,"tools/verify.mjs"].map(relativePath=>({relativePath}))).length===3
+    &&!publicFailureRepairWireVerified("PUBLIC_EXCEPTION_CLASS",[{...wire,publicExceptionClassCount:1,
+      contextPaths:[...wire.contextPaths,"tools/verify.mjs"]}]),
+    "verifier implementation is excluded from both cognition contexts and treatment leakage disqualifies comparison");
+  check(publicFailureRepairWireVerified("OPAQUE_EXCEPTION_CONTROL",[wire])
+    &&publicFailureRepairWireVerified("PUBLIC_EXCEPTION_CLASS",[{...wire,publicExceptionClassCount:1},wire]),
+    "public diagnostic treatment is witnessed on initial failure but need not appear on later non-exception repairs");
+  for(const invalid of [{...wire,publicExceptionClassCount:-1},{...wire,privateExceptionClassCount:1},
+    {...wire,publicAdmissionPolicyId:"omega-public-static-candidate/2"},{...wire,publicExceptionClassCount:undefined}]) {
+    check(!publicFailureRepairWireVerified("PUBLIC_EXCEPTION_CLASS",[invalid]),
+      "missing, private, unbounded or wrong-policy diagnostic observations cannot qualify a comparison");
+  }
+  check(!publicFailureRepairWireVerified("PUBLIC_EXCEPTION_CLASS",[wire])
+    &&!publicFailureRepairWireVerified("OPAQUE_EXCEPTION_CONTROL",[{...wire,publicExceptionClassCount:1}]),
+    "unexercised treatment and contaminated control remain invalid comparisons");
+  for (const [error, label] of [[new ReferenceError(sensitive), "REFERENCE_ERROR"],
+    [new TypeError(sensitive), "TYPE_ERROR"], [new RangeError(sensitive), "RANGE_ERROR"],
+    [new SyntaxError(sensitive), "SYNTAX_ERROR"], [new Error(sensitive), "ERROR"],
+    [sensitive, "UNKNOWN_THROW"], [null, "UNKNOWN_THROW"], [42, "UNKNOWN_THROW"]] as const) {
+    const result = publicExecutionFailure(error, 0);
+    check(result.includes(`error-class=${label}`) && !result.includes(sensitive),
+      "public exception diagnostics expose bounded class, never raw message or thrown value");
+  }
+  const native = new TypeError(sensitive);
+  Object.defineProperty(native, "stack", {value:`TypeError: ${sensitive}\n    at transform (file:///private-root/src/transform.mjs:7:11)\n    at other (file:///secrets/credentials.mjs:1:1)`, configurable:true});
+  Object.defineProperty(native, "name", {get(){throw Error("name_getter_must_not_run");}});
+  check(publicExecutionFailure(native, 1) === "FAIL public-example=1 execution-error error-class=TYPE_ERROR",
+    "public exception coordinates exclude every absolute path and user-controlled name");
+  let accessed = false;
+  const accessor = new Error(sensitive);
+  Object.defineProperty(accessor, "stack", {get(){accessed=true;return sensitive;},configurable:true});
+  check(publicExecutionFailure(accessor, 0)==="FAIL public-example=0 execution-error error-class=ERROR" && !accessed,
+    "diagnostic extractor does not invoke candidate stack accessors");
+  const proxy = new Proxy({}, {getPrototypeOf(){throw Error(sensitive);}});
+  check(publicExecutionFailure(proxy, 0).includes("UNKNOWN_THROW") && !publicExecutionFailure(proxy, 0).includes(sensitive),
+    "hostile exception objects cannot inject diagnostics or stop the verifier");
+  for (const stack of [`Error: /src/transform.mjs:2:3`, `Error\n    at other (/private/transform.mjs:2:3)`,
+    `Error\n    at transform (/private/src/transform.mjs:0:3)`, `Error\n    at transform (/private/src/transform.mjs:10001:3)`,
+    "x".repeat(8001)]) {
+    const error = new Error(sensitive); Object.defineProperty(error,"stack",{value:stack,configurable:true});
+    check(publicExecutionFailure(error, 0)==="FAIL public-example=0 execution-error error-class=ERROR",
+      "message headers, unrelated files and out-of-bound stack locations remain unknown");
+  }
+  rejects(()=>publicExecutionFailure(native, -1), "public exception index cannot be arbitrary text or out of range");
+  rejects(()=>publicExecutionFailure(native, 16), "public exception evidence has a finite example bound");
+  const task = {id:"PUBLIC-FAILURE-DEVELOPMENT",tier:"DEVELOPMENT" as const,domain:"RUNTIME_DIAGNOSTICS",
+    objective:"Return exact integer quotient as a string for decimal integer strings n,d where d is nonzero.",
+    publicCases:[{input:{n:"15",d:"2"},expected:"7"}], privateCases:[{input:{n:"8",d:"3"},expected:"2"}]};
+  const files = representationRepositoryFiles(task);
+  const priorModule=execFileSync("git",["show","72942530005025df5ae40dc83ba7c7fc84432576:scripts/omega/benchmarks/sourceRepresentationTasks.ts"],{encoding:"utf8"});
+  const priorFunction=priorModule.slice(priorModule.indexOf("export function representationRepositoryFiles"),
+    priorModule.indexOf("export function scoreRepresentationArtifact"));
+  const typescript=await import("typescript");
+  const compiled=typescript.transpileModule(priorFunction,{compilerOptions:{target:typescript.ScriptTarget.ES2022,
+    module:typescript.ModuleKind.ESNext}}).outputText.replace("export function","function");
+  const previousFixture=new Function("observePublicRuntimeSample",compiled+"\nreturn representationRepositoryFiles;")(observePublicRuntimeSample);
+  check([...SOURCE_REPRESENTATION_TASKS,...V3_FRESH_BUDGET_TASKS,...PUBLIC_FAILURE_REPAIR_TASKS].every(item=>
+    theoryDigest(previousFixture(item))===theoryDigest(representationRepositoryFiles(item))),
+    "omitted public diagnostic option preserves exact fixture bytes from frozen predecessor across old and new domains");
+  const enriched = representationRepositoryFiles(task,{publicExecutionDiagnostics:"BOUNDED_CLASS_ONLY"});
+  check(Object.keys(files).every(path=>path==="tools/verify.mjs"||files[path]===enriched[path]),
+    "public diagnostic treatment leaves source, examples and withheld inputs byte-identical");
+  check(enriched["tools/verify.mjs"].includes('catch {console.error("FAIL private-input execution-error"); failed++;}')
+    && !files["tools/verify.mjs"].includes("error-class="),
+    "withheld runtime failures remain opaque and omitted configuration preserves legacy feedback");
+  rejects(()=>representationRepositoryFiles(task,{publicExecutionDiagnostics:"RAW" as any}),
+    "raw exception diagnostics are not an admitted option");
+  rejects(()=>representationRepositoryFiles(task,{other:true} as any), "unknown diagnostic options cannot silently select treatment");
+  // Reproduce through the existing real R3 executor/observer, not a mocked log.
+  const source = 'export function transform(input) {\n  return (BigInt(input.n) / Number(input.d)).toString();\n}\n';
+  const observations: string[][] = [];
+  for (const config of [{}, {publicExecutionDiagnostics:"BOUNDED_CLASS_ONLY" as const}]) {
+    const session=await R3BenchmarkRepositorySession.create({...representationRepositoryFiles(task,config),
+      "src/transform.mjs":source},"a".repeat(40),Date.now()+60000,12000);
+    try {
+      const baseline=await session.baseline();
+      observations.push(baseline.observation.diagnostics.map(d=>d.message));
+      check(baseline.result.outcome==="FAIL" && baseline.observation.state==="TEST_FAIL",
+        "richer public runtime evidence cannot turn a failing execution into acceptance");
+    } finally {
+      const cleanup=await session.close();
+      check(cleanup.sourceUnchanged&&cleanup.cleanupVerified,"public diagnostic development preserves source and verifies disposal");
+    }
+  }
+  check(observations[0].some(message=>message==="FAIL public-example=0 execution-error")
+    && !observations[0].some(message=>message.includes("TYPE_ERROR")),
+    "existing pipeline reproduces native TypeError being erased before NYX feedback");
+  check(observations[1].some(message=>message.includes("error-class=TYPE_ERROR"))
+    && observations[1].some(message=>message==="FAIL private-input execution-error"),
+    "existing observer carries sanitized public class while private failure stays opaque");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

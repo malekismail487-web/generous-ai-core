@@ -1,5 +1,32 @@
 # NYX benchmark capability program
 
+### Public exception diagnostic experiment — frozen before inference
+
+`NYX-PUBLIC-EXCEPTION-DIAGNOSTIC-001` corrects an independently reproduced
+interface gap: the existing R3 verifier erased native runtime classes before
+NYX received public feedback. The opt-in helper emits only a bounded native
+error-class label. It never reads messages, names or stack traces; Node 24's
+lazy stack formatting invalidated the initial location-extraction assumption.
+Private exception feedback remains opaque. Omission preserves the exact
+predecessor fixture bytes, and all acceptance and authority gates are unchanged.
+
+The next frozen comparison uses four new supplied faulty repositories, two
+predeclared repeats, two arms, identical Super configuration and V3 admission.
+The only changed variable is public exception logging. This measures bounded
+existing-function debugging, not from-scratch code generation or any external
+benchmark. Both arms omit verifier implementation from cognition context;
+Omega still pins and executes it. Shared limits: two logical/physical calls per arm (including retries),
+8,192 output tokens per call, two candidate iterations, three verifier executions,
+155 seconds per arm and 45 minutes per epoch; at most 32 physical calls.
+Calls, reported tokens and scheduled verifier work must agree within 10% for a
+matched comparison. These are compute proxies, not total host CPU measurements.
+No efficacy claim exists before terminal evidence; default Ultra is unchanged.
+
+Ω coverage: evidence-bound failure observation and bounded diagnosis–repair;
+supporting principles are generator/detector separation, original-state quality
+comparison and explicit authority. Broad promotion, reserved benchmarks and new
+cognitive layers are deferred. Coverage remains **PARTIAL / JUST-IN-TIME**.
+
 ### Fresh V3 comparison — no acceptance gain (2026-10-11)
 
 Frozen candidate `c117fed6db592b55a179064b87fd351bf7cc6267`,
