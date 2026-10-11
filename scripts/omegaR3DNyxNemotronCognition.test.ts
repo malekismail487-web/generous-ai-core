@@ -8,6 +8,8 @@ import { measuredQualityRepairGuidance, originalStateQualityBudget, measureBindi
 import { proposeNyxLocalRefactors, nyxLocalRefactorGuidance } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactorSelectionSchema }
   from "../src/lib/codelab/cognition/nyxSourceBoundRefactorSelection";
+import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema }
+  from "../src/lib/codelab/cognition/nyxSourceSiteEmission";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
 import { NvidiaNimProvider, type NvidiaNimTransport } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -1859,6 +1861,158 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
       "V3 generic guidance preserves unchanged absolute and general structural limits in both arms");
     check(Boolean(prompts[0]?.originalStructuralBudget)===Boolean(guidance),
       "generic V3 policy consistency does not silently enable the optional exact original-state budget");
+  }
+}
+{
+  // Independently authored development witnesses, not retained live source or evaluation answers.
+  const prefix = 'export const label = "retained-λ";\nexport function untouched(value) { return value * 7; }\n';
+  const program = prefix + 'export function fold(input) {\n' +
+    '  const first = input.initial;\n  const second = first;\n  const third = second;\n' +
+    '  let total = third;\n  for (const value of input.values) { total += value; }\n' +
+    '  return [total, input.values.length, label];\n}\n';
+  const path = "src/fold.mjs", obs = { ...observation("TEST_PASS"), diagnostics: [] };
+  const measured = measureEngineeringStructure(path, program);
+  const makeRequest = (content = program, overrides: Partial<NyxRepairCognitionRequest> = {}) => request({
+    objective: "Preserve ordered summation, initial state, length, label and all unrelated exports while removing redundant aliases.",
+    observation: obs, files: [{ relativePath: path, content, contentSha256: hash(content) }], allowedMutationPaths: [path],
+    priorHypotheses: [{ hypothesisId: "SITE-PRIOR", parentHypothesisId: null, causalHypothesis: "Redundant aliases preserve behavior.",
+      expectedResult: "Public checks pass but structural debt remains.", strategyDigest: hash("prior-site-strategy"),
+      disposition: "PARTIALLY_SUPPORTED", verificationEvidenceRefs: ["QUALITY-SITES"] }],
+    candidateQualityFeedback: { assessmentId: "ASSESS-SITES", evidenceId: "QUALITY-SITES", hypothesisId: "SITE-PRIOR",
+      applicationId: obs.applicationId, proposalDigest: obs.proposalDigest, hiddenEvidenceUsed: false, authorityGranted: false,
+      findings: [{ code: "DECLARATION_DELTA", dimension: "UNNECESSARY_COMPLEXITY", paths: [path],
+        measurement: { observed: measured.declarations - 2, limit: 4 } }] }, ...overrides });
+  const req = makeRequest(), catalog = buildNyxSourceSiteCatalog(req)!;
+  const entry = catalog.entries.find(item => item.original ===
+    'const first = input.initial;\n  const second = first;\n  const third = second;')!;
+  check(Boolean(entry) && catalog.entries.length <= 32 && catalog.limits.edits === 8 && Object.isFrozen(catalog),
+    "source-bound sites offer bounded editable syntax, not a host-authored algorithm or mutable approval");
+  const fields = JSON.parse(intent({ decision: "PROPOSE_SOURCE_SITES", evidenceRefs:
+    ["OBJECTIVE", `FILE:${path}`, "QUALITY-SITES", `OBSERVATION:${obs.observationId}`],
+    diagnosis: "Repeated aliases add declarations without changing ordered state.",
+    causalHypothesis: "Removing only the alias chain preserves the accumulator and surrounding exports.",
+    invariant: "Initial state and each input contribution remain present exactly once in order.",
+    expectedResult: "Public checks remain passing and declarations decrease.",
+    counterexamples: ["empty values retain the initial state", "negative values preserve signed accumulation"],
+    failureInterpretation: "The prior public pass did not establish structural quality." }));
+  delete fields.changes;
+  const wire = (ref = entry.siteRef, lines = ['const third = input.initial;']) => ({ ...fields,
+    edits: [{ siteRef: ref, lines, lineEnding: "LF" }] });
+  const resolved = (await resolveNyxSourceSites(wire(), catalog, req, "TEXT"))!;
+  const proposed = (resolved.value as { changes: { replacement: string }[] })?.changes[0].replacement;
+  check(resolved.evidence.outcome === "RESOLVED" && proposed === program.replace(entry.original, 'const third = input.initial;')
+    && proposed.startsWith(prefix) && !resolved.evidence.authorityGranted && !resolved.evidence.semanticEquivalenceCertified,
+    "literal site expansion preserves all unselected bytes without claiming semantic equivalence or authority");
+  const trusted = async (body: string) => import(`data:text/javascript;base64,${Buffer.from(body).toString("base64")}`);
+  const originalModule = await trusted(program), editedModule = await trusted(proposed);
+  // Reproduce the destructive-rewrite class independently: correct serialization is not correctness.
+  const destructive = prefix + 'export function fold(input) { return [input.values.reduce((a,b)=>a+b,0), input.values.length, label]; }\n';
+  check((await validateNyxSourceSyntax(path, destructive)).valid
+    && !isDeepStrictEqual((await trusted(destructive)).fold({ initial: 11, values: [] }), originalModule.fold({ initial: 11, values: [] })),
+    "a syntax-valid smaller whole-source rewrite can destroy previously passing state behavior");
+  for (const input of [{ initial: 11, values: [] }, { initial: -3, values: [5, -8, 2] },
+    { initial: 0.25, values: [0.5, -0.125] }]) check(isDeepStrictEqual(editedModule.fold(input),
+      [input.initial + input.values.reduce((a, b) => a + b, 0), input.values.length, "retained-λ"])
+      && editedModule.untouched(3) === 21,
+    "independent development oracle checks retained initial state, signed/fractional contributions and unrelated export");
+  const host = (enabled: boolean, response: unknown, transport?: NvidiaNimTransport) => NyxNemotronEngineeringCognition.create({
+    cognitionId: "NYX-SITE-DEVELOPMENT", provider: provider(transport ?? transportFor(JSON.stringify(response))),
+    maxPromptBytes: 50000, maxOutputTokens: 1024, sourceRepresentation: "LINES",
+    ...(enabled ? { sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS" as const } : {}) });
+  const result = await host(true, wire()).proposeRepair(req);
+  check(result.decision === "PROPOSED" && result.hypothesis?.changes[0].replacementContent === proposed
+    && result.evidence.sourceSiteEmission?.outcome === "RESOLVED" && !result.omegaAuthorityGranted,
+    "existing cognition/compiler derives an ordinary host-hashed edit from model-written fragments");
+  check((await host(false, wire()).proposeRepair(req)).decision === "COGNITION_ERROR",
+    "the new action has no authority or acceptance when its host opt-in is absent");
+  for (const altered of [{ ...wire(), changes: [] }, { ...wire(), selectedProposalRef: "FORGED" },
+    { ...wire(), edits: [...wire().edits, ...wire().edits] }, wire("FORGED"), wire(entry.siteRef, ["const third ="]),
+    wire(entry.siteRef, ["return 1; } export function injected() { return 2;"]),
+    wire(entry.siteRef, ["const third = input.initial; // swallow untouched code"]),
+    wire(entry.siteRef, [" const third = input.initial;"]), wire(entry.siteRef, ["const third = input.initial; "]),
+    wire(entry.siteRef, ["x".repeat(2049)]), wire(entry.siteRef, ["one\ntwo"]),
+    { ...wire(), evidenceRefs: [`FILE:${path}`] }, { ...wire(), edits: [] },
+    { ...wire(), edits: [{ ...wire().edits[0], extra: "PRIVATE-SHOULD-NOT-ECHO" }] }]) {
+    const refused = await resolveNyxSourceSites(altered, catalog, req, "TEXT");
+    check(refused?.value === null && refused.evidence.outcome === "REFUSED"
+      && !JSON.stringify(refused.evidence).includes("PRIVATE-SHOULD-NOT-ECHO"),
+      "mixed, stale, duplicated, malformed, escaped or uncited fragments fail closed with sanitized receipts");
+  }
+  const overlap = catalog.entries.find(item => item.start >= entry.start && item.end <= entry.end && item.siteRef !== entry.siteRef)!;
+  check((await resolveNyxSourceSites({ ...wire(), edits: [...wire().edits,
+    { siteRef: overlap.siteRef, lines: ["const first = 1;"], lineEnding: "LF" }] }, catalog, req, "TEXT"))?.evidence.reason
+    === "source_sites_overlap", "nested/range overlap is rejected rather than silently ordered");
+  for (const altered of [makeRequest(program.replace("initial", "initial + 1")), makeRequest(program, { objective: "Different objective" }),
+    makeRequest(program, { maxPatchBytes: req.maxPatchBytes - 1 }), makeRequest(program, { observedAtEpochMs: NOW + 1 }),
+    makeRequest(program, { candidateAdmissionPolicyId: "omega-public-static-candidate/3" }),
+    makeRequest(program, { observation: { ...obs, candidateCommit: "e".repeat(40) } })])
+    check((await resolveNyxSourceSites(wire(), catalog, altered, "TEXT"))?.value === null,
+      "source, objective, bounds, clock, candidate and admission policy changes invalidate exact source-site references");
+  check(buildNyxSourceSiteCatalog(request()) === null
+    && buildNyxSourceSiteCatalog(makeRequest(program, { candidateQualityFeedback: null })) === null
+    && buildNyxSourceSiteCatalog(makeRequest(program, { allowedMutationPaths: [] })) === null,
+    "no catalog is invented before provenance-bound passing quality feedback or outside mutation scope");
+  const schema = withNyxSourceSiteSchema(buildNyxRepairIntentContract(req, "LINES", true).providerSchema, catalog);
+  const validator = new Ajv({ strict: false }).compile(schema);
+  check(validator(wire()) && !validator({ ...wire(), changes: [] }) && !validator(wire("UNKNOWN")),
+    "provider gets a separate closed schema branch without weakening ordinary complete-source schema");
+  const noOpportunity = makeRequest('export function fold(input) { return input; }\n');
+  const bodies: unknown[] = [];
+  for (const enabled of [false, true]) await host(enabled, JSON.parse(intent()), async (url, init) => {
+    bodies.push(JSON.parse(String(init.body))); return transportFor(intent())(url, init);
+  }).proposeRepair(noOpportunity);
+  check(isDeepStrictEqual(bodies[0], bodies[1]), "unsupported source preserves the exact historical simpler-control wire");
+  const crlf = makeRequest(program.replace(/\n/g, "\r\n")), crlfCatalog = buildNyxSourceSiteCatalog(crlf)!;
+  const crlfEntry = crlfCatalog.entries.find(item => item.original.includes("const first") && item.original.includes("const third"))!;
+  const crlfResult = await resolveNyxSourceSites({ ...fields, edits: [{ siteRef: crlfEntry.siteRef,
+    lines: ["const third = input.initial;"], lineEnding: "CRLF" }] }, crlfCatalog, crlf, "LINES");
+  check(crlfResult?.evidence.outcome === "RESOLVED" && crlfResult.evidence.sourceDigests[0].base === hash(crlf.files[0].content),
+    "Unicode UTF16 offsets and CRLF byte digests remain distinct and correctly bound");
+  const wrongSemantic = await host(true, wire(entry.siteRef, ["const third = 0;"])).proposeRepair(req);
+  check(wrongSemantic.decision === "PROPOSED" && wrongSemantic.evidence.sourceSiteEmission?.semanticEquivalenceCertified === false,
+    "syntactic confinement honestly permits an unverified semantically wrong edit; unchanged execution must reject it");
+  const returnSite = catalog.entries.find(item => item.category === "STATEMENTS" && item.original.startsWith("return ["))!;
+  const disjointWire = { ...wire(), edits: [{ siteRef: returnSite.siteRef,
+    lines: ['return [total, input.values.length, "retained-λ"];'], lineEnding: "LF" }, ...wire().edits] };
+  const disjoint = await resolveNyxSourceSites(disjointWire, catalog, req, "TEXT");
+  const disjointSource = (disjoint?.value as { changes: { replacement: string }[] } | null)?.changes[0].replacement;
+  check(disjoint?.evidence.outcome === "RESOLVED" && disjointSource === program
+    .replace(entry.original, "const third = input.initial;").replace(returnSite.original, disjointWire.edits[0].lines[0]),
+    "disjoint edits are ordered by current offsets and later spans shift exactly with earlier fragment length");
+  check(disjointSource && isDeepStrictEqual((await trusted(disjointSource)).fold({ initial: 11, values: [-2, 3] }),
+    [12, 2, "retained-λ"]), "independent oracle checks behavior after two disjoint model-written fragments");
+  const aborted = new AbortController(); aborted.abort();
+  for (const expired of [makeRequest(program, { signal: aborted.signal }),
+    makeRequest(program, { deadlineEpochMs: Date.now() - 1 })]) {
+    const expiredCatalog = buildNyxSourceSiteCatalog(expired)!;
+    const expiredRef = expiredCatalog.entries.find(item => item.original === entry.original)!.siteRef;
+    const expiredResult = await resolveNyxSourceSites(wire(expiredRef), expiredCatalog, expired, "TEXT");
+    check(expiredResult?.value === null && expiredResult.evidence.reason === "source_sites_request_changed_or_expired",
+      "aborted or expired source emission remains unexecutable even when source references are current");
+  }
+  const changedDuringRequest = makeRequest();
+  const changedDuring = await host(true, wire(), async (url, init) => {
+    (changedDuringRequest as { objective: string }).objective = "Changed while the provider was awaited";
+    return transportFor(JSON.stringify(wire()))(url, init);
+  }).proposeRepair(changedDuringRequest);
+  check(changedDuring.decision === "COGNITION_ERROR" && changedDuring.hypothesis === null
+    && changedDuring.evidence.sourceSiteEmission?.reason === "source_sites_request_changed_or_not_offered",
+    "provider-await mutation invalidates source-site binding rather than creating a stale executable proposal");
+  for (const unsupported of [program + "x".repeat(12001),
+    program.replace("input.initial", "(".repeat(90) + "input.initial" + ")".repeat(90)),
+    program.replace("input.initial", "[" + Array(2600).fill("0").join(",") + "]"),
+    program.replace("\n", "\r\n")]) check(buildNyxSourceSiteCatalog(makeRequest(unsupported)) === null,
+      "oversized, overdeep, overnode and mixed-newline input cannot create an unbounded or ambiguous source catalog");
+  const schemaViolations = await host(true, { ...wire(), executableShell: "NEVER_EXECUTE_THIS" }).proposeRepair(req);
+  check(schemaViolations.decision === "COGNITION_ERROR" && schemaViolations.hypothesis === null
+    && !JSON.stringify(schemaViolations).includes("NEVER_EXECUTE_THIS"),
+    "site reification cannot launder an unknown executable field past the existing closed semantic contract");
+  for (const conflict of [{ sourceEditScope: "FUNCTION_BODY" as const }, { localRefactorSelection: "SOURCE_BOUND_REFERENCES" as const },
+    { experimentVariant: "MINIMAL_REFERENCE" as const }]) {
+    let rejected = false;
+    try { NyxNemotronEngineeringCognition.create({ cognitionId: "CONFLICT", provider: provider(transportFor(intent())),
+      maxPromptBytes: 50000, maxOutputTokens: 1024, sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS", ...conflict }); } catch { rejected = true; }
+    check(rejected, "incompatible emission modes cannot silently combine or alter a minimal reference control");
   }
 }
 console.log(`Omega R3-D NYX Nemotron cognition tests - passed: ${passed}, failed: ${failed}`);

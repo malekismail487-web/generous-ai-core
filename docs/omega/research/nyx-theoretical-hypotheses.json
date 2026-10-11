@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 1,
+  "kind": "RESEARCH_PORTFOLIO_NOT_EXECUTOR",
+  "createdAt": "2026-10-11",
+  "baseline": "fc295196ef84475a9a142a1ecdabca629c542bdc",
+  "hypothesisStatus": "PROPOSED_OR_DEVELOPMENT_ONLY_NO_TRANSFER_PROMOTION",
+  "claimOfNovelty": false,
+  "authorityGranted": false,
+  "experimentsDispatched": 0,
+  "modelCalls": 0,
+  "companion": "NYX-DUAL-TRACK-PROGRAM.md",
+  "families": [
+    { "id": "F01", "name": "Source and interface representation", "sourceRefs": ["S01", "S15"] },
+    { "id": "F02", "name": "Task-specific tool invention", "sourceRefs": ["S04", "S06", "S07"] },
+    { "id": "F03", "name": "Verified procedural reuse", "sourceRefs": ["S04", "S05"] },
+    { "id": "F04", "name": "Counterexample-producing critics", "sourceRefs": ["S01", "S07"] },
+    { "id": "F05", "name": "Certificate-bearing symbolic cooperation", "sourceRefs": ["S10", "S13"] },
+    { "id": "F06", "name": "Discriminating experiment design", "sourceRefs": ["S11"] },
+    { "id": "F07", "name": "Calibrated uncertainty", "sourceRefs": ["S03", "S11"] },
+    { "id": "F08", "name": "Long-horizon evidence-aware planning", "sourceRefs": ["S09", "S14"] },
+    { "id": "F09", "name": "Freshness-bound procedural memory", "sourceRefs": ["S04", "S08"] },
+    { "id": "F10", "name": "Bounded specialist hypothesis networks", "sourceRefs": ["S09", "S11", "S13"] },
+    { "id": "F11", "name": "Diverse program search", "sourceRefs": ["S06", "S07", "S12"] },
+    { "id": "F12", "name": "Controlled recursive improvement", "sourceRefs": ["S02", "S03", "S08"] },
+    { "id": "F13", "name": "Independent detector improvement", "sourceRefs": ["S02", "S03", "S10"] },
+    { "id": "F14", "name": "Validated cross-domain abstraction", "sourceRefs": ["S10", "S11", "S13"] },
+    { "id": "F15", "name": "Grounded transition models", "sourceRefs": ["S14"] },
+    { "id": "F16", "name": "Useful compute allocation", "sourceRefs": ["S03", "S09", "S11"] }
+  ],
+  "hypotheses": [
+    {
+      "id": "H001", "family": "F01", "name": "Source-bound local emission",
+      "intervention": "Offer model-generated fragments anchored to the passing current source, retaining unselected bytes literally.",
+      "control": "Whole-source repair with the same evidence, model, acceptance checks and total budget.",
+      "falsifier": "Fresh repairs do not improve quality-accepted outcomes or lose passing behavior at comparable compute."
+    },
+    {
+      "id": "H002", "family": "F01", "name": "Typed edit round-trip",
+      "intervention": "Compile a typed edit representation to source and independently check its round-trip intent correspondence.",
+      "control": "Existing typed complete-source intent and strict syntax checks.",
+      "falsifier": "Translation errors, unsupported semantic changes or overhead erase any fresh-task advantage."
+    },
+    {
+      "id": "H003", "family": "F01", "name": "Interface-first implementation",
+      "intervention": "Commit input/output, effects and failure contracts before asking the model to implement a module.",
+      "control": "The same requirements supplied in the ordinary task prompt.",
+      "falsifier": "Contract-first candidates miss hidden requirements or achieve no gain after contract-generation compute is charged."
+    },
+    {
+      "id": "H004", "family": "F01", "name": "Dependency-minimal context",
+      "intervention": "Retrieve a provenance-bound call/dependency slice while retaining explicit unresolved context obligations.",
+      "control": "The existing bounded repository context with equal total inference budget.",
+      "falsifier": "Missing dependencies create new errors, or context reduction does not improve fresh outcomes or resource cost."
+    },
+    {
+      "id": "H005", "family": "F02", "name": "Specification-to-tool invention",
+      "intervention": "When an evidence gap is explicit, propose one pure typed tool plus independent behavior tests before admission.",
+      "control": "Solve the objective with the existing tool catalogue only.",
+      "falsifier": "The generated tool cannot pass independent adversarial tests or its total creation and use cost yields no fresh-task benefit."
+    },
+    {
+      "id": "H006", "family": "F02", "name": "Executable measurement adapter",
+      "intervention": "Generate a bounded instrument that extracts a measurable property from an already admitted artifact.",
+      "control": "Model inspection of the same artifact and existing measurements.",
+      "falsifier": "Calibration fails against a trusted reference, or downstream decisions remain wrong despite accurate measurement."
+    },
+    {
+      "id": "H007", "family": "F02", "name": "Tool-contract inference",
+      "intervention": "Infer applicability and failure conditions from authorized tool observations, then test those conditions independently.",
+      "control": "Static tool documentation with equal observation access.",
+      "falsifier": "Inferred contracts overclaim behavior, fail held-out tool cases or do not reduce invalid requests."
+    },
+    {
+      "id": "H008", "family": "F02", "name": "Algebraic tool composition",
+      "intervention": "Compose admitted pure tools through typed contracts and explicit units, rather than synthesizing unconstrained code.",
+      "control": "The same tools invoked separately by the existing reasoning loop.",
+      "falsifier": "Composition introduces effect/type errors or only redistributes compute without improving accepted solutions."
+    },
+    {
+      "id": "H009", "family": "F03", "name": "Procedure distillation",
+      "intervention": "Extract a general executable procedure from development success, with task answers removed and applicability documented.",
+      "control": "Fresh model reasoning with the same historical development budget accounted.",
+      "falsifier": "The procedure only works on exposed tasks or total-cost transfer is no better than recomputing."
+    },
+    {
+      "id": "H010", "family": "F03", "name": "Precondition-gated skills",
+      "intervention": "Check formal and empirical preconditions before selecting a reusable skill.",
+      "control": "Skill retrieval by semantic similarity alone.",
+      "falsifier": "False applicability persists or rejecting useful skills reduces net acceptance at matched resources."
+    },
+    {
+      "id": "H011", "family": "F03", "name": "Shadow skill reuse",
+      "intervention": "Evaluate a proposed reusable procedure in shadow against an existing trusted workflow before replacing it.",
+      "control": "Use the established workflow without a shadow candidate.",
+      "falsifier": "Shadow evidence predicts promotion poorly or validation costs exceed later measured savings."
+    },
+    {
+      "id": "H012", "family": "F03", "name": "Capability-closed skill packages",
+      "intervention": "Package procedures with transitive capability/resource requirements and independently check them before use.",
+      "control": "Existing individually scoped tool calls.",
+      "falsifier": "Requirements omit side effects, acquire authority implicitly or fail to reduce execution/admission errors."
+    },
+    {
+      "id": "H013", "family": "F04", "name": "Typed property counterexamples",
+      "intervention": "Translate admissible requirements into bounded property generators targeting state, ordering and boundary cases.",
+      "control": "Equal-budget generic critique and existing public checks.",
+      "falsifier": "Generated properties are invalid or fresh repairs do not improve after generator and verifier costs are charged."
+    },
+    {
+      "id": "H014", "family": "F04", "name": "Differential implementation probes",
+      "intervention": "Compare structurally different development implementations against an independent specification oracle.",
+      "control": "One implementation plus the same oracle under equal total budget.",
+      "falsifier": "Correlated implementations miss the same defects or disagreement does not lead to more correct transfer solutions."
+    },
+    {
+      "id": "H015", "family": "F04", "name": "Minimal failing trace feedback",
+      "intervention": "Minimize authorized failing traces without changing their failure predicate, then supply the minimal witness to repair.",
+      "control": "Original structured trace feedback.",
+      "falsifier": "Minimization alters the failure class, removes causal context or provides no accepted-repair advantage."
+    },
+    {
+      "id": "H016", "family": "F04", "name": "Mutation-validated critics",
+      "intervention": "Validate a proposed critic against independently authored semantic mutations before using its findings as repair evidence.",
+      "control": "Unvalidated model critique with the same budget.",
+      "falsifier": "The critic misses critical mutations, falsely condemns valid candidates or gains no fresh defect detection."
+    },
+    {
+      "id": "H017", "family": "F05", "name": "Proof-obligation decomposition",
+      "intervention": "Split a mathematical objective into explicit obligations and request independently checkable certificates where feasible.",
+      "control": "One model-generated argument with existing final checks.",
+      "falsifier": "Obligations omit assumptions or decomposition does not improve correctly formalized fresh proofs."
+    },
+    {
+      "id": "H018", "family": "F05", "name": "Bounded decision-procedure delegation",
+      "intervention": "Delegate an applicable finite subproblem to an admitted exact solver and bind its result to the surrounding argument.",
+      "control": "Model-only reasoning within the same end-to-end resource ceiling.",
+      "falsifier": "Encoding is wrong, certificates do not cover the claimed conclusion or no fresh correctness gain appears."
+    },
+    {
+      "id": "H019", "family": "F05", "name": "Encoding uncertainty certificates",
+      "intervention": "Represent unresolved translation assumptions alongside solver results instead of promoting numerical certainty to semantic certainty.",
+      "control": "Existing solver output and confidence reporting.",
+      "falsifier": "Translation mistakes remain falsely accepted or calibration improves only by abstaining on all useful objectives."
+    },
+    {
+      "id": "H020", "family": "F05", "name": "Dual formalization challenge",
+      "intervention": "Independently formalize a development statement two ways and test whether interpretations disagree before proving it.",
+      "control": "Single formalization with equal total translation/checking compute.",
+      "falsifier": "The two encodings share errors or added translation cost outweighs reduced false proof acceptance."
+    },
+    {
+      "id": "H021", "family": "F06", "name": "Disagreement-targeted measurements",
+      "intervention": "Select experiments where explicit competing hypotheses predict different observable outcomes.",
+      "control": "Generic next-experiment selection using the same experiment catalogue.",
+      "falsifier": "Predictions are unverifiable or measured hypothesis elimination per experiment does not improve."
+    },
+    {
+      "id": "H022", "family": "F06", "name": "Cost-aware information gain",
+      "intervention": "Choose bounded experiments by expected uncertainty reduction per admitted cost, testing prior sensitivity.",
+      "control": "Uniform or lowest-cost experiment selection.",
+      "falsifier": "Prior misspecification reverses the advantage or actual uncertainty reduction is no better at matched cost."
+    },
+    {
+      "id": "H023", "family": "F06", "name": "Instrument calibration before inference",
+      "intervention": "Require a proposed software measurement instrument to estimate error against known reference cases before theory updates.",
+      "control": "Direct interpretation of instrument output.",
+      "falsifier": "Calibration cannot predict held-out measurement error or does not reduce wrong downstream conclusions."
+    },
+    {
+      "id": "H024", "family": "F06", "name": "Sequential rival-theory updates",
+      "intervention": "Maintain competing predictions across several observations and revise only dependencies contradicted by admissible evidence.",
+      "control": "A single favored hypothesis with ordinary reflection.",
+      "falsifier": "Rivals become cosmetic copies, disconfirming observations are ignored or fresh conclusion accuracy does not improve."
+    },
+    {
+      "id": "H025", "family": "F07", "name": "Evidence-separated confidence",
+      "intervention": "Distinguish model estimates, checked constraints, measured outcomes and unknowns in confidence computation.",
+      "control": "Existing scalar model confidence.",
+      "falsifier": "Held-out calibration or false acceptance fails to improve at comparable coverage and cost."
+    },
+    {
+      "id": "H026", "family": "F07", "name": "Correlation-aware agreement",
+      "intervention": "Discount agreeing outputs sharing model, context or evidence instead of counting them as independent votes.",
+      "control": "Raw majority agreement with the same outputs.",
+      "falsifier": "Discounts are uncalibrated or produce no reduction in confidently wrong fresh conclusions."
+    },
+    {
+      "id": "H027", "family": "F07", "name": "Risk-coverage abstention",
+      "intervention": "Fit development-only abstention thresholds and evaluate calibration at fixed fresh-task coverage.",
+      "control": "Always-answer and existing abstention policies.",
+      "falsifier": "Improved risk merely comes from lower coverage or thresholds fail under domain shift."
+    },
+    {
+      "id": "H028", "family": "F07", "name": "Dependency-sensitive uncertainty propagation",
+      "intervention": "Propagate uncertain assumptions through an evidence graph without multiplying independent probabilities when dependencies exist.",
+      "control": "Final-answer confidence only.",
+      "falsifier": "Graph assumptions are unjustified or long-chain error/calibration does not improve on fresh tasks."
+    },
+    {
+      "id": "H029", "family": "F08", "name": "Checkpoint-triggered replanning",
+      "intervention": "Replan only after an observation invalidates an explicit plan dependency, retaining valid progress and rollback points.",
+      "control": "Full replanning or fixed-plan continuation.",
+      "falsifier": "Stale dependencies survive or recovery success/cost is no better under injected interruptions."
+    },
+    {
+      "id": "H030", "family": "F08", "name": "Precondition-reachable plans",
+      "intervention": "Search for a bounded action sequence whose explicit preconditions are reachable under available capabilities.",
+      "control": "Unstructured plan generation followed by ordinary authorization.",
+      "falsifier": "Predicted reachability is unsound or executable fresh-plan success does not improve."
+    },
+    {
+      "id": "H031", "family": "F08", "name": "State projection with obligations",
+      "intervention": "Compress long-horizon state to relevant facts while keeping explicit obligations for omitted information.",
+      "control": "Ordinary summary or bounded raw history.",
+      "falsifier": "Omissions lose necessary information or end-to-end accuracy falls after compression costs are counted."
+    },
+    {
+      "id": "H032", "family": "F08", "name": "Interruption-consistent continuation",
+      "intervention": "Resume from checked candidate/evidence identities and distinguish completed, attempted and pending actions.",
+      "control": "Restarting the workflow from a natural-language summary.",
+      "falsifier": "Repeated side effects or invalid stale references remain, or fresh interrupted-task completion does not improve."
+    },
+    {
+      "id": "H033", "family": "F09", "name": "Invariant-oriented retrieval",
+      "intervention": "Retrieve general procedures and invariants rather than prior task answers, with applicability and provenance.",
+      "control": "No memory and ordinary semantic retrieval under equal total budgets.",
+      "falsifier": "Transfer is answer leakage, irrelevant retrieval increases errors or no fresh-task gain is measured."
+    },
+    {
+      "id": "H034", "family": "F09", "name": "Version-fresh memory",
+      "intervention": "Revalidate memory entries when relevant source/tool/assumption dependencies change, not on every unrelated change.",
+      "control": "Static memory retrieval.",
+      "falsifier": "Stale conclusions are still used or revalidation overhead exceeds demonstrated correctness benefit."
+    },
+    {
+      "id": "H035", "family": "F09", "name": "Negative-procedure memory",
+      "intervention": "Store general failure conditions and counterexample classes without retaining benchmark answers or question-specific repairs.",
+      "control": "Successful procedures only.",
+      "falsifier": "Negative memory blocks valid strategies or only improves repeated exposed questions."
+    },
+    {
+      "id": "H036", "family": "F09", "name": "Checked memory compression",
+      "intervention": "Compress artifacts only when independent retrieval/obligation checks show required information remains recoverable.",
+      "control": "Unvalidated summaries or uncompressed bounded memory.",
+      "falsifier": "Compression discards key evidence, privacy boundaries leak or total-cost fresh performance does not improve."
+    },
+    {
+      "id": "H037", "family": "F10", "name": "Prediction-distinct specialists",
+      "intervention": "Assign specialists competing hypotheses with different predicted observations rather than duplicate generic prompts.",
+      "control": "An equal-compute single reasoner or identical-prompt group.",
+      "falsifier": "Predictions collapse to the same view or independently judged fresh outcomes show no gain."
+    },
+    {
+      "id": "H038", "family": "F10", "name": "Guardian evidence-gap routing",
+      "intervention": "Let a guardian request the cheapest authorized evidence addressing a specialist's explicit uncertainty, not demand confidence 100.",
+      "control": "Generic critique and retry at the same cost.",
+      "falsifier": "Routing cannot identify useful gaps or correctness/calibration fails to improve."
+    },
+    {
+      "id": "H039", "family": "F10", "name": "Structure-matched theory communication",
+      "intervention": "Exchange facts only through mapped variables, units, assumptions and provenance between related hypotheses.",
+      "control": "Free-form specialist message exchange.",
+      "falsifier": "Mapping admits invalid analogies or extra protocol cost yields no transfer benefit."
+    },
+    {
+      "id": "H040", "family": "F10", "name": "Sparse active theory population",
+      "intervention": "Activate a small evidence-selected subset of addressable entities, with explicit per-entity state and shared inference machinery.",
+      "control": "Fixed-size active set or one shared reasoner.",
+      "falsifier": "Activation misses useful hypotheses, duplicate work dominates or realized outcome per resource is no better."
+    },
+    {
+      "id": "H041", "family": "F11", "name": "Typed grammar program search",
+      "intervention": "Search admissible bounded program structures with checked types and independent semantics evaluation.",
+      "control": "Unconstrained generation with the same sample/compute budget.",
+      "falsifier": "Grammar excludes needed solutions, shifts errors to encoding or improves syntax without improving fresh acceptance."
+    },
+    {
+      "id": "H042", "family": "F11", "name": "Quality-diversity archive",
+      "intervention": "Retain distinct development strategies by measurable behavior and cost, including useful nonwinning stepping stones.",
+      "control": "Keep only the current best candidate.",
+      "falsifier": "Behavior descriptors are cosmetic, archive cost is not amortized or fresh outcomes do not improve."
+    },
+    {
+      "id": "H043", "family": "F11", "name": "Residual-obligation synthesis",
+      "intervention": "Generate code addressing a remaining unsatisfied obligation while preserving previously independently checked ones.",
+      "control": "Regenerate the complete candidate after each failure.",
+      "falsifier": "Preserved obligations are falsely assumed or localized synthesis does not improve complete acceptance."
+    },
+    {
+      "id": "H044", "family": "F11", "name": "Construction-cost-amortized search",
+      "intervention": "Optimize reusable algorithms only when lifetime build/validation/use cost improves over repeated direct reasoning.",
+      "control": "No search or direct per-task generation.",
+      "falsifier": "Predicted reuse does not occur or aggregate fresh quality-accepted outcome per cost is worse."
+    },
+    {
+      "id": "H045", "family": "F12", "name": "Bounded self-tool candidate",
+      "intervention": "NYX proposes an improvement to a permitted tool implementation in an isolated version, with an external frozen evaluator.",
+      "control": "Frozen parent tool plus equal-budget human-defined generic correction or static proposal process.",
+      "falsifier": "Candidate changes the trust boundary, cannot reproduce cleanly or fails fresh-task and safety comparison."
+    },
+    {
+      "id": "H046", "family": "F12", "name": "Workflow candidate optimization",
+      "intervention": "Change an allowlisted reasoning workflow representation, retaining fixed model, permissions, graders and evidence custody.",
+      "control": "Frozen workflow under equal total optimization and inference compute.",
+      "falsifier": "Improvement comes from extra compute, evaluator exposure or no repeatable fresh-task gain."
+    },
+    {
+      "id": "H047", "family": "F12", "name": "Improvement-strategy candidate",
+      "intervention": "Optimize a bounded proposal/search strategy in a disposable candidate while the outer evaluation and admission remain immutable.",
+      "control": "Fixed proposal/search strategy with the same construction and evaluation budget.",
+      "falsifier": "More proposals do not yield more independently admitted improvements or search becomes uninspectable/unbounded."
+    },
+    {
+      "id": "H048", "family": "F12", "name": "Two-generation recursion test",
+      "intervention": "Compare parent and improved candidate in their ability to generate the next useful improvement on untouched objectives.",
+      "control": "Static-parent search and one-generation-only improvement under equal cumulative resources.",
+      "falsifier": "A better task solver is not better at producing further transferable improvements, or regressions accumulate."
+    },
+    {
+      "id": "H049", "family": "F13", "name": "Independently admitted detector proposals",
+      "intervention": "Allow NYX to propose a detector, then validate it on independent faults before a separately reviewed evaluator version can use it.",
+      "control": "Existing detector and equal-budget independent review.",
+      "falsifier": "Detector is correlated with its generator, weakens checks or fails sensitivity/false-positive criteria."
+    },
+    {
+      "id": "H050", "family": "F13", "name": "Counterexample-agent separation",
+      "intervention": "Give a bounded critic the objective and candidate but not the generator's persuasive rationale; require checkable findings.",
+      "control": "Critic with shared rationale or single-pass self-review at equal compute.",
+      "falsifier": "Critic findings are ungrounded or separately judged fresh correctness does not improve."
+    },
+    {
+      "id": "H051", "family": "F13", "name": "Objective-to-certificate audit",
+      "intervention": "Independently check that an accepted formal certificate actually answers the stated natural-language objective.",
+      "control": "Certificate validation alone.",
+      "falsifier": "Incorrect formalization remains accepted or audit abstention/cost eliminates practical benefit."
+    },
+    {
+      "id": "H052", "family": "F13", "name": "Nonstationary detector challenge",
+      "intervention": "Test promoted detectors on new defect families and distribution shifts without adapting to reserved answers.",
+      "control": "Fixed familiar mutation/defect corpus.",
+      "falsifier": "Sensitivity collapses on new faults or threshold adjustments mask the regression."
+    },
+    {
+      "id": "H053", "family": "F14", "name": "Dimension-preserving analogy",
+      "intervention": "Require cross-domain mappings to preserve units, boundary conditions and predicted relationships before reuse.",
+      "control": "Linguistic analogy with the same information budget.",
+      "falsifier": "Invalid analogies pass the mapping checks or fresh cross-domain predictions do not improve."
+    },
+    {
+      "id": "H054", "family": "F14", "name": "Constraint-graph transfer",
+      "intervention": "Map an unsolved objective to a solved structural constraint graph and verify the mapping in both directions.",
+      "control": "Direct reasoning without mapped reuse.",
+      "falsifier": "Mapping loses assumptions or transfer fails to outperform direct reasoning after mapping cost."
+    },
+    {
+      "id": "H055", "family": "F14", "name": "Counter-analogy search",
+      "intervention": "Search for cases where a tempting analogy predicts the wrong result before allowing it to guide a solution.",
+      "control": "Positive supporting examples only.",
+      "falsifier": "Counterexamples are spurious, useful analogies are discarded or no fresh correctness gain occurs."
+    },
+    {
+      "id": "H056", "family": "F14", "name": "Representation change as an experiment",
+      "intervention": "Propose an alternative mathematical representation and precommit what new tractable prediction or construction it should enable.",
+      "control": "Continue using the original representation at equal total compute.",
+      "falsifier": "New notation changes no solvable outcomes, obscures assumptions or cannot be independently translated."
+    },
+    {
+      "id": "H057", "family": "F15", "name": "Provenance-bound transition predictions",
+      "intervention": "Model a permitted environment's state transitions from observed actions, retaining prediction/observation distinction.",
+      "control": "Reactive reasoning using the same observations.",
+      "falsifier": "Predicted transitions fail held-out calibration or planning success does not improve at matched resources."
+    },
+    {
+      "id": "H058", "family": "F15", "name": "Selective counterfactual rollout",
+      "intervention": "Simulate only high-value branches and verify selected actions against actual authorized observations.",
+      "control": "Equal-budget reactive actions or uniform rollouts.",
+      "falsifier": "Model bias selects bad branches or total-cost task acceptance is no better."
+    },
+    {
+      "id": "H059", "family": "F15", "name": "Uncertainty-bounded reachability",
+      "intervention": "Expose uncertainty around simulated reachable states and refuse claims outside validated transition support.",
+      "control": "Point-estimate simulated planning.",
+      "falsifier": "Bounds miss actual transitions or useful planning coverage drops without reducing failures."
+    },
+    {
+      "id": "H060", "family": "F15", "name": "Domain-shift recalibration",
+      "intervention": "Detect changed environment dynamics through checked observations before reusing an old transition model.",
+      "control": "Continue the previous model without shift checks.",
+      "falsifier": "Shifts go undetected, false alarms dominate or adaptation cost yields no net recovery benefit."
+    },
+    {
+      "id": "H061", "family": "F16", "name": "Measured value of extra reasoning",
+      "intervention": "Allocate the remaining finite budget based on development-calibrated expected improvement, not raw confidence alone.",
+      "control": "Fixed-budget reasoning on every task.",
+      "falsifier": "Predicted value is uncalibrated or resource-matched fresh acceptance does not improve."
+    },
+    {
+      "id": "H062", "family": "F16", "name": "Evidence-based branch termination",
+      "intervention": "Stop a branch when contradicted assumptions or repeated no-information outcomes make further work unproductive.",
+      "control": "Fixed-depth branching.",
+      "falsifier": "Useful branches are pruned or saved compute does not improve other fresh outcomes."
+    },
+    {
+      "id": "H063", "family": "F16", "name": "Conflict-checked plan parallelism",
+      "intervention": "Parallelize only proven-independent candidate substeps with leases, bounded resources and deterministic merge checks.",
+      "control": "Sequential execution under the same aggregate compute and authority.",
+      "falsifier": "Hidden conflicts, duplicated work or nondeterministic evidence outweigh measured latency/success benefit."
+    },
+    {
+      "id": "H064", "family": "F16", "name": "Addressability-to-throughput audit",
+      "intervention": "Benchmark sparse entity activation separately from addressable IDs, persisted population and active reasoning throughput.",
+      "control": "Direct task dispatch without the sparse entity layer.",
+      "falsifier": "Entity bookkeeping adds cost without more verified solutions per resource; large ID space is the only apparent gain."
+    }
+  ],
+  "configurationSpace": {
+    "classification": "RAW_CARTESIAN_CONFIGURATIONS_NOT_DISTINCT_VALIDATED_SOLUTIONS",
+    "axesOrder": ["hypothesis", "representation", "domain", "feedback", "evaluation", "budget"],
+    "hypothesisIds": "H001..H064",
+    "representations": ["TYPED_JSON", "SOURCE_SITES", "AST", "DEPENDENCY_GRAPH", "CONSTRAINT_SYSTEM", "EXECUTABLE_PROCEDURE", "PROOF_CERTIFICATE", "PREDICTION_TABLE"],
+    "domains": ["SOFTWARE", "MATHEMATICS", "SIMULATED_PHYSICAL_SYSTEM", "REPOSITORY_PLANNING", "SYNTHETIC_SCIENTIFIC_INFERENCE"],
+    "feedback": ["CHECKABLE_COUNTEREXAMPLE", "STRUCTURED_TOOL_OBSERVATION", "INDEPENDENT_CONSTRAINT_RESULT", "CALIBRATED_MEASUREMENT"],
+    "evaluations": ["MATCHED_PAIRED_TRANSFER", "MECHANISM_ABLATION", "CLEAN_ENVIRONMENT_REPLICATION", "CROSS_DOMAIN_TRANSFER", "TWO_GENERATION_COMPARISON"],
+    "budgets": ["FIXED_CALLS_AND_TOKEN_CEILING", "MATCHED_REALIZED_TOTAL_COMPUTE", "FIXED_END_TO_END_COST", "FIXED_LATENCY_AND_RESOURCE_CEILING"],
+    "dimensions": [64, 8, 5, 4, 5, 4],
+    "rawConfigurationCount": 204800,
+    "compatibleConfigurationCount": null,
+    "executedConfigurationCount": 0,
+    "encoding": "Left-to-right mixed radix, zero based; ((((hypothesis*8+representation)*5+domain)*4+feedback)*5+evaluation)*4+budget.",
+    "idRange": "0..204799",
+    "compatibilityBeforeExecution": [
+      "Representation must express the intervention; do not infer equivalence across representations.",
+      "Domain requires a valid objective, trustworthy independent oracle and lawful admitted data.",
+      "Feedback must be available without reserved answer exposure or generated evidence being treated as observation.",
+      "Evaluation must have a simpler control, frozen acceptance, honest matching and predeclared stopping rules.",
+      "All construction, search, validation, inference, tool and repair costs count; unknown usage remains unknown.",
+      "No budget policy expands the authority or resource ceiling.",
+      "Untrusted generated execution requires a validated quota-enforcing isolation boundary; no host fallback.",
+      "Candidate code cannot change authoritative graders, custody, leases, secret boundaries or admission.",
+      "Deduplicate identical interventions and reject incompatible configurations before selecting experiments."
+    ]
+  }
+}

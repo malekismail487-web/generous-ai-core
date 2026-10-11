@@ -544,7 +544,89 @@ const extendedOrderedRefactorRefinement: [string, string][] = [
   ["      ? buildNyxRefactorSelection(request, this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\") : null;", "      ? buildNyxRefactorSelection(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;"],
   ["      this.#config.localRefactorGuidance === \"EVALUATION_ORDER_PROPOSALS\");", "      evaluationOrderRefactors, extendedEvaluationOrderRefactors);"],
 ];
+// Exact opt-in site-emission inversion; no tolerance for unrelated source drift.
+const sourceSiteEmissionRefinement: [string, string, number][] = [
+  [
+    "",
+    "import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema,\n  type NyxSourceSiteEvidence } from \"./nyxSourceSiteEmission\";\n",
+    1
+  ],
+  [
+    "",
+    "  readonly sourceSiteEmission?: NyxSourceSiteEvidence;\n",
+    1
+  ],
+  [
+    "",
+    "  /** Host-only quality-repair emission experiment; no new cognition, defaults or authority. */\n  readonly sourceSiteEmission?: \"SOURCE_BOUND_FRAGMENTS\";\n",
+    1
+  ],
+  [
+    "",
+    "    if (config.sourceSiteEmission !== undefined && (config.sourceSiteEmission !== \"SOURCE_BOUND_FRAGMENTS\"\n      || config.sourceEditScope || config.localRefactorSelection || config.experimentVariant === \"MINIMAL_REFERENCE\")) {\n      throw Error(\"nyx_source_site_configuration_invalid\");\n    }\n",
+    1
+  ],
+  [
+    "",
+    "    const sourceSiteCatalog = this.#config.sourceSiteEmission ? buildNyxSourceSiteCatalog(request) : null;\n",
+    1
+  ],
+  [
+    "      availableSemanticActions: refactorSelection ? [...contract.allowedActions, \"SELECT_LOCAL_REFACTOR\"] : contract.allowedActions,\n      requiredFieldsByDecision: refactorSelection ? { ...contract.requiredFields,\n",
+    "      ...(sourceSiteCatalog ? { sourceSiteEmission: sourceSiteCatalog,\n        sourceSiteAction: \"PROPOSE_SOURCE_SITES\", sourceSiteRequiredFields: [\"decision\", \"diagnosis\", \"causalHypothesis\",\n          \"evidenceRefs\", \"invariant\", \"expectedResult\", \"counterexamples\", \"edits\"] } : {}),\n      availableSemanticActions: sourceSiteCatalog ? [...contract.allowedActions, \"PROPOSE_SOURCE_SITES\"]\n        : refactorSelection ? [...contract.allowedActions, \"SELECT_LOCAL_REFACTOR\"] : contract.allowedActions,\n      requiredFieldsByDecision: sourceSiteCatalog ? { ...contract.requiredFields,\n        PROPOSE_SOURCE_SITES: [...contract.requiredFields.PROPOSE_EDIT.filter(field => field !== \"changes\"), \"edits\"] }\n        : refactorSelection ? { ...contract.requiredFields,\n",
+    1
+  ],
+  [
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: withNyxFunctionBodySchema(withNyxRefactorSelectionSchema(this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    "      responseFormat: { type: \"JSON_SCHEMA\", name: \"nyx_repair_intent\", schema: withNyxSourceSiteSchema(withNyxFunctionBodySchema(withNyxRefactorSelectionSchema(this.#config.providerIntentShape === \"DECISION_REQUIRED_FIELDS_AND_BOUNDS\"\n",
+    1
+  ],
+  [
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection), functionBodyCatalog) },\n",
+    "          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection), functionBodyCatalog), sourceSiteCatalog) },\n",
+    1
+  ],
+  [
+    "    const compiled = await compileNyxRepairIntent(functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n",
+    "    const sourceSites = await resolveNyxSourceSites(parsed, sourceSiteCatalog, request, this.#sourceRepresentation);\n    if (sourceSites?.value === null) return this.#result(\"COGNITION_ERROR\", \"nyx_source_site_intent_invalid\", request, null, null,\n      completion.evidence, [diagnostic(\"SEMANTIC_REPAIR_INVALID\", \"$\", \"fresh syntax-bound local source emission\", sourceSites.evidence.reason)],\n      undefined, feedbackPresented, undefined, undefined, sourceSites.evidence);\n    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n",
+    1
+  ],
+  [
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    "        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);\n",
+    1
+  ],
+  [
+    "        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    "        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);\n",
+    1
+  ],
+  [
+    "      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);\n",
+    "      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);\n",
+    2
+  ],
+  [
+    "    functionBodyEmission?: NyxFunctionBodyEvidence): NyxRepairCognitionResult {\n",
+    "    functionBodyEmission?: NyxFunctionBodyEvidence, sourceSiteEmission?: NyxSourceSiteEvidence): NyxRepairCognitionResult {\n",
+    1
+  ],
+  [
+    "      ...(functionBodyEmission ? { functionBodyEmission } : {}) })).slice(0, 32)}`,\n",
+    "      ...(functionBodyEmission ? { functionBodyEmission } : {}),\n      ...(sourceSiteEmission ? { sourceSiteEmission } : {}) })).slice(0, 32)}`,\n",
+    1
+  ],
+  [
+    "",
+    "      ...(sourceSiteEmission ? { sourceSiteEmission } : {}),\n",
+    1
+  ]
+];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) for (const [before, after, count] of sourceSiteEmissionRefinement) {
+    if (current.split(after).length !== count + 1) throw Error("arc_source_site_emission_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after] of extendedOrderedRefactorRefinement) {
     if (current.split(after).length !== 2) throw Error("arc_extended_ordered_refactor_hunk_mismatch");
     current = current.split(after).join(before);

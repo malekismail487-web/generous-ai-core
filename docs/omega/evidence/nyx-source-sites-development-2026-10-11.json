@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "kind": "LOCAL_MECHANISM_AND_RESEARCH_AMENDMENT_RECEIPT",
+  "baselineCommit": "fc295196ef84475a9a142a1ecdabca629c542bdc",
+  "evidenceClass": "E3",
+  "independence": "SAME_AUTHOR_DEVELOPMENT_WITNESSES_AND_TEST_DOUBLE_NOT_HELD_OUT_LIVE_EVIDENCE",
+  "environment": { "platform": "win32", "node": "24.19.0", "typescript": "5.8.3", "worktree": "DIRTY_WITH_UNRELATED_USER_UI_EDITS_PRESERVED" },
+  "mechanism": {
+    "version": "nyx-source-bound-site-emission/1",
+    "hostOptIn": "SOURCE_BOUND_FRAGMENTS",
+    "semanticAction": "PROPOSE_SOURCE_SITES",
+    "sourceOrigin": "MODEL_GENERATED_FRAGMENTS_NOT_HOST_ALGORITHM",
+    "defaultEnabled": false,
+    "semanticEquivalenceCertified": false,
+    "authorityGranted": false,
+    "acceptanceGranted": false,
+    "scope": "QUALITY_REPAIR_AFTER_PROVENANCE_BOUND_PUBLIC_PASS",
+    "limits": { "sourceBytes": 12000, "nodes": 2500, "depth": 64, "sites": 32, "edits": 8, "fragmentBytes": 2048, "fragmentLines": 64, "statementRun": 3 }
+  },
+  "sourceIdentity": [
+    { "path": "src/lib/codelab/cognition/nyxSourceSiteEmission.ts", "gitBlob": "f0b1ccb3aaa253208d48d155cacfde60f384d6fe", "sha256": "739950d42cb90a9b3be6a73ad27ceeb0473f88cc8c97efb53b5f2d7f345754b5" },
+    { "path": "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts", "gitBlob": "fa36616ac8561204b7f2b6b035bd1ffcbe6d62a6", "sha256": "9c709fb494712a6ba4828baf94ce7ad3dfea3cc1af548fd9f5aaa4f2ffd4edf4" },
+    { "path": "scripts/omegaR3DNyxNemotronCognition.test.ts", "gitBlob": "ac73240c17a49498243091f3d8c4b6ab973cbc3d", "sha256": "080f4af35f1579a93841bf06f31dde7555fb60f4ae3a86adc4ba3c9527d8171f" },
+    { "path": "scripts/omega/nyx-arc-core-refinement.ts", "gitBlob": "9e3452a662765e74beb7fcd6f5189f473d0240df", "sha256": "f6839c946b7e274a47a7886ce3c5106e827e707e133bc63493465e0c178f357a" }
+  ],
+  "checks": {
+    "focusedR3DCognition": { "passed": 966, "failed": 0, "newSourceSiteChecks": 47 },
+    "omegaAggregate": { "suites": 109, "passedChecks": 13876, "failedSuites": 0, "failedChecks": 0, "manifestDigest": "837a9def3ee0b0ab4638fa1ee2eaddff02a26f2e16ea1ef99ed11a9cde68d5b9", "scope": "LOCAL_WORKTREE_INCLUDES_UNRELATED_UI_TESTS_NOT_CLEAN_COMMIT_CI" },
+    "typeScript": { "version": "5.8.3", "baseline": 0, "current": 0, "new": 0 },
+    "productionBuild": { "result": "PASS", "durationSeconds": 9.66, "existingWarningsRemain": true },
+    "packageSmoke": "PASS_ASSETS_LOOPBACK_SESSION_NO_IMPLICIT_CREDENTIAL",
+    "originalGoalPreservedVerbatim": true,
+    "portfolio": { "hypotheses": 64, "families": 16, "rawConfigurations": 204800, "uniqueEncodingRoundTripsChecked": 204800, "compatibleCount": null, "executedConfigurations": 0 }
+  },
+  "developmentFindings": [
+    "Syntax-valid smaller whole-file rewriting can destroy already passing initial-state behavior.",
+    "Model-written local fragments retain unselected text literally; independently authored signed, fractional, empty and disjoint-edit witnesses pass.",
+    "Syntactic containment does not certify semantics: a wrong initial-state fragment is honestly proposed as unverified.",
+    "Malformed, overlapping, forged, uncited, stale, aborted, expired, oversized and AST-escaping fragments fail closed.",
+    "A same-start ancestor boundary false negative was corrected without relaxing untouched AST projection.",
+    "An expiry-test assumption was corrected: altered deadlines also alter reference identity, so current references are required to isolate expiry.",
+    "Pinned-project library compatibility errors from Object.hasOwn were repaired using Object.prototype.hasOwnProperty.call."
+  ],
+  "claimLimits": {
+    "liveModelCallsThisMilestone": 0,
+    "freshBenchmarkTasksScored": 0,
+    "liveRepairGain": "NOT_EVALUATED",
+    "cognitivePromotion": "NONE",
+    "endToEndDisposableSourceSiteIntegration": "NOT_YET_EVALUATED",
+    "hostileCodeIsolation": "NOT_ESTABLISHED_BY_EXISTING_NODE_RUNNER",
+    "recursiveSelfImprovement": "RESEARCH_PROPOSAL_NOT_DEMONSTRATED",
+    "agiOrAsi": "NOT_ESTABLISHED",
+    "trustedProductionAuthorityDelta": "NONE",
+    "applicationGoalObjectiveChanged": false
+  },
+  "researchAmendment": {
+    "path": "docs/omega/research/NYX-DUAL-TRACK-PROGRAM.md",
+    "portfolioPath": "docs/omega/research/nyx-theoretical-hypotheses.json",
+    "mode": "DEMONSTRATED_PATH_PRESERVED_PLUS_THEORETICAL_GOALS",
+    "alternation": "COHESIVE_MILESTONE_BOUNDARIES_WITH_FROZEN_EVALUATION_AND_INDEPENDENT_ADMISSION",
+    "status": "REPOSITORY_WORKING_AMENDMENT_NOT_APP_OBJECTIVE_EDIT"
+  },
+  "omegaPlanCoverage": {
+    "direct": ["EVIDENCE_OVER_CONFIDENCE", "NO_SELF_CERTIFICATION", "NO_AUTHORITY_WITHOUT_SCOPE", "GENERAL_REPAIR_NOT_TASK_MEMORIZATION", "PLANS_ARE_HYPOTHESES"],
+    "supporting": ["TYPED_INTENT", "ORIGINAL_STATE_QUALITY", "GENERATOR_REQUIRES_VALIDATED_DETECTOR", "REVERSIBLE_VERSIONED_CANDIDATES"],
+    "deferred": ["FRESH_MATCHED_LIVE_TRANSFER", "GENERATED_TOOL_ADMISSION", "TWO_GENERATION_RECURSION", "MODEL_WEIGHT_TRAINING", "PHYSICAL_ACTUATION"],
+    "conflicts": ["Large raw search-space cardinality is not validated cognition; confidence targets do not authorize fabricating results."],
+    "coverage": "PARTIAL_JUST_IN_TIME"
+  }
+}

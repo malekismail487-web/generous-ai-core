@@ -1,5 +1,33 @@
 # NYX benchmark capability program
 
+### Demonstrated-path / theoretical-goals amendment (2026-10-11)
+
+The original active application goal is preserved; the available goal tools
+cannot edit its objective. The repository-backed additive working amendment is
+`docs/omega/research/NYX-DUAL-TRACK-PROGRAM.md`, with 64 falsifiable proposals in
+`nyx-theoretical-hypotheses.json`. The 204,800 raw configurations are a research
+search space, not validated solutions, agents, model calls or cognitive gains.
+Alternate at completed milestones; theoretical interventions return to fresh,
+independently judged, resource-accounted comparisons before promotion.
+
+The current supporting intervention is opt-in source-bound fragment emission
+(`nyx-source-bound-site-emission/1`). Unlike a host-authored algorithm selection,
+the model writes the fragments. The host retains unselected bytes and checks
+AST boundaries, current source/evidence references, resource limits and syntax;
+ordinary Omega authorization and full functional/quality acceptance remain.
+This addresses the observed destructive quality-rewrite failure class without
+claiming that syntactic confinement proves semantic equivalence. Development
+tests reproduce a syntax-valid smaller rewrite losing initial-state behavior,
+and check local alternatives and adversarial requests. No live causal gain or
+fresh benchmark improvement is claimed from those tests. Defaults, policy V3,
+frozen epochs, private oracles and production authority remain unchanged.
+
+Local receipt: `docs/omega/evidence/nyx-source-sites-development-2026-10-11.json`.
+47 added checks passed (966 focused; 109 suites / 13,876 local worktree checks).
+TypeScript 5.8.3 remains zero; build and package smoke passed. Unrelated UI work
+is preserved/excluded, so this is not a claim of clean-commit CI evidence.
+No live model calls or benchmark scoring occurred in this supporting milestone.
+
 ### Shared live-candidate causal repair epoch (2026-10-11)
 
 The earlier unseeded comparison had different first sources in every pair and

@@ -10,6 +10,8 @@ import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactor
   type NyxRefactorSelectionEvidence } from "./nyxSourceBoundRefactorSelection";
 import { buildNyxFunctionBodyCatalog, resolveNyxFunctionBody, withNyxFunctionBodySchema,
   type NyxFunctionBodyEvidence } from "./nyxFunctionBodyEmission";
+import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema,
+  type NyxSourceSiteEvidence } from "./nyxSourceSiteEmission";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxLengthBoundedDecisionRequiredProviderSchema } from "./nyxDecisionRequiredSchema";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2,
@@ -191,6 +193,7 @@ export interface NyxRepairCognitionEvidence {
   readonly intentCompilation: NyxIntentCompilationEvidence;
   readonly refactorSelection?: NyxRefactorSelectionEvidence;
   readonly functionBodyEmission?: NyxFunctionBodyEvidence;
+  readonly sourceSiteEmission?: NyxSourceSiteEvidence;
   readonly modelUsage: NvidiaNimEvidence["usage"];
   readonly experimentVariant?: NyxCognitionExperimentVariant;
   readonly delivery?: NvidiaNimEvidence["delivery"];
@@ -498,6 +501,8 @@ export interface NyxNemotronEngineeringCognitionConfig {
   readonly localRefactorGuidance?: "GUARDED_PROPOSALS" | "EVALUATION_ORDER_PROPOSALS" | "EXTENDED_EVALUATION_ORDER_PROPOSALS";
   /** Opt-in emission path only. A selected host proposal is neither generated source nor approval. */
   readonly localRefactorSelection?: "SOURCE_BOUND_REFERENCES";
+  /** Host-only quality-repair emission experiment; no new cognition, defaults or authority. */
+  readonly sourceSiteEmission?: "SOURCE_BOUND_FRAGMENTS";
   /** Evaluation-only, process-local feedback. Never changes executable authority or acceptance. */
   readonly repairFeedbackPolicy?: NyxRepairFeedbackPolicy;
 }
@@ -683,6 +688,10 @@ export class NyxNemotronEngineeringCognition {
 
   private constructor(config: NyxNemotronEngineeringCognitionConfig, model: string) {
     this.#config = config; this.#model = model; this.#sourceRepresentation = config.sourceRepresentation ?? "TEXT";
+    if (config.sourceSiteEmission !== undefined && (config.sourceSiteEmission !== "SOURCE_BOUND_FRAGMENTS"
+      || config.sourceEditScope || config.localRefactorSelection || config.experimentVariant === "MINIMAL_REFERENCE")) {
+      throw Error("nyx_source_site_configuration_invalid");
+    }
     if (config.sourceEditScope !== undefined && (config.sourceEditScope !== "FUNCTION_BODY"
       || this.#sourceRepresentation !== "LINES" || config.localRefactorSelection || config.experimentVariant === "MINIMAL_REFERENCE")) {
       throw Error("nyx_function_body_configuration_invalid");
@@ -793,6 +802,7 @@ export class NyxNemotronEngineeringCognition {
     const refactorSelection = this.#config.localRefactorSelection
       ? buildNyxRefactorSelection(request, evaluationOrderRefactors, extendedEvaluationOrderRefactors) : null;
     const functionBodyCatalog = this.#config.sourceEditScope === "FUNCTION_BODY" ? buildNyxFunctionBodyCatalog(request) : null;
+    const sourceSiteCatalog = this.#config.sourceSiteEmission ? buildNyxSourceSiteCatalog(request) : null;
     if (this.#config.sourceEditScope && !functionBodyCatalog) return this.#result("BLOCKED", "nyx_function_body_target_unsupported",
       request, null, null, null, [diagnostic("UNSUPPORTED_FILE_TARGET", "$request", "sole named exported function", "unsupported_body_target")]);
     const contract = buildNyxRepairIntentContract(request, this.#sourceRepresentation, this.#config.preserveProviderArrayBounds);
@@ -805,8 +815,14 @@ export class NyxNemotronEngineeringCognition {
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
       ...(functionBodyCatalog ? { functionBodyEmission: functionBodyCatalog } : {}),
-      availableSemanticActions: refactorSelection ? [...contract.allowedActions, "SELECT_LOCAL_REFACTOR"] : contract.allowedActions,
-      requiredFieldsByDecision: refactorSelection ? { ...contract.requiredFields,
+      ...(sourceSiteCatalog ? { sourceSiteEmission: sourceSiteCatalog,
+        sourceSiteAction: "PROPOSE_SOURCE_SITES", sourceSiteRequiredFields: ["decision", "diagnosis", "causalHypothesis",
+          "evidenceRefs", "invariant", "expectedResult", "counterexamples", "edits"] } : {}),
+      availableSemanticActions: sourceSiteCatalog ? [...contract.allowedActions, "PROPOSE_SOURCE_SITES"]
+        : refactorSelection ? [...contract.allowedActions, "SELECT_LOCAL_REFACTOR"] : contract.allowedActions,
+      requiredFieldsByDecision: sourceSiteCatalog ? { ...contract.requiredFields,
+        PROPOSE_SOURCE_SITES: [...contract.requiredFields.PROPOSE_EDIT.filter(field => field !== "changes"), "edits"] }
+        : refactorSelection ? { ...contract.requiredFields,
         SELECT_LOCAL_REFACTOR: [...contract.requiredFields.PROPOSE_EDIT.filter(field => field !== "changes"), "selectedProposalRef"] }
         : contract.requiredFields,
       constraints: { output: "JSON_SCHEMA", maxChanges: contract.bounds.changes, maxPatchBytes: contract.bounds.patchBytes,
@@ -915,12 +931,12 @@ export class NyxNemotronEngineeringCognition {
         : NYX_REPAIR_SYSTEM_INSTRUCTION + (refactorSelection
           ? " When the request offers SELECT_LOCAL_REFACTOR, complete source is already listed for your independent review. You may propose that exact source using its current reference without re-emitting source; this is still an ordinary unapproved edit proposal. Do not copy the example blindly or assume a proposal passes verification." : "") },
         { role: "user", content: serializedPrompt }], maxTokens: this.#config.maxOutputTokens, temperature: 0,
-      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: withNyxFunctionBodySchema(withNyxRefactorSelectionSchema(this.#config.providerIntentShape === "DECISION_REQUIRED_FIELDS_AND_BOUNDS"
+      responseFormat: { type: "JSON_SCHEMA", name: "nyx_repair_intent", schema: withNyxSourceSiteSchema(withNyxFunctionBodySchema(withNyxRefactorSelectionSchema(this.#config.providerIntentShape === "DECISION_REQUIRED_FIELDS_AND_BOUNDS"
         ? nyxBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema, contract.allowedActions, contract.requiredFields)
         : this.#config.providerIntentShape === "DECISION_REQUIRED_FIELDS_AND_LENGTHS"
           ? nyxLengthBoundedDecisionRequiredProviderSchema(contract.providerSchema, contract.schema, contract.allowedActions, contract.requiredFields)
         : this.#config.providerIntentShape === "DECISION_REQUIRED_FIELDS"
-          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection), functionBodyCatalog) },
+          ? nyxDecisionRequiredProviderSchema(contract.providerSchema, contract.allowedActions, contract.requiredFields) : contract.providerSchema, refactorSelection), functionBodyCatalog), sourceSiteCatalog) },
       ...(this.#config.structuredOutputMode === "STRICT_LOCAL" ? { structuredOutputMode: "STRICT_LOCAL" as const } : {}),
       inferencePolicy: this.#config.comparisonInferencePolicy
         ?? (this.#experimentVariant === "CURRENT" ? "CONSTRAINED_JSON" : "REASONING_JSON"),
@@ -961,7 +977,11 @@ export class NyxNemotronEngineeringCognition {
     if (functionBody?.value === null) return this.#result("COGNITION_ERROR", "nyx_function_body_intent_invalid", request, null, null,
       completion.evidence, [diagnostic("SEMANTIC_REPAIR_INVALID", "$.changes", "fresh syntax-valid function-body emission", functionBody.evidence.reason)],
       undefined, feedbackPresented, undefined, functionBody.evidence);
-    const compiled = await compileNyxRepairIntent(functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,
+    const sourceSites = await resolveNyxSourceSites(parsed, sourceSiteCatalog, request, this.#sourceRepresentation);
+    if (sourceSites?.value === null) return this.#result("COGNITION_ERROR", "nyx_source_site_intent_invalid", request, null, null,
+      completion.evidence, [diagnostic("SEMANTIC_REPAIR_INVALID", "$", "fresh syntax-bound local source emission", sourceSites.evidence.reason)],
+      undefined, feedbackPresented, undefined, undefined, sourceSites.evidence);
+    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,
       sourceRepresentation: this.#sourceRepresentation, maxCounterexamples: request.maxCounterexamples,
       maxPatchBytes: request.maxPatchBytes, maxLineLength: request.sourceQualityConstraints.maxLineLength,
       maxSourceLines: NYX_SOURCE_LINES_POLICY.maxLines });
@@ -973,7 +993,7 @@ export class NyxNemotronEngineeringCognition {
           this.#sourceRepresentation, completion.evidence.responseDigest);
       }
       return this.#result("COGNITION_ERROR", "nyx_cognition_output_schema_invalid",
-        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);
+        request, null, null, completion.evidence, validated.diagnostics, compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);
     }
     if (validated.evidenceRequest) {
       const requestBase = { requestedEvidenceRefs: Object.freeze(validated.requestedEvidenceRefs), diagnosis: validated.diagnosis!,
@@ -981,10 +1001,10 @@ export class NyxNemotronEngineeringCognition {
         evidenceRefs: Object.freeze(validated.evidenceRefs), authorityGranted: false as const };
       const evidenceRequest: NyxEvidenceRequest = Object.freeze({ ...requestBase, requestDigest: sha256(canonical(requestBase)) });
       return this.#result("REQUEST_EVIDENCE", "nyx_cognition_requests_admitted_evidence", request, null, evidenceRequest,
-        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);
+        completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);
     }
     if (validated.noAction) return this.#result("NO_ACTION", "nyx_cognition_no_action", request, null, null,
-      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);
+      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);
     const strategyDigest = sha256(canonical({ causalHypothesis: validated.causalHypothesis,
       expectedResult: validated.expectedResult, changes: validated.changes.map((change) => ({ path: change.relativePath,
         replacementContentHash: change.replacementContentHash })) }));
@@ -1001,7 +1021,7 @@ export class NyxNemotronEngineeringCognition {
       strategyDigest, disposition: "PENDING_VERIFICATION" as const, applyAuthorized: false as const };
     const hypothesis: NyxRepairHypothesis = Object.freeze({ ...proposalBase, proposalDigest: sha256(canonical(proposalBase)) });
     return this.#result("PROPOSED", "nyx_repair_hypothesis_validated", request, hypothesis, null,
-      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence);
+      completion.evidence, [], compiled.evidence, feedbackPresented, selected?.evidence, functionBody?.evidence, sourceSites?.evidence);
   }
 
   #validateInput(request: NyxRepairCognitionRequest): readonly string[] {
@@ -1323,7 +1343,7 @@ export class NyxNemotronEngineeringCognition {
     hypothesis: NyxRepairHypothesis | null, evidenceRequest: NyxEvidenceRequest | null, modelEvidence: NvidiaNimEvidence | null,
     schemaDiagnostics: readonly NyxSchemaDiagnostic[], intentCompilation?: NyxIntentCompilationEvidence,
     rejectedSourceFeedbackPresented = false, refactorSelection?: NyxRefactorSelectionEvidence,
-    functionBodyEmission?: NyxFunctionBodyEvidence): NyxRepairCognitionResult {
+    functionBodyEmission?: NyxFunctionBodyEvidence, sourceSiteEmission?: NyxSourceSiteEvidence): NyxRepairCognitionResult {
     const sourceObservationId = request.observation?.observationId ?? "UNKNOWN";
     const sourceEvidenceId = request.observation?.candidateEvidenceId ?? "UNKNOWN";
     const evidence: NyxRepairCognitionEvidence = Object.freeze({ evidenceId: `NYX-COGNITION-${sha256(canonical({
@@ -1331,7 +1351,8 @@ export class NyxNemotronEngineeringCognition {
       proposalDigest: hypothesis?.proposalDigest ?? null, evidenceRequestDigest: evidenceRequest?.requestDigest ?? null,
       decision, reason, sourceRepresentation: this.#sourceRepresentation, experimentVariant: this.#experimentVariant,
       intentCompilation: intentCompilation ?? null, ...(refactorSelection ? { refactorSelection } : {}),
-      ...(functionBodyEmission ? { functionBodyEmission } : {}) })).slice(0, 32)}`,
+      ...(functionBodyEmission ? { functionBodyEmission } : {}),
+      ...(sourceSiteEmission ? { sourceSiteEmission } : {}) })).slice(0, 32)}`,
       evidenceClass: modelEvidence?.evidenceClass ?? "E3", sourceObservationId, sourceExecutionEvidenceId: sourceEvidenceId,
       modelEvidenceId: modelEvidence?.evidenceId ?? "NOT_INVOKED", model: this.#model,
       cognitiveSubstrate: "NVIDIA_NEMOTRON_3_ULTRA", modelRequestDigest: modelEvidence?.requestDigest ?? null,
@@ -1348,6 +1369,7 @@ export class NyxNemotronEngineeringCognition {
       rejectedSourceFeedbackPresented,
       ...(refactorSelection ? { refactorSelection } : {}),
       ...(functionBodyEmission ? { functionBodyEmission } : {}),
+      ...(sourceSiteEmission ? { sourceSiteEmission } : {}),
       intentCompilation: intentCompilation
         ?? unattemptedNyxRepairIntentCompilation(this.#intentCompilationMode, this.#sourceRepresentation),
       experimentVariant: this.#experimentVariant,
