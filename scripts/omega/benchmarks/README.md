@@ -2869,3 +2869,36 @@ additional brain layers and authority. Potential conflict: hosted generation
 guidance differs from independent local validation; omit it experimentally,
 never substitute permissive extraction. Superseded approach: inferring all
 syntax failures are reasoning failures, or all ungraded output is incorrect.
+
+Terminal result at frozen candidate `7c3aaa49034f320a33b68fd1099e87b327c904c8`,
+run `38144012456`: **no promotion**. Hosted control retained functional
+acceptance on 4/8 executions and full quality acceptance on 2/8; strict-local
+retained functional acceptance on 3/8 and full quality acceptance on 1/8.
+All three fully accepted solutions were first candidates; no repair was fully
+accepted. Seven pairs were provider-stable, three matched realized compute,
+and none was a qualifying treatment gain. Separate run references made all
+eight first-prompt digests differ despite identical prompt construction.
+
+All 16 arm executions were attempted. Ten final retained artifacts were
+privately graded; six were ungraded (three missing artifacts, three artifact
+schema failures). Fourteen per-iteration candidate grades are preserved
+separately. Across 29 physical/logical calls, 28 HTTP-200 emissions included
+19 syntactically valid sources, one truncation, three non-JSON responses,
+three malformed replacement boundaries and two syntax rejections. One other
+call timed out. Usage: 213,288 reported tokens plus one unknown-usage timeout;
+33 verifier executions. These are not 16 graded reasoning outcomes.
+
+Grid candidates passed private functional cases but exceeded unchanged
+absolute-complexity and original-state delta budgets; none achieved quality
+acceptance after repair. Disabling hosted grammar introduced non-JSON and
+boundary failures, so the hosted path and all runtime defaults remain unchanged.
+This supporting experiment is not demonstrated cognitive improvement.
+
+Windows and frozen Linux regression each passed 109 suites / 13,347 checks;
+TypeScript 5.8.3 remained at zero. Artifact SHA256:
+`d205fadf9944a384bdac8d83f807b030e45589020e1d7ba0674fa72e7dd61a2e`.
+The sanitized [custody receipt](../../../docs/omega/evidence/nyx-native-local-7c3aaa49.json)
+retains original per-iteration grades, wire controls, source/task hashes and
+limitations. Glob correctness does not independently certify every requested
+algorithm-selection constraint. No benchmark-score, hostile-code sandbox,
+authority-increase or independent-E5 replication claim is made.
