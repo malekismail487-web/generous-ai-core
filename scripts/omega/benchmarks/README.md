@@ -1,6 +1,40 @@
 # NYX benchmark capability program
 
-### Structural contribution feedback — bounded fresh experiment (2026-10-11)
+### Structural contribution feedback — no demonstrated repair gain (2026-10-11)
+
+Frozen candidate `f92d915e94a7b7376b55ee0f027c0ae29b7d6b2e`,
+[run 38114559195](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38114559195).
+Functional acceptance was **4/8 in each arm**; full acceptance was **1/8 control
+versus 2/8 map arm**, all first-call successes before map feedback. The extra
+treatment success therefore cannot be attributed to this intervention. Both
+exercised flow repairs remained functionally correct but quality-rejected.
+**No accepted repairs, no demonstrated mechanism gain, no promotion/default change.**
+
+Seven provider-stable pairs, five realized-compute-matched pairs, two exercised
+map pairs, zero identical first-candidate pairs and zero qualifying repair pairs.
+The matched population includes an ungraded truncation pair, not five successful
+reasoning comparisons. 16 selected/attempted, 14 final private artifacts graded,
+two ungraded truncation runs and zero unexecuted. Terminal classes: five quality
+rejections, two functional failures, two syntax failures, one rejected no-op
+intent, one provider failure, two truncation runs and three full acceptances.
+Earlier valid candidates within syntax/intent/provider-failed runs retain their
+private scores; failure labels do not erase those observations.
+
+29 logical/physical/HTTP calls, 236,317 reported tokens plus one unknown-usage
+provider timeout; 37 verifier executions, 609 scheduled tool-work units and 303
+private-scorer units. 824,181 ms summed arm wall time, not inference alone.
+22 valid emissions, two syntax rejections and four truncated emissions.
+All owned environments cleaned; source integrity preserved; zero false accepts
+or private-correctness regressions after quality rejection.
+
+Artifact SHA256 `0816ffddf992092dade9b13dae2434888ac4d79cb22328805d20df8fb4313351`;
+CRC/member bounds, report/log/freeze agreement and 22 frozen source hashes verified.
+Clean Windows and Linux passed **109 suites / 13,225 checks**; TypeScript 5.8.3
+zero, build/package/inventory/security pass. Full sanitized
+[receipt](../../../docs/omega/evidence/nyx-structural-map-f92d915e.json).
+Next: independently reproduce truncation/source emission and specification failures,
+and coherent structural redesign, rather than adding more generic feedback layers
+or reusing these exposed outcomes as fresh generalization evidence.
 
 Following the V3 native comparison's correctness gains without quality gains,
 the next opt-in correction supplies a digest-bound map of control and short-circuit
