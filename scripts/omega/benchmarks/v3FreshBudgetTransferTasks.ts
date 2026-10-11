@@ -144,3 +144,13 @@ export function v3FreshBudgetWireVerified(variant: string, controls: readonly {
       : control.originalBudgetVersion == null && control.originalBudgetPolicyId == null;
   });
 }
+
+/** No admission on a failed executable candidate is NOT_REACHED, not policy drift. */
+export function observeV3AdmissionPolicy(rows: readonly {quality: string|null; staticPolicyId?: string|null}[]) {
+  const reached = rows.filter(row => row.quality !== null);
+  const consistent = rows.every(row => row.quality === null ? row.staticPolicyId === null
+    : ["ADMITTED","REJECTED","INSUFFICIENT_EVIDENCE"].includes(row.quality)
+      && row.staticPolicyId === V3_FRESH_BUDGET_EPOCH.admissionPolicyId);
+  return Object.freeze({state: !consistent ? "MISMATCH" as const
+    : reached.length ? "OBSERVED" as const : "NOT_REACHED" as const, observedAdmissions: reached.length});
+}

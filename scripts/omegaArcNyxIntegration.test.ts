@@ -29,7 +29,7 @@ import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration }
 import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./omega/benchmarks/originalBudgetTransferTasks";
 import { V3_FRESH_BUDGET_EPOCH, V3_FRESH_BUDGET_TASKS, v3FreshBudgetTasks,
-  v3FreshBudgetWireVerified } from "./omega/benchmarks/v3FreshBudgetTransferTasks";
+  v3FreshBudgetWireVerified, observeV3AdmissionPolicy } from "./omega/benchmarks/v3FreshBudgetTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -1206,6 +1206,19 @@ for (const variant of ["STRUCTURE_SITES_CONTROL","ORIGINAL_BUDGET"]) {
     "post-candidate request cannot present stale original-budget guidance");
 }
 rejects(()=>v3FreshBudgetWireVerified("RELAX_QUALITY",[]),"unknown fresh V3 arm cannot claim protocol validity");
+check(observeV3AdmissionPolicy([]).state==="NOT_REACHED","no candidate cannot certify an observed admission");
+check(observeV3AdmissionPolicy([{quality:null,staticPolicyId:null}]).state==="NOT_REACHED",
+  "execution failure before admission is not provider failure or policy drift");
+check(observeV3AdmissionPolicy([{quality:null}]).state==="MISMATCH",
+  "missing policy-observation field is not silently coerced into an unreached stage");
+check(observeV3AdmissionPolicy([{quality:null,staticPolicyId:null},{quality:"REJECTED",staticPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}]).state==="OBSERVED",
+  "mixed reached and unreached iterations preserve the actually observed correct policy");
+check(observeV3AdmissionPolicy([{quality:"ADMITTED",staticPolicyId:"omega-public-static-candidate/2"}]).state==="MISMATCH",
+  "an actual legacy policy invocation remains a critical control mismatch");
+check(observeV3AdmissionPolicy([{quality:null,staticPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}]).state==="MISMATCH",
+  "a claimed policy invocation without a result fails observation integrity");
+check(observeV3AdmissionPolicy([{quality:"FORGED_PASS",staticPolicyId:V3_FRESH_BUDGET_EPOCH.admissionPolicyId}]).state==="MISMATCH",
+  "invented admission result cannot pass policy controls");
 for (const task of [...SOURCE_REPRESENTATION_TASKS, ...ARRAY_BOUND_TRANSFER_TASKS,...SOURCE_LITERAL_TRANSFER_TASKS,...MEASURED_QUALITY_TRANSFER_TASKS,...QUALITY_SITE_TRANSFER_TASKS,...DECISION_CONTRACT_TRANSFER_TASKS,...BOUNDED_CONTRACT_TRANSFER_TASKS,...PATTERN_REPAIR_TRANSFER_TASKS,...LENGTH_GRAMMAR_TRANSFER_TASKS,...NATIVE_REASONING_TRANSFER_TASKS,...ORIGINAL_BUDGET_TRANSFER_TASKS,...BEHAVIOR_REPAIR_TRANSFER_TASKS,...LOCAL_REFACTOR_TRANSFER_TASKS,...EVALUATION_ORDER_TRANSFER_TASKS,...V3_FRESH_BUDGET_TASKS]) {
   const rows = task.privateCases.map(c => ({value: c.expected, inputUnchanged: true, resultDetached: true}));
   const marker = (value: unknown) => "ENGINEERING_PREDICTIONS " + JSON.stringify(value);

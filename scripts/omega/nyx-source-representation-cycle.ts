@@ -24,7 +24,7 @@ import { NATIVE_REASONING_TRANSFER_TASKS, nativeReasoningTransferConfiguration }
 import { ORIGINAL_BUDGET_TRANSFER_TASKS, originalBudgetTransferConfiguration,
   originalBudgetWireControlVerified } from "./benchmarks/originalBudgetTransferTasks";
 import { V3_FRESH_BUDGET_EPOCH, v3FreshBudgetTasks,
-  v3FreshBudgetWireVerified } from "./benchmarks/v3FreshBudgetTransferTasks";
+  v3FreshBudgetWireVerified, observeV3AdmissionPolicy } from "./benchmarks/v3FreshBudgetTransferTasks";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -92,6 +92,7 @@ const frozen = {model, temperature: 0, inferencePolicy: nativeReasoningCompariso
   ...(originalBudgetComparison?{postQualityGuidance:"IDENTICAL_STRUCTURE_SITES",preCandidateGuidance:{
     STRUCTURE_SITES_CONTROL:"EXISTING_PUBLIC_POLICY_ONLY",ORIGINAL_BUDGET:"PUBLIC_ORIGINAL_STATE"}}:{}),
   ...(v3FreshBudgetComparison?{qualityPolicy:V3_FRESH_BUDGET_EPOCH.admissionPolicyId,
+    evaluationAccountingVersion:"nyx-v3-admission-observation/1",
     epoch:V3_FRESH_BUDGET_EPOCH, suppliedCandidates:false, modelCallsMaximum:32,
     comparisonAgainstV2:"NOT_COMPARABLE_NOT_REGRADED", broadPromotion:"NONE"}:{}),
   ...(behaviorRepairComparison?{preCandidateGuidance:"IDENTICAL_PUBLIC_ORIGINAL_STATE",postQualityGuidance:{
@@ -333,7 +334,8 @@ for (const [index, task] of epochTasks.entries()) {
           retainedWithoutMutation:loopResult?.reason==="bounded_review_retained_independently_admitted_candidate"}:{}),
         ...(originalBudgetComparison?{originalBudgetControlVerified:
           (v3FreshBudgetComparison?v3FreshBudgetWireVerified:originalBudgetWireControlVerified)(variant,observedInferenceControls),
-          ...(v3FreshBudgetComparison?{admissionPolicyControlVerified:perIteration.length>0&&perIteration.every(i=>i.staticPolicyId===V3_FRESH_BUDGET_EPOCH.admissionPolicyId),
+          ...(v3FreshBudgetComparison?{admissionPolicyObservation:observeV3AdmissionPolicy(perIteration),
+            admissionPolicyControlVerified:observeV3AdmissionPolicy(perIteration).state==="OBSERVED",
             publicPolicyControlVerified:observedInferenceControls.every(control=>control.publicAdmissionPolicyId===V3_FRESH_BUDGET_EPOCH.admissionPolicyId
               &&control.legacyLineApplicabilityPresent===false),
             initialCandidateMeetsFunctionalAndQuality:perIteration[0]?.functionalAccepted===true&&perIteration[0]?.quality==="ADMITTED"}: {})}:{}),
@@ -374,7 +376,7 @@ const pairs = tasks.map(task => {
     && r.toolUsageComplete
     && (!runtimeReviewComparison || r.inferenceControlVerified===true&&r.runtimeReviewControlVerified===true)
     && (!originalBudgetComparison || r.inferenceControlVerified === true && r.originalBudgetControlVerified === true)
-    && (!v3FreshBudgetComparison || r.admissionPolicyControlVerified===true&&r.publicPolicyControlVerified===true)
+    && (!v3FreshBudgetComparison || ["OBSERVED","NOT_REACHED"].includes(r.admissionPolicyObservation?.state)&&r.publicPolicyControlVerified===true)
     && (!behaviorRepairComparison || r.inferenceControlVerified === true && r.behaviorRepairControlVerified === true)
     && (!concreteRefactorComparison || r.inferenceControlVerified === true && r.localRefactorControlVerified === true)
     && (!conditionalRepair || r.fixtureReady===true&&r.fixtureInteractions===1&&r.fixtureEvidence[0]?.evidenceClass==="E3")
@@ -390,6 +392,9 @@ const pairs = tasks.map(task => {
       treatment.usage[key] + (key === "toolWorkUnits" ? treatment.privateScorerWorkUnits : 0)
       <= baseline.usage[key] + (key === "toolWorkUnits" ? baseline.privateScorerWorkUnits : 0));
   return {id: task.id, tier: task.tier, providerStable: stable, matchedRealizedCompute: matched,
+    ...(v3FreshBudgetComparison?{comparisonControlsVerified:stable,
+      providerDeliveryStable:rows.length===2&&rows.every(r=>!r.infrastructureFailure&&r.usage
+        &&r.usage.providerFailures===0&&r.usage.unknownUsageCalls===0&&r.usage.retries===0)}:{}),
     ...(runtimeReviewComparison?{treatmentExercised:(treatment?.sampleObservationPrompts??0)>0,
       sameFirstCandidate:typeof baseline?.perIteration?.[0]?.candidateSourceDigest==="string"
         &&baseline.perIteration[0].candidateSourceDigest===treatment?.perIteration?.[0]?.candidateSourceDigest,

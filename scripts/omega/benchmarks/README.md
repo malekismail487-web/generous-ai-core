@@ -1,5 +1,51 @@
 # NYX benchmark capability program
 
+### Fresh V3 comparison — no acceptance gain (2026-10-11)
+
+Frozen candidate `c117fed6db592b55a179064b87fd351bf7cc6267`,
+[run 38109196231](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38109196231),
+Super, four unseeded domains × two predeclared repeats × two arms. Identical V3
+admission, functional/private checks and resource caps; only the pre-candidate
+original-state budget explanation differs. All 16 arm executions completed.
+
+| Outcome | Structure-site control | Original-budget guidance |
+|---|---:|---:|
+| Final full acceptance | 1/8 | 1/8 |
+| Final functional acceptance | 3/8 | 3/8 |
+| First-call full acceptance | 1/8 | 0/8 |
+| Repaired full acceptance | 0/8 | 1/8 |
+| Known model tokens | 95,439 | 108,909 |
+
+31 logical/physical/HTTP calls, 204,348 reported tokens, zero unknown-usage,
+provider, syntax or truncation failures. 44 verification executions; 275,764 ms
+summed arm wall time (not inference latency alone). Final outcomes: six functional
+failures, five quality rejections, three rejected repeated/no-op repair proposals,
+two acceptances. Nine initial candidates passed all functional cases; three lost
+that property during quality repair. The budget explanation earns no promotion.
+
+The evaluator also exposed an accounting mistake: a functionally failed iteration
+never invokes admission, so its absent policy ID is **NOT_REACHED**, not policy
+drift or provider instability. The raw artifact retains its three composite
+qualified pairs. A clearly labeled post-hoc correction records eight delivery-
+stable pairs and six pairs matched within the predeclared 10% realized-compute
+tolerance. No scores, tasks, budgets or promotion decisions changed; no rerun was
+launched. Future accounting distinguishes observed, unreached and mismatched
+policy invocation. Missing fields and genuine wrong policy versions still fail.
+
+The [receipt](../../../docs/omega/evidence/nyx-v3-fresh-budget-c117fed6.json)
+verifies archive SHA256 `b09210ae2c72c08bc07bb9b39d318db31fdc502cd55ba15bbeb19cac7d2e27a6`,
+report/log/freeze/per-task agreement, 19 frozen source identities, task membership
+and complete cleanup. Clean-candidate CI passed 109 suites / 12,878 checks;
+post-run accounting regression passed 109 / 12,885, with global/scoped TypeScript
+zero. V2 evidence and the default Ultra configuration remain unchanged. No new
+authority, official benchmark score or cognitive improvement is claimed.
+
+Next diagnosis must use separate development tasks to reproduce public execution
+exceptions and quality-induced functional regressions, then test a general
+correction on fresh transfer tasks. Do not special-case this now-exposed cohort,
+reinterpret unreached private predictions as wrong answers, weaken the oracle,
+or add speculative brain/cognitive layers.
+
 ### Approved V3 applicability correction (isolated opt-in, not cognitive promotion)
 
 The operator approved a **new** `omega-public-static-candidate/3` policy on

@@ -1,0 +1,1864 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-V3-FRESH-ORIGINAL-BUDGET-TRANSFER-001",
+  "evaluatedCandidate": "c117fed6db592b55a179064b87fd351bf7cc6267",
+  "runId": 38109196231,
+  "jobId": 114381022064,
+  "policyCorrection": {
+    "userAuthorized": true,
+    "semanticPolicy": "omega-public-static-candidate/3",
+    "frozenV2Preserved": true,
+    "addedSiblingDefect": "V3_REQUEST_STILL_PRESENTED_GENERIC_V2_LINE_COUNT_GUIDANCE",
+    "reproduced": {
+      "passed": 794,
+      "failed": 2,
+      "liveCalls": 0
+    },
+    "repaired": {
+      "passed": 796,
+      "failed": 0
+    },
+    "defaultGuidanceUnchanged": true,
+    "pinnedPredecessorReconstruction": "PASSED"
+  },
+  "localVerification": {
+    "discoveredSuites": 109,
+    "executedSuites": 109,
+    "passedSuites": 109,
+    "failedSuites": 0,
+    "passedChecks": 12878,
+    "failedChecks": 0,
+    "semanticTestDefinitions": 4571,
+    "manifestDigest": "6756539bf0cca706f3dd34021be29633ea1dd505e054c0711c4a157bdb52f825",
+    "scope": "DIRTY_PARENT_PLUS_EXACT_LF_SOURCE_DIGESTS_NOT_CLEAN_COMMIT_EXECUTION",
+    "parent": "ee9d984cf169efd4ecaeef88d10ddb72c53965e6",
+    "typescript": "5.8.3",
+    "globalErrors": 0,
+    "scopedErrors": 0,
+    "build": "PASSED",
+    "existingBuildWarningsPreserved": true
+  },
+  "localSourceCustody": {
+    "epoch": {
+      "version": "nyx-v3-original-budget-fresh-transfer/1",
+      "admissionPolicyId": "omega-public-static-candidate/3",
+      "originalBudgetVersion": "nyx-original-state-quality-budget/2",
+      "uniqueTasks": 4,
+      "predeclaredRepeats": 2,
+      "status": "FIRST_EXPOSURE_IN_THIS_EPOCH_NOT_PROVEN_PRETRAINING_UNSEEN",
+      "efficacyCriterion": "BOTH_REPEATS_WIN_IN_TWO_DISTINCT_DOMAINS_AT_MATCHED_REALIZED_COMPUTE_WITH_NO_PAIRED_ACCEPTANCE_REGRESSION",
+      "scope": "SMALL_SAME_AUTHOR_DEVELOPMENT_TRANSFER_NOT_EXTERNAL_BENCHMARK_OR_BROAD_PROMOTION"
+    },
+    "tasks": [
+      {
+        "id": "SCC-PARTITION-V3-FRESH",
+        "domain": "DIRECTED_GRAPH_EQUIVALENCE",
+        "publicCases": 2,
+        "privateCases": 14,
+        "fixtureDigest": "a4dc31e914879994809aeb462d9b2dc89d2e593db6ca25312a1cdaeed993183a"
+      },
+      {
+        "id": "RATIONAL-PREFIX-V3-FRESH",
+        "domain": "EXACT_NUMERICAL_COMPUTATION",
+        "publicCases": 2,
+        "privateCases": 10,
+        "fixtureDigest": "5b704d5c0bad0dbc85e0cb7566f3c2ecdd195ed7052ee84f3e3c3663aa3fcb28"
+      },
+      {
+        "id": "TRANSACTION-VIEWS-V3-FRESH",
+        "domain": "TRANSACTIONAL_STATE_VISIBILITY",
+        "publicCases": 2,
+        "privateCases": 10,
+        "fixtureDigest": "51715a233bdd5b43db4e4efd4760276e9c4afaa85c5ae29264bc114af2b2573a"
+      },
+      {
+        "id": "JSON-POINTER-V3-FRESH",
+        "domain": "STRUCTURED_DATA_ADDRESSING",
+        "publicCases": 2,
+        "privateCases": 13,
+        "fixtureDigest": "5ef40bc437111a5399890b63db3c29aa861a50639653bcb00a8250e6de94e1ac"
+      }
+    ],
+    "expandedTaskIdentities": [
+      "SCC-PARTITION-V3-FRESH-REPEAT-1",
+      "SCC-PARTITION-V3-FRESH-REPEAT-2",
+      "RATIONAL-PREFIX-V3-FRESH-REPEAT-1",
+      "RATIONAL-PREFIX-V3-FRESH-REPEAT-2",
+      "TRANSACTION-VIEWS-V3-FRESH-REPEAT-1",
+      "TRANSACTION-VIEWS-V3-FRESH-REPEAT-2",
+      "JSON-POINTER-V3-FRESH-REPEAT-1",
+      "JSON-POINTER-V3-FRESH-REPEAT-2"
+    ],
+    "sourceSha256": {
+      "scripts/omega/benchmarks/v3FreshBudgetTransferTasks.ts": "e1ff2ebb184e910c037b91ff54aa29a5f555421aed234054e867e5d4c4bde5de",
+      "scripts/omega/nyx-source-representation-cycle.ts": "941ae36cb28909164368af964c1a7280073217d079ac541bdb6de4e4b1c2d12c",
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "504a29dc3b44c50f63c4b8c040fe92c99b6d12749fbf2abb44942f2f018a73f8",
+      "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "60d63e36cd19654d3130c8200096ddd190e165014be17daa169c0c474f1525c0",
+      "src/lib/codelab/assurance/candidateQualityApplicability.ts": "024baeae0611a2415dbaadeb1667cc92a30d80b05ba89173d6ccfde288fb8019",
+      "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "4cc293f6ac9eb3b6b852b78c964767df022082d470097ffeea80ae3cf46b778c",
+      "scripts/omegaArcNyxIntegration.test.ts": "fa29646d56f5ce93787858d7443bd2e701f1d6fdfa0a64a778a3331c32b424e0",
+      "scripts/omegaR3DNyxNemotronCognition.test.ts": "103aa4dc26b6e46f87ba6e1c55b3e7f81d99bc966523a52ee404336ee5ec5a28"
+    }
+  },
+  "authority": {
+    "delta": false,
+    "sourceMutation": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "benchmarkProfile": "EXISTING_R3_DISPOSABLE_ONLY",
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "directlyImplemented": [
+      "ORIGINAL_STATE_QUALITY_APPLICABILITY",
+      "FORMATTING_INVARIANCE",
+      "CONTROLLED_FALSIFIABLE_COMPARISON"
+    ],
+    "supporting": [
+      "EVIDENCE_OVER_CONFIDENCE",
+      "NO_SELF_CERTIFICATION",
+      "GENERAL_REPAIR_NOT_TASK_MEMORIZATION",
+      "HONEST_COMPUTE_ACCOUNTING"
+    ],
+    "deferred": [
+      "COGNITIVE_PROMOTION",
+      "PRODUCTION_AUTHORITY",
+      "OFFICIAL_TERMINAL_SWE_EVALUATION"
+    ],
+    "conflicts": [],
+    "supersededOperationalApproaches": [
+      "V3_GENERIC_GUIDANCE_USING_V2_LINE_COUNT_APPLICABILITY"
+    ]
+  },
+  "terminal": {
+    "conclusion": "success",
+    "experimentOutcome": "NO_NET_ACCEPTANCE_GAIN",
+    "selectedPairs": 8,
+    "uniqueTasks": 4,
+    "predeclaredRepeats": 2,
+    "attemptedArms": 16,
+    "completedArms": 16,
+    "firstCallAccepted": {
+      "control": 1,
+      "treatment": 0
+    },
+    "repairedAccepted": {
+      "control": 0,
+      "treatment": 1
+    },
+    "summaries": [
+      {
+        "variant": "STRUCTURE_SITES_CONTROL",
+        "accepted": 1,
+        "functionallyAccepted": 3,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 1,
+        "repairedAccepted": 0,
+        "reportedTokens": 95439,
+        "unknownUsageCalls": 0
+      },
+      {
+        "variant": "ORIGINAL_BUDGET",
+        "accepted": 1,
+        "functionallyAccepted": 3,
+        "qualityAccepted": 1,
+        "firstCallAccepted": 0,
+        "repairedAccepted": 1,
+        "reportedTokens": 108909,
+        "unknownUsageCalls": 0
+      }
+    ],
+    "usage": {
+      "logicalCalls": 31,
+      "physicalCalls": 31,
+      "httpAttempts": 31,
+      "reportedTokens": 204348,
+      "unknownUsageCalls": 0,
+      "toolCalls": 44,
+      "toolWorkUnits": 606,
+      "wallClockMs": 275764,
+      "providerFailures": 0,
+      "retries": 0
+    },
+    "privateScorerWorkUnits": 330,
+    "syntaxValidResponses": 31,
+    "truncations": 0,
+    "syntaxFailures": 0,
+    "providerFailures": 0,
+    "unknownUsageCalls": 0,
+    "failureClasses": {
+      "FUNCTIONAL_FAILURE": 6,
+      "QUALITY_REJECTION": 5,
+      "ACCEPTED": 2,
+      "SEMANTIC_INTENT_FAILURE": 3
+    },
+    "sourceUnchanged": true,
+    "cleanupVerified": true,
+    "firstCandidateFunctionalPasses": 9,
+    "functionalRegressionsDuringQualityRepair": 3,
+    "acceptanceCriterionReached": false,
+    "defaultPromotion": false,
+    "cognitiveGainDemonstrated": false,
+    "officialBenchmarkScore": false,
+    "fullPopulationScore": false,
+    "reservedAnswersUsed": false,
+    "hostSolutionsSuppliedToModel": false
+  },
+  "artifact": {
+    "artifactId": 11691177600,
+    "name": "nyx-bounded-transfer-c117fed6db592b55a179064b87fd351bf7cc6267",
+    "archiveSha256": "b09210ae2c72c08bc07bb9b39d318db31fdc502cd55ba15bbeb19cac7d2e27a6",
+    "reportSha256": "9cc9287202baef8d782a76be21a3aaab4f78ab83714497b75694a8968ff0cd09",
+    "zipBytes": 14113,
+    "member": "nyx-source-representation-c117fed6db592b55a179064b87fd351bf7cc6267.json",
+    "artifactMetadataDigestVerified": true,
+    "terminalReportLogAgreement": true,
+    "freezeLogAgreement": true,
+    "freezeDigest": "6dd8ddb5a59a11f0e05b740db319ff68518a56bbb78055624e1f47cc348412e8",
+    "perTaskLogAgreement": true
+  },
+  "frozen": {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0,
+    "inferencePolicy": "CONSTRAINED_JSON",
+    "maxOutputTokens": 8192,
+    "taskCorpus": "nyx-v3-original-budget-fresh-transfer/1",
+    "providerTimeoutMs": 65000,
+    "logicalCallsPerTask": 2,
+    "candidateIterationsPerTask": 2,
+    "toolCallsPerTask": 3,
+    "wallClockMsPerTask": 155000,
+    "globalWallClockMs": 2700000,
+    "maxPatchBytes": 12000,
+    "maxPromptBytes": 48000,
+    "realizedTolerance": 0.1,
+    "physicalCallsPerTaskIncludingRetries": 2,
+    "reasoningControl": "SUPER_HOSTED_NATIVE",
+    "reasoningEffort": "none",
+    "generationPolicy": "nyx-length-bounded-decision-schema/1",
+    "changedVariable": "EXACT_ORIGINAL_STATE_PUBLIC_STRUCTURAL_BUDGET_BEFORE_FIRST_CANDIDATE_ONLY",
+    "publicFeedback": "IDENTICAL_PUBLIC_TEST_FAILURE_AND_STATIC_ADMISSION",
+    "authority": "EXISTING_R3_ISOLATED_ONLY",
+    "postQualityGuidance": "IDENTICAL_STRUCTURE_SITES",
+    "preCandidateGuidance": {
+      "STRUCTURE_SITES_CONTROL": "EXISTING_PUBLIC_POLICY_ONLY",
+      "ORIGINAL_BUDGET": "PUBLIC_ORIGINAL_STATE"
+    },
+    "qualityPolicy": "omega-public-static-candidate/3",
+    "epoch": {
+      "version": "nyx-v3-original-budget-fresh-transfer/1",
+      "admissionPolicyId": "omega-public-static-candidate/3",
+      "originalBudgetVersion": "nyx-original-state-quality-budget/2",
+      "uniqueTasks": 4,
+      "predeclaredRepeats": 2,
+      "status": "FIRST_EXPOSURE_IN_THIS_EPOCH_NOT_PROVEN_PRETRAINING_UNSEEN",
+      "efficacyCriterion": "BOTH_REPEATS_WIN_IN_TWO_DISTINCT_DOMAINS_AT_MATCHED_REALIZED_COMPUTE_WITH_NO_PAIRED_ACCEPTANCE_REGRESSION",
+      "scope": "SMALL_SAME_AUTHOR_DEVELOPMENT_TRANSFER_NOT_EXTERNAL_BENCHMARK_OR_BROAD_PROMOTION"
+    },
+    "suppliedCandidates": false,
+    "modelCallsMaximum": 32,
+    "comparisonAgainstV2": "NOT_COMPARABLE_NOT_REGRADED",
+    "broadPromotion": "NONE",
+    "realizedMatchScope": "REPORTED_MODEL_CALLS_TOKENS_AND_VERIFIER_WORK_NOT_TOTAL_HOST_CPU",
+    "hostDiagnosticCost": "INCLUDED_IN_WALL_CLOCK_NOT_SEPARATELY_PROFILED",
+    "sourceMutations": false,
+    "generalShell": false,
+    "generalNetwork": false,
+    "production": false,
+    "hostileCodeSandbox": false,
+    "candidateNetworkIsolation": "NOT_PROVEN"
+  },
+  "sourceCustody": {
+    "candidate": "c117fed6db592b55a179064b87fd351bf7cc6267",
+    "sourceDigests": {
+      "src/lib/codelab/cognition/nyxNemotronEngineeringCognition.ts": "504a29dc3b44c50f63c4b8c040fe92c99b6d12749fbf2abb44942f2f018a73f8",
+      "src/lib/codelab/cognition/nyxRepairIntentCompiler.ts": "4f0dbb3d393d6e5c581e029aadd9a5c86372be6c4257b00cdb2e66ee61b167ff",
+      "src/lib/codelab/engine/r3BoundedRepairLoop.ts": "4cc293f6ac9eb3b6b852b78c964767df022082d470097ffeea80ae3cf46b778c",
+      "scripts/omega/benchmarks/sourceRepresentationTasks.ts": "7b9dfca6562c651aff5d943621494b8ce36a841759fea37b0d48fa3ca418e3fd",
+      "scripts/omega/benchmarks/arrayBoundTransferTasks.ts": "8606df3882c3568324f041d25818fec2d8ee28a2063cc5cddf9082f65f0f807c",
+      "scripts/omega/benchmarks/sourceLiteralTransferTasks.ts": "c357173ad8e5d7e871f7552f55f37694399ba7ac5b6ac726be8dcbb88fa427e2",
+      "scripts/omega/benchmarks/measuredQualityTransferTasks.ts": "43b4f950d291cded6cf1a42830941c7bb1a74760b3c084acfe1138f66ef341f3",
+      "src/lib/codelab/cognition/nyxMeasuredQualityGuidance.ts": "efaf4eee2ecefbbee51304d41b16b06a45f29144655ff3782ea8e0206557de76",
+      "scripts/omega/benchmarks/qualitySiteTransferTasks.ts": "084344f447220904a054667745a0d7f0392fe44ed19af4230f9f213d472b9f10",
+      "src/lib/codelab/assurance/engineeringQualityOracle.ts": "bbe8ba830c62f74e7360227eb364cf328772ef8bd7c661c5b930abe1a167b43d",
+      "src/lib/codelab/assurance/candidateEngineeringAdmission.ts": "60d63e36cd19654d3130c8200096ddd190e165014be17daa169c0c474f1525c0",
+      "src/lib/codelab/assurance/candidateQualityApplicability.ts": "024baeae0611a2415dbaadeb1667cc92a30d80b05ba89173d6ccfde288fb8019",
+      "scripts/omega/benchmarks/v3FreshBudgetTransferTasks.ts": "e1ff2ebb184e910c037b91ff54aa29a5f555421aed234054e867e5d4c4bde5de",
+      "src/lib/codelab/cognition/nyxDecisionRequiredSchema.ts": "0a0092b282ad48894e3801a96951d041721be686a7a6e7c79c1311f2e0161dc5",
+      "scripts/omega/benchmarks/originalBudgetTransferTasks.ts": "cfa660faddb037bc416c40206acb4f0d522b5d61641b3aa5c1ecbfe9ecf5b703",
+      "scripts/omega/nyx-source-representation-cycle.ts": "941ae36cb28909164368af964c1a7280073217d079ac541bdb6de4e4b1c2d12c",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "scripts/omega/benchmarks/nyxArcAdapter.ts": "c880b82172d3eb19de07635a6181d5b4d9d745b14dcbb7ace817b9c4bd5f4a9b"
+    },
+    "taskIdentityVerified": true
+  },
+  "cleanCiVerification": {
+    "runId": 38109196232,
+    "jobId": 114381021787,
+    "discoveredSuites": 109,
+    "executedSuites": 109,
+    "passedSuites": 109,
+    "failedSuites": 0,
+    "passedChecks": 12878,
+    "failedChecks": 0,
+    "semanticTestDefinitions": 4571,
+    "candidate": {
+      "commit": "c117fed6db592b55a179064b87fd351bf7cc6267",
+      "worktreeState": "CLEAN"
+    },
+    "manifestDigest": "5ea71b10adec7162baa4e09c9d096fcb988ef5cbf06e94bf00ebb4d6ae5455d8",
+    "typescript": "5.8.3",
+    "globalErrors": 0
+  },
+  "originalPairs": [
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        },
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        },
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "SEMANTIC_INTENT_FAILURE"
+        },
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        },
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": false,
+      "matchedRealizedCompute": false,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        },
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "FUNCTIONAL_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-1",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "SEMANTIC_INTENT_FAILURE"
+        },
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": false,
+          "failureClass": "SEMANTIC_INTENT_FAILURE"
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-2",
+      "tier": "VALIDATION",
+      "providerStable": true,
+      "matchedRealizedCompute": true,
+      "treatmentNoMoreMeasuredCompute": false,
+      "qualityAcceptanceGainWithoutMoreMeasuredCompute": false,
+      "outcomes": [
+        {
+          "variant": "ORIGINAL_BUDGET",
+          "accepted": true,
+          "failureClass": null
+        },
+        {
+          "variant": "STRUCTURE_SITES_CONTROL",
+          "accepted": false,
+          "failureClass": "QUALITY_REJECTION"
+        }
+      ]
+    }
+  ],
+  "posthocAccountingCorrection": {
+    "version": "nyx-v3-admission-observation/1",
+    "reason": "NOT_REACHED_STATIC_ADMISSION_WAS_WRONGLY_REQUIRED_TO_NAME_POLICY",
+    "rawArtifactUnchanged": true,
+    "scoresUnchanged": true,
+    "taskSetUnchanged": true,
+    "rerun": false,
+    "pureProviderStablePairs": 8,
+    "originalCompositeQualifiedPairs": 3,
+    "correctedComputeMatchedPairs": 6,
+    "promotionDecisionChanged": false,
+    "qualification": "POSTHOC_ACCOUNTING_ONLY_NOT_NEW_EMPIRICAL_RESULTS",
+    "pairs": [
+      {
+        "id": "SCC-PARTITION-V3-FRESH-REPEAT-1",
+        "originalCompositeProviderStable": false,
+        "originalCompositeMatched": false,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          },
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          }
+        ]
+      },
+      {
+        "id": "SCC-PARTITION-V3-FRESH-REPEAT-2",
+        "originalCompositeProviderStable": false,
+        "originalCompositeMatched": false,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          },
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          }
+        ]
+      },
+      {
+        "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-1",
+        "originalCompositeProviderStable": false,
+        "originalCompositeMatched": false,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": false,
+        "outcomes": [
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": true,
+            "failureClass": null
+          },
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-2",
+        "originalCompositeProviderStable": false,
+        "originalCompositeMatched": false,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": false,
+        "outcomes": [
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "SEMANTIC_INTENT_FAILURE"
+          },
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-1",
+        "originalCompositeProviderStable": true,
+        "originalCompositeMatched": true,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          },
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          }
+        ]
+      },
+      {
+        "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-2",
+        "originalCompositeProviderStable": false,
+        "originalCompositeMatched": false,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          },
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "FUNCTIONAL_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "JSON-POINTER-V3-FRESH-REPEAT-1",
+        "originalCompositeProviderStable": true,
+        "originalCompositeMatched": true,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "SEMANTIC_INTENT_FAILURE"
+          },
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": false,
+            "failureClass": "SEMANTIC_INTENT_FAILURE"
+          }
+        ]
+      },
+      {
+        "id": "JSON-POINTER-V3-FRESH-REPEAT-2",
+        "originalCompositeProviderStable": true,
+        "originalCompositeMatched": true,
+        "providerDeliveryStable": true,
+        "policyConsistentIfObserved": true,
+        "matchedRealizedComputePosthoc": true,
+        "outcomes": [
+          {
+            "variant": "ORIGINAL_BUDGET",
+            "accepted": true,
+            "failureClass": null
+          },
+          {
+            "variant": "STRUCTURE_SITES_CONTROL",
+            "accepted": false,
+            "failureClass": "QUALITY_REJECTION"
+          }
+        ]
+      }
+    ]
+  },
+  "candidateOutcomes": [
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-1",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 16325,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 48,
+        "wallClockMs": 16932,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 15,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 2,
+            "total": 14,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-1",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "QUALITY_REJECTION",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 16619,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 48,
+        "wallClockMs": 14126,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 16,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 15,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 16,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 15,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-2",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 17234,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 48,
+        "wallClockMs": 17483,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 17,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 16,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 21,
+                "limit": 12
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 14,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "SCC-PARTITION-V3-FRESH-REPEAT-2",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "QUALITY_REJECTION",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 16454,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 48,
+        "wallClockMs": 14487,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 15,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 14,
+            "total": 14,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 19,
+                "limit": 12
+              }
+            },
+            {
+              "code": "NESTING_LIMIT",
+              "measurement": {
+                "observed": 5,
+                "limit": 4
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 18,
+                "limit": 8
+              }
+            },
+            {
+              "code": "DECLARATION_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-1",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "firstCallAccepted": true,
+      "repairedAccepted": false,
+      "failureClass": null,
+      "loopReason": "bounded_repair_functionally_verified",
+      "candidateIterations": 1,
+      "usage": {
+        "logicalCalls": 1,
+        "physicalCalls": 1,
+        "httpAttempts": 1,
+        "reportedTokens": 4999,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 24,
+        "wallClockMs": 6213,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "ADMITTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 10,
+            "total": 10,
+            "failure": null
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-1",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11359,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 15702,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-2",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "SEMANTIC_INTENT_FAILURE",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "candidateIterations": 1,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 14484,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 24,
+        "wallClockMs": 30067,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 1,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "RATIONAL-PREFIX-V3-FRESH-REPEAT-2",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10773,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 20887,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-1",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "QUALITY_REJECTION",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12683,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 13591,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": false,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": false,
+            "correct": 9,
+            "total": 10,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 13,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 12,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": false,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": false,
+            "correct": 9,
+            "total": 10,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 11,
+                "limit": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-1",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "QUALITY_REJECTION",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13222,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 12106,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 10,
+            "total": 10,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 10,
+            "total": 10,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-2",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 13409,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 11051,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": false,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": false,
+            "correct": 9,
+            "total": 10,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 14,
+                "limit": 12
+              }
+            },
+            {
+              "code": "NESTING_LIMIT",
+              "measurement": {
+                "observed": 8,
+                "limit": 4
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 13,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "TRANSACTION-VIEWS-V3-FRESH-REPEAT-2",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "FUNCTIONAL_FAILURE",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 12815,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 36,
+        "wallClockMs": 23054,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 10,
+            "total": 10,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 15,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": false,
+          "functionalAccepted": false,
+          "quality": null,
+          "staticPolicyId": null,
+          "privateScore": {
+            "accepted": false,
+            "correct": 0,
+            "total": 10,
+            "failure": "ARTIFACT_SCHEMA"
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-1",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "SEMANTIC_INTENT_FAILURE",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "candidateIterations": 1,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10453,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 30,
+        "wallClockMs": 12793,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 1,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": false,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": false,
+            "correct": 12,
+            "total": 13,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 11,
+                "limit": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-1",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": false,
+      "functionalAccepted": false,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "SEMANTIC_INTENT_FAILURE",
+      "loopReason": "repair_cognition_correction_budget_exhausted",
+      "candidateIterations": 1,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11039,
+        "unknownUsageCalls": 0,
+        "toolCalls": 2,
+        "toolWorkUnits": 30,
+        "wallClockMs": 19568,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 1,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": false,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": false,
+            "correct": 10,
+            "total": 13,
+            "failure": "HIDDEN_CASE_FAILURE"
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 11,
+                "limit": 8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-2",
+      "variant": "ORIGINAL_BUDGET",
+      "accepted": true,
+      "functionalAccepted": true,
+      "qualityAccepted": true,
+      "firstCallAccepted": false,
+      "repairedAccepted": true,
+      "failureClass": null,
+      "loopReason": "bounded_repair_functionally_verified",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 11543,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 45,
+        "wallClockMs": 31040,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 13,
+            "total": 13,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 11,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "ADMITTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 13,
+            "total": 13,
+            "failure": null
+          },
+          "qualityFindings": []
+        }
+      ]
+    },
+    {
+      "id": "JSON-POINTER-V3-FRESH-REPEAT-2",
+      "variant": "STRUCTURE_SITES_CONTROL",
+      "accepted": false,
+      "functionalAccepted": true,
+      "qualityAccepted": false,
+      "firstCallAccepted": false,
+      "repairedAccepted": false,
+      "failureClass": "QUALITY_REJECTION",
+      "loopReason": "repair_iteration_budget_exhausted",
+      "candidateIterations": 2,
+      "usage": {
+        "logicalCalls": 2,
+        "physicalCalls": 2,
+        "httpAttempts": 2,
+        "reportedTokens": 10937,
+        "unknownUsageCalls": 0,
+        "toolCalls": 3,
+        "toolWorkUnits": 45,
+        "wallClockMs": 16664,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "sourceEmissionOutcomes": [
+        "SYNTACTICALLY_VALID",
+        "SYNTACTICALLY_VALID"
+      ],
+      "noOpRepairRejections": 0,
+      "perIteration": [
+        {
+          "iteration": 1,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 13,
+            "total": 13,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 15,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 8
+              }
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "publicAccepted": true,
+          "functionalAccepted": true,
+          "quality": "REJECTED",
+          "staticPolicyId": "omega-public-static-candidate/3",
+          "privateScore": {
+            "accepted": true,
+            "correct": 13,
+            "total": 13,
+            "failure": null
+          },
+          "qualityFindings": [
+            {
+              "code": "COMPLEXITY_LIMIT",
+              "measurement": {
+                "observed": 15,
+                "limit": 12
+              }
+            },
+            {
+              "code": "COMPLEXITY_DELTA",
+              "measurement": {
+                "observed": 14,
+                "limit": 8
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnosis": {
+    "measured": "EXACT_ORIGINAL_BUDGET_GUIDANCE_DID_NOT_INCREASE_FULL_ACCEPTANCE",
+    "independentlyObservedWeakness": "QUALITY_REPAIR_CAN_PRESERVE_EXCESS_STRUCTURE_OR_DESTROY_PREVIOUSLY_PASSING_BEHAVIOR",
+    "executionArtifactGap": "SOME_VALID_SOURCES_FAILED_BEFORE_PRIVATE_PREDICTIONS_WERE_PRODUCED;_THOSE_UNREACHED_CASES_ARE_NOT_WRONG_HIDDEN_ANSWERS",
+    "nextGeneralCorrection": "DIAGNOSE_PUBLIC_EXECUTION_EXCEPTIONS_AND_WHOLE_ALGORITHM_QUALITY_REPLANNING_ON_SEPARATE_DEVELOPMENT_TASKS;_KEEP_HIDDEN_ORACLE_CLOSED",
+    "doNot": "DO_NOT_SPECIAL_CASE_THIS_EXPOSED_COHORT_RELAX_THRESHOLDS_OR_ADD_MODEL_CALLS_TO_FORCE_GREEN",
+    "limitations": [
+      "SMALL_SAME_AUTHOR_COHORT",
+      "REPEATS_NOT_INDEPENDENT_TASKS",
+      "NO_TOTAL_HOST_CPU_PROFILE",
+      "PRETRAINING_EXPOSURE_UNKNOWN",
+      "CANDIDATE_NETWORK_ISOLATION_NOT_PROVEN"
+    ]
+  },
+  "triggerCleanup": {
+    "commit": "0bbba25a78d1f93316677a00c74d54ba88fc452e",
+    "onlyWorkflowTriggerRemoved": true,
+    "duplicateRunsStarted": false
+  },
+  "postRunVerification": {
+    "discoveredSuites": 109,
+    "executedSuites": 109,
+    "passedSuites": 109,
+    "failedSuites": 0,
+    "passedChecks": 12885,
+    "failedChecks": 0,
+    "semanticTestDefinitions": 4578,
+    "manifestDigest": "7dd46b6839850c7a1f575f1030dec3b71a949eccd12b0376aa7a8e0fc8b47a17",
+    "candidate": {
+      "commit": "0bbba25a78d1f93316677a00c74d54ba88fc452e",
+      "worktreeState": "DIRTY"
+    },
+    "typescript": "5.8.3",
+    "globalErrors": 0,
+    "scopedErrors": 0,
+    "sourceAccountingOnly": true,
+    "note": "NON_SECRET_ACCOUNTING_CORRECTION_NOT_A_LIVE_MODEL_RERUN_OR_REGRADING"
+  }
+}
