@@ -1,5 +1,48 @@
 # NYX benchmark capability program
 
+### Guarded unseeded transfer — completed, treatment unexercised (2026-10-11)
+
+Terminal [run 38152411345](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38152411345)
+at `0ad3d11c6cc78d23b5f597a52c155d666a5ef0fb`: all eight arm executions
+were attempted and graded; all retained candidates passed all twelve private
+cases plus public checks. Full quality acceptance was **3/4 control, 4/4 selection
+configuration**; first-call full acceptance was **2/4 in both**. Four initial
+correct candidates needed quality repair; three ordinary rewrites succeeded,
+one control remained rejected (declaration delta **14 > 12**, down from 21).
+There were no functional regressions in this epoch.
+
+**Zero guarded proposals and zero selections were exercised.** Every pair's
+initial candidate differed, and only one of four provider-stable pairs matched
+realized compute. The apparent 3/4→4/4 difference therefore does not establish a
+selection benefit; the predeclared promotion criterion was not met. No promotion,
+runtime/default change or authority increase. Two objectives / two repeats are
+not an external benchmark, and these finite passes do not establish frontier
+superiority or ≥80% across benchmarks.
+
+Twelve physical/logical calls used **89,331 reported tokens** (44,505 control /
+44,826 treatment), zero unknown usage, provider failures, retries, truncations,
+schema failures or ungraded cases. Twenty verifier executions and twelve
+per-iteration results remain separate; summed task latency was 247,211 ms.
+Cleanup, original source, all 23 frozen source hashes, four task hashes, freeze
+digest, artifact CRC/SHA256 and log/report agreement were verified. Clean Linux
+CI passed **109 suites / 13,572 checks**, TypeScript 5.8.3 zero, build, package,
+inventory and secret scan. Unrelated local UI edits remain outside the candidate.
+Archive SHA256: `11297150652d3500afc5b8366fe91e76c22f65dbfedc192a6c486d7b06b68f4a`.
+[Sanitized custody receipt](../../../docs/omega/evidence/nyx-guarded-fresh-0ad3d11c.json).
+
+Next general correction: diagnose guarded-proposal applicability and coherent
+structural reduction on separate development inputs. The exact unsupported live
+construct is unknown because raw source was not retained; do not invent a cause,
+special-case these objectives, relax the policy or rerun this frozen set for a
+promotion claim. Prior negative function-body evidence remains preserved.
+
+A separate E3 probe reproduced general applicability gaps: an adjacent const
+return receives a v3 proposal, but an otherwise identical let return and a first
+array/object-value use do not. These are intentionally excluded grammar forms,
+not proven causes of the live absence; no raw candidate was reconstructed and no
+guard or runtime was relaxed. Any extension must preserve evaluation order,
+ownership and unchanged independent verification.
+
 ### Predeclared guarded quality-repair transfer (2026-10-11)
 
 `nyx-guarded-repair-unseeded-transfer/1` tests the existing guarded refactor
@@ -41,8 +84,9 @@ Supporting: evidence-over-confidence, no self-certification, candidate/authority
 separation, finite repair and rollback ownership. Deferred: brain expansion,
 production promotion and broad benchmark superiority. Superseded experiment:
 function-body scope, whose negative frozen result remains below. No identified
-authority/evidence conflict; no historical result is regraded. Status: predeclared,
-not yet measured; no capability improvement claim.
+authority/evidence conflict; no historical result is regraded. The frozen
+predeclaration is preserved here; terminal results above show unexercised
+treatment and no causal capability-improvement claim.
 
 ### Source-bound function-body emission — promotion rejected (2026-10-11)
 
