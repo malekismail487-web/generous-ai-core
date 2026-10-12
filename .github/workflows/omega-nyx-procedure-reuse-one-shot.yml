@@ -1,10 +1,12 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
     inputs:
       experiment:
         type: choice
-        options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native, direct-model-repair]
+        options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native, direct-model-repair, quantitative-diagnosis]
         default: native-generation
         required: true
 permissions:
@@ -14,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-direct-model-repair-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-quantitative-diagnosis-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -67,11 +69,18 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-procedure-reuse-live-eval.ts
       - name: Compare direct repair and public mathematical reformulation from the same live first proposal
-        if: github.event_name == 'push' || inputs.experiment == 'direct-model-repair'
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'direct-model-repair'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_QUANTITATIVE_EXPERIMENT: DIRECT_REFORMULATION
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
+      - name: Diagnose public-formulation contracts and exact-value rejection on two new cases
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-quantitative-diagnosis-once]') || github.event_name == 'workflow_dispatch' && inputs.experiment == 'quantitative-diagnosis'
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_QUANTITATIVE_EXPERIMENT: FAILURE_DIAGNOSIS
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Preserve sanitized bounded evidence
         if: always()
@@ -85,4 +94,5 @@ jobs:
             ${{ runner.temp }}/nyx-repair-context-*.json
             ${{ runner.temp }}/nyx-direct-native-*.json
             ${{ runner.temp }}/nyx-direct-model-repair-*.json
+            ${{ runner.temp }}/nyx-quantitative-diagnosis-*.json
           if-no-files-found: error
