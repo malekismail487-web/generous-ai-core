@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { BoundedReasoningSession, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
+import { BoundedReasoningSession, snapshotBoundedReasoningData, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { QUANTITATIVE_TASKS, expectedQuantities, referenceQuantitativeProgram, verifyQuantitativeSubmission } from "./omega/nyx-quantitative-transfer-fixtures";
@@ -14,6 +14,9 @@ import { COMPOSED_TRANSFER_TASKS,verifyComposedTransferSubmission } from "./omeg
 import { COMMAND_TRANSFER_TASKS,verifyCommandTransferSubmission } from "./omega/nyx-quantitative-command-transfer-fixtures";
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
+import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, expectedProcedureOutputs, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
+import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -617,5 +620,189 @@ const late=await runNyxQuantitativeTask({...cognitionTask,arm:"REASONING_WITH_WO
   },verify:()=>{throw Error("expired_model_cannot_invoke_verifier");}});
 check(!late.accepted&&late.outcome==="LATE_RESPONSE_NOT_ADMITTED"&&late.toolRequests===0
   &&late.attempts[0].modelEvidence.usage.totalTokens===150,"late model response is unadmitted but spent compute remains accounted");
+// Authored development witnesses only: never passed to live cognition or used as
+// a fallback for failed tool synthesis. Oracle uses matrix elimination instead.
+function procedureWitness(task: ProcedureCase): QuantitativeProgram {
+  const registers: { id: string; source: string }[] = [], steps: QuantitativeProgram["blocks"][number]["steps"][number][] = [];
+  function op(id: string, operation: "ADD"|"SUB"|"MUL"|"DIV", left: string, right: string) {
+    if (!registers.some(v => v.id === id)) registers.push({ id, source: "zero" });
+    steps.push({ target: id, op: operation, left, right }); return id;
+  }
+  const outputs: { label: string; source: string }[] = [];
+  if (task.family === "INTERPOLATION") {
+    const twiceT = op("twiceT", "MUL", "two", "t");
+    const terms: string[] = [], slopes: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const [j, k] = [0,1,2].filter(v => v !== i);
+      const a = op(`a${i}`, "SUB", `x${i}`, `x${j}`), b = op(`b${i}`, "SUB", `x${i}`, `x${k}`);
+      const den = op(`d${i}`, "MUL", a, b), weight = op(`w${i}`, "DIV", `y${i}`, den);
+      const tj = op(`j${i}`, "SUB", "t", `x${j}`), tk = op(`k${i}`, "SUB", "t", `x${k}`);
+      terms.push(op(`v${i}`, "MUL", weight, op(`a${i}`, "MUL", tj, tk)));
+      slopes.push(op(`s${i}`, "MUL", weight, op(`b${i}`, "SUB", op(`b${i}`, "SUB", twiceT, `x${j}`), `x${k}`)));
+    }
+    // Reuse two existing registers; stay within the native 32-register bound.
+    steps.push({ target: "v0", op: "ADD", left: terms[0], right: terms[1] }, { target: "v0", op: "ADD", left: "v0", right: terms[2] },
+      { target: "s0", op: "ADD", left: slopes[0], right: slopes[1] }, { target: "s0", op: "ADD", left: "s0", right: slopes[2] });
+    outputs.push({ label: "value", source: "v0" }, { label: "slope", source: "s0" });
+  } else {
+    const a = op("a", "ADD", "g0", "g01"), d = op("d", "ADD", "g1", "g01");
+    const det = op("det", "SUB", op("ad", "MUL", a, d), op("cross", "MUL", "g01", "g01"));
+    const v0 = op("v0", "DIV", op("num0", "ADD", op("id", "MUL", "i0", d), op("ki", "MUL", "g01", "i1")), det);
+    const v1 = op("v1", "DIV", op("num1", "ADD", op("ia", "MUL", "i1", a), op("kj", "MUL", "g01", "i0")), det);
+    const loss = op("loss", "ADD", op("iv0", "MUL", "i0", v0), op("iv1", "MUL", "i1", v1));
+    outputs.push({ label: "voltage0", source: v0 }, { label: "voltage1", source: v1 }, { label: "loss", source: loss });
+  }
+  return { schemaVersion: 1, registers, blocks: [{ iterations: 1, mode: "SEQUENTIAL", steps }], outputs };
+}
+for (const family of PROCEDURE_FAMILIES) for (const task of [family.seed, ...family.fresh]) {
+  const native = BoundedReasoningSession.create(task.problem, { maxWorkUnits: 100000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now()+10000 });
+  const result = native.analyze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: native.problemDigest, program: procedureWitness(task) });
+  check(result.status === "CONSTRUCTED" && verifyProcedureOutputs(task, { outputs: result.payload!.outputs, confidence: 0.8 }).accepted,
+    `independent elimination oracle agrees with a different authored derivation for ${task.taskId}`); native.revoke();
+  check(!verifyProcedureOutputs(task, { outputs: expectedProcedureOutputs(task).map(v => ({ ...v, value: "0" })), confidence: 1 }).accepted,
+    "wrong computed quantities cannot be accepted by confidence");
+}
+const sumTask = { objective: "Compute sum=x+y exactly.", problem: { kind: "EXACT_QUANTITATIVE_DERIVATION" as const,
+  constants: [{ id: "zero", value: "0" }, { id: "x", value: "2" }, { id: "y", value: "3" }] }, outputLabels: ["sum"] };
+const sumProgram: QuantitativeProgram = { schemaVersion: 1, registers: [{ id: "r", source: "zero" }],
+  blocks: [{ iterations: 1, mode: "SEQUENTIAL", steps: [{ target: "r", op: "ADD", left: "x", right: "y" }] }], outputs: [{ label: "sum", source: "r" }] };
+const procedureLimits = { maxWorkUnits: 100000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now()+120000 };
+const sumCheck = (expected: string) => (certificate: unknown) => {
+  const c = certificate as { outputs?: { label: string; value: string }[] };
+  const accepted = c.outputs?.length === 1 && c.outputs[0].label === "sum" && c.outputs[0].value === expected;
+  return { accepted: !!accepted, findings: accepted ? [] : ["EXACT_OBJECTIVE_MISMATCH"], verificationDigest: theoryDigest({ expected, certificate }) };
+};
+const admitSum = () => BoundQuantitativeProcedure.admit({ task: sumTask, program: sumProgram, parameterIds: ["x","y"],
+  modelEvidenceDigest: theoryDigest("development-test-double"), limits: procedureLimits, verify: sumCheck("5") });
+const admitted = admitSum(), bound = admitted.procedure!;
+check(admitted.decision === "SEED_VALIDATED_TRANSFER_UNVERIFIED" && BoundQuantitativeProcedure.isOwned(bound) && admitted.result.workUnits > 0,
+  "admission requires actual bounded native replay and independent seed acceptance, with charged work");
+check(bound.descriptor().grantsAuthority === false && bound.descriptor().freshNativeLeaseRequired && bound.descriptor().independentVerificationRequired,
+  "procedure minting is not a capability lease or semantic proof on transfer");
+const freshSum = { ...sumTask, taskId: "PROC-SUM-FRESH", problem: { ...sumTask.problem,
+  constants: [{ id: "zero", value: "0" }, { id: "x", value: "-9" }, { id: "y", value: "17" }] } };
+check(bound.matches(freshSum) && bound.context(freshSum).program.schemaVersion === 1, "new parameter values preserve declared procedure applicability");
+for (const task of [{ ...freshSum, objective: "Different objective" }, { ...freshSum, outputLabels: ["other"] },
+  { ...freshSum, problem: { ...freshSum.problem, constants: [...freshSum.problem.constants, { id: "extra", value: "0" }] } },
+  { ...freshSum, problem: { ...freshSum.problem, constants: freshSum.problem.constants.map(v => v.id === "zero" ? { ...v, value: "1" } : v) } },
+  { ...freshSum, problem: { ...freshSum.problem, constants: [...freshSum.problem.constants, freshSum.problem.constants[0]] } }])
+  check(!bound.matches(task), "changed objective, labels, constant names, fixed constants or invalid inputs withhold applicability");
+let getterTriggered = false;
+const getterTask = Object.defineProperty({}, "objective", { enumerable: true, get() { getterTriggered = true; return sumTask.objective; } });
+check(!bound.matches(getterTask as typeof sumTask) && !getterTriggered, "applicability never executes candidate accessors");
+const cycle: { self?: unknown } = {}; cycle.self = cycle;
+for (const data of [getterTask, cycle, new Date(), { value: "x".repeat(128001) }, { value: NaN }, { [Symbol("hidden")]: 1 }])
+  check(throws(() => snapshotBoundedReasoningData(data)), "cross-callback snapshots reject non-data, cyclic and oversized candidates");
+const aliasTask = JSON.parse(JSON.stringify(sumTask)), aliasProgram = JSON.parse(JSON.stringify(sumProgram)), aliasParams = ["x","y"];
+const snapshotAdmission = BoundQuantitativeProcedure.admit({ task: aliasTask, program: aliasProgram, parameterIds: aliasParams,
+  modelEvidenceDigest: theoryDigest("owned-origin"), limits: procedureLimits, verify: c => {
+    aliasTask.objective = "mutated"; aliasTask.problem.constants[0].value = "99"; aliasProgram.blocks[0].steps[0].op = "SUB"; aliasParams.pop();
+    return sumCheck("5")(c);
+  } });
+check(snapshotAdmission.procedure!.matches(freshSum) && theoryDigest(snapshotAdmission.procedure!.context(freshSum).program) === theoryDigest(sumProgram),
+  "trusted verification callback cannot mutate the retained artifact through input aliases");
+check(BoundQuantitativeProcedure.admit({ task: sumTask, program: sumProgram, parameterIds: ["x"], modelEvidenceDigest: theoryDigest("seed"),
+  limits: procedureLimits, verify: sumCheck("6") }).procedure === null, "wrong seed never mints a procedure");
+check(throws(() => BoundQuantitativeProcedure.admit({ task: sumTask, program: sumProgram, parameterIds: ["missing"],
+  modelEvidenceDigest: theoryDigest("seed"), limits: procedureLimits, verify: sumCheck("5") })), "unknown parameter declaration cannot mint an artifact");
+check(throws(() => BoundQuantitativeProcedure.admit({ task: sumTask, program: sumProgram, parameterIds: ["x"],
+  modelEvidenceDigest: theoryDigest("seed"), limits: procedureLimits, verify: () => { throw Error("oracle-unavailable"); } })), "seed oracle failures propagate instead of authorizing fallback");
+const invocation = { problemDigest: theoryDigest(freshSum.problem), procedureId: bound.descriptor().procedureId };
+for (const reference of [{ ...invocation, procedureId: "forged" }, { ...invocation, problemDigest: "stale" },
+  { ...invocation, program: sumProgram }, null, getterTask])
+  check(throws(() => bound.request(freshSum, reference, theoryDigest(freshSum.problem))), "unknown/stale/overridden/non-data invocation rejected before execution");
+check(!getterTriggered, "invocation rejection never calls accessors");
+check(!BoundQuantitativeProcedure.isOwned(JSON.parse(JSON.stringify(bound.descriptor())))
+  && !BoundQuantitativeProcedure.isOwned(Object.create(BoundQuantitativeProcedure.prototype)), "serialized descriptor/prototype cannot mint process-local ownership");
+const reuseLimits = { ...limits, maxCalls: 1, maxToolRequests: 1, expiresAtEpochMs: Date.now()+120000 };
+const reuseInput = { ...freshSum, arm: "REASONING_WITH_WORKBENCH" as const, limits: reuseLimits, verify: sumCheck("8") };
+const responseFor = (request: unknown) => ({ ...capturedCompletion, content: JSON.stringify(request) });
+const procedureExchange = { action: "SUBMIT_PROCEDURE", analysisRequest: invocation, certificate: { confidence: 0.9 } };
+let schemaOffersInvocation = false;
+const reused = await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: bound, mode: "BOUND_INVOCATION" }, complete: async request => {
+  schemaOffersInvocation = JSON.stringify(request.responseFormat).includes("SUBMIT_PROCEDURE"); return responseFor(procedureExchange);
+} });
+check(reused.accepted && reused.calls === 1 && reused.toolRequests === 1 && schemaOffersInvocation
+  && reused.attempts[0].procedureReference?.procedureId === bound.descriptor().procedureId && reused.attempts[0].computation?.status === "CONSTRUCTED",
+  "model explicitly selects bound procedure; unchanged existing native lease executes fresh constants; independent oracle accepts");
+const contextOnly = await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: bound, mode: "CONTEXT_ONLY" }, complete: async request => {
+  check(!JSON.stringify(request.responseFormat).includes("SUBMIT_PROCEDURE") && request.messages[1].content.includes("priorProcedureContext"),
+    "context-only control offers public prior IR but no invocation action"); return responseFor(procedureExchange);
+} });
+check(!contextOnly.accepted && contextOnly.toolRequests === 0 && contextOnly.outcome === "AUTHORIZATION_REJECTION", "model cannot invent invocation in context-only arm");
+const unsupported = await runNyxQuantitativeTask({ ...reuseInput, complete: async () => responseFor(procedureExchange) });
+check(!unsupported.accepted && unsupported.toolRequests === 0, "default NYX gains no procedure authority from emitted text");
+const exhaustedReuse = await runNyxQuantitativeTask({ ...reuseInput, limits: { ...reuseLimits, maxToolWorkUnits: 1 },
+  procedure: { artifact: bound, mode: "BOUND_INVOCATION" }, complete: async () => responseFor(procedureExchange) });
+check(!exhaustedReuse.accepted && exhaustedReuse.attempts[0].computation?.status === "BUDGET_EXHAUSTED",
+  "procedure invocation cannot reset or enlarge the fresh session's arithmetic work budget");
+const hardcoded = { ...sumProgram, blocks: [], registers: [{ id: "r", source: "y" }], outputs: [{ label: "sum", source: "x" }] };
+const hardcodedSeed = { ...sumTask, problem: { ...sumTask.problem, constants: [{id:"zero",value:"0"},{id:"x",value:"5"},{id:"y",value:"0"}] } };
+const seedOnly = BoundQuantitativeProcedure.admit({ task: hardcodedSeed, program: hardcoded, parameterIds: ["x","y"],
+  limits: procedureLimits, modelEvidenceDigest: theoryDigest("hardcoded-test-double"), verify: sumCheck("5") }).procedure!;
+const seedOnlyRun = await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: seedOnly, mode: "BOUND_INVOCATION" },
+  complete: async () => responseFor({ ...procedureExchange, analysisRequest: { ...invocation, procedureId: seedOnly.descriptor().procedureId } }) });
+check(!seedOnlyRun.accepted && seedOnlyRun.outcome === "FUNCTIONAL_REJECTION" && seedOnlyRun.toolRequests === 1,
+  "seed-passing but nongeneral procedure is independently refuted on fresh values, not silently certified");
+bound.revoke();
+check(!bound.matches(freshSum) && !bound.descriptor().available && throws(() => bound.request(freshSum, invocation, invocation.problemDigest)),
+  "revocation removes applicability without granting replacement leases");
+const revokedRun = await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: bound, mode: "BOUND_INVOCATION" },
+  complete: async request => { check(!JSON.stringify(request.responseFormat).includes("SUBMIT_PROCEDURE"), "revoked artifact withheld from model schema"); return responseFor(procedureExchange); } });
+check(!revokedRun.accepted && revokedRun.toolRequests === 0, "revoked invocation fails closed in actual cognition protocol");
+check(PROCEDURE_REUSE_EPOCH.maxPhysicalLogicalCalls === 28 && !PROCEDURE_REUSE_EPOCH.broadCognitionPromotion,
+  "research protocol freezes finite calls and prohibits broad cognition promotion from two parameter-transfer families");
+let procedureWireCalls = 0;
+const procedureCognition = NvidiaNimProvider.create({ providerId: "TEST-PROCEDURE", model: PROCEDURE_REUSE_EPOCH.model,
+  authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { read: () => "test-only-non-secret", sourceIdentity: "DETERMINISTIC_TEST_DOUBLE" },
+  maxPromptBytes: 32000, maxOutputTokens: 8192, timeoutMs: 1000, transport: async (_url, init) => {
+    procedureWireCalls++; const wire = JSON.parse(String(init?.body)), prompt = JSON.parse(wire.messages[1].content);
+    check(wire.model === PROCEDURE_REUSE_EPOCH.model && wire.reasoning_effort === "high" && wire.reasoning_budget === 2048
+      && wire.response_format?.type === "json_schema" && !wire.chat_template_kwargs, "all experimental arms use identical supported Super native controls and strict schema");
+    const task = PROCEDURE_FAMILIES.flatMap(f => [f.seed, ...f.fresh]).find(t => t.taskId === prompt.taskId)!;
+    const exchange = prompt.boundProcedure ? { action: "SUBMIT_PROCEDURE", analysisRequest: { problemDigest: prompt.availableTool.problemDigest,
+      procedureId: prompt.boundProcedure.procedureId }, certificate: { confidence: 0.8 } } : { action: "SUBMIT_DERIVATION",
+      analysisRequest: { problemDigest: prompt.availableTool.problemDigest, program: procedureWitness(task) }, certificate: { confidence: 0.8 } };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(exchange) }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 } }), { status: 200, headers: { "Content-Type": "application/json" } });
+  } });
+const simulatedReuse = await runProcedureReuseEpoch(request => procedureCognition.complete(request),
+  { candidate: "0".repeat(40), sourceDigests: { development: theoryDigest("test-only") } });
+check(simulatedReuse.complete && simulatedReuse.providerStable && procedureWireCalls === 14 && simulatedReuse.physicalLogicalCalls === 14,
+  "entire finite comparison runs through real protocol and native tools with E3 cognition test doubles, never mislabeled E4");
+check(simulatedReuse.arms.every(a => a.correct === 4) && simulatedReuse.arms[2].procedureAccepted === 4,
+  "composed procedure invocation passes independently checked fresh values in both formal families");
+check(simulatedReuse.physicalUsage.reportedTokens === 2100 && simulatedReuse.arms[0].fullyChargedUsage.reportedTokens === 600
+  && simulatedReuse.arms[1].fullyChargedUsage.reportedTokens === 900 && simulatedReuse.arms[2].fullyChargedUsage.reportedTokens === 900,
+  "physical construction charged once, full counterfactual construction charged to both reuse arms, no unfair baseline setup charge");
+check(simulatedReuse.arms[2].fullyChargedUsage.toolWorkUnits > simulatedReuse.arms[0].fullyChargedUsage.toolWorkUnits
+  && !simulatedReuse.scopedEfficiencySignal && simulatedReuse.promotion.startsWith("NONE"), "equal acceptance plus extra construction is not claimed as a cognitive improvement");
+check(!JSON.stringify(simulatedReuse).includes('"registers"') && !JSON.stringify(simulatedReuse).includes('"initialState"')
+  && simulatedReuse.seeds.every(s => s.run.attempts.every(a => a.modelEvidence.evidenceClass === "E3")), "report retains identities/outcomes/accounting, not IR or private model reasoning");
+const noSeed = await runProcedureReuseEpoch(async request => {
+  const prompt = JSON.parse(request.messages[1].content);
+  const task = PROCEDURE_FAMILIES.flatMap(f => [f.seed,...f.fresh]).find(t => t.taskId === prompt.taskId)!;
+  return responseFor({ action: "SUBMIT", analysisRequest: null, certificate: { outputs: expectedProcedureOutputs(task), confidence: 1 } });
+}, { candidate: "0".repeat(40), sourceDigests: {} });
+check(!noSeed.complete && noSeed.seeds.every(s => s.admission === "NO_REPLAYABLE_ACCEPTED_PROCEDURE")
+  && noSeed.arms[2].unexecuted === 4 && noSeed.arms[0].correct === 4, "manual seed answer cannot trigger hidden authored-tool fallback; missing tool and successful control stay distinct");
+const sumEquations: QuantitativeEquations = { schemaVersion: 2, initialState: [], cycles: [{ iterations: 1, phases: [{
+  expressions: [{ id: "e0", op: "ADD", left: "x", right: "y" }], updates: [{ slot: "r0", source: "e0" }] }] }], outputs: [{ label: "sum", source: "r0" }] };
+const equationProcedure = BoundQuantitativeProcedure.admit({ task: sumTask, program: sumEquations, parameterIds: ["x","y"],
+  modelEvidenceDigest: theoryDigest("v2-test-double"), limits: procedureLimits, verify: sumCheck("5") }).procedure!;
+const equationReuse = await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: equationProcedure, mode: "BOUND_INVOCATION" },
+  complete: async () => responseFor({ ...procedureExchange, analysisRequest: { ...invocation, procedureId: equationProcedure.descriptor().procedureId } }) });
+check(equationReuse.accepted && equationReuse.attempts[0].executedProgram?.schemaVersion === 2
+  && equationReuse.attempts[0].computation?.loweringVersion !== null, "actual hosted-schema equation format admits and transfers through existing lowerer");
+let forgedCallback = false;
+try { await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: JSON.parse(JSON.stringify(equationProcedure.descriptor())), mode: "BOUND_INVOCATION" },
+  complete: async () => { forgedCallback = true; return responseFor(procedureExchange); } }); check(false, "forged artifact must throw"); }
+catch { check(!forgedCallback, "forged configuration rejected before any model call"); }
+let reuseOracleFailure = false;
+try { await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: equationProcedure, mode: "BOUND_INVOCATION" },
+  complete: async () => responseFor({ ...procedureExchange, analysisRequest: { ...invocation, procedureId: equationProcedure.descriptor().procedureId } }),
+  verify: () => { throw Error("fresh-independent-oracle-unavailable"); } }); }
+catch(error) { reuseOracleFailure = error instanceof Error && error.message === "fresh-independent-oracle-unavailable"; }
+check(reuseOracleFailure, "fresh verifier exception propagates after native procedure execution; never mislabeled or accepted");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

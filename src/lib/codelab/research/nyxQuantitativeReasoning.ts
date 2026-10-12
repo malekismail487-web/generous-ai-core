@@ -4,6 +4,7 @@ import { EXACT_DERIVATION_OPERATIONS,EXACT_DERIVATION_POLICY,type QuantitativePr
 import { equationNames,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
+import { BoundQuantitativeProcedure } from "./quantitativeProcedureReuse";
 
 export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
 export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;
@@ -19,6 +20,7 @@ export interface QuantitativeAttempt { readonly call: number; readonly outcome: 
   readonly repairContextProgramDigest?:string|null;
   readonly executedProgram:QuantitativeProgram|QuantitativeEquations|null;
   readonly computation:ReasoningToolResult|null;
+  readonly procedureReference?: Readonly<{ procedureId: string; programDigest: string; scopeDigest: string }>;
   readonly modelEvidence: NvidiaNimEvidence }
 export interface QuantitativeRun {
   readonly arm: QuantitativeArm; readonly taskId: string; readonly accepted: boolean; readonly outcome: string;
@@ -56,7 +58,7 @@ export function quantitativeProgramSchema(labels:readonly string[],constantIds:r
     outputs:array(object({label:{type:"string",enum:labels},source}),1)});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
-  constantIds:readonly string[]=[],artifactDigest:string|null=null) {
+  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null) {
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
@@ -70,6 +72,8 @@ export function quantitativeExchangeSchema(labels:readonly string[],toolAvailabl
   const exchange=(action:string,analysisRequest:unknown,certificate:unknown)=>object({action:constant(action),analysisRequest,certificate});
   const branches=[exchange("SUBMIT",{type:"null"},certificate),
     ...(toolAvailable?[exchange("SUBMIT_DERIVATION",tool,object({confidence:{type:"number"}}))]:[]),
+    ...(toolAvailable&&procedureId!==null?[exchange("SUBMIT_PROCEDURE",object({problemDigest:constant(problemDigest),
+      procedureId:constant(procedureId)}),object({confidence:{type:"number"}}))]:[]),
     ...(artifactAvailable?[exchange("SUBMIT_ANALYSIS_ARTIFACT",artifact,{type:"null"}),
       exchange("DECLINE_ANALYSIS_ARTIFACT",{type:"null"},{type:"null"})]:[])];
   return {type:"object",anyOf:branches};
@@ -86,10 +90,20 @@ export async function runNyxQuantitativeTask(input: {
   readonly retainAdmittedDerivation?:boolean;
   /** Experimental repair-only representation change. Consumes an EXISTING call; no tool or authority. */
   readonly reformulateAfterRejection?:boolean;
+  /** Host-only experimental procedure reuse. The actual model must select the
+   * bound invocation; a descriptor is not automatic execution or acceptance. */
+  readonly procedure?: Readonly<{ artifact: BoundQuantitativeProcedure; mode: "CONTEXT_ONLY" | "BOUND_INVOCATION" }>;
+  readonly createReusableProcedure?: boolean;
 }): Promise<QuantitativeRun> {
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
     ||input.reformulateAfterRejection&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_model_formulation_setting_invalid");
+  if(input.createReusableProcedure!==undefined&&(typeof input.createReusableProcedure!=="boolean"
+    ||input.createReusableProcedure&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_procedure_creation_setting_invalid");
+  if(input.procedure!==undefined&&(!keys(input.procedure,["artifact","mode"])
+    ||!BoundQuantitativeProcedure.isOwned(input.procedure.artifact)
+    ||!["CONTEXT_ONLY","BOUND_INVOCATION"].includes(input.procedure.mode)
+    ||input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_procedure_setting_invalid");
   const now=input.now??Date.now;const started=now();
   const limits=Object.freeze({...input.limits});
   for(const [key,value] of Object.entries(limits)) if(!Number.isSafeInteger(value)||value<1) throw Error(`quantitative_limit_invalid:${key}`);
@@ -131,6 +145,8 @@ export async function runNyxQuantitativeTask(input: {
         &&attempts.at(-1)?.outcome==="FUNCTIONAL_REJECTION"&&call<limits.maxCalls;
       if(formulate)formulationAttempted=true;
       const available=arm==="REASONING_WITH_WORKBENCH" && session.descriptor().available===true;
+      const procedure=input.procedure?.artifact.matches(task)?input.procedure:null;
+      const invocableProcedure=available&&procedure?.mode==="BOUND_INVOCATION"?procedure.artifact:null;
       const artifactAvailable=observation?.decision==="CANDIDATE_CONSTRUCTED_NOT_ACCEPTED";
       // Cognition is stateless across calls unless we explicitly provide candidate state.
       // Retain only IR that Omega actually admitted, not rejected executable text, hidden oracle
@@ -157,6 +173,16 @@ export async function runNyxQuantitativeTask(input: {
           repairInstruction:"Inspect your last admitted equations against the ORIGINAL objective and independent feedback before revising. "
             +"A correctly executed but rejected program is a modeling failure, not a proved answer. Context grants no authority; request a fresh authorized computation for a changed program."}:{}),
         authority:"FINITE_PURE_COMPUTATION_ONLY_NO_FILES_SHELL_NETWORK_CREDENTIALS_OR_ACCEPTANCE_AUTHORITY"};
+      const procedurePrompt={...(input.createReusableProcedure?{procedureCreation:
+        "Prefer SUBMIT_DERIVATION: create a general mathematical procedure for these named parameters, not a copied numerical answer. "
+        +"Your admitted public IR may be independently tested on other input values under the identical objective. It receives no automatic future acceptance."}:{}),
+        ...(procedure?.mode==="CONTEXT_ONLY"?{priorProcedureContext:procedure.artifact.context(task),
+          procedureContextInstruction:"This seed-validated PUBLIC mathematical IR is a hypothesis for reuse, not a verified answer on current inputs. "
+            +"Use existing actions to propose an appropriate current computation. No bound procedure invocation is available in this arm."}:{}),
+        ...(invocableProcedure?{boundProcedure:invocableProcedure.descriptor(),
+          procedureInvocationInstruction:"You may choose SUBMIT_PROCEDURE with analysisRequest EXACTLY {problemDigest,procedureId} "
+            +"and certificate ONLY {confidence:number 0..1}. It computes the unchanged seed procedure on CURRENT constants in this task's existing lease, "
+            +"then submits to the SAME independent oracle. Reuse may be wrong. Ordinary SUBMIT_DERIVATION and SUBMIT remain available."}:{})};
       const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
         messages:formulate?[{role:"system",content:"You are the SAME NYX cognition revising a falsified mathematical model. "
           +"Return concise PUBLIC mathematical definitions and assumptions only as the required JSON. "
@@ -168,19 +194,21 @@ export async function runNyxQuantitativeTask(input: {
             authority:"NONE_PUBLIC_MODEL_PROPOSAL_ONLY"})}]:
         [{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
-          {role:"user",content:JSON.stringify(prompt)}],maxTokens:limits.maxOutputTokens,temperature:0,
+          {role:"user",content:JSON.stringify({...prompt,...procedurePrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
         responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels)}:
         {type:"JSON_SCHEMA",name:"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
-          task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null)},
+          task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
+          invocableProcedure?String(invocableProcedure.descriptor().procedureId):null)},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
       let executedProgram:QuantitativeProgram|QuantitativeEquations|null=null;
       let computation:ReasoningToolResult|null=null;
+      let procedureReference:QuantitativeAttempt["procedureReference"];
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
         attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
           cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
-          executedProgram,computation,modelEvidence:completion.evidence}));};
+          executedProgram,computation,...(procedureReference?{procedureReference}:{}),modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -208,18 +236,26 @@ export async function runNyxQuantitativeTask(input: {
       }
       if(!keys(value,["action","analysisRequest","certificate"])){record("PROTOCOL_REJECTION",["Exactly action,analysisRequest,certificate are required."]);continue;}
       proposalDigest=theoryDigest(value);
-      if(value.action==="REQUEST_ANALYSIS"||value.action==="SUBMIT_DERIVATION") {
-        const compound=value.action==="SUBMIT_DERIVATION";
+      if(value.action==="REQUEST_ANALYSIS"||value.action==="SUBMIT_DERIVATION"||value.action==="SUBMIT_PROCEDURE") {
+        const useProcedure=value.action==="SUBMIT_PROCEDURE";
+        const compound=value.action!=="REQUEST_ANALYSIS";
         const submittedConfidence=compound&&keys(value.certificate,["confidence"])?value.certificate.confidence:null;
         if(!available){record("AUTHORIZATION_REJECTION",["COMPUTATION_CAPABILITY_UNAVAILABLE"]);continue;}
         if((!compound&&value.certificate!==null)||(compound&&(typeof submittedConfidence!=="number"
           ||!Number.isFinite(submittedConfidence)||submittedConfidence<0||submittedConfidence>1))){
           record("PROTOCOL_REJECTION",[compound?"DERIVATION_CERTIFICATE_REQUIRES_ONLY_FINITE_CONFIDENCE_0_TO_1":"ANALYSIS_CERTIFICATE_MUST_BE_NULL"]);continue;}
-        if(compound&&!keys(value.analysisRequest,["problemDigest","program"])) {
-          record("PROTOCOL_REJECTION",["SUBMIT_DERIVATION analysisRequest requires EXACTLY problemDigest and program; do not include native header or confidence fields."]);continue;
+        if(compound&&!keys(value.analysisRequest,useProcedure?["problemDigest","procedureId"]:["problemDigest","program"])) {
+          record("PROTOCOL_REJECTION",[useProcedure?"SUBMIT_PROCEDURE analysisRequest requires EXACTLY problemDigest and procedureId; no program override.":
+            "SUBMIT_DERIVATION analysisRequest requires EXACTLY problemDigest and program; do not include native header or confidence fields."]);continue;
         }
-        const nativeRequest=compound?{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
+        let nativeRequest:unknown=compound?{schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",
           problemDigest:(value.analysisRequest as Record<string,unknown>).problemDigest,program:(value.analysisRequest as Record<string,unknown>).program}:value.analysisRequest;
+        if(useProcedure){
+          if(!invocableProcedure){record("AUTHORIZATION_REJECTION",["BOUND_PROCEDURE_UNAVAILABLE"]);continue;}
+          try {nativeRequest=invocableProcedure.request(task,value.analysisRequest,session.problemDigest);
+            const d=invocableProcedure.descriptor();procedureReference={procedureId:d.procedureId,programDigest:d.programDigest,scopeDigest:d.scopeDigest};}
+          catch {record("AUTHORIZATION_REJECTION",["BOUND_PROCEDURE_REFERENCE_SCOPE_OR_LIFETIME_REJECTED"]);continue;}
+        }
         let derivedCertificate:Readonly<Record<string,unknown>>|null=null;
         try {
           const result=session.analyze(nativeRequest);computation=result;toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;

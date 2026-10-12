@@ -1,0 +1,43 @@
+name: Omega NYX bounded procedure invention and transfer
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  procedure-transfer:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-procedure-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify procedure confinement, independent oracles and TypeScript zero
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBoundedReasoningWorkbench.test.ts
+          npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omegaBoundedReasoningWorkbench.test.ts
+      - name: Generate two procedures once and compare recompute, context and bound invocation on fresh values
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-procedure-reuse-live-eval.ts
+      - name: Preserve sanitized bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-procedure-reuse-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-procedure-reuse-*.json
+          if-no-files-found: error

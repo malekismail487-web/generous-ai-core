@@ -117,6 +117,15 @@ function validTable(value: PredictionTable): boolean {
       && text(row.mechanismId) && value.mechanismIds.includes(row.mechanismId) && Array.isArray(row.outcomes)
       && row.outcomes.length === value.experimentIds.length && row.outcomes.every(text));
 }
+
+/** Reuse the native boundary when a host retains candidate data across callbacks.
+ * Owning a snapshot grants neither execution nor semantic acceptance.
+ */
+export function snapshotBoundedReasoningData<T>(value: T): T {
+  if (!plainData(value) || new TextEncoder().encode(JSON.stringify(value)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes)
+    throw Error("reasoning_data_snapshot_rejected");
+  return immutableTheoryValue(JSON.parse(JSON.stringify(value))) as T;
+}
 function validProblem(value: unknown): value is ReasoningProblem {
   if (!plainData(value) || new TextEncoder().encode(JSON.stringify(value)).byteLength
     > NYX_REASONING_WORKBENCH.maxInputBytes) return false;
