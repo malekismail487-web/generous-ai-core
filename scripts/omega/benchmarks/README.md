@@ -3416,3 +3416,37 @@ package verification and independent native replay passed. Default Ultra and
 all authority/acceptance boundaries remain unchanged. Next investigate the
 objective-output contract on separate development cases; retained hashes alone
 cannot identify missing/duplicate outputs or wrong equations precisely.
+
+## Own-admitted-program repair context — no demonstrated repair gain
+
+Frozen candidate `e6682829`, [run 38241264506](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38241264506):
+four new parameter cases in two known families, GRAPH_WITH_OUTPUT_CONTRACT
+versus GRAPH_WITH_ADMITTED_CONTEXT. Both use the same public exact-output
+contract, positional frontend, model controls and independent elimination oracle.
+Only a later treatment call receives its own admitted candidate.
+
+All 16 Super calls delivered complete JSON with known usage: 75,599 tokens,
+zero provider failures, retries, truncations or output/certificate-shape
+rejections. Both arms accepted 0/4 first try and 0/4 after repair.
+Control executed seven incorrect proposals and rejected one native IR;
+treatment executed five incorrect proposals and rejected three native IRs.
+Seven unique stages were mathematically graded; one IR-only stage was ungraded.
+Five initial and seven second proposals were wrong, not twelve distinct tasks.
+Two unavailable-source and two invalid-output-binding findings were interface
+failures, not authorization denials.
+
+Only two treatment second calls actually used admitted context; both failed
+mathematically. Control used 38,349 tokens versus 37,250 treatment; no pair
+met five-percent realized matching, and only two pairs used no more treatment
+compute. Independent first proposals, limited context exposure and known
+families restrict causal claims. No functional, repair, cognition, recursion,
+official benchmark or default promotion is supported.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-repair-context-e6682829.json)
+binds exact sources, task/configuration identities, log agreement and archive
+SHA256 `43d11b786f59788f2fab7b573d2a141582e15153191a808f673ab2100b2d20b8`.
+Clean Linux CI passed 109 suites / 14,479 checks, TypeScript 5.8.3 zero,
+build 10.36s, package and independent native replay. Default Ultra and all
+authority/acceptance boundaries remain unchanged. Next isolate direct
+mathematical generation from native-IR generation before adding a mechanism;
+this receipt does not launch that diagnostic.

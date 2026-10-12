@@ -1280,5 +1280,59 @@ check(contextEpochCalls===16&&contextEpoch.summaries[0].accepted===0&&contextEpo
   "E3 injected corrector validates context custody and separate first/repair accounting, not actual model capability");
 check(contextEpoch.scopedRepairSignal&&contextEpoch.pairs.every(p=>p.realizedComputeMatched&&p.addedAcceptedRepairAgainstGradedFailure)
   &&contextEpoch.promotion.startsWith("NONE_"),"E3 scoring recognizes a supported repaired-outcome pattern but never automatically promotes it");
+// Terminal live evidence is immutable; these checks bind custody and accounting,
+// not a claim that a successful E3 test double establishes model reasoning.
+const contextReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-repair-context-e6682829.json","utf8"));
+const frozenContext=contextReceipt.frozenReport,contextReceiptBytes=Buffer.from(JSON.stringify(frozenContext,null,2)+"\n");
+check(createHash("sha256").update(contextReceiptBytes).digest("hex")===contextReceipt.integrity.reportSha256
+  &&contextReceiptBytes.length===contextReceipt.integrity.reportBytes&&theoryDigest(frozenContext.freeze)===frozenContext.freezeDigest,
+  "context receipt reconstructs exact verified artifact bytes and freeze without modifying outcomes");
+for(const [path,digest] of Object.entries(frozenContext.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_context_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${contextReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `context receipt binds historical source ${path}`);
+}
+check(theoryDigest(frozenContext.freeze.configuration)===theoryDigest(REPAIR_CONTEXT_EPOCH)
+  &&frozenContext.freeze.tasks.length===4&&frozenContext.freeze.tasks.every((b:any)=>REPAIR_CONTEXT_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "context model, controls, fresh corpus, oracle and caps remain frozen");
+const contextObserved=frozenContext.rows.flatMap((r:any)=>r.run.attempts);
+check(contextObserved.length===16&&contextObserved.every((a:any)=>a.modelEvidence.evidenceClass==="E4"
+  &&a.modelEvidence.model===REPAIR_CONTEXT_EPOCH.model&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null)
+  &&frozenContext.totals.calls===16&&frozenContext.totals.httpAttempts===16&&frozenContext.totals.reportedTokens===75599
+  &&frozenContext.totals.unknownUsageCalls===0&&frozenContext.totals.unknownUsageHttpAttempts===0&&frozenContext.providerStable,
+  "sixteen stable deliveries and complete usage cannot be mislabeled as provider failure or cognitive improvement");
+check(contextObserved.every((a:any)=>a.outputStructure?.matches&&a.outputStructure.inspectionComplete
+  &&a.outputStructure.missingLabels===0&&a.outputStructure.duplicateLabels===0&&a.outputStructure.unexpectedLabels===0)
+  &&frozenContext.summaries.every((s:any)=>s.outputContractRejections===0&&!s.outcomes.CERTIFICATE_SCHEMA_REJECTION),
+  "every output set was complete in this corpus; common interface success is not a between-epoch causal gain");
+check(frozenContext.summaries[0].arm==="GRAPH_WITH_OUTPUT_CONTRACT"&&frozenContext.summaries[0].irRejections===1
+  &&frozenContext.summaries[0].nativeExecutions===7&&frozenContext.summaries[0].functionalRejections===7
+  &&frozenContext.summaries[1].arm==="GRAPH_WITH_ADMITTED_CONTEXT"&&frozenContext.summaries[1].irRejections===3
+  &&frozenContext.summaries[1].nativeExecutions===5&&frozenContext.summaries[1].functionalRejections===5,
+  "control and treatment execution failures remain distinct from native IR rejection");
+check(contextObserved.filter((a:any)=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&a.findings[0].endsWith(":SOURCE_NOT_BOUND")).length===2
+  &&contextObserved.filter((a:any)=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&a.findings[0].endsWith(":OUTPUT_BINDING")).length===2
+  &&frozenContext.summaries.every((s:any)=>s.nativeAuthorizationRejections===0),
+  "invalid expression references and output bindings are interface failures, not authority refusals or reasoning grades");
+check(frozenContext.rows.filter((r:any)=>r.run.attempts.some((a:any)=>a.outcome==="FUNCTIONAL_REJECTION")).length===7
+  &&contextReceipt.accounting.mathematicallyGradedStages===7&&contextReceipt.accounting.ungradedAttemptedStages===1
+  &&contextReceipt.accounting.acceptanceEvaluatedStages===7&&contextReceipt.frozenMetadataAnnotation.frozenOutcomeAltered===false,
+  "one IR-only stage remains ungraded; twelve wrong proposals are not twelve distinct tasks");
+check(contextObserved.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJECTION").length===5
+  &&contextObserved.filter((a:any)=>a.call===2&&a.outcome==="FUNCTIONAL_REJECTION").length===7
+  &&contextReceipt.accounting.firstAttempts.correct===0&&contextReceipt.accounting.secondAttempts.correct===0,
+  "first and repaired mathematical outcomes remain separate with no ever-correct accumulation");
+const actualContext=contextObserved.filter((a:any)=>typeof a.repairContextProgramDigest==="string");
+check(actualContext.length===2&&actualContext.every((a:any)=>a.call===2&&a.outcome==="FUNCTIONAL_REJECTION")
+  &&frozenContext.summaries[0].admittedContextAttempts===0&&frozenContext.summaries[1].admittedContextAttempts===2
+  &&frozenContext.pairs.filter((p:any)=>p.boundedAdmittedContextUsed).length===2,
+  "only two admitted-context repairs were exercised; enabled configuration does not prove every task consumed it");
+check(frozenContext.complete&&frozenContext.sourceUnchanged&&!frozenContext.scopedRepairSignal&&!frozenContext.scopedFunctionalSignal
+  &&frozenContext.summaries.every((s:any)=>s.accepted===0&&s.firstAttemptAccepted===0&&s.repairedAccepted===0)
+  &&frozenContext.pairs.every((p:any)=>!p.realizedComputeMatched&&!p.addedAcceptedRepairAgainstGradedFailure)
+  &&frozenContext.pairs.filter((p:any)=>p.boundedNoMoreModelCompute).length===2
+  &&frozenContext.summaries[0].usage.reportedTokens===38349&&frozenContext.summaries[1].usage.reportedTokens===37250
+  &&contextReceipt.diagnosis.cognitiveGainDemonstrated===false&&contextReceipt.diagnosis.defaultChanged===false,
+  "zero accepted outcomes and unmatched pairs prohibit repair, cognition, default, authority or recursion promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
