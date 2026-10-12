@@ -1,6 +1,14 @@
-name: Omega NYX bounded procedure invention and transfer
+name: Omega NYX bounded quantitative capability experiments
 on:
   workflow_dispatch:
+    inputs:
+      experiment:
+        type: choice
+        options: [native-generation, procedure-reuse]
+        default: native-generation
+        required: true
+  push:
+    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:
@@ -8,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-procedure-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-native-generation-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -26,8 +34,15 @@ jobs:
         run: |
           node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaBoundedReasoningWorkbench.test.ts
           npm run typecheck:ratchet
-          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omegaBoundedReasoningWorkbench.test.ts
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-native-generation-live-eval.ts scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omegaBoundedReasoningWorkbench.test.ts
+      - name: Compare original and native-bound generation on four fresh cases
+        if: github.event_name == 'push' || inputs.experiment == 'native-generation'
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Generate two procedures once and compare recompute, context and bound invocation on fresh values
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'procedure-reuse'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
@@ -36,6 +51,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-procedure-reuse-${{ github.sha }}
-          path: ${{ runner.temp }}/nyx-procedure-reuse-*.json
+          name: nyx-pure-computation-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/nyx-procedure-reuse-*.json
+            ${{ runner.temp }}/nyx-native-generation-*.json
           if-no-files-found: error

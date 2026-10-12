@@ -19,23 +19,27 @@ export function procedureInferenceRequest(request: NvidiaNimCompletionRequest): 
   const { reasoningEffort: _ultraOnly, ...rest } = request;
   return { ...rest, reasoningControl: EPOCH.reasoningControl, reasoningBudgetTokens: EPOCH.reasoningBudgetTokens };
 }
-function usage(run: QuantitativeRun) {
+export function usage(run: QuantitativeRun) {
   const attempts = run.attempts, disruptive = (a: typeof attempts[number]) =>
     (a.modelEvidence.delivery?.rateLimitedResponses ?? 0) + (a.modelEvidence.delivery?.transientUnavailableResponses ?? 0) + (a.modelEvidence.delivery?.timedOutAttempts ?? 0);
   return { calls: run.calls, reportedTokens: attempts.reduce((n, a) => n + (a.modelEvidence.usage.totalTokens ?? 0), 0),
     unknownUsageCalls: attempts.filter(a => a.modelEvidence.usage.totalTokens === null).length,
     httpAttempts: attempts.reduce((n,a) => n + (a.modelEvidence.delivery?.httpAttempts ?? Number(a.modelEvidence.networkAttempted)), 0),
+    knownUsageHttpAttempts: attempts.reduce((n,a)=>n+Number(a.modelEvidence.networkAttempted&&a.modelEvidence.usage.totalTokens!==null),0),
+    unknownUsageHttpAttempts: attempts.reduce((n,a)=>n+Math.max(0,(a.modelEvidence.delivery?.httpAttempts??Number(a.modelEvidence.networkAttempted))
+      -Number(a.modelEvidence.networkAttempted&&a.modelEvidence.usage.totalTokens!==null)),0),
     providerFailures: attempts.filter(a => a.outcome === "PROVIDER_FAILURE" && a.modelEvidence.networkAttempted).length,
     localDeliveryBlocks: attempts.filter(a => a.outcome === "PROVIDER_FAILURE" && !a.modelEvidence.networkAttempted).length,
     recoveredDisruptions: attempts.reduce((n,a) => n + disruptive(a), 0), toolRequests: run.toolRequests,
     toolWorkUnits: run.toolWorkUnits, toolElapsedMs: run.toolElapsedMs, elapsedMs: run.elapsedMs };
 }
-function publicRun(run: QuantitativeRun) {
+export function publicRun(run: QuantitativeRun) {
   return { taskId: run.taskId, accepted: run.accepted, outcome: run.outcome, usage: usage(run),
     firstAttemptAccepted: run.attempts[0]?.outcome === "ACCEPTED", repairDepth: Math.max(0, run.calls - 1),
     attempts: run.attempts.map(a => ({ call: a.call, outcome: a.outcome, findings: a.findings, confidence: a.confidence,
       proposalDigest: a.proposalDigest, verificationDigest: a.resultDigest, programDigest: a.executedProgram ? theoryDigest(a.executedProgram) : null,
       procedureReference: a.procedureReference ?? null,
+      ...(a.nativeRejectionStructure?{nativeRejectionStructure:a.nativeRejectionStructure}:{}),
       nativeExecution: a.computation ? { status: a.computation.status, resultDigest: a.computation.resultDigest,
         requestDigest: a.computation.requestDigest, workUnits: a.computation.workUnits, elapsedMs: a.computation.elapsedMs,
         executedProgramDigest: a.computation.executedProgramDigest, loweringVersion: a.computation.loweringVersion } : null,
@@ -45,8 +49,8 @@ type Row = { family: string; taskId: string; arm: Arm; run: ReturnType<typeof pu
 type Seed = { family: string; run: ReturnType<typeof publicRun>; admission: string;
   descriptor: ReturnType<BoundQuantitativeProcedure["descriptor"]> | null;
   admissionReplay: { status: string; workUnits: number; elapsedMs: number; resultDigest: string } | null; constructionElapsedMs: number };
-const SUM_KEYS = ["calls", "reportedTokens", "unknownUsageCalls", "httpAttempts", "providerFailures", "localDeliveryBlocks", "recoveredDisruptions", "toolRequests", "toolWorkUnits", "toolElapsedMs", "elapsedMs"] as const;
-function sumUsage(runs: ReturnType<typeof publicRun>[]) {
+const SUM_KEYS = ["calls", "reportedTokens", "unknownUsageCalls", "httpAttempts", "knownUsageHttpAttempts", "unknownUsageHttpAttempts", "providerFailures", "localDeliveryBlocks", "recoveredDisruptions", "toolRequests", "toolWorkUnits", "toolElapsedMs", "elapsedMs"] as const;
+export function sumUsage(runs: ReturnType<typeof publicRun>[]) {
   return Object.fromEntries(SUM_KEYS.map(key => [key, runs.reduce((n, r) => n + r.usage[key], 0)])) as Record<typeof SUM_KEYS[number], number>;
 }
 /** Pure orchestrator composes existing cognition, native leases and independently
@@ -94,7 +98,7 @@ export async function runProcedureReuseEpoch(complete: Complete, binding: { cand
     const [control,context,bound] = arms;
     const complete = seeds.length === 2 && results.length === 12 && results.every(r=>r.run!==null&&r.run.usage.calls>0);
     const physicalUsage = sumUsage([...seeds.map(s=>s.run),...results.flatMap(r=>r.run?[r.run]:[])]);
-    const providerStable = physicalUsage.providerFailures===0 && physicalUsage.localDeliveryBlocks===0 && physicalUsage.recoveredDisruptions===0 && physicalUsage.unknownUsageCalls===0;
+    const providerStable = physicalUsage.providerFailures===0 && physicalUsage.localDeliveryBlocks===0 && physicalUsage.recoveredDisruptions===0 && physicalUsage.unknownUsageCalls===0 && physicalUsage.unknownUsageHttpAttempts===0;
     const pairs = PROCEDURE_FAMILIES.flatMap(f=>f.fresh).map(task => {
       const rows = EPOCH.arms.map(arm=>results.find(r=>r.arm===arm&&r.taskId===task.taskId)?.run??null);
       return { taskId: task.taskId, outcomes: rows.map((r,i)=>({arm:EPOCH.arms[i],accepted:r?.accepted??null,outcome:r?.outcome??"UNEXECUTED"})),

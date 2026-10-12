@@ -4476,6 +4476,7 @@
           "scripts/omega/nyx-harbor-entrypoint.ts",
           "scripts/omega/nyx-hypothesis-coverage-fixtures.ts",
           "scripts/omega/nyx-live-r3e.ts",
+          "scripts/omega/nyx-native-generation-live-eval.ts",
           "scripts/omega/nyx-procedure-reuse-fixtures.ts",
           "scripts/omega/nyx-procedure-reuse-live-eval.ts",
           "scripts/omega/nyx-public-witness-cycle.ts",

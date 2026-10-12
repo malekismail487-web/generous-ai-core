@@ -36,6 +36,27 @@ export const PROCEDURE_FAMILIES = immutableTheoryValue([
       task("PASSIVE_NETWORK", "PROC-NETWORK-TRANSFER-2", { g0: "5", g1: "2", g01: "4", i0: "0", i1: "-13" })] }
 ]);
 export const PROCEDURE_CORPUS_DIGEST = theoryDigest(PROCEDURE_FAMILIES);
+/** Newly frozen values, never sent in the earlier seed/reuse epoch. The formal
+ * families are known: this tests a general interface correction, not unseen
+ * disciplines or memorized exposed questions. Oracle and all native limits stay.
+ */
+export const NATIVE_GENERATION_CASES = immutableTheoryValue([
+  task("INTERPOLATION", "GEN-INTERPOLATION-1", {x0:"-7/3",x1:"5/4",x2:"13/5",y0:"19/7",y1:"-11/6",y2:"23/8",t:"-4/9"}),
+  task("PASSIVE_NETWORK", "GEN-NETWORK-1", {g0:"11/7",g1:"5/9",g01:"13/8",i0:"-17/6",i1:"29/11"}),
+  task("INTERPOLATION", "GEN-INTERPOLATION-2", {x0:"-6",x1:"-2",x2:"5",y0:"-9",y1:"13",y2:"2",t:"7/3"}),
+  task("PASSIVE_NETWORK", "GEN-NETWORK-2", {g0:"7",g1:"11",g01:"3",i0:"19",i1:"-23"})
+]);
+export const NATIVE_GENERATION_CORPUS_DIGEST = theoryDigest(NATIVE_GENERATION_CASES);
+export const NATIVE_GENERATION_EPOCH = immutableTheoryValue({version:"nyx-native-generation-bounds/1",
+  model:PROCEDURE_REUSE_EPOCH.model,arms:["ORIGINAL_GENERATION","NATIVE_BOUNDS"],
+  maxCallsPerStage:2,maxHttpAttemptsPerStage:2,maxLogicalCalls:16,maxHttpAttemptsPerEpoch:16,
+  maxOutputTokensPerCall:8192,reasoningControl:"SUPER_HOSTED_NATIVE" as const,reasoningBudgetTokens:2048,
+  maxStageMs:180000,maxEpochMs:1800000,maxToolRequestsPerStage:2,maxToolWorkUnitsPerStage:100000,maxToolElapsedMsPerStage:2000,
+  realizedTokenMatchTolerance:0.05,unchangedOracle:"independent-gaussian-elimination/1",
+  changedVariable:"OPTIONAL_NATIVE_COLLECTION_SCHEMA_PROMPT_AND_PUBLIC_DIAGNOSTIC_GUIDANCE",
+  support:"MORE_INDEPENDENTLY_ACCEPTED_FRESH_CASES_WITHOUT_MORE_REALIZED_MODEL_COMPUTE_AND_NO_CASE_REGRESSION",
+  limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","INTERFACE_CORRECTION_NOT_NEW_COGNITIVE_LAYER",
+    "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_NO_DEFAULT_OR_BROAD_PROMOTION"],authorityIncrease:false});
 type Q = readonly [bigint, bigint];
 function q(n: bigint, d = 1n): Q {
   if (!d) throw Error("procedure_oracle_division_by_zero");

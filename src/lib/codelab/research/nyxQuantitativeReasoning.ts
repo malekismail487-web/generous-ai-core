@@ -13,6 +13,7 @@ export interface QuantitativeRunLimits { readonly maxCalls: number; readonly max
 export interface QuantitativeAcceptance { readonly accepted: boolean; readonly findings: readonly string[];
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
+  readonly nativeRejectionStructure?: QuantitativeRejectionStructure;
   readonly cognitiveStage?: "OMEGA_INTENT"|"MODEL_FORMULATION";
   readonly formulationArtifactDigest?:string|null;
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
@@ -30,6 +31,44 @@ export interface QuantitativeRun {
 }
 function keys(v: unknown,names:string[]): v is Record<string,unknown> {return !!v && typeof v==="object" && !Array.isArray(v)
   && Object.keys(v).sort().join("\0")===names.sort().join("\0");}
+export interface QuantitativeRejectionStructure {
+  readonly format: "EQUATIONS_V2" | "OTHER";
+  readonly cycleCount: number | null;
+  readonly inspectedCycles: number;
+  readonly phases: readonly { readonly cycle: number; readonly phase: number; readonly fieldShapeValid: boolean;
+    readonly expressionCount: number | null; readonly updateCount: number | null; readonly inspectedExpressions: number;
+    readonly malformedExpressions: number; readonly duplicateExpressionIds: number; readonly unknownExpressionIds: number }[];
+}
+/** Input comes ONLY from parsed JSON or an owned procedure, not executable host
+ * objects. Preserve bounded shape measurements, never arbitrary names/source or
+ * values. Counts beyond the inspection ceiling remain explicitly uninspected.
+ * This observes rejection; it never repairs, validates or authorizes a program.
+ */
+function rejectedProgramStructure(program: unknown, constantIds: readonly string[]): QuantitativeRejectionStructure {
+  const p = program as {schemaVersion?:unknown;cycles?:unknown};
+  if (!p || p.schemaVersion!==2) return {format:"OTHER",cycleCount:null,inspectedCycles:0,phases:[]};
+  const cycles = Array.isArray(p.cycles)?p.cycles:[], phases: QuantitativeRejectionStructure["phases"][number][]=[];
+  const allowed = new Set(equationNames(constantIds).expressions);
+  for (const [cycle,c] of cycles.slice(0,16).entries()) {
+    if (!c || !Array.isArray(c.phases)) continue;
+    for (const [phase,s] of c.phases.slice(0,8).entries()) {
+      const expressions = Array.isArray(s?.expressions)?s.expressions:[], seen=new Set<string>();
+      let malformedExpressions=0,duplicateExpressionIds=0,unknownExpressionIds=0;
+      for (const e of expressions.slice(0,32)) {
+        if(!keys(e,["id","op","left","right"]) || typeof e.op!=="string"
+          || !(EXACT_DERIVATION_OPERATIONS as readonly string[]).includes(e.op)) malformedExpressions++;
+        const id=e?.id;
+        if(typeof id!=="string"||!allowed.has(id))unknownExpressionIds++;
+        if(typeof id==="string"){if(seen.has(id))duplicateExpressionIds++;seen.add(id);}
+      }
+      phases.push({cycle,phase,fieldShapeValid:keys(s,["expressions","updates"]),
+        expressionCount:Array.isArray(s?.expressions)?s.expressions.length:null,
+        updateCount:Array.isArray(s?.updates)?s.updates.length:null,inspectedExpressions:Math.min(expressions.length,32),
+        malformedExpressions,duplicateExpressionIds,unknownExpressionIds});
+    }
+  }
+  return {format:"EQUATIONS_V2",cycleCount:Array.isArray(p.cycles)?p.cycles.length:null,inspectedCycles:Math.min(cycles.length,16),phases};
+}
 const MAX_ADMITTED_DERIVATION_CONTEXT_BYTES=12000;
 const MAX_MODEL_FORMULATION_BYTES=4096;
 /** Public mathematical artifact, NOT private reasoning, executable syntax, or a certificate. */
@@ -216,11 +255,13 @@ export async function runNyxQuantitativeTask(input: {
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
       let executedProgram:QuantitativeProgram|QuantitativeEquations|null=null;
       let computation:ReasoningToolResult|null=null;
+      let nativeRejectionStructure:QuantitativeRejectionStructure|undefined;
       let procedureReference:QuantitativeAttempt["procedureReference"];
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
         attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
           cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
-          executedProgram,computation,...(procedureReference?{procedureReference}:{}),modelEvidence:completion.evidence}));};
+          executedProgram,computation,...(procedureReference?{procedureReference}:{}),
+          ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -290,6 +331,8 @@ export async function runNyxQuantitativeTask(input: {
           } else record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
             "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
         } catch(error) {
+          nativeRejectionStructure=rejectedProgramStructure((nativeRequest as {program?:unknown}|null)?.program,
+            task.problem.constants.map(c=>c.id));
           const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
           const generationFeedback=input.nativeGenerationBounds&&reason==="quantitative_equations_invalid:PHASE_BOUND"?

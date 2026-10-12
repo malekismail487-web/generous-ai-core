@@ -16,8 +16,9 @@ import { COMMAND_TRANSFER_TASKS,verifyCommandTransferSubmission } from "./omega/
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
-import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, expectedProcedureOutputs, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
+import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH, expectedProcedureOutputs, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
+import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -659,7 +660,7 @@ function procedureWitness(task: ProcedureCase): QuantitativeProgram {
   }
   return { schemaVersion: 1, registers, blocks: [{ iterations: 1, mode: "SEQUENTIAL", steps }], outputs };
 }
-for (const family of PROCEDURE_FAMILIES) for (const task of [family.seed, ...family.fresh]) {
+for (const task of [...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh]),...NATIVE_GENERATION_CASES]) {
   const native = BoundedReasoningSession.create(task.problem, { maxWorkUnits: 100000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now()+10000 });
   const result = native.analyze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: native.problemDigest, program: procedureWitness(task) });
   check(result.status === "CONSTRUCTED" && verifyProcedureOutputs(task, { outputs: result.payload!.outputs, confidence: 0.8 }).accepted,
@@ -864,5 +865,81 @@ check(frozenProcedure.results.filter((s:any)=>s.blocked!==null).length===8&&!fro
 check(frozenProcedure.arms[0].fullyChargedUsage.reportedTokens===38123&&frozenProcedure.arms[1].fullyChargedUsage.reportedTokens===19234
   &&frozenProcedure.arms[2].fullyChargedUsage.reportedTokens===19234&&frozenProcedure.freeze.configuration.seedChargedToEveryArm===true
   &&receipt.frozenMetadataAnnotation.frozenOutcomeAltered===false, "misleading historical cost label is preserved and explicitly annotated, never used to corrupt correct arithmetic");
+check(generationRepair.attempts[0].nativeRejectionStructure?.phases[0].updateCount===0
+  &&generationRepair.attempts[0].nativeRejectionStructure?.phases[0].expressionCount===0,
+  "rejected phase telemetry distinguishes empty updates without reconstructing or retaining candidate source");
+const measuredDuplicate=await runNyxQuantitativeTask({...reuseInput,complete:async()=>responseFor(equationExchange(duplicatedExpression))});
+check(measuredDuplicate.attempts[0].nativeRejectionStructure?.phases[0].duplicateExpressionIds===1
+  &&measuredDuplicate.attempts[0].nativeRejectionStructure?.phases[0].expressionCount===2,
+  "specific duplicate-ID observation separates semantic identifier failure from over-limit phase generation");
+const measuredOversize=await runNyxQuantitativeTask({...reuseInput,complete:async()=>responseFor(equationExchange(tooManyExpressions))});
+check(measuredOversize.attempts[0].nativeRejectionStructure?.phases[0].expressionCount===17
+  &&measuredOversize.attempts[0].nativeRejectionStructure?.phases[0].inspectedExpressions===17,
+  "oversized phase reports actual count, not just ambiguous PHASE_BOUND");
+const secretLikeProgram={...sumEquations,cycles:[{iterations:1,phases:[{expressions:[{id:"do-not-persist-candidate-name",op:"ADD",left:"x",right:"y"}],updates:[]}]}]};
+const measuredPrivacy=await runNyxQuantitativeTask({...reuseInput,complete:async()=>responseFor(equationExchange(secretLikeProgram as QuantitativeEquations))});
+check(!JSON.stringify(measuredPrivacy.attempts[0].nativeRejectionStructure).includes("do-not-persist-candidate-name")
+  &&measuredPrivacy.attempts[0].nativeRejectionStructure?.phases[0].unknownExpressionIds===1,
+  "shape telemetry contains counts only, not arbitrary names, input values or private generated content");
+const manyExpressions={...sumEquations,cycles:[{iterations:1,phases:[{expressions:Array(100).fill(sumEquations.cycles[0].phases[0].expressions[0]),updates:[]}]}]};
+const measuredBound=await runNyxQuantitativeTask({...reuseInput,complete:async()=>responseFor(equationExchange(manyExpressions))});
+check(measuredBound.attempts[0].nativeRejectionStructure?.phases[0].expressionCount===100
+  &&measuredBound.attempts[0].nativeRejectionStructure?.phases[0].inspectedExpressions===32,
+  "diagnostic inspection ceiling stays explicit and bounded even for an oversized rejected proposal");
+check(NATIVE_GENERATION_CASES.length===4&&NATIVE_GENERATION_EPOCH.maxLogicalCalls===16
+  &&NATIVE_GENERATION_CASES.every(t=>!PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh]).some(old=>theoryDigest(old.problem)===theoryDigest(t.problem))),
+  "new paired comparison binds fresh values rather than replaying exposed seed/transfer inputs");
+let generationEpochCalls=0;
+const generationEpoch=await runNativeGenerationEpoch(async(request,stage)=>{
+  generationEpochCalls++;const prompt=JSON.parse(request.messages[1].content),task=NATIVE_GENERATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  check(request.reasoningControl==="SUPER_HOSTED_NATIVE"&&request.reasoningEffort===undefined&&request.reasoningBudgetTokens===2048
+    &&request.maxTokens===8192, "fresh comparison holds native model controls fixed across both arms");
+  check(Boolean(prompt.nativeGenerationBounds)===stage.endsWith("NATIVE_BOUNDS"), "only declared treatment receives generation constraints");
+  return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(task.problem),program:procedureWitness(task)},certificate:{confidence:0.8}});
+},{candidate:"0".repeat(40),sourceDigests:{development:theoryDigest("test-double")}});
+check(generationEpoch.complete&&generationEpoch.providerStable&&generationEpochCalls===8&&generationEpoch.totals.reportedTokens===1200
+  &&generationEpoch.summaries.every(s=>s.accepted===4&&s.firstAttemptAccepted===4), "full paired epoch composes existing native engine and independent fresh-case oracle under E3 doubles");
+check(generationEpoch.pairs.every(p=>p.realizedComputeMatched)&&!generationEpoch.scopedFunctionalSignal&&!generationEpoch.emissionSignal,
+  "equal matched success is not manufactured into an improvement signal");
+const retriedGenerationEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content),task=NATIVE_GENERATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  const completion=responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(task.problem),program:procedureWitness(task)},certificate:{confidence:0.8}});
+  return {...completion,evidence:{...completion.evidence,delivery:{policy:"nvidia-capacity/1",requestsPerMinute:40,scope:"PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+    httpAttempts:2,rateLimitedResponses:1,transientUnavailableResponses:0,timedOutAttempts:0,capacityWaitMs:1,state:"DELIVERED",notBeforeEpochMs:null,authorityRenewed:false}}};
+},{candidate:"0".repeat(40),sourceDigests:{}});
+check(retriedGenerationEpoch.totals.httpAttempts===16&&retriedGenerationEpoch.totals.knownUsageHttpAttempts===8
+  &&retriedGenerationEpoch.totals.unknownUsageHttpAttempts===8&&!retriedGenerationEpoch.providerStable&&!retriedGenerationEpoch.scopedFunctionalSignal,
+  "successful final delivery cannot conceal unreported usage from earlier physical retry attempts or establish compute-matched gain");
+let nativeWireChecks=0;
+const generationWire=NvidiaNimProvider.create({providerId:"TEST-NATIVE-GENERATION-WIRE",model:NATIVE_GENERATION_EPOCH.model,authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{read:()=>"test-only-non-secret",sourceIdentity:"DETERMINISTIC_TEST_DOUBLE"},maxPromptBytes:32000,maxOutputTokens:8192,timeoutMs:1000,
+  transport:async(_url,init)=>{
+    const wire=JSON.parse(String(init?.body)),prompt=JSON.parse(wire.messages[1].content),task=NATIVE_GENERATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+    const bounded=Boolean(prompt.nativeGenerationBounds),programSchema=wire.response_format.json_schema.schema.anyOf[1].properties.analysisRequest.properties.program;
+    check(wire.model===NATIVE_GENERATION_EPOCH.model&&wire.reasoning_budget===2048&&wire.reasoning_effort==="high"&&wire.max_tokens===8192,
+      "actual NVIDIA adapter preserves frozen Super wire controls in fresh comparison");
+    check((programSchema.properties.cycles.items.properties.phases.items.properties.expressions.maxItems===16)===bounded
+      &&(programSchema.properties.cycles.items.properties.phases.items.properties.updates.minItems===1)===bounded,
+      "adapter transmits optional min/max collection constraints unchanged; it does not silently strip them");nativeWireChecks++;
+    return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify({action:"SUBMIT",analysisRequest:null,
+      certificate:{outputs:expectedProcedureOutputs(task),confidence:0.8}})},finish_reason:"stop"}],usage:{prompt_tokens:100,completion_tokens:50,total_tokens:150}}),
+      {status:200,headers:{"Content-Type":"application/json"}});
+  }});
+const wireEpoch=await runNativeGenerationEpoch(request=>generationWire.complete(request),{candidate:"0".repeat(40),sourceDigests:{}});
+check(nativeWireChecks===8&&wireEpoch.summaries.every(s=>s.accepted===4&&s.nativeExecutions===0)
+  &&wireEpoch.rows.every(r=>r.run!.attempts.every(a=>a.modelEvidence.evidenceClass==="E3")),
+  "wire/strict manual-certificate test is explicitly E3 and not misrepresented as model reasoning or native execution");
+const staleGenerationEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content),task=NATIVE_GENERATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:"stale-scope",program:procedureWitness(task)},certificate:{confidence:0.8}});
+},{candidate:"0".repeat(40),sourceDigests:{}});
+check(staleGenerationEpoch.summaries.every(s=>s.irRejections===0&&s.nativeAuthorizationRejections===8&&s.graded===0),
+  "stale-scope and authority rejection never masquerade as malformed IR or mathematical reasoning failure");
+let expiryClock=1000;
+const expiredEpoch=await runNativeGenerationEpoch(async request=>{
+  expiryClock+=NATIVE_GENERATION_EPOCH.maxEpochMs;return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:[],confidence:1}});
+},{candidate:"0".repeat(40),sourceDigests:{}},()=>expiryClock);
+check(!expiredEpoch.complete&&expiredEpoch.rows.filter(r=>r.blocked==="GLOBAL_BUDGET").length===7&&expiredEpoch.logicalCalls===1,
+  "global expiry does not renew task leases or dispatch seven remaining stages");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
