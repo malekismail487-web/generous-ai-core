@@ -1,10 +1,12 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
     inputs:
       experiment:
         type: choice
-        options: [native-generation, procedure-reuse, expression-graph, repair-context]
+        options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native]
         default: native-generation
         required: true
 permissions:
@@ -14,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-repair-context-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-direct-native-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -47,11 +49,18 @@ jobs:
           NYX_QUANTITATIVE_EXPERIMENT: EXPRESSION_GRAPH
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Compare objective-bound graphs with and without their own admitted repair context
-        if: github.event_name == 'push' || inputs.experiment == 'repair-context'
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'repair-context'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_QUANTITATIVE_EXPERIMENT: REPAIR_CONTEXT
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
+      - name: Diagnose reasoned direct certificates versus existing native graph generation
+        if: github.event_name == 'push' || inputs.experiment == 'direct-native'
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_QUANTITATIVE_EXPERIMENT: DIRECT_NATIVE
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Generate two procedures once and compare recompute, context and bound invocation on fresh values
         if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'procedure-reuse'
@@ -69,4 +78,5 @@ jobs:
             ${{ runner.temp }}/nyx-native-generation-*.json
             ${{ runner.temp }}/nyx-expression-transfer-*.json
             ${{ runner.temp }}/nyx-repair-context-*.json
+            ${{ runner.temp }}/nyx-direct-native-*.json
           if-no-files-found: error

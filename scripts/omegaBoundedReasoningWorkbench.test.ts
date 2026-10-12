@@ -17,7 +17,7 @@ import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } f
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
 import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
-  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,
+  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,
   expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
@@ -1280,6 +1280,71 @@ check(contextEpochCalls===16&&contextEpoch.summaries[0].accepted===0&&contextEpo
   "E3 injected corrector validates context custody and separate first/repair accounting, not actual model capability");
 check(contextEpoch.scopedRepairSignal&&contextEpoch.pairs.every(p=>p.realizedComputeMatched&&p.addedAcceptedRepairAgainstGradedFailure)
   &&contextEpoch.promotion.startsWith("NONE_"),"E3 scoring recognizes a supported repaired-outcome pattern but never automatically promotes it");
+check(DIRECT_NATIVE_CASES.length===4&&DIRECT_NATIVE_CASES.every(t=>![...REPAIR_CONTEXT_CASES,...EXPRESSION_TRANSFER_CASES,
+  ...NATIVE_GENERATION_CASES,...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh])]
+  .some(old=>theoryDigest(old.problem)===theoryDigest(t.problem))),
+  "direct/native diagnosis freezes fresh parameter values, never a replay of failed old objectives");
+for(const task of DIRECT_NATIVE_CASES){
+  const s=BoundedReasoningSession.create(task.problem,graphLimits,Date.now,{expressionGraphs:true});
+  const result=s.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:s.problemDigest,program:testExpressionWitness(task)});s.revoke();
+  check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:result.payload!.outputs,confidence:0.8}).accepted,
+    "direct/native fresh objective is representable under unchanged interpreter and independent oracle");
+}
+function directNativeProposal(prompt:any,direct:boolean,correct:boolean){
+  const task=DIRECT_NATIVE_CASES.find(t=>t.taskId===prompt.taskId)!;
+  if(direct)return{action:"SUBMIT",analysisRequest:null,certificate:{outputs:correct?expectedProcedureOutputs(task):
+    task.outputLabels.map(label=>({label,value:"0"})),confidence:0.8}};
+  return{action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(task.problem),
+    program:correct?testExpressionWitness(task):{schemaVersion:4,expressions:[],outputs:task.outputLabels.map(label=>({label,source:"zero"}))}},
+    certificate:{confidence:0.8}};
+}
+for(const winner of ["BOTH","DIRECT","NATIVE","NEITHER"] as const){
+  const wirePolicies:string[]=[],requestCounts=new Map<string,number>();
+  const e=await runNativeGenerationEpoch(async(request,stage)=>{
+    const prompt=JSON.parse(request.messages[1].content),direct=stage.endsWith("DIRECT_REASONED");
+    requestCounts.set(stage,(requestCounts.get(stage)??0)+1);
+    check(request.inferencePolicy==="REASONING_JSON"&&request.reasoningControl==="SUPER_HOSTED_NATIVE"
+      &&request.reasoningEffort===undefined&&request.reasoningBudgetTokens===2048&&request.maxTokens===8192,
+      "direct control is reasoning-enabled under identical Super wire controls, not reasoning-disabled CURRENT_DIRECT");
+    wirePolicies.push(JSON.stringify({policy:request.inferencePolicy,control:request.reasoningControl,
+      budget:request.reasoningBudgetTokens,output:request.maxTokens,temperature:request.temperature}));
+    check(Boolean(prompt.availableTool)===!direct&&Boolean(prompt.nativeExpressionGraph)===!direct
+      &&prompt.objectiveOutputContract.requiredCount===prompt.outputLabels.length&&!prompt.lastAdmittedDerivation,
+      "deliberate tool-availability difference shares public objective, exact output set and no hidden repair context");
+    const schema=request.responseFormat as any;
+    check(schema.schema.anyOf.length===(direct?1:prompt.artifactReference?4:2),
+      "direct exposes only submission; native retains existing bound-artifact choices after actual execution");
+    return responseFor(directNativeProposal(prompt,direct,winner==="BOTH"||winner===(direct?"DIRECT":"NATIVE")));
+  },{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"DIRECT_NATIVE");
+  check(new Set(wirePolicies).size===1&&e.complete&&e.providerStable&&e.summaries[0].nativeExecutions===0
+    &&e.summaries[0].usage.toolRequests===0&&e.summaries.every(s=>s.firstAttemptAccepted===(winner==="BOTH"
+      ||winner===(s.arm==="DIRECT_REASONED"?"DIRECT":"NATIVE")?4:0)),
+    "E3 injected witnesses prove matched configuration and distinct accounting, not live cognitive success");
+  const expected=winner==="BOTH"?"BOTH_ACCEPTED":winner==="DIRECT"?"DIRECT_ONLY_ACCEPTED":
+    winner==="NATIVE"?"NATIVE_ONLY_ACCEPTED":"BOTH_REJECTED_MATHEMATICS";
+  check(e.diagnosticContrasts?.every(d=>d.contrast===expected&&d.directMathematicallyGraded&&d.nativeMathematicallyGraded)
+    &&e.summaries.every(s=>s.mathematicallyGraded===4),
+    "diagnostic distinguishes direct/native acceptance from two wrong valid mathematical paths");
+  check(e.directCertificateSignal===(winner==="DIRECT")&&e.scopedFunctionalSignal===(winner==="NATIVE")
+    &&e.promotion.startsWith("NONE_")&&e.logicalCalls<=(DIRECT_NATIVE_EPOCH.maxLogicalCalls),
+    "cost-bounded scoped patterns are diagnosable, never automatic authority/default or broad promotion");
+  check([...requestCounts.values()].every(n=>n<=2)&&e.summaries.every(s=>s.repairedAccepted===0),
+    "first-pass successes and two rejected attempts cannot be merged into an invented repaired success");
+}
+const directAuthorizationEpoch=await runNativeGenerationEpoch(async(request,stage)=>{
+  const prompt=JSON.parse(request.messages[1].content),direct=stage.endsWith("DIRECT_REASONED");
+  return responseFor(directNativeProposal(prompt,false,direct));
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"DIRECT_NATIVE");
+check(directAuthorizationEpoch.summaries[0].nativeAuthorizationRejections===8&&directAuthorizationEpoch.summaries[0].graded===0
+  &&directAuthorizationEpoch.summaries[0].usage.toolRequests===0&&directAuthorizationEpoch.summaries[1].functionalRejections===8
+  &&directAuthorizationEpoch.diagnosticContrasts?.every(d=>d.contrast==="NEITHER_ACCEPTED_WITH_UNGRADED_BOUNDARY"),
+  "attempting native execution in direct control fails closed; unreached direct grades are not reasoning failures");
+const manualNativeEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content);return responseFor(directNativeProposal(prompt,true,true));
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"DIRECT_NATIVE");
+check(manualNativeEpoch.summaries.every(s=>s.accepted===4&&s.nativeExecutions===0&&s.manualGradedProposals===4)
+  &&manualNativeEpoch.diagnosticContrasts?.every(d=>d.contrast==="BOTH_ACCEPTED")&&!manualNativeEpoch.scopedFunctionalSignal,
+  "manual success in the native-available arm is not misrepresented as executed native-program success");
 // Terminal live evidence is immutable; these checks bind custody and accounting,
 // not a claim that a successful E3 test double establishes model reasoning.
 const contextReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-repair-context-e6682829.json","utf8"));
