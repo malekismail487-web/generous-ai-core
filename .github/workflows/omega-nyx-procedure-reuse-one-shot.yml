@@ -1,8 +1,6 @@
 name: Omega NYX bounded procedure invention and transfer
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:

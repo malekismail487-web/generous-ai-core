@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { BoundedReasoningSession, snapshotBoundedReasoningData, type ReasoningProblem, type ColoringProblem, type ReachabilityProblem,
   type ExperimentSelectionProblem, type HypothesisEliminationProblem } from "../src/lib/codelab/research/boundedReasoningWorkbench";
@@ -622,6 +623,10 @@ check(!late.accepted&&late.outcome==="LATE_RESPONSE_NOT_ADMITTED"&&late.toolRequ
   &&late.attempts[0].modelEvidence.usage.totalTokens===150,"late model response is unadmitted but spent compute remains accounted");
 // Authored development witnesses only: never passed to live cognition or used as
 // a fallback for failed tool synthesis. Oracle uses matrix elimination instead.
+check(theoryDigest(expectedProcedureOutputs(PROCEDURE_FAMILIES[0].seed)) === theoryDigest([{label:"value",value:"-1"},{label:"slope",value:"10/3"}]),
+  "interpolation oracle agrees with independently derived polynomial 4x^2/3-2x-7/3, not just native execution");
+check(theoryDigest(expectedProcedureOutputs(PROCEDURE_FAMILIES[1].seed)) === theoryDigest([{label:"voltage0",value:"26/11"},{label:"voltage1",value:"1/11"},{label:"loss",value:"180/11"}]),
+  "network oracle agrees with explicit conservation solution and energy identity");
 function procedureWitness(task: ProcedureCase): QuantitativeProgram {
   const registers: { id: string; source: string }[] = [], steps: QuantitativeProgram["blocks"][number]["steps"][number][] = [];
   function op(id: string, operation: "ADD"|"SUB"|"MUL"|"DIV", left: string, right: string) {
@@ -775,6 +780,8 @@ check(simulatedReuse.arms.every(a => a.correct === 4) && simulatedReuse.arms[2].
 check(simulatedReuse.physicalUsage.reportedTokens === 2100 && simulatedReuse.arms[0].fullyChargedUsage.reportedTokens === 600
   && simulatedReuse.arms[1].fullyChargedUsage.reportedTokens === 900 && simulatedReuse.arms[2].fullyChargedUsage.reportedTokens === 900,
   "physical construction charged once, full counterfactual construction charged to both reuse arms, no unfair baseline setup charge");
+check(PROCEDURE_REUSE_EPOCH.seedCostCharging === "FULL_CONSTRUCTION_BOTH_REUSE_ARMS_BASELINE_NOT_CHARGED",
+  "freeze metadata agrees with independent cost-accounting assertions, not a misleading shared-prefix label");
 check(simulatedReuse.arms[2].fullyChargedUsage.toolWorkUnits > simulatedReuse.arms[0].fullyChargedUsage.toolWorkUnits
   && !simulatedReuse.scopedEfficiencySignal && simulatedReuse.promotion.startsWith("NONE"), "equal acceptance plus extra construction is not claimed as a cognitive improvement");
 check(!JSON.stringify(simulatedReuse).includes('"registers"') && !JSON.stringify(simulatedReuse).includes('"initialState"')
@@ -804,5 +811,58 @@ try { await runNyxQuantitativeTask({ ...reuseInput, procedure: { artifact: equat
   verify: () => { throw Error("fresh-independent-oracle-unavailable"); } }); }
 catch(error) { reuseOracleFailure = error instanceof Error && error.message === "fresh-independent-oracle-unavailable"; }
 check(reuseOracleFailure, "fresh verifier exception propagates after native procedure execution; never mislabeled or accepted");
+const unboundedGeneration = new Ajv().compile(quantitativeExchangeSchema(["sum"],true,false,theoryDigest(freshSum.problem),freshSum.problem.constants.map(c=>c.id)));
+const boundedGeneration = new Ajv().compile(quantitativeExchangeSchema(["sum"],true,false,theoryDigest(freshSum.problem),freshSum.problem.constants.map(c=>c.id),null,null,true));
+const equationExchange = (program: QuantitativeEquations) => ({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(freshSum.problem),program},certificate:{confidence:0.8}});
+const emptyUpdate = {...sumEquations,cycles:[{iterations:1,phases:[{expressions:[],updates:[]}]}]};
+check(unboundedGeneration(equationExchange(emptyUpdate)) && !boundedGeneration(equationExchange(emptyUpdate)),
+  "separate development reproduction: structural JSON guidance permits empty updates; opt-in native generation bounds reject them before emission");
+const tooManyExpressions = {...sumEquations,cycles:[{iterations:1,phases:[{expressions:Array(17).fill(sumEquations.cycles[0].phases[0].expressions[0]),
+  updates:sumEquations.cycles[0].phases[0].updates}]}]};
+check(unboundedGeneration(equationExchange(tooManyExpressions)) && !boundedGeneration(equationExchange(tooManyExpressions)),
+  "oversized phase development reproduction rejected without increasing the native sixteen-expression limit");
+check(boundedGeneration(equationExchange(sumEquations)), "useful in-scope equations remain schema-admissible");
+const duplicatedExpression = {...sumEquations,cycles:[{iterations:1,phases:[{expressions:Array(2).fill(sumEquations.cycles[0].phases[0].expressions[0]),
+  updates:sumEquations.cycles[0].phases[0].updates}]}]};
+check(boundedGeneration(equationExchange(duplicatedExpression)) && throws(()=>lowerQuantitativeEquations(freshSum.problem,duplicatedExpression)),
+  "generation schema is not a detector substitute: duplicate-ID semantic rejection remains independent");
+let boundedGenerationCalls = 0;
+const generationRepair = await runNyxQuantitativeTask({...reuseInput,limits:{...reuseLimits,maxCalls:2},nativeGenerationBounds:true,complete:async request=>{
+  boundedGenerationCalls++; const prompt=JSON.parse(request.messages[1].content);
+  check(prompt.nativeGenerationBounds.maxExpressionsPerPhase===16&&prompt.nativeGenerationBounds.maxTotalLoweredSteps===64,
+    "generation aid communicates exact unchanged native resource policy");
+  if(boundedGenerationCalls===2)check(prompt.verificationFeedback.some((s:string)=>s.includes("0..16 expressions and 1..16 updates")),
+    "rejected phase receives specific public interface guidance, never secret oracle quantities");
+  return responseFor(equationExchange(boundedGenerationCalls===1?emptyUpdate:sumEquations));
+}});
+check(generationRepair.accepted&&generationRepair.calls===2&&generationRepair.toolRequests===1
+  &&generationRepair.attempts[0].outcome==="AUTHORIZATION_OR_IR_REJECTION", "development-only general emission correction composes with unchanged verifier and lease; no automatic rewriting");
+const generationWrong = await runNyxQuantitativeTask({...reuseInput,nativeGenerationBounds:true,verify:sumCheck("9"),
+  complete:async()=>responseFor(equationExchange(sumEquations))});
+check(!generationWrong.accepted&&generationWrong.outcome==="FUNCTIONAL_REJECTION", "bounded generation cannot turn native success into mathematical acceptance");
+const receipt = JSON.parse(readFileSync("docs/omega/evidence/nyx-procedure-transfer-b89f3bea.json","utf8"));
+const frozenProcedure = receipt.frozenReport, exactReportBytes = Buffer.from(JSON.stringify(frozenProcedure,null,2)+"\n");
+check(createHash("sha256").update(exactReportBytes).digest("hex")===receipt.integrity.reportSha256
+  && exactReportBytes.length===receipt.integrity.reportBytes && theoryDigest(frozenProcedure.freeze)===frozenProcedure.freezeDigest,
+  "frozen sanitized report exactly reconstructs independently verified artifact bytes and freeze identity");
+for(const [path,digest] of Object.entries(frozenProcedure.freeze.sourceDigests)) {
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${receipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `procedure receipt reconstructs historical source ${path}`);
+}
+for(const binding of frozenProcedure.freeze.taskBindings)
+  check(PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh]).some(t=>t.taskId===binding.taskId&&theoryDigest(t)===binding.digest),
+    "exact frozen public corpus membership and parameter values retained");
+const frozenAttempts = [...frozenProcedure.seeds.map((s:any)=>s.run),...frozenProcedure.results.flatMap((s:any)=>s.run?[s.run]:[])].flatMap((r:any)=>r.attempts);
+check(frozenAttempts.length===12&&frozenAttempts.every((a:any)=>a.modelEvidence.evidenceClass==="E4"&&a.modelEvidence.model===PROCEDURE_REUSE_EPOCH.model
+  &&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null), "observed live Super identity and full delivery remain distinct from E3 development tests");
+check(frozenAttempts.filter((a:any)=>a.findings.includes("quantitative_equations_invalid:PHASE_BOUND")).length===9
+  &&frozenAttempts.filter((a:any)=>a.findings.includes("quantitative_equations_invalid:EXPRESSION_SHAPE")).length===2
+  &&frozenAttempts.filter((a:any)=>a.outcome==="FUNCTIONAL_REJECTION").length===1, "eleven unexecuted IR rejections never mislabeled as eleven reasoning failures");
+check(frozenProcedure.results.filter((s:any)=>s.blocked!==null).length===8&&!frozenProcedure.complete&&!frozenProcedure.scopedEfficiencySignal
+  &&frozenProcedure.physicalUsage.reportedTokens===57357&&frozenProcedure.physicalUsage.httpAttempts===12, "blocked transfer stays untested and full physical compute remains charged");
+check(frozenProcedure.arms[0].fullyChargedUsage.reportedTokens===38123&&frozenProcedure.arms[1].fullyChargedUsage.reportedTokens===19234
+  &&frozenProcedure.arms[2].fullyChargedUsage.reportedTokens===19234&&frozenProcedure.freeze.configuration.seedChargedToEveryArm===true
+  &&receipt.frozenMetadataAnnotation.frozenOutcomeAltered===false, "misleading historical cost label is preserved and explicitly annotated, never used to corrupt correct arithmetic");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

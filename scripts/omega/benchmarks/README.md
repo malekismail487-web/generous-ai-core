@@ -3337,3 +3337,28 @@ retains original per-iteration grades, wire controls, source/task hashes and
 limitations. Glob correctness does not independently certify every requested
 algorithm-selection constraint. No benchmark-score, hostile-code sandbox,
 authority-increase or independent-E5 replication claim is made.
+
+## Bounded model-authored procedure synthesis — no transfer promotion
+
+Frozen candidate `b89f3bea333e9e9a744e57a3745ee4bdd96b9b16`, run
+`38215703956`, attempted two seed constructions and four fresh parameter
+controls through the existing native arithmetic engine. All 12 Super calls
+delivered (57,357 reported tokens; zero unknown usage, retries or provider
+failures). Eleven complete-JSON programs failed native IR admission:
+nine `PHASE_BOUND`, two `EXPRESSION_SHAPE`. One executed candidate failed
+the independent mathematical oracle. Six initial attempts were ungraded;
+one of six second attempts was graded and incorrect.
+
+Neither seed minted a procedure. Eight context/reuse stages therefore stayed
+unexecuted, without host-authored fallback. Reuse benefit is **untested**, not
+refuted or promoted; this is not an official benchmark score. Full failed
+construction cost is charged to both reuse arms, not to the recompute control.
+The misleading frozen setup-cost label is annotated without rewriting results.
+
+The [sanitized receipt](../../../docs/omega/evidence/nyx-procedure-transfer-b89f3bea.json)
+binds archive/report hashes, exact source/corpus, log agreement, first/second
+attempts and limitations. Clean Linux CI passed 109 suites / 14,037 checks.
+An opt-in native-bound generation aid is separately reproduced locally; its
+live effectiveness requires a newly frozen comparison under unchanged native
+limits and independent acceptance. Default Ultra, production authority and
+all prior benchmark results remain unchanged.

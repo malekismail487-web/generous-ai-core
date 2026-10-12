@@ -58,11 +58,11 @@ export function quantitativeProgramSchema(labels:readonly string[],constantIds:r
     outputs:array(object({label:{type:"string",enum:labels},source}),1)});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
-  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null) {
+  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false) {
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const tool=object({problemDigest:constant(problemDigest),program:quantitativeProgramSchema(labels,constantIds)});
+  const tool=object({problemDigest:constant(problemDigest),program:quantitativeProgramSchema(labels,constantIds,boundedCollections)});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
   const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});
@@ -94,12 +94,17 @@ export async function runNyxQuantitativeTask(input: {
    * bound invocation; a descriptor is not automatic execution or acceptance. */
   readonly procedure?: Readonly<{ artifact: BoundQuantitativeProcedure; mode: "CONTEXT_ONLY" | "BOUND_INVOCATION" }>;
   readonly createReusableProcedure?: boolean;
+  /** Development-only generation aid mirrors unchanged native bounds. Hosted
+   * grammar support is empirical; no fallback or automatic program rewriting. */
+  readonly nativeGenerationBounds?: boolean;
 }): Promise<QuantitativeRun> {
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
     ||input.reformulateAfterRejection&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_model_formulation_setting_invalid");
   if(input.createReusableProcedure!==undefined&&(typeof input.createReusableProcedure!=="boolean"
     ||input.createReusableProcedure&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_procedure_creation_setting_invalid");
+  if(input.nativeGenerationBounds!==undefined&&(typeof input.nativeGenerationBounds!=="boolean"
+    ||input.nativeGenerationBounds&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_generation_bounds_setting_invalid");
   if(input.procedure!==undefined&&(!keys(input.procedure,["artifact","mode"])
     ||!BoundQuantitativeProcedure.isOwned(input.procedure.artifact)
     ||!["CONTEXT_ONLY","BOUND_INVOCATION"].includes(input.procedure.mode)
@@ -183,6 +188,13 @@ export async function runNyxQuantitativeTask(input: {
           procedureInvocationInstruction:"You may choose SUBMIT_PROCEDURE with analysisRequest EXACTLY {problemDigest,procedureId} "
             +"and certificate ONLY {confidence:number 0..1}. It computes the unchanged seed procedure on CURRENT constants in this task's existing lease, "
             +"then submits to the SAME independent oracle. Reuse may be wrong. Ordinary SUBMIT_DERIVATION and SUBMIT remain available."}:{})};
+      const generationPrompt=input.nativeGenerationBounds&&available?{nativeGenerationBounds:{
+        maxInitialBindings:EQUATION_COMPILER_POLICY.stateSlots,maxCycles:EQUATION_COMPILER_POLICY.maxCycles,
+        maxPhasesPerCycle:EQUATION_COMPILER_POLICY.maxPhasesPerCycle,maxExpressionsPerPhase:EQUATION_COMPILER_POLICY.expressionSlotsPerPhase,
+        minUpdatesPerPhase:1,maxUpdatesPerPhase:EQUATION_COMPILER_POLICY.stateSlots,maxTotalLoweredSteps:EXACT_DERIVATION_POLICY.maxSteps,
+        instruction:"Use only schema-listed expression IDs, each at most once PER phase. Every phase has EXACTLY expressions and updates, with at least one update. "
+          +"Split longer dependency chains into ordered phases and retain intermediate values in state slots. The 64-step bound includes expression evaluations, "
+          +"state snapshots and updates over the WHOLE program. These constraints do not establish mathematical correctness or authorize additional computation."}}:{};
       const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
         messages:formulate?[{role:"system",content:"You are the SAME NYX cognition revising a falsified mathematical model. "
           +"Return concise PUBLIC mathematical definitions and assumptions only as the required JSON. "
@@ -194,11 +206,11 @@ export async function runNyxQuantitativeTask(input: {
             authority:"NONE_PUBLIC_MODEL_PROPOSAL_ONLY"})}]:
         [{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
-          {role:"user",content:JSON.stringify({...prompt,...procedurePrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
+          {role:"user",content:JSON.stringify({...prompt,...procedurePrompt,...generationPrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
         responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels)}:
-        {type:"JSON_SCHEMA",name:"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
+        {type:"JSON_SCHEMA",name:input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
-          invocableProcedure?String(invocableProcedure.descriptor().procedureId):null)},
+          invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds)},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
@@ -280,7 +292,11 @@ export async function runNyxQuantitativeTask(input: {
         } catch(error) {
           const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
-          record("AUTHORIZATION_OR_IR_REJECTION",[reason,"Request must bind the available problem, use only initialized/authorized names, "
+          const generationFeedback=input.nativeGenerationBounds&&reason==="quantitative_equations_invalid:PHASE_BOUND"?
+            ["PHASE_BOUND: each phase requires exactly expressions and updates; 0..16 expressions and 1..16 updates. Check shape and counts before resubmitting."]:
+            input.nativeGenerationBounds&&reason==="quantitative_equations_invalid:EXPRESSION_SHAPE"?
+              ["EXPRESSION_SHAPE: each expression requires exactly id,op,left,right; use only schema-listed IDs once per phase and listed operations. No new names or fields."]:[];
+          record("AUTHORIZATION_OR_IR_REJECTION",[reason,...generationFeedback,"Request must bind the available problem, use only initialized/authorized names, "
             +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);
         }
         if(derivedCertificate!==null) {

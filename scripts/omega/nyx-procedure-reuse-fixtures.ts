@@ -14,7 +14,7 @@ export const PROCEDURE_REUSE_EPOCH = immutableTheoryValue({ version: "nyx-proced
   reasoningControl: "SUPER_HOSTED_NATIVE" as const, reasoningBudgetTokens: 2048, structuredOutput: "GUIDED_STRICT_LOCAL_VALIDATION",
   maxToolRequestsPerStage: 2, maxToolWorkUnitsPerStage: 100000, maxToolElapsedMsPerStage: 2000,
   maxPhysicalLogicalCalls: 28, transferScope: "UNSEEN_PARAMETER_VALUES_IN_TWO_KNOWN_FORMAL_FAMILIES",
-  sharedSeedConstruction: true, seedChargedToEveryArm: true, noHumanAuthoredFallback: true,
+  sharedSeedConstruction: true, seedCostCharging: "FULL_CONSTRUCTION_BOTH_REUSE_ARMS_BASELINE_NOT_CHARGED", noHumanAuthoredFallback: true,
   acceptance: "EXACT_CANONICAL_OUTPUTS_INDEPENDENT_LINEAR_SYSTEM_ORACLE",
   promotion: "COMPLETE_PROVIDER_STABLE_TRANSFER_WITH_NO_ACCEPTANCE_REGRESSION_AND_LOWER_FULLY_CHARGED_TOKENS_AND_NO_MORE_CALLS",
   broadCognitionPromotion: false, authorityIncrease: false });
