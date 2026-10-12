@@ -5,6 +5,7 @@ import { deriveQuantities, validQuantitativeProblem, validQuantitativeProgram, q
 import { lowerQuantitativeEquations,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { lowerFiniteProbability, FINITE_PROBABILITY_POLICY, type FiniteProbabilityModel } from "./finiteProbabilityCompiler";
 import { lowerQuantitativeExpressions, EXPRESSION_COMPILER_POLICY, type QuantitativeExpressionGraph } from "./quantitativeExpressionCompiler";
+import { lowerQuantitativeAlgebraicForm, ALGEBRAIC_COMPILER_POLICY, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 
 /** Constructive algorithms, not a second model or an acceptance authority. */
 export const NYX_REASONING_WORKBENCH = Object.freeze({
@@ -58,7 +59,7 @@ export interface ReasoningToolRequest {
   readonly problemDigest: string;
 }
 export interface QuantitativeToolRequest extends ReasoningToolRequest {
-  readonly program: QuantitativeProgram | QuantitativeEquations | FiniteProbabilityModel | QuantitativeExpressionGraph;
+  readonly program: QuantitativeProgram | QuantitativeEquations | FiniteProbabilityModel | QuantitativeExpressionGraph | QuantitativeAlgebraicForm;
 }
 export interface ReasoningToolResult {
   readonly version: string;
@@ -357,25 +358,29 @@ export class BoundedReasoningSession {
   readonly #limits: ReasoningLimits;
   readonly #now: () => number;
   readonly #expressionGraphs: boolean;
+  readonly #algebraicForms: boolean;
   #requests = 0;
   #workUnits = 0;
+  #elapsedMs = 0;
   #revoked = false;
   readonly problemDigest: string;
-  private constructor(problem: ReasoningProblem, limits: ReasoningLimits, now: () => number, expressionGraphs:boolean) {
+  private constructor(problem: ReasoningProblem, limits: ReasoningLimits, now: () => number, expressionGraphs:boolean, algebraicForms:boolean) {
     this.#problem = immutableTheoryValue(JSON.parse(JSON.stringify(problem)));
     this.#limits = Object.freeze({ ...limits }); this.#now = now; this.problemDigest = theoryDigest(this.#problem);
     this.#expressionGraphs=expressionGraphs;
+    this.#algebraicForms=algebraicForms;
   }
   static create(problem: ReasoningProblem, limits: ReasoningLimits, now = () => Date.now(),
-    options:Readonly<{expressionGraphs:boolean}>={expressionGraphs:false}): BoundedReasoningSession {
+    options:Readonly<{expressionGraphs:boolean;algebraicForms?:boolean}>={expressionGraphs:false}): BoundedReasoningSession {
     if (!validProblem(problem)) throw new Error("reasoning_problem_invalid");
-    if(!plainData(options)||!keys(options,["expressionGraphs"])||typeof options.expressionGraphs!=="boolean"
-      ||options.expressionGraphs&&problem.kind!=="EXACT_QUANTITATIVE_DERIVATION")throw Error("reasoning_session_options_invalid");
+    if(!plainData(options)||!(keys(options,["expressionGraphs"])||keys(options,["expressionGraphs","algebraicForms"]))
+      ||typeof options.expressionGraphs!=="boolean"||options.algebraicForms!==undefined&&typeof options.algebraicForms!=="boolean"
+      ||(options.expressionGraphs||options.algebraicForms)&&problem.kind!=="EXACT_QUANTITATIVE_DERIVATION")throw Error("reasoning_session_options_invalid");
     if (!keys(limits, ["maxWorkUnits", "maxElapsedMs", "maxRequests", "expiresAtEpochMs"])
       || !integer(limits.maxWorkUnits, 1, 1_000_000) || !integer(limits.maxElapsedMs, 1, 10_000)
       || !integer(limits.maxRequests, 1, 8) || !integer(limits.expiresAtEpochMs, 1, Number.MAX_SAFE_INTEGER)
       || !Number.isFinite(now()) || limits.expiresAtEpochMs <= now()) throw new Error("reasoning_limits_invalid");
-    return new BoundedReasoningSession(problem, limits, now,options.expressionGraphs);
+    return new BoundedReasoningSession(problem, limits, now,options.expressionGraphs,!!options.algebraicForms);
   }
   descriptor(): Readonly<Record<string, unknown>> {
     return Object.freeze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: this.problemDigest,
@@ -388,7 +393,13 @@ export class BoundedReasoningSession {
       ...(this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" ? { programRequired: true,
         programPolicy: EXACT_DERIVATION_POLICY, equationPolicy:EQUATION_COMPILER_POLICY,
         probabilityPolicy:FINITE_PROBABILITY_POLICY,
-        ...(this.#expressionGraphs?{expressionPolicy:EXPRESSION_COMPILER_POLICY}:{}) } : {}) });
+        ...(this.#expressionGraphs?{expressionPolicy:EXPRESSION_COMPILER_POLICY}:{}),
+        ...(this.#algebraicForms?{algebraicPolicy:ALGEBRAIC_COMPILER_POLICY}:{}) } : {}) });
+  }
+  /** Host accounting includes bounded lowering attempts that throw or exhaust
+   * resources, not just successfully returned constructions. No action authority. */
+  usage(): Readonly<{requests:number;workUnits:number;elapsedMs:number}> {
+    return Object.freeze({requests:this.#requests,workUnits:this.#workUnits,elapsedMs:this.#elapsedMs});
   }
   revoke(): void { this.#revoked = true; }
   analyze(request: unknown): ReasoningToolResult {
@@ -406,8 +417,10 @@ export class BoundedReasoningSession {
     let executedProgram:QuantitativeProgram|null=null;
     const probabilityModel = quantitative && (request.program as Partial<FiniteProbabilityModel>)?.schemaVersion === 3;
     const expressionGraph=quantitative&&(request.program as Partial<QuantitativeExpressionGraph>)?.schemaVersion===4;
+    const algebraicForm=quantitative&&(request.program as Partial<QuantitativeAlgebraicForm>)?.schemaVersion===5;
     if(expressionGraph&&!this.#expressionGraphs)throw Error("reasoning_request_invalid:EXPRESSION_GRAPH_NOT_ENABLED");
-    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel) {
+    if(algebraicForm&&!this.#algebraicForms)throw Error("reasoning_request_invalid:ALGEBRAIC_FORM_NOT_ENABLED");
+    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel && !algebraicForm) {
       executedProgram=expressionGraph?lowerQuantitativeExpressions(this.#problem,request.program)
         :(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2
         ?lowerQuantitativeEquations(this.#problem,request.program):request.program as QuantitativeProgram;
@@ -421,6 +434,8 @@ export class BoundedReasoningSession {
       this.#limits.expiresAtEpochMs, this.#now,operationStarted);
     let construction: Construction | null = null;
     try {
+      if (algebraicForm && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
+        executedProgram=lowerQuantitativeAlgebraicForm(this.#problem,request.program,()=>budget.tick());
       if (probabilityModel && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
         executedProgram=lowerFiniteProbability(this.#problem,request.program,()=>budget.tick()).program;
       if(executedProgram&&(expressionGraph||(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2))
@@ -430,13 +445,13 @@ export class BoundedReasoningSession {
       else if (this.#problem.kind === "EXPERIMENT_SELECTION") construction = selectExperiments(this.#problem, budget);
       else if (this.#problem.kind === "HYPOTHESIS_ELIMINATION") construction = eliminate(this.#problem, budget);
       else if (executedProgram && validQuantitativeProgram(this.#problem, executedProgram)) construction = deriveQuantities(this.#problem, executedProgram, budget);
-    } catch (error) { if (!(error instanceof SearchBudgetExceeded)) { this.#workUnits += budget.units; throw error; } }
-    this.#workUnits += budget.units;
+    } catch (error) { if (!(error instanceof SearchBudgetExceeded)) throw error; }
+    finally { this.#workUnits += budget.units;this.#elapsedMs+=Math.max(0,this.#now()-budget.started); }
     const result = { version: NYX_REASONING_WORKBENCH.version, inputDigest: this.problemDigest,
       requestDigest: theoryDigest(request), status: construction?.status ?? "BUDGET_EXHAUSTED" as const,
       payload: construction?.payload ?? null, workUnits: budget.units, elapsedMs: Math.max(0, this.#now() - budget.started),
       ...(executedProgram?{executedProgramDigest:theoryDigest(executedProgram),
-        loweringVersion:expressionGraph?EXPRESSION_COMPILER_POLICY.version:probabilityModel?FINITE_PROBABILITY_POLICY.version
+        loweringVersion:algebraicForm?ALGEBRAIC_COMPILER_POLICY.version:expressionGraph?EXPRESSION_COMPILER_POLICY.version:probabilityModel?FINITE_PROBABILITY_POLICY.version
           :(request.program as Partial<QuantitativeEquations>)?.schemaVersion===2?EQUATION_COMPILER_POLICY.version:null}:{}),
       evidenceClass: "E3" as const, acceptanceRequiresIndependentVerifier: true as const, grantsAuthority: false as const };
     return immutableTheoryValue({ ...result, resultDigest: theoryDigest(result) });

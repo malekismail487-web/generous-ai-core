@@ -57,6 +57,22 @@ export const NATIVE_GENERATION_EPOCH = immutableTheoryValue({version:"nyx-native
   support:"MORE_INDEPENDENTLY_ACCEPTED_FRESH_CASES_WITHOUT_MORE_REALIZED_MODEL_COMPUTE_AND_NO_CASE_REGRESSION",
   limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","INTERFACE_CORRECTION_NOT_NEW_COGNITIVE_LAYER",
     "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_NO_DEFAULT_OR_BROAD_PROMOTION"],authorityIncrease:false});
+/** Frozen new values for a surface-notation ablation. No task-specific formula
+ * is supplied to cognition. Same independent oracle and exact output checks. */
+export const ALGEBRAIC_TRANSFER_CASES = immutableTheoryValue([
+  task("INTERPOLATION", "ALGEBRA-INTERPOLATION-1", {x0:"-19/12",x1:"23/14",x2:"41/10",y0:"61/31",y1:"-37/27",y2:"29/19",t:"11/17"}),
+  task("PASSIVE_NETWORK", "ALGEBRA-NETWORK-1", {g0:"43/25",g1:"47/31",g01:"29/22",i0:"-83/37",i1:"67/23"}),
+  task("INTERPOLATION", "ALGEBRA-INTERPOLATION-2", {x0:"-17",x1:"7",x2:"23",y0:"59",y1:"-31",y2:"47",t:"19/13"}),
+  task("PASSIVE_NETWORK", "ALGEBRA-NETWORK-2", {g0:"31",g1:"23",g01:"17",i0:"-79",i1:"53"}),
+]);
+export const ALGEBRAIC_TRANSFER_CORPUS_DIGEST = theoryDigest(ALGEBRAIC_TRANSFER_CASES);
+export const ALGEBRAIC_TRANSFER_EPOCH = immutableTheoryValue({...NATIVE_GENERATION_EPOCH,
+  version:"nyx-algebraic-surface-transfer/1",arms:["GRAPH_WITH_ADMITTED_CONTEXT","ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"],
+  changedVariable:"MODEL_AUTHORED_MATHEMATICAL_SURFACE_STRINGS_LOWERED_INTO_EXISTING_EXACT_INTERPRETER",
+  limitations:["FOUR_NEW_PARAMETER_CASES_TWO_KNOWN_FORMAL_FAMILIES","NO_TASK_SPECIFIC_FORMULAS_SUPPLIED",
+    "SAME_ORACLE_OUTPUT_CONTRACT_ADMITTED_REPAIR_CONTEXT_CAPS_AND_NATIVE_EXECUTOR",
+    "REALIZED_MODEL_COMPUTE_AND_NATIVE_PARSER_WORK_MEASURED_NOT_ASSUMED_MATCHED",
+    "NO_DEFAULT_CHANGE_OR_BROAD_COGNITIVE_PROMOTION"],authorityIncrease:false});
 type Q = readonly [bigint, bigint];
 /** New representation epoch; old corpora and their oracle identities remain unchanged. */
 export const EXPRESSION_TRANSFER_CASES=immutableTheoryValue([

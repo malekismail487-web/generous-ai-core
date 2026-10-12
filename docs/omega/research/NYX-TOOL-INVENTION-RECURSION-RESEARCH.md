@@ -166,6 +166,23 @@ then freeze a fresh comparison against the current native representation.
 Construction, translation and validation costs count. No new compiler or
 experiment is claimed implemented by this research selection.
 
+The next implementation checkpoint now exists: a separately enabled schema-5
+surface compiler with immutable ordered definitions and mathematical expressions.
+It implements `+ - * /`, parentheses and the existing `MIN/MAX/BINOMIAL` only,
+rejects literals, shadowing, forward/unknown names, unsupported syntax and
+resource excess, and preserves unused operations. It lowers through schema 4 to
+the same schema-1 evaluator. Parsing, lowering, execution and rejected attempts
+are charged to the existing session. Existing owned procedures can retain this
+data after independent replay/seed verification; transfer remains unverified.
+This is not a literal self-editing language, a new trained reasoning engine,
+arbitrary tool execution, recursive improvement or AGI. Its falsifiable job is
+to remove reference bookkeeping without supplying mathematics. Four new
+known-family parameter cases are frozen for the existing live comparison runner,
+with unchanged oracle, finite budgets and no automatic/default promotion.
+Independent development Gaussian/energy witnesses validate translation but are
+never included in live model inputs. E3 interface success alone is no capability
+promotion.
+
 An additional primary method examined is
 [PICARD](https://aclanthology.org/2021.emnlp-main.779.pdf), sections 2--3 and
 the ablations: incremental parsing rejects invalid tokens and guards name scope;

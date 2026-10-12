@@ -152,6 +152,21 @@ Charge construction, retain independent acceptance and compare on fresh inputs.
 A normalization-only result is serialization support, not reasoning improvement.
 This selection does not launch an experiment or grant a candidate new authority.
 
+**H005/H009 implementation checkpoint (2026-10-12):** the experimental
+`quantitativeAlgebraicCompiler.ts` now lowers model-authored formula strings
+through the existing expression compiler into the existing exact interpreter.
+It supplies no equation, numerical constant, solver or new operation. Explicit
+host opt-in, existing process-local procedure ownership/revocation, original
+resource leases and independent exact acceptance remain authoritative. Parsing
+and failed lowering consume measured native work; failed attempts are no longer
+omitted from the adapter's tool accounting. Development witnesses/property and
+hostile-input tests are supporting E3 evidence, not evidence of live cognition.
+The next frozen comparison uses four new parameter cases, equal model/call/
+token/tool caps and admitted repair context in both arms, comparing positional
+graphs against formula notation. Realized compute is measured, not assumed.
+Default Ultra and all production authority remain unchanged; no gain is claimed
+until fresh independently accepted live outcomes exist.
+
 **Demonstrated-path milestone completed (2026-10-12):** source-site hardening, disposable integration and the fresh shared-start comparison are now evidenced. Frozen candidate `6b1b32a` produced no quality-accepted repairs in either arm, no selected source sites and no realized-compute-matched pairs. Provider delivery was stable for all eleven actual calls; one treatment was blocked locally before dispatch. Prompt/catalogue duplication and terminal classification were corrected separately without regrading the frozen epoch. Preservation of untouched syntax is not preservation of semantics; the full oracle still decides. No causal gain or default promotion is supported. See `docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json`.
 
 **Next eligible theoretical prototype:** NYX encounters a development objective requiring evidence it cannot obtain from an existing tool. It proposes one small pure transformation/checker with typed inputs/outputs, preconditions, resource bound and failure modes. A trusted independent harness checks its behavior, adversarial cases and safety. A separately admitted executable artifact can then be reused on fresh objectives through existing Omega tool requests. Compare against a no-new-tool control under total matched resources, charging tool construction and validation as well as inference. This does not grant automatic tool registration or arbitrary host execution.

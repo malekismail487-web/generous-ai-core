@@ -6,6 +6,7 @@ import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
 import { BoundQuantitativeProcedure } from "./quantitativeProcedureReuse";
 import { quantitativeExpressionSchema, EXPRESSION_COMPILER_POLICY, type QuantitativeExpressionGraph } from "./quantitativeExpressionCompiler";
+import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 
 export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
 export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;
@@ -22,7 +23,7 @@ export interface QuantitativeAttempt { readonly call: number; readonly outcome: 
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
   readonly repairContextDigest?:string|null;
   readonly repairContextProgramDigest?:string|null;
-  readonly executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|null;
+  readonly executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|QuantitativeAlgebraicForm|null;
   readonly computation:ReasoningToolResult|null;
   readonly procedureReference?: Readonly<{ procedureId: string; programDigest: string; scopeDigest: string }>;
   readonly modelEvidence: NvidiaNimEvidence }
@@ -193,13 +194,15 @@ export function quantitativeProgramSchema(labels:readonly string[],constantIds:r
     outputs:{...array(object({label:{type:"string",enum:labels},source}),1),...(exactOutputs?{minItems:labels.length,maxItems:labels.length}:{})}});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
-  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false,exactOutputs=false) {
-  if(typeof expressionGraph!=="boolean"||typeof exactOutputs!=="boolean")throw Error("quantitative_expression_profile_invalid");
+  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false,exactOutputs=false,algebraicForm=false) {
+  if(typeof expressionGraph!=="boolean"||typeof exactOutputs!=="boolean"||typeof algebraicForm!=="boolean"
+    ||expressionGraph&&algebraicForm)throw Error("quantitative_expression_profile_invalid");
   if(exactOutputs)objectiveLabels(labels);
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const tool=object({problemDigest:constant(problemDigest),program:expressionGraph?quantitativeExpressionSchema(labels,constantIds,exactOutputs)
+  const tool=object({problemDigest:constant(problemDigest),program:algebraicForm?quantitativeAlgebraicSchema(labels,exactOutputs)
+    :expressionGraph?quantitativeExpressionSchema(labels,constantIds,exactOutputs)
     :quantitativeProgramSchema(labels,constantIds,boundedCollections,exactOutputs)});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
@@ -247,6 +250,9 @@ export async function runNyxQuantitativeTask(input: {
   /** Host-selected, development-only representation ablation. It grants no new
    * operations or authority, and is unavailable to the procedure-reuse path. */
   readonly nativeExpressionGraph?: boolean;
+  /** Experimental surface notation lowers to the SAME native interpreter. No
+   * constants, operations, equation solving or acceptance are supplied by it. */
+  readonly nativeAlgebraicForm?: boolean;
   /** Host-selected experiment only. OBSERVE records bounded structural counts;
    * ENFORCE also checks the exact objective label set before native execution or
    * submission. Neither mode modifies a proposal or replaces the external oracle. */
@@ -269,6 +275,9 @@ export async function runNyxQuantitativeTask(input: {
   if(input.nativeExpressionGraph!==undefined&&(typeof input.nativeExpressionGraph!=="boolean"
     ||input.nativeExpressionGraph&&(input.arm!=="REASONING_WITH_WORKBENCH"||input.createReusableProcedure||input.procedure!==undefined)))
     throw Error("quantitative_expression_graph_setting_invalid");
+  if(input.nativeAlgebraicForm!==undefined&&(typeof input.nativeAlgebraicForm!=="boolean"
+    ||input.nativeAlgebraicForm&&(input.arm!=="REASONING_WITH_WORKBENCH"||input.nativeExpressionGraph)))
+    throw Error("quantitative_algebraic_form_setting_invalid");
   if(input.procedure!==undefined&&(!keys(input.procedure,["artifact","mode"])
     ||!BoundQuantitativeProcedure.isOwned(input.procedure.artifact)
     ||!["CONTEXT_ONLY","BOUND_INVOCATION"].includes(input.procedure.mode)
@@ -284,7 +293,7 @@ export async function runNyxQuantitativeTask(input: {
   // Validate and own the finite constants even in controls. No model-supplied input replacement.
   const session=BoundedReasoningSession.create(input.problem,{maxWorkUnits:limits.maxToolWorkUnits,
     maxElapsedMs:limits.maxToolElapsedMs,maxRequests:limits.maxToolRequests,expiresAtEpochMs:expires},now,
-    {expressionGraphs:!!input.nativeExpressionGraph});
+    {expressionGraphs:!!input.nativeExpressionGraph,algebraicForms:!!input.nativeAlgebraicForm});
   const task=immutableTheoryValue(JSON.parse(JSON.stringify({taskId:input.taskId,objective:input.objective,
     problem:input.problem,outputLabels:input.outputLabels})));
   const complete=input.complete;const verify=input.verify;const arm=input.arm;
@@ -296,9 +305,20 @@ export async function runNyxQuantitativeTask(input: {
   const contract={action:"SUBMIT_DERIVATION computes YOUR program and submits its outputs to an INDEPENDENT checker in this call. SUBMIT submits manually.",
     analysisRequest:"On SUBMIT_DERIVATION EXACTLY {problemDigest,program}. NO operation, outer schemaVersion, confidence, or extra fields. The adapter owns the native tool header. On SUBMIT: null.",
     certificate:"SUBMIT_DERIVATION requires ONLY {confidence:number 0..1}. SUBMIT requires {outputs:[{label:string,value:canonical reduced rational string}],confidence:number 0..1}",
-    program:input.nativeExpressionGraph?"{schemaVersion:4,expressions:[{op,left,right}],outputs:[{label,source}]}"
+    program:input.nativeAlgebraicForm?"{schemaVersion:5,definitions:[{id,expression}],outputs:[{label,expression}]}"
+      :input.nativeExpressionGraph?"{schemaVersion:4,expressions:[{op,left,right}],outputs:[{label,source}]}"
       :"{schemaVersion:2,initialState:[{slot,source}],cycles:[{iterations,phases:[{expressions:[{id,op,left,right}],updates:[{slot,source}]}]}],outputs:[{label,source}]}",
-    programSemantics:input.nativeExpressionGraph?"Expression positions are implicit unique ZERO-BASED identities. Each operand is an original named constant STRING or an earlier expression's position NUMBER, never a stringified index. "
+    programSemantics:input.nativeAlgebraicForm?"Expressions are mathematical STRINGS using named original constants and earlier definitions. "
+      +"Use +,-,*,/ and parentheses with usual precedence and LEFT associativity. Unary + and - exist; unary - requires an original zero constant. "
+      +"MIN(a,b), MAX(a,b), BINOMIAL(a,b) are the only functions; BINOMIAL requires nonnegative integer arguments. "
+      +"Definitions have unique ASCII letter-first names of at most 48 characters; they cannot overwrite constants or reserved function names. "
+      +"Each definition can use ONLY original constants and PREVIOUS definitions. Output labels are NOT variables. "
+      +"No numeric literals, powers, assignments, implicit multiplication, code or extra fields. Write products explicitly. "
+      +"At most 32 definitions, 16 outputs, 512 characters per expression, 4096 total, parse nesting 16, and 64 arithmetic operations total. "
+      +"Repeated subexpressions each count as operations; factor shared mathematics into named definitions yourself. "
+      +"Every definition executes even if unused. The compiler assigns references but supplies no missing equations, signs or solutions. "
+      +"Only the existing exact engine executes your formulas; mathematical correctness still requires independent verification."
+      :input.nativeExpressionGraph?"Expression positions are implicit unique ZERO-BASED identities. Each operand is an original named constant STRING or an earlier expression's position NUMBER, never a stringified index. "
       +"Outputs refer to a named constant or any expression position. No explicit IDs, state slots, phases, updates, loops or extra fields exist. "
       +"Use one ADD/SUB/MUL/DIV/MIN/MAX/BINOMIAL per expression, in dependency order; shared expressions may be referenced repeatedly. "
       +"The compiler assigns temporary registers and preserves every operation and its order; it supplies no missing equations and changes no signs. "
@@ -363,7 +383,8 @@ export async function runNyxQuantitativeTask(input: {
           procedureInvocationInstruction:"You may choose SUBMIT_PROCEDURE with analysisRequest EXACTLY {problemDigest,procedureId} "
             +"and certificate ONLY {confidence:number 0..1}. It computes the unchanged seed procedure on CURRENT constants in this task's existing lease, "
             +"then submits to the SAME independent oracle. Reuse may be wrong. Ordinary SUBMIT_DERIVATION and SUBMIT remain available."}:{})};
-      const generationPrompt=input.nativeExpressionGraph&&available?{nativeExpressionGraph:EXPRESSION_COMPILER_POLICY}
+      const generationPrompt=input.nativeAlgebraicForm&&available?{nativeAlgebraicForm:ALGEBRAIC_COMPILER_POLICY}
+        :input.nativeExpressionGraph&&available?{nativeExpressionGraph:EXPRESSION_COMPILER_POLICY}
         :input.nativeGenerationBounds&&available?{nativeGenerationBounds:{
         maxInitialBindings:EQUATION_COMPILER_POLICY.stateSlots,maxCycles:EQUATION_COMPILER_POLICY.maxCycles,
         maxPhasesPerCycle:EQUATION_COMPILER_POLICY.maxPhasesPerCycle,maxExpressionsPerPhase:EQUATION_COMPILER_POLICY.expressionSlotsPerPhase,
@@ -394,14 +415,14 @@ export async function runNyxQuantitativeTask(input: {
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
           {role:"user",content:JSON.stringify({...prompt,...procedurePrompt,...generationPrompt,...outputPrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
         responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels,!!input.boundedModelFormulation)}:
-        {type:"JSON_SCHEMA",name:input.nativeExpressionGraph?"nyx_quantitative_expression_exchange":input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
+        {type:"JSON_SCHEMA",name:input.nativeAlgebraicForm?"nyx_quantitative_algebraic_exchange":input.nativeExpressionGraph?"nyx_quantitative_expression_exchange":input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
           invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds,!!input.nativeExpressionGraph,
-          input.objectiveOutputContract==="ENFORCE")},
+          input.objectiveOutputContract==="ENFORCE",!!input.nativeAlgebraicForm)},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
-      let executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|null=null;
+      let executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|QuantitativeAlgebraicForm|null=null;
       let computation:ReasoningToolResult|null=null;
       let nativeRejectionStructure:QuantitativeRejectionStructure|undefined;
       let outputStructure:QuantitativeOutputStructure|undefined;
@@ -472,12 +493,15 @@ export async function runNyxQuantitativeTask(input: {
         if(input.nativeExpressionGraph&&(nativeRequest as {program?:{schemaVersion?:unknown}}|null)?.program?.schemaVersion!==4){
           record("PROTOCOL_REJECTION",["EXPRESSION_GRAPH_PROFILE_REQUIRES_SCHEMA_4_NO_LEGACY_FALLBACK"]);continue;
         }
+        if(input.nativeAlgebraicForm&&(nativeRequest as {program?:{schemaVersion?:unknown}}|null)?.program?.schemaVersion!==5){
+          record("PROTOCOL_REJECTION",["ALGEBRAIC_FORM_PROFILE_REQUIRES_SCHEMA_5_NO_LEGACY_FALLBACK"]);continue;
+        }
         if(!outputConforms((nativeRequest as {program?:{outputs?:unknown}}|null)?.program?.outputs,"PROGRAM_OUTPUTS"))continue;
         let derivedCertificate:Readonly<Record<string,unknown>>|null=null;
         try {
-          const result=session.analyze(nativeRequest);computation=result;toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
+          const result=session.analyze(nativeRequest);computation=result;
           // Validated bounded action data only; no raw provider reasoning or credential.
-          executedProgram=(nativeRequest as {program:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph}).program;
+          executedProgram=(nativeRequest as {program:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|QuantitativeAlgebraicForm}).program;
           const context={problemDigest:session.problemDigest,program:executedProgram,programDigest:theoryDigest(executedProgram),
             computationRequestDigest:result.requestDigest,computationResultDigest:result.resultDigest,
             executionStatus:result.status,independentEvaluation:null,grantsAuthority:false};
@@ -497,7 +521,7 @@ export async function runNyxQuantitativeTask(input: {
         } catch(error) {
           nativeRejectionStructure=rejectedProgramStructure((nativeRequest as {program?:unknown}|null)?.program,
             task.problem.constants.map(c=>c.id));
-          const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations|expressions)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
+          const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations|expressions|algebraic)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
             ?error.message:error instanceof Error&&error.message==="reasoning_session_budget_exhausted"?"NATIVE_WORK_BUDGET_EXHAUSTED":"REQUEST_SCOPE_OR_LIFETIME_REJECTED";
           const generationFeedback=input.nativeExpressionGraph&&reason==="quantitative_expressions_invalid:SOURCE_NOT_BOUND"?
             ["SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices."]:
@@ -538,7 +562,7 @@ export async function runNyxQuantitativeTask(input: {
       accepted=checked.accepted;record(accepted?"ACCEPTED":checked.findings.some(f=>/SCHEMA_INVALID/.test(f))?"CERTIFICATE_SCHEMA_REJECTION":"FUNCTIONAL_REJECTION",checked.findings);
       if(accepted){acceptedCertificate=immutableTheoryValue(proposedCertificate);break;}
     }
-  } finally {session.revoke();}
+  } finally {const usage=session.usage();toolRequests=usage.requests;toolWorkUnits=usage.workUnits;toolElapsedMs=usage.elapsedMs;session.revoke();}
   return immutableTheoryValue({arm,taskId:task.taskId,accepted,outcome,attempts,elapsedMs:Math.max(0,now()-started),calls:attempts.length,
     toolRequests,toolWorkUnits,toolElapsedMs,acceptedCertificate,authorityIncrease:false});
 }

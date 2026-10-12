@@ -25,6 +25,8 @@ import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NAT
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
 import {lowerQuantitativeExpressions,quantitativeExpressionSchema,type QuantitativeExpressionGraph} from "../src/lib/codelab/research/quantitativeExpressionCompiler";
+import {lowerQuantitativeAlgebraicForm,quantitativeAlgebraicSchema,ALGEBRAIC_COMPILER_POLICY,type QuantitativeAlgebraicForm} from "../src/lib/codelab/research/quantitativeAlgebraicCompiler";
+import {ALGEBRAIC_TRANSFER_CASES,ALGEBRAIC_TRANSFER_EPOCH,ALGEBRAIC_TRANSFER_CORPUS_DIGEST} from "./omega/nyx-procedure-reuse-fixtures";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -1809,5 +1811,147 @@ check(formBoundsFrozen.complete&&formBoundsFrozen.sourceUnchanged&&formBoundsFro
   &&!formBoundsFrozen.formulationGenerationSignal&&!formBoundsFrozen.scopedFunctionalSignal&&!formBoundsFrozen.scopedRepairSignal
   &&formBoundsReceipt.assessment.newCapabilityGained==="NONE"&&!formBoundsReceipt.assessment.cognitiveGainDemonstrated,
   "all eight stages were evaluated, but extra treatment tokens and shape counts establish no accepted capability gain");
+// Development-only compiler witnesses. These expressions/expected values are
+// NEVER passed to live cognition or used as benchmark answer-specific repairs.
+const algebraProblem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[
+  {id:"zero",value:"0"},{id:"one",value:"1"},{id:"two",value:"2"},{id:"x",value:"6"},{id:"y",value:"3"},{id:"z",value:"2"}]};
+const algebraForm=(expression:string,definitions:QuantitativeAlgebraicForm["definitions"]=[]):QuantitativeAlgebraicForm=>
+  ({schemaVersion:5,definitions,outputs:[{label:"result",expression}]});
+const algebraLimits=()=>({maxWorkUnits:100000,maxElapsedMs:2000,maxRequests:2,expiresAtEpochMs:Date.now()+120000});
+function algebraSession(problem=algebraProblem,limits=algebraLimits()){
+  return BoundedReasoningSession.create(problem,limits,Date.now,{expressionGraphs:false,algebraicForms:true});
+}
+function computeAlgebra(program:QuantitativeAlgebraicForm,problem=algebraProblem){
+  const session=algebraSession(problem);
+  try{return session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program});}
+  finally{session.revoke();}
+}
+for(const [expression,expected] of [
+  ["x+y*z","12"],["(x+y)*z","18"],["x/y*z","4"],["x/(y*z)","1"],["x-y-z","1"],
+  ["x-(y-z)","5"],["-x+y","-3"],["-(x+y)*z","-18"],["x--y","9"],["+x","6"],
+  ["MIN(x,y)","3"],["MAX(x,y)","6"],["BINOMIAL(x,z)","15"],["MAX(MIN(x,y),z)","3"],
+  [" x \t +\n y ","9"],["x/(y-y)",null],
+] as const){
+  const r=computeAlgebra(algebraForm(expression));
+  check(expected===null?r.status==="INSUFFICIENT_EVIDENCE":r.status==="CONSTRUCTED"
+    &&(r.payload?.outputs as {value:string}[])[0].value===expected,`surface precedence/function/arithmetic boundary: ${expression}`);
+  check(r.loweringVersion===ALGEBRAIC_COMPILER_POLICY.version&&r.grantsAuthority===false&&r.acceptanceRequiresIndependentVerifier
+    &&r.workUnits>expression.length,"surface parsing and exact execution are charged without self-certification");
+}
+const namedForm=algebraForm("square+delta",[{id:"delta",expression:"x-y"},{id:"square",expression:"delta*delta"}]);
+const beforeNamed=theoryDigest(namedForm),namedResult=computeAlgebra(namedForm);
+check((namedResult.payload?.outputs as {value:string}[])[0].value==="12"&&theoryDigest(namedForm)===beforeNamed,
+  "named immutable references compile without mutating input or inserting equations");
+check(theoryDigest(lowerQuantitativeAlgebraicForm(algebraProblem,namedForm))===theoryDigest(lowerQuantitativeAlgebraicForm(algebraProblem,namedForm)),
+  "surface compilation is deterministic");
+const unusedFault=computeAlgebra(algebraForm("x",[{id:"unused",expression:"one/zero"}]));
+check(unusedFault.status==="INSUFFICIENT_EVIDENCE","unused arithmetic errors are not eliminated to conceal invalid model mathematics");
+for(const expression of ["", " ", "1", "x+1", "x^two", "x**two", "x(y)", "x y", "SIN(x,y)", "Math.max(x,y)",
+  "x=one", "x;one", "x//y", "x/*y*/", "x[zero]", "unknown", "y) ", "(x", "MIN(x)", "MAX(x,y,z)",
+  "MIN(,x)", "x+", "x, y", "x%y", "x\u0000", "α", "x\u00a0+y", "process.exit()", "import(x)"]){
+  check(throws(()=>computeAlgebra(algebraForm(expression))),"unsupported/malformed mathematical text fails closed");
+}
+for(const definitions of [
+  [{id:"x",expression:"one"}], [{id:"MIN",expression:"one"}], [{id:"a",expression:"b"},{id:"b",expression:"one"}],
+  [{id:"a",expression:"a"}], [{id:"a",expression:"one"},{id:"a",expression:"two"}], [{id:"bad-name",expression:"one"}],
+])check(throws(()=>computeAlgebra(algebraForm("x",definitions))),"shadowing, cyclic/forward names and duplicate assignments reject");
+check(throws(()=>computeAlgebra({schemaVersion:5,definitions:[],outputs:[{label:"a",expression:"one"},{label:"b",expression:"a"}]})),
+  "output labels do not implicitly expand the variable namespace");
+const disabledAlgebra=BoundedReasoningSession.create(algebraProblem,algebraLimits());
+check(!("algebraicPolicy" in disabledAlgebra.descriptor())&&throws(()=>disabledAlgebra.analyze({schemaVersion:1,
+  operation:"ANALYZE_FINITE_PROBLEM",problemDigest:disabledAlgebra.problemDigest,program:namedForm}))&&disabledAlgebra.usage().requests===0,
+  "schema five stays unavailable without explicit host opt-in; a model cannot enable it");disabledAlgebra.revoke();
+check(throws(()=>computeAlgebra(algebraForm("-x"),{...algebraProblem,constants:algebraProblem.constants.filter(c=>c.id!=="zero")})),
+  "unary minus never fabricates a zero constant outside the authorized problem");
+for(const [expression,allowed] of [["(".repeat(16)+"one"+")".repeat(16),true],["(".repeat(17)+"one"+")".repeat(17),false],
+  ["one+".repeat(64)+"one",true],["one+".repeat(65)+"one",false],[" ".repeat(509)+"one",true],[" ".repeat(510)+"one",false]] as const)
+  check(throws(()=>computeAlgebra(algebraForm(expression)))!==allowed,"parse depth, operation and character boundaries are exact");
+check(throws(()=>computeAlgebra(algebraForm("one",Array.from({length:8},(_,i)=>({id:`d${i}`,expression:" ".repeat(509)+"one"}))))),
+  "the aggregate expression character ceiling is enforced, not only per-string limits");
+check(throws(()=>computeAlgebra(algebraForm("one",Array.from({length:33},(_,i)=>({id:`d${i}`,expression:"one"}))))),"definition count is bounded");
+let algebraGetterRead=false;const hostileForm={schemaVersion:5,definitions:[],outputs:[{label:"result",get expression(){algebraGetterRead=true;return "one";}}]};
+check(throws(()=>computeAlgebra(hostileForm as QuantitativeAlgebraicForm))&&!algebraGetterRead,"native data guard rejects accessors before lexical inspection");
+const lowAlgebra=algebraSession(algebraProblem,{...algebraLimits(),maxWorkUnits:5});
+const lowResult=lowAlgebra.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:lowAlgebra.problemDigest,program:namedForm});
+check(lowResult.status==="BUDGET_EXHAUSTED"&&lowAlgebra.usage().requests===1&&lowAlgebra.usage().workUnits>0,
+  "parser exhaustion is bounded and accounted in the original lease");lowAlgebra.revoke();
+const badAlgebra=algebraSession();
+check(throws(()=>badAlgebra.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:badAlgebra.problemDigest,program:algebraForm("unknown")}))
+  &&badAlgebra.usage().requests===1&&badAlgebra.usage().workUnits>0,"rejected parser work is not omitted from host resource accounting");
+badAlgebra.revoke();check(throws(()=>badAlgebra.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:badAlgebra.problemDigest,program:namedForm})),
+  "surface notation cannot bypass revocation");
+let algebraClock=100;const timedAlgebra=BoundedReasoningSession.create(algebraProblem,{...algebraLimits(),expiresAtEpochMs:120},()=>algebraClock,
+  {expressionGraphs:false,algebraicForms:true});algebraClock=121;
+check(throws(()=>timedAlgebra.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:timedAlgebra.problemDigest,program:namedForm})),
+  "surface notation cannot bypass expiry");timedAlgebra.revoke();
+// Independent integer arithmetic property oracle; not the compiler or interpreter.
+for(let x=-8;x<=8;x++)for(let y=-4;y<=4;y++){
+  const problem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"zero",value:"0"},{id:"x",value:String(x)},{id:"y",value:String(y)}]};
+  const r=computeAlgebra(algebraForm("s*s-x*y",[{id:"s",expression:"x+y"}]),problem);
+  check((r.payload?.outputs as {value:string}[])[0].value===String((BigInt(x)+BigInt(y))**2n-BigInt(x)*BigInt(y)),
+    "signed input property agrees with independent direct integer oracle");
+}
+const sumForm:QuantitativeAlgebraicForm={schemaVersion:5,definitions:[],outputs:[{label:"sum",expression:"x+y"}]};
+check(throws(()=>BoundQuantitativeProcedure.admit({task:sumTask,program:sumForm,parameterIds:["x","y"],modelEvidenceDigest:theoryDigest("algebra-development"),
+  limits:algebraLimits(),verify:sumCheck("5")})),"procedure admission cannot enable a new representation from model data alone");
+const algebraBound=BoundQuantitativeProcedure.admit({task:sumTask,program:sumForm,parameterIds:["x","y"],
+  modelEvidenceDigest:theoryDigest("algebra-development"),algebraicForms:true,limits:algebraLimits(),verify:sumCheck("5")}).procedure!;
+check(BoundQuantitativeProcedure.isOwned(algebraBound)&&algebraBound.matches(freshSum)&&algebraBound.descriptor().grantsAuthority===false,
+  "seed validation reuses the existing owned procedure, fixed constants, scope and independent replay");
+const algebraTaskInput={...sumTask,taskId:"ALGEBRA-DEVELOPMENT",arm:"REASONING_WITH_WORKBENCH" as const,
+  nativeAlgebraicForm:true,objectiveOutputContract:"ENFORCE" as const,limits:{maxCalls:2,maxOutputTokens:1024,maxTaskMs:30000,
+    expiresAtEpochMs:Date.now()+60000,maxToolRequests:2,maxToolWorkUnits:100000,maxToolElapsedMs:2000},verify:sumCheck("5")};
+let algebraRequests=0;
+const algebraRun=await runNyxQuantitativeTask({...algebraTaskInput,complete:async request=>{
+  const prompt=JSON.parse(request.messages[1].content),schema=JSON.stringify(request.responseFormat);
+  check(schema.includes("nyx_quantitative_algebraic_exchange")&&schema.includes('"enum":[5]')&&!schema.includes('"enum":[4]')
+    &&prompt.nativeAlgebraicForm.grantsAuthority===false,"host-selected surface exchange advertises only its actual bounded grammar");
+  return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(sumTask.problem),
+    program:{...sumForm,outputs:[{label:"sum",expression:++algebraRequests===1?"x-y":"x+y"}]}},certificate:{confidence:0.8}});
+}});
+check(algebraRun.accepted&&algebraRun.calls===2&&algebraRun.attempts[0].outcome==="FUNCTIONAL_REJECTION"
+  &&algebraRun.attempts[1].outcome==="ACCEPTED"&&algebraRun.toolRequests===2&&algebraRun.toolWorkUnits>0,
+  "wrong model-authored mathematics is independently rejected; finite repair does not erase the first failure");
+const syntaxRun=await runNyxQuantitativeTask({...algebraTaskInput,complete:async()=>responseFor({action:"SUBMIT_DERIVATION",
+  analysisRequest:{problemDigest:theoryDigest(sumTask.problem),program:{...sumForm,outputs:[{label:"sum",expression:"x+1"}]}},certificate:{confidence:0.8}})});
+check(!syntaxRun.accepted&&syntaxRun.toolRequests===2&&syntaxRun.toolWorkUnits>0&&syntaxRun.attempts.every(a=>
+  a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&a.findings.includes("quantitative_algebraic_invalid:LEXICAL_TOKEN")),
+  "invalid source is classified independently of reasoning failure and rejected parsing still counts");
+const reusedAlgebra=await runNyxQuantitativeTask({...algebraTaskInput,...freshSum,verify:sumCheck("8"),
+  procedure:{artifact:algebraBound,mode:"BOUND_INVOCATION"},complete:async()=>responseFor({action:"SUBMIT_PROCEDURE",
+    analysisRequest:{problemDigest:theoryDigest(freshSum.problem),procedureId:algebraBound.descriptor().procedureId},certificate:{confidence:0.8}})});
+check(reusedAlgebra.accepted&&reusedAlgebra.calls===1&&reusedAlgebra.toolRequests===1&&reusedAlgebra.attempts[0].procedureReference!==undefined,
+  "model can explicitly select an unchanged owned formula procedure on fresh parameters using the existing lease and oracle");
+algebraBound.revoke();check(!algebraBound.matches(freshSum),"reusable formula objects retain revocation");
+check(throws(()=>quantitativeExchangeSchema(["sum"],true,false,theoryDigest(sumTask.problem),[],null,null,false,true,true,true)),
+  "mutually inconsistent representation profiles cannot be requested");
+check((quantitativeAlgebraicSchema(["sum"],true).properties.outputs as {minItems:number}).minItems===1&&ALGEBRAIC_COMPILER_POLICY.grantsAuthority===false,
+  "generation guidance does not weaken local validation or add execution authority");
+check(ALGEBRAIC_TRANSFER_CASES.length===4&&theoryDigest(ALGEBRAIC_TRANSFER_CASES)===ALGEBRAIC_TRANSFER_CORPUS_DIGEST
+  &&ALGEBRAIC_TRANSFER_EPOCH.maxLogicalCalls===16&&ALGEBRAIC_TRANSFER_EPOCH.arms.length===2
+  &&ALGEBRAIC_TRANSFER_CASES.every(t=>!FORMULATION_BOUNDS_CASES.some(old=>theoryDigest(t.problem)===theoryDigest(old.problem))),
+  "new comparison freezes four nonduplicate parameter problems with unchanged budget/oracle and distinct first/repair outcomes");
+const algebraSynthetic=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content);return responseFor({action:"SUBMIT",analysisRequest:null,
+    certificate:{outputs:expectedProcedureOutputs(ALGEBRAIC_TRANSFER_CASES.find(t=>t.taskId===prompt.taskId)!),confidence:0.8}});
+},{candidate:"a".repeat(40),sourceDigests:{}},Date.now,async()=>{},"ALGEBRAIC_FORM");
+check(algebraSynthetic.complete&&algebraSynthetic.rows.length===8&&algebraSynthetic.summaries.every(s=>s.accepted===4&&s.firstAttemptAccepted===4)
+  &&algebraSynthetic.pairs.every(p=>p.realizedComputeMatched)&&!algebraSynthetic.scopedFunctionalSignal&&algebraSynthetic.promotion.startsWith("NONE"),
+  "equal synthetic outcomes cannot establish a surface-notation gain or promote cognition");
+for(const task of ALGEBRAIC_TRANSFER_CASES){
+  const program:QuantitativeAlgebraicForm=task.family==="INTERPOLATION"?{schemaVersion:5,
+    definitions:[{id:"a",expression:"y0/((x0-x1)*(x0-x2))"},{id:"b",expression:"y1/((x1-x0)*(x1-x2))"},
+      {id:"c",expression:"y2/((x2-x0)*(x2-x1))"}],
+    outputs:[{label:"value",expression:"a*(t-x1)*(t-x2)+b*(t-x0)*(t-x2)+c*(t-x0)*(t-x1)"},
+      {label:"slope",expression:"a*((t-x1)+(t-x2))+b*((t-x0)+(t-x2))+c*((t-x0)+(t-x1))"}]}:
+    {schemaVersion:5,definitions:[{id:"A",expression:"g0+g01"},{id:"B",expression:"g1+g01"},
+      {id:"det",expression:"A*B-g01*g01"},{id:"v",expression:"(B*i0+g01*i1)/det"},
+      {id:"w",expression:"(A*i1+g01*i0)/det"},{id:"delta",expression:"v-w"}],
+    outputs:[{label:"voltage0",expression:"v"},{label:"voltage1",expression:"w"},
+      {label:"loss",expression:"g0*v*v+g1*w*w+g01*delta*delta"}]};
+  const result=computeAlgebra(program,task.problem);
+  check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:result.payload!.outputs,confidence:0.8}).accepted,
+    "development Lagrange/Cramer witnesses agree with independent Gaussian/energy oracle without entering live prompts");
+}
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

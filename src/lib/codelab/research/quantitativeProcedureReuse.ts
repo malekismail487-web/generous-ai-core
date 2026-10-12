@@ -1,10 +1,11 @@
 import { BoundedReasoningSession, snapshotBoundedReasoningData, type ReasoningLimits, type ReasoningToolResult } from "./boundedReasoningWorkbench";
 import { validQuantitativeProblem, type QuantitativeProblem, type QuantitativeProgram } from "./exactQuantitativeDerivation";
 import type { QuantitativeEquations } from "./quantitativeEquationCompiler";
+import type { QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 
 export const QUANTITATIVE_PROCEDURE_REUSE = "nyx-bound-quantitative-procedure/1" as const;
-export type ProcedureProgram = QuantitativeProgram | QuantitativeEquations;
+export type ProcedureProgram = QuantitativeProgram | QuantitativeEquations | QuantitativeAlgebraicForm;
 export interface ProcedureTask {
   readonly objective: string;
   readonly problem: QuantitativeProblem;
@@ -46,6 +47,7 @@ export class BoundQuantitativeProcedure {
   static admit(input: { readonly task: ProcedureTask; readonly program: ProcedureProgram;
     readonly parameterIds: readonly string[]; readonly modelEvidenceDigest: string;
     readonly limits: ReasoningLimits; readonly now?: () => number;
+    readonly algebraicForms?: boolean;
     readonly verify: (certificate: unknown) => { readonly accepted: boolean; readonly verificationDigest: string } }) {
     const task = snapshotBoundedReasoningData(input.task), program = snapshotBoundedReasoningData(input.program),
       parameterIds = snapshotBoundedReasoningData(input.parameterIds), limits = snapshotBoundedReasoningData(input.limits),
@@ -60,7 +62,9 @@ export class BoundQuantitativeProcedure {
       throw Error("quantitative_procedure_scope_invalid");
     // Own/validate the original problem before inspecting constants; the native
     // engine rejects getters, cycles, host objects and oversized trees.
-    const session = BoundedReasoningSession.create(task.problem, limits, input.now);
+    if(input.algebraicForms!==undefined&&typeof input.algebraicForms!=="boolean")throw Error("quantitative_procedure_profile_invalid");
+    const session = BoundedReasoningSession.create(task.problem, limits, input.now,
+      {expressionGraphs:false,algebraicForms:!!input.algebraicForms});
     let result: ReasoningToolResult;
     try {
       if (parameterIds.some(id => !names(task).includes(id))) throw Error("quantitative_procedure_parameter_invalid");

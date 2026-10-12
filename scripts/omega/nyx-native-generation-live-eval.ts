@@ -15,18 +15,20 @@ import {NATIVE_GENERATION_CASES,NATIVE_GENERATION_EPOCH,NATIVE_GENERATION_CORPUS
   DIRECT_REFORMULATION_CASES,DIRECT_REFORMULATION_EPOCH,DIRECT_REFORMULATION_CORPUS_DIGEST,
   QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
   FORMULATION_BOUNDS_CASES,FORMULATION_BOUNDS_EPOCH,FORMULATION_BOUNDS_CORPUS_DIGEST,
+  ALGEBRAIC_TRANSFER_CASES,ALGEBRAIC_TRANSFER_EPOCH,ALGEBRAIC_TRANSFER_CORPUS_DIGEST,
   diagnoseProcedureCertificate,type ProcedureCertificateDiagnosis,verifyProcedureOutputs} from "./nyx-procedure-reuse-fixtures";
 import {createSharedFirstProposal,assessConstraintFeedbackComparison,type FeedbackComparisonRun,type SharedProposalReceipt} from "./nyx-quantitative-coupled-transfer-fixtures";
 
-type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR"|"LEGACY_FORMULATION_GUIDANCE"|"BOUNDED_FORMULATION_GUIDANCE";
-type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS"|"FORMULATION_BOUNDS";
+type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR"|"LEGACY_FORMULATION_GUIDANCE"|"BOUNDED_FORMULATION_GUIDANCE"|"ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT";
+type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS"|"FORMULATION_BOUNDS"|"ALGEBRAIC_FORM";
 const STUDIES={GENERATION_BOUNDS:{tasks:NATIVE_GENERATION_CASES,epoch:NATIVE_GENERATION_EPOCH,digest:NATIVE_GENERATION_CORPUS_DIGEST,file:"native-generation"},
   EXPRESSION_GRAPH:{tasks:EXPRESSION_TRANSFER_CASES,epoch:EXPRESSION_TRANSFER_EPOCH,digest:EXPRESSION_TRANSFER_CORPUS_DIGEST,file:"expression-transfer"},
   REPAIR_CONTEXT:{tasks:REPAIR_CONTEXT_CASES,epoch:REPAIR_CONTEXT_EPOCH,digest:REPAIR_CONTEXT_CORPUS_DIGEST,file:"repair-context"},
   DIRECT_NATIVE:{tasks:DIRECT_NATIVE_CASES,epoch:DIRECT_NATIVE_EPOCH,digest:DIRECT_NATIVE_CORPUS_DIGEST,file:"direct-native"},
   DIRECT_REFORMULATION:{tasks:DIRECT_REFORMULATION_CASES,epoch:DIRECT_REFORMULATION_EPOCH,digest:DIRECT_REFORMULATION_CORPUS_DIGEST,file:"direct-model-repair"},
   FAILURE_DIAGNOSIS:{tasks:QUANTITATIVE_DIAGNOSIS_CASES,epoch:QUANTITATIVE_DIAGNOSIS_EPOCH,digest:QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,file:"quantitative-diagnosis"},
-  FORMULATION_BOUNDS:{tasks:FORMULATION_BOUNDS_CASES,epoch:FORMULATION_BOUNDS_EPOCH,digest:FORMULATION_BOUNDS_CORPUS_DIGEST,file:"formulation-bounds"}};
+  FORMULATION_BOUNDS:{tasks:FORMULATION_BOUNDS_CASES,epoch:FORMULATION_BOUNDS_EPOCH,digest:FORMULATION_BOUNDS_CORPUS_DIGEST,file:"formulation-bounds"},
+  ALGEBRAIC_FORM:{tasks:ALGEBRAIC_TRANSFER_CASES,epoch:ALGEBRAIC_TRANSFER_EPOCH,digest:ALGEBRAIC_TRANSFER_CORPUS_DIGEST,file:"algebraic-transfer"}};
 type Row={taskId:string;family:string;arm:Arm;run:ReturnType<typeof publicRun>|null;blocked:string|null;
   sharedProposal?:SharedProposalReceipt|null;sharedPrefixChargedMs?:number;allocatedElapsedMs?:number;
   physicalInference?:{calls:number;reportedTokens:number;unknownUsageCalls:number;httpAttempts:number};
@@ -59,9 +61,9 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
         unexecuted:TASKS.length-runs.filter(r=>r.usage.calls>0).length,usage:sumUsage(runs),nativeExecutions:attempts.filter(a=>a.nativeExecution!==null).length,
         constructedNativeProposals:attempts.filter(a=>a.nativeExecution?.status==="CONSTRUCTED").length,
         irRejections:attempts.filter(a=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"
-          &&a.findings.some(f=>/^quantitative_(?:equations|program|expressions)_invalid:/.test(f))).length,
+          &&a.findings.some(f=>/^quantitative_(?:equations|program|expressions|algebraic)_invalid:/.test(f))).length,
         nativeAuthorizationRejections:attempts.filter(a=>a.outcome==="AUTHORIZATION_REJECTION"
-          ||a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&!a.findings.some(f=>/^quantitative_(?:equations|program|expressions)_invalid:/.test(f))).length,
+          ||a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&!a.findings.some(f=>/^quantitative_(?:equations|program|expressions|algebraic)_invalid:/.test(f))).length,
         functionalRejections:attempts.filter(a=>a.outcome==="FUNCTIONAL_REJECTION").length,
         outputContractRejections:attempts.filter(a=>a.outcome==="OUTPUT_CONTRACT_REJECTION").length,
         admittedContextAttempts:attempts.filter(a=>a.repairContextProgramDigest).length,
@@ -148,11 +150,13 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
     const branch=shared?.branch();
     let stageCalls=0;const certificateValueDiagnostics:{call:number;value:ProcedureCertificateDiagnosis}[]=[];
     const result=await runNyxQuantitativeTask({...task,arm:arm==="DIRECT_REASONED"||sharedRepair?"REASONING_MEDIUM":"REASONING_WITH_WORKBENCH",nativeGenerationBounds:arm==="NATIVE_BOUNDS",
-      nativeExpressionGraph:arm==="EXPRESSION_GRAPH"||experiment==="REPAIR_CONTEXT"||arm==="NATIVE_GRAPH",
+      nativeExpressionGraph:arm==="EXPRESSION_GRAPH"||experiment==="REPAIR_CONTEXT"||arm==="NATIVE_GRAPH"||experiment==="ALGEBRAIC_FORM"&&arm==="GRAPH_WITH_ADMITTED_CONTEXT",
+      ...(experiment==="ALGEBRAIC_FORM"?{nativeAlgebraicForm:arm==="ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"}:{}),
       reformulateAfterRejection:formulationBounds||arm==="DIRECT_MODEL_REPAIR",
       ...(formulationBounds?{boundedModelFormulation:arm==="BOUNDED_FORMULATION_GUIDANCE"}:{}),
       ...(observeFailures?{observeModelFormulation:true}:{}),
-      ...(experiment==="REPAIR_CONTEXT"||experiment==="DIRECT_NATIVE"||sharedRepair?{objectiveOutputContract:"ENFORCE" as const,retainAdmittedDerivation:arm==="GRAPH_WITH_ADMITTED_CONTEXT"}:{}),now,
+      ...(experiment==="REPAIR_CONTEXT"||experiment==="DIRECT_NATIVE"||sharedRepair||experiment==="ALGEBRAIC_FORM"?{objectiveOutputContract:"ENFORCE" as const,
+        retainAdmittedDerivation:arm==="GRAPH_WITH_ADMITTED_CONTEXT"||arm==="ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"}:{}),now,
       limits:{maxCalls:EPOCH.maxCallsPerStage,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:remainingStageMs,expiresAtEpochMs:expires,
         maxToolRequests:EPOCH.maxToolRequestsPerStage,maxToolWorkUnits:EPOCH.maxToolWorkUnitsPerStage,maxToolElapsedMs:EPOCH.maxToolElapsedMsPerStage},
       complete:request=>{stageCalls++;if(++logicalCalls>EPOCH.maxLogicalCalls)throw Error("native_generation_logical_call_cap");
@@ -184,6 +188,7 @@ async function main() {
     "src/lib/codelab/research/quantitativeEquationCompiler.ts","src/lib/codelab/research/quantitativeProcedureReuse.ts","src/lib/codelab/research/analysisArtifactReference.ts",
     "src/lib/codelab/research/theoryContracts.ts","src/lib/codelab/model/nvidiaNimProvider.ts","src/lib/codelab/model/nvidiaCapacity.ts",
     "src/lib/codelab/research/quantitativeExpressionCompiler.ts",
+    "src/lib/codelab/research/quantitativeAlgebraicCompiler.ts",
     ...(experiment==="DIRECT_REFORMULATION"||experiment==="FAILURE_DIAGNOSIS"||experiment==="FORMULATION_BOUNDS"?["scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts"]:[])];
   const sourceDigests=Object.fromEntries(paths.map(path=>[path,theoryDigest(readFileSync(path,"utf8"))]));
   const provider=NvidiaNimProvider.create({providerId:"NYX-NATIVE-GENERATION-TRANSFER",model:EPOCH.model,authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",

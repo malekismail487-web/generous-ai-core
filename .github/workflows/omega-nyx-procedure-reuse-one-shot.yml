@@ -1,10 +1,13 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-procedure-reuse-one-shot.yml]
   workflow_dispatch:
     inputs:
       experiment:
         type: choice
-        options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native, direct-model-repair, quantitative-diagnosis, formulation-bounds]
+        options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native, direct-model-repair, quantitative-diagnosis, formulation-bounds, algebraic-form]
         default: native-generation
         required: true
 permissions:
@@ -14,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-formulation-bounds-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-algebraic-transfer-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -87,6 +90,13 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           NYX_QUANTITATIVE_EXPERIMENT: FORMULATION_BOUNDS
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
+      - name: Compare positional graphs and mathematical surface formulas on four fresh parameter cases
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-algebraic-transfer-once]') || github.event_name == 'workflow_dispatch' && inputs.experiment == 'algebraic-form'
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_QUANTITATIVE_EXPERIMENT: ALGEBRAIC_FORM
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Preserve sanitized bounded evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -101,4 +111,5 @@ jobs:
             ${{ runner.temp }}/nyx-direct-model-repair-*.json
             ${{ runner.temp }}/nyx-quantitative-diagnosis-*.json
             ${{ runner.temp }}/nyx-formulation-bounds-*.json
+            ${{ runner.temp }}/nyx-algebraic-transfer-*.json
           if-no-files-found: error
