@@ -1106,5 +1106,46 @@ const badReferenceEpoch=await runNativeGenerationEpoch(async request=>{
 },{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"EXPRESSION_GRAPH");
 check(badReferenceEpoch.summaries[1].irRejections===8&&badReferenceEpoch.summaries[1].nativeAuthorizationRejections===0
   &&badReferenceEpoch.summaries[1].graded===0, "graph source rejection is separate from authority refusal or unreached mathematical grading");
+const expressionReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-expression-transfer-becd3139.json","utf8"));
+const frozenExpression=expressionReceipt.frozenReport, expressionReceiptBytes=Buffer.from(JSON.stringify(frozenExpression,null,2)+"\n");
+check(createHash("sha256").update(expressionReceiptBytes).digest("hex")===expressionReceipt.integrity.reportSha256
+  &&expressionReceiptBytes.length===expressionReceipt.integrity.reportBytes&&theoryDigest(frozenExpression.freeze)===frozenExpression.freezeDigest,
+  "expression receipt reconstructs independently verified artifact bytes and exact freeze");
+for(const [path,digest] of Object.entries(frozenExpression.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_expression_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${expressionReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `expression receipt binds exact historical source ${path}`);
+}
+check(theoryDigest(frozenExpression.freeze.configuration)===theoryDigest(EXPRESSION_TRANSFER_EPOCH)
+  &&frozenExpression.freeze.tasks.length===4&&frozenExpression.freeze.tasks.every((b:any)=>EXPRESSION_TRANSFER_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "frozen model, controls, corpus, oracle, caps and representation identities remain unchanged");
+const expressionObserved=frozenExpression.rows.flatMap((r:any)=>r.run.attempts);
+check(expressionObserved.length===16&&expressionObserved.every((a:any)=>a.modelEvidence.evidenceClass==="E4"
+  &&a.modelEvidence.model===EXPRESSION_TRANSFER_EPOCH.model&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null)
+  &&frozenExpression.totals.calls===16&&frozenExpression.totals.httpAttempts===16&&frozenExpression.totals.reportedTokens===76221
+  &&frozenExpression.totals.unknownUsageCalls===0&&frozenExpression.totals.unknownUsageHttpAttempts===0&&frozenExpression.providerStable,
+  "all sixteen live deliveries and known physical/logical compute are preserved without treating reliability as cognition");
+check(frozenExpression.summaries[0].arm==="NATIVE_BOUNDS"&&frozenExpression.summaries[0].irRejections===3
+  &&frozenExpression.summaries[0].nativeExecutions===5&&frozenExpression.summaries[0].functionalRejections===5
+  &&frozenExpression.summaries[1].arm==="EXPRESSION_GRAPH"&&frozenExpression.summaries[1].irRejections===1
+  &&frozenExpression.summaries[1].nativeExecutions===7&&frozenExpression.summaries[1].functionalRejections===3
+  &&frozenExpression.summaries[1].outcomes.CERTIFICATE_SCHEMA_REJECTION===4,
+  "fewer native rejections cannot hide new certificate-schema failures or unchanged zero acceptance");
+check(frozenExpression.rows.filter((r:any)=>r.run.attempts.some((a:any)=>a.outcome==="FUNCTIONAL_REJECTION")).length===6
+  &&expressionReceipt.accounting.mathematicallyGradedStages===6&&expressionReceipt.accounting.ungradedAttemptedStages===2
+  &&expressionReceipt.accounting.acceptanceEvaluatedStages===8&&frozenExpression.summaries.reduce((n:number,s:any)=>n+s.graded,0)===8
+  &&expressionReceipt.frozenMetadataAnnotation.frozenOutcomeAltered===false,
+  "schema-only stages are acceptance-evaluated but not mathematically graded; frozen counters remain intact and annotated");
+check(expressionObserved.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJECTION").length===4
+  &&expressionObserved.filter((a:any)=>a.call===2&&a.outcome==="FUNCTIONAL_REJECTION").length===4
+  &&expressionObserved.filter((a:any)=>a.outcome==="CERTIFICATE_SCHEMA_REJECTION").length===4
+  &&expressionReceipt.accounting.firstAttempts.correct===0&&expressionReceipt.accounting.secondAttempts.correct===0,
+  "initial and second mathematical proposal failures stay separate from certificate-shape failures");
+check(frozenExpression.complete&&frozenExpression.sourceUnchanged&&frozenExpression.emissionSignal&&!frozenExpression.scopedFunctionalSignal
+  &&frozenExpression.summaries.every((s:any)=>s.accepted===0&&s.nativeAuthorizationRejections===0)
+  &&frozenExpression.pairs.every((p:any)=>!p.realizedComputeMatched&&p.boundedNoMoreModelCompute)
+  &&frozenExpression.summaries[0].usage.reportedTokens===40545&&frozenExpression.summaries[1].usage.reportedTokens===35676
+  &&expressionReceipt.diagnosis.cognitiveGainDemonstrated===false&&expressionReceipt.diagnosis.defaultChanged===false,
+  "narrow emission and lower model compute signal does not become functional, default, authority or recursion promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

@@ -3386,3 +3386,33 @@ public corpus and the unchanged oracle. Clean Linux CI: 109 suites / 14,123
 checks, TypeScript 5.8.3 zero. Next investigate automatic temporary binding in
 a bounded data-only frontend to the existing interpreter on separate development
 tasks and a fresh comparison. Preserve this negative epoch unchanged.
+
+## Positional expression frontend — emission signal, no reasoning promotion
+
+Frozen candidate `becd3139`, run `38236657562`: four new parameter cases,
+two known formal families, NATIVE_BOUNDS versus EXPRESSION_GRAPH. All eight
+stages attempted; all sixteen Super calls delivered with known usage, no
+provider failure or truncation. Both arms accepted zero solutions.
+
+Native-IR rejections fell from three to one; native executions rose from five
+to seven. Treatment also had four certificate-schema rejections, versus none
+in control. Six unique stages reached mathematical grading and were wrong;
+two treatment stages were schema-only, so reasoning correctness is unknown.
+The frozen report's `graded` counter includes schema rejection; the receipt
+separates acceptance evaluation from mathematically gradable outcomes.
+
+Treatment used 35,676 tokens versus 40,545 control and the same eight calls
+per arm. Every pair used no more treatment compute, but none matched within
+the predeclared five-percent token tolerance. Four initial and four second
+proposals were mathematically wrong; four others failed certificate shape.
+The narrower emission signal is supporting reliability, not cognitive gain,
+official benchmark performance, procedure transfer or measured recursion.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-expression-transfer-becd3139.json)
+preserves exact report bytes, source/corpus/configuration, terminal-log agreement
+and archive SHA256 `eaed4d0e541029f2db54c95dd13cd7ca1f380166df94808bf193c54e2ab656bd`.
+Clean Linux CI: 109 suites / 14,325 checks, TypeScript 5.8.3 zero, build 10.88s,
+package verification and independent native replay passed. Default Ultra and
+all authority/acceptance boundaries remain unchanged. Next investigate the
+objective-output contract on separate development cases; retained hashes alone
+cannot identify missing/duplicate outputs or wrong equations precisely.
