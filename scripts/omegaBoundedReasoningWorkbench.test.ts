@@ -1741,5 +1741,73 @@ const boundsAlreadyCorrect=await runNativeGenerationEpoch(async request=>{boundF
 check(boundFirstCalls===4&&boundsAlreadyCorrect.logicalCalls===8&&boundsAlreadyCorrect.summaries.every(s=>s.firstAttemptAccepted===4&&s.formulationCalls===0)
   &&!boundsAlreadyCorrect.formulationGenerationSignal&&!boundsAlreadyCorrect.scopedFunctionalSignal,
   "first successes stay first successes, not evidence for an unexercised repair profile");
+const formBoundsReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-formulation-bounds-162e958c.json","utf8"));
+const formBoundsFrozen=formBoundsReceipt.frozenReport,formBoundsBytes=Buffer.from(JSON.stringify(formBoundsFrozen,null,2)+"\n");
+check(formBoundsReceipt.evaluatedCandidate==="162e958cfdd5fcd842454f77c8483098aeeaeb08"
+  &&formBoundsReceipt.runId===38282997508&&formBoundsReceipt.jobId===114924542787
+  &&formBoundsFrozen.candidate===formBoundsReceipt.evaluatedCandidate&&formBoundsBytes.length===113659
+  &&createHash("sha256").update(formBoundsBytes).digest("hex")===formBoundsReceipt.integrity.reportSha256
+  &&formBoundsReceipt.integrity.reportSha256==="fbddf2f300dbc79cbb7d96120c4b262c584d7bb3bf70ff9a6584e1c8d76efd17"
+  &&formBoundsReceipt.integrity.archiveSha256==="7b82c99dbfcf175583ad2c5f721a2f5717011340ddc760fdb9454a6b23116d52"
+  &&theoryDigest(formBoundsFrozen.freeze)===formBoundsFrozen.freezeDigest,
+  "formulation transfer receipt reconstructs the exact terminal artifact and frozen candidate");
+for(const [path,digest] of Object.entries(formBoundsFrozen.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_formulation_bounds_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${formBoundsReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `formulation comparison retains historical source ${path}`);
+}
+check(theoryDigest(formBoundsFrozen.freeze.configuration)===theoryDigest(FORMULATION_BOUNDS_EPOCH)
+  &&formBoundsFrozen.freeze.corpusDigest===FORMULATION_BOUNDS_CORPUS_DIGEST
+  &&formBoundsFrozen.freeze.tasks.length===4&&formBoundsFrozen.freeze.tasks.every((b:any)=>
+    FORMULATION_BOUNDS_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "formulation comparison freezes the actual four new inputs, unchanged model, call caps and independent oracle");
+const formBoundsAllocated=formBoundsFrozen.rows.flatMap((r:any)=>r.run.attempts);
+const formBoundsPhysical=formBoundsFrozen.rows.flatMap((r:any)=>r.run.attempts.filter((_:any,i:number)=>!(i===0&&r.sharedProposal.replayed)));
+check(formBoundsAllocated.length===24&&formBoundsPhysical.length===20&&formBoundsFrozen.logicalCalls===24
+  &&formBoundsFrozen.physicalLogicalCalls===20&&formBoundsFrozen.totals.reportedTokens===61234
+  &&formBoundsFrozen.physicalInferenceTotals.reportedTokens===50216
+  &&formBoundsPhysical.reduce((n:number,a:any)=>n+a.modelEvidence.usage.totalTokens,0)===50216,
+  "twenty actual calls and 50216 tokens remain distinct from twenty-four allocations and 61234 charged tokens");
+check(formBoundsPhysical.every((a:any)=>a.modelEvidence.evidenceClass==="E4"&&a.modelEvidence.model===FORMULATION_BOUNDS_EPOCH.model
+  &&a.modelEvidence.statusCode===200&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.delivery.httpAttempts===1)
+  &&formBoundsFrozen.providerStable&&formBoundsFrozen.totals.unknownUsageCalls===0&&formBoundsFrozen.totals.unknownUsageHttpAttempts===0,
+  "stable provider delivery leaves mathematical and canonical serialization failures observable rather than speculative");
+check(formBoundsFrozen.rows.filter((r:any)=>r.sharedProposal.replayed).length===4
+  &&formBoundsFrozen.rows.filter((r:any)=>r.sharedProposal.replayed).every((r:any)=>{
+    const original=formBoundsFrozen.rows.find((a:any)=>a.taskId===r.taskId&&!a.sharedProposal.replayed);
+    return theoryDigest(original.run.attempts[0])===theoryDigest(r.run.attempts[0])
+      &&original.sharedProposal.sourceEvidenceId===r.sharedProposal.sourceEvidenceId
+      &&r.sharedPrefixChargedMs===r.sharedProposal.prefixElapsedMs
+      &&r.allocatedElapsedMs===r.run.usage.elapsedMs+r.sharedPrefixChargedMs;
+  }),"comparison shares identical first evidence without giving the replay arm free inference or extra task lifetime");
+const formBoundsValues=formBoundsFrozen.rows.flatMap((r:any)=>r.certificateValueDiagnostics);
+check(formBoundsValues.length===16&&formBoundsValues.filter((d:any)=>d.value.verdict==="AS_WRITTEN_NUMERIC_MISMATCH").length===15
+  &&formBoundsValues.filter((d:any)=>d.value.verdict==="EQUIVALENT_NONCANONICAL").length===1
+  &&formBoundsValues.reduce((n:number,d:any)=>n+d.value.incorrectExactValueCount,0)===31
+  &&formBoundsValues.reduce((n:number,d:any)=>n+d.value.canonicalExactMatchCount,0)===8
+  &&formBoundsValues.reduce((n:number,d:any)=>n+d.value.equivalentNoncanonicalCount,0)===1
+  &&formBoundsValues.every((d:any)=>!d.value.admissionChanged&&d.value.unclassifiedValueTextCount===0),
+  "fifteen incorrect certificates and one equivalent noncanonical certificate retain distinct unchanged grades");
+const noncanonicalFormRow=formBoundsFrozen.rows.find((r:any)=>r.taskId==="FORM-NETWORK-2"&&r.arm==="BOUNDED_FORMULATION_GUIDANCE");
+check(noncanonicalFormRow.certificateValueDiagnostics.at(-1).value.verdict==="EQUIVALENT_NONCANONICAL"
+  &&noncanonicalFormRow.run.attempts.at(-1).outcome==="FUNCTIONAL_REJECTION"&&!noncanonicalFormRow.run.accepted,
+  "a prospectively observed formatting-only issue is not retroactively converted into a passing frozen candidate");
+const formBoundsPublicDefinitions=formBoundsAllocated.filter((a:any)=>a.cognitiveStage==="MODEL_FORMULATION");
+check(formBoundsPublicDefinitions.length===8&&formBoundsPublicDefinitions.filter((a:any)=>a.formulationStructure.structurallyValid).length===7
+  &&formBoundsFrozen.summaries[0].admittedFormulations===3&&formBoundsFrozen.summaries[1].admittedFormulations===4
+  &&formBoundsPublicDefinitions.filter((a:any)=>a.outcome==="MODEL_FORMULATION_REJECTION").every((a:any)=>
+    a.formulationStructure.actualEquations===0&&a.formulationStructure.expectedOutputs===3&&a.formulationStructure.missingLabels===3
+    &&theoryDigest(a.formulationStructure.reasons)===theoryDigest(["EQUATION_COUNT","OUTPUT_LABEL_SET"])),
+  "a complete but empty legacy formulation is separate from four structurally admitted treatment hypotheses");
+check(formBoundsFrozen.complete&&formBoundsFrozen.sourceUnchanged&&formBoundsFrozen.stopReason==="PREDECLARED_PAIRS_COMPLETE"
+  &&formBoundsFrozen.summaries.every((s:any)=>s.attempted===4&&s.mathematicallyGraded===4&&s.accepted===0
+    &&s.firstAttemptAccepted===0&&s.repairedAccepted===0&&s.formulationCalls===4&&s.usage.toolRequests===0)
+  &&formBoundsFrozen.summaries[0].usage.reportedTokens===28792&&formBoundsFrozen.summaries[1].usage.reportedTokens===32442
+  &&formBoundsFrozen.pairs.filter((p:any)=>p.realizedComputeMatched).length===2
+  &&formBoundsFrozen.pairs.filter((p:any)=>p.repairComputeMatched).length===2
+  &&formBoundsFrozen.pairs.filter((p:any)=>p.boundedNoMoreModelCompute).length===1
+  &&!formBoundsFrozen.formulationGenerationSignal&&!formBoundsFrozen.scopedFunctionalSignal&&!formBoundsFrozen.scopedRepairSignal
+  &&formBoundsReceipt.assessment.newCapabilityGained==="NONE"&&!formBoundsReceipt.assessment.cognitiveGainDemonstrated,
+  "all eight stages were evaluated, but extra treatment tokens and shape counts establish no accepted capability gain");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

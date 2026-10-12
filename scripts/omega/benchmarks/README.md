@@ -1,5 +1,43 @@
 # NYX benchmark capability program
 
+### Public-formulation bounds: stable fresh transfer, no accepted gain (2026-10-12)
+
+Frozen `162e958c`, [run 38282997508](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38282997508),
+completed four new parameter cases in two known formal families. Both arms
+received identical shared first proposals, owned sessions, the same model,
+three-call stage budgets and unchanged exact acceptance. Only public-formulation
+generation bounds differed. Both accepted **0/4** first or repaired solutions.
+
+Bounded guidance admitted **4/4** public formulations versus **3/4** legacy;
+the latter rejected an empty equation list for three required outputs. That
+count difference is not formula correctness or cognitive progress. Treatment
+used **32,442** tokens versus **28,792** legacy, about 12.68% more. Only two of
+four pairs met the unchanged 5% whole-stage and repair-only compute tolerance;
+only one used no more treatment compute. All predeclared promotion signals
+are false; default Ultra and operational authority remain unchanged.
+
+All **20 physical calls / 50,216 tokens** delivered complete JSON with known
+usage, no retries, truncation, provider, schema or authority failure. Fully
+charged allocation is **24 calls / 61,234 tokens**, including four common-prefix
+replays. Fifteen of sixteen allocated certificates were numerically wrong as
+written. One final treatment certificate was mathematically equivalent but
+contained a noncanonical value, so the strict oracle still rejected it. Keep
+serialization distinct from wrong arithmetic; no frozen answer was normalized
+or regraded. Formula semantics remain unknown without an independent check.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-formulation-bounds-162e958c.json)
+preserves original first/later outcomes, source and configuration hashes, exact
+artifact SHA256/CRC and log agreement. Clean Linux CI: 109 suites / 15,308
+checks, TypeScript 5.8.3 zero, secret scan 1,371 files / zero findings, build
+15.36s and package smoke pass. The temporary launch trigger is removed.
+
+Next alternate to H005/H009: investigate model-authored parameterized computation
+under existing native leases, with separate development reproduction of binding
+and translation defects. Compare a bounded mathematical surface representation
+against the current finite IR, not a second interpreter or another brain layer.
+Only fresh independently accepted outcomes can promote capability; formatting
+corrections alone are supporting work. No further model run is launched here.
+
 ### Counts-only failure diagnosis and general contract correction (2026-10-12)
 
 Frozen `6ba3d859`, run `38278833093`, completed two new parameter cases in

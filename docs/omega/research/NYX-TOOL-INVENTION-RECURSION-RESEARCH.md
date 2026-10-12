@@ -143,6 +143,39 @@ exists. Do not replace empirical failure with another impressive-looking layer.
 
 ## Immediate selection and evidence discipline
 
+### Fresh transfer and next bounded question (2026-10-12)
+
+The formulation-bound transfer at `162e958c` is complete: four known-family
+parameter cases, both arms zero accepted, stable delivery, three versus four
+admitted public formulations and more treatment tokens. One later treatment
+certificate was mathematically equivalent but noncanonical; the strict frozen
+oracle still rejects it. Most certificate values were wrong. Neither an
+interface count gain nor a formatting-only repair establishes stronger cognition.
+The [sanitized receipt](../evidence/nyx-formulation-bounds-162e958c.json) retains
+this negative result and actual compute; do not repeat the same manual arithmetic
+strategy merely to seek a favorable sample.
+
+Select H005/H009's existing finite-IR route next. A bounded mathematical surface
+notation could remove bookkeeping of positional temporary references while
+leaving every proposed operation/sign and the original task intact. The model
+must still supply the mathematics. Lowering must reuse the existing exact
+interpreter, reject unknown names, forward/cyclic bindings, unsupported syntax,
+excess resource use and arithmetic faults, and never infer a missing formula.
+Demonstrate correspondence and seeded rejection on separate development cases,
+then freeze a fresh comparison against the current native representation.
+Construction, translation and validation costs count. No new compiler or
+experiment is claimed implemented by this research selection.
+
+An additional primary method examined is
+[PICARD](https://aclanthology.org/2021.emnlp-main.779.pdf), sections 2--3 and
+the ablations: incremental parsing rejects invalid tokens and guards name scope;
+the study separately measures exact match and execution across database instances.
+Its inference hooks need decoder/token-score access, which this hosted NYX path
+has not established. Do not claim PICARD is installed or copy its SQL accuracy
+to NYX. The applicable design inference is narrower: distinguish lexical,
+binding and semantic failures, test translation with an independent oracle,
+and require fresh execution outcomes rather than grammar validity alone.
+
 The working diagnostic distinguishes public-formulation structural rejection,
 canonical serialization, as-written numerical mismatch and unclassified text.
 It supplies no answer, changes no acceptance, and is not a reasoning upgrade.

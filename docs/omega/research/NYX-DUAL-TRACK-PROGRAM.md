@@ -134,6 +134,24 @@ The candidate can propose an experiment or evaluator; it cannot certify itself. 
 
 ## First falsifiable research sequence
 
+**Latest demonstrated-path boundary:** `162e958c`, run `38282997508`, completed
+the frozen formulation-bounds comparison. Both arms accepted zero of four new
+parameter cases. Bounded formulation admission rose from three to four, but
+treatment used 32,442 versus 28,792 tokens; only two pairs matched 5% realized
+compute. All twenty physical calls delivered stably. One later certificate was
+equivalent but noncanonical; the others were numerically wrong as written.
+No past outcome was regraded, no default changed and no cognitive gain is
+promoted. See [the exact receipt](../evidence/nyx-formulation-bounds-162e958c.json).
+
+**Next alternation:** H005/H009 must address the remaining modeling/arithmetic
+bottleneck with model-created parameterized computation, not another identical
+manual-certificate epoch. Reproduce binding/translation failures separately;
+test a strictly bounded mathematical surface representation lowered into the
+existing interpreter, with no inferred formula or authored live fallback.
+Charge construction, retain independent acceptance and compare on fresh inputs.
+A normalization-only result is serialization support, not reasoning improvement.
+This selection does not launch an experiment or grant a candidate new authority.
+
 **Demonstrated-path milestone completed (2026-10-12):** source-site hardening, disposable integration and the fresh shared-start comparison are now evidenced. Frozen candidate `6b1b32a` produced no quality-accepted repairs in either arm, no selected source sites and no realized-compute-matched pairs. Provider delivery was stable for all eleven actual calls; one treatment was blocked locally before dispatch. Prompt/catalogue duplication and terminal classification were corrected separately without regrading the frozen epoch. Preservation of untouched syntax is not preservation of semantics; the full oracle still decides. No causal gain or default promotion is supported. See `docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json`.
 
 **Next eligible theoretical prototype:** NYX encounters a development objective requiring evidence it cannot obtain from an existing tool. It proposes one small pure transformation/checker with typed inputs/outputs, preconditions, resource bound and failure modes. A trusted independent harness checks its behavior, adversarial cases and safety. A separately admitted executable artifact can then be reused on fresh objectives through existing Omega tool requests. Compare against a no-new-tool control under total matched resources, charging tool construction and validation as well as inference. This does not grant automatic tool registration or arbitrary host execution.
