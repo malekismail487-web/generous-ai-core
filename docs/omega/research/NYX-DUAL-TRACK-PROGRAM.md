@@ -173,6 +173,29 @@ Keep initial/repaired outcomes, manual submissions, native executions, ungraded 
 
 ## Boundaries and current evidence
 
+**Bounded general correction prepared:** public mathematical reformulation is
+now opt-in for REASONING_MEDIUM as well as the existing workbench arm. Only
+an independently rejected exact certificate can trigger it, once, with a later
+intent call still available in the original finite budget. The public equations
+are unverified, ephemeral data; they cannot request tools, certify themselves,
+or modify the oracle. In the reasoning-only arm the next operation remains
+manual SUBMIT and native requests fail closed. Default paths are unchanged.
+
+`nyx-direct-model-repair/1` freezes four new parameter cases in the same two
+formal families. Both arms use the same live first proposal via the existing
+common-prefix helper, separate owned sessions, reasoning-enabled Super, strict
+exact output acceptance and no tools. Control repairs directly; treatment may
+spend one existing call on public equations before resubmission. Four allocated
+calls per arm, 32 allocated logical calls and at most 28 actual logical/HTTP
+attempts per epoch; retries share the fixed physical budget. Prefix inference
+is charged to both arms, physically counted once, and its measured time is
+deducted from the replay arm's four-minute task budget. Thirty-minute epoch,
+8,192 output / 2,048 configured reasoning tokens per call. Measure repair-only
+token matching at 5%, known/unknown usage and actual exposure; no extra call is
+silently granted. Preserve first and repaired outcomes, private reasoning stays
+unpersisted, and no broad/default/recursive promotion follows this four-case
+comparison. E3 success validates composition/scoring, not model cognition.
+
 **Direct/native diagnostic completed:** frozen `ad83dc8e`, run `38245924053`,
 attempted all eight stages with fifteen stable live calls / 55,474 reported
 tokens. Direct accepted one first proposal of four; native accepted zero.

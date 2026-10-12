@@ -18,6 +18,7 @@ import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
 import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
   EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,
+  DIRECT_REFORMULATION_CASES,DIRECT_REFORMULATION_EPOCH,DIRECT_REFORMULATION_CORPUS_DIGEST,
   expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
@@ -1345,6 +1346,71 @@ const manualNativeEpoch=await runNativeGenerationEpoch(async request=>{
 check(manualNativeEpoch.summaries.every(s=>s.accepted===4&&s.nativeExecutions===0&&s.manualGradedProposals===4)
   &&manualNativeEpoch.diagnosticContrasts?.every(d=>d.contrast==="BOTH_ACCEPTED")&&!manualNativeEpoch.scopedFunctionalSignal,
   "manual success in the native-available arm is not misrepresented as executed native-program success");
+for(const task of DIRECT_REFORMULATION_CASES){
+  check(![...DIRECT_NATIVE_CASES,...REPAIR_CONTEXT_CASES,...EXPRESSION_TRANSFER_CASES,...NATIVE_GENERATION_CASES,
+    ...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh])].some(old=>theoryDigest(old.problem)===theoryDigest(task.problem)),
+    "public-model repair freezes new parameters, never the exposed direct/native answers");
+  const witness=testExpressionWitness(task),session=BoundedReasoningSession.create(task.problem,
+    {maxRequests:1,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+10000},Date.now,{expressionGraphs:true});
+  try{const execution=session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program:witness});
+    check(execution.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:execution.payload!.outputs,confidence:0.5}).accepted,
+      "separately authored development witness confirms fresh-task solvability under unchanged independent oracle");
+  }finally{session.revoke();}
+}
+check(theoryDigest(DIRECT_REFORMULATION_CASES)===DIRECT_REFORMULATION_CORPUS_DIGEST
+  &&DIRECT_REFORMULATION_EPOCH.maxLogicalCalls===32&&DIRECT_REFORMULATION_EPOCH.maxPhysicalLogicalCalls===28
+  &&DIRECT_REFORMULATION_EPOCH.maxHttpAttemptsPerEpoch===28,"shared-prefix physical and allocated ceilings are explicit and distinct");
+for(const succeeds of [true,false]){
+  const firstRequests=new Map<string,number>(),calls=new Map<string,number>();
+  const epoch=await runNativeGenerationEpoch(async(request,stage)=>{
+    const prompt=JSON.parse(request.messages[1].content),task=DIRECT_REFORMULATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+    calls.set(stage,(calls.get(stage)??0)+1);
+    const formulation=typeof request.responseFormat==="object"&&request.responseFormat.name==="nyx_public_model_formulation";
+    if(!formulation){check(prompt.availableTool===null&&prompt.artifactReference===null
+      &&(request.responseFormat as any).schema.anyOf.length===1,
+      "both repair arms expose only manual certificates, not native actions or accepted artifacts");
+      if(!prompt.verificationFeedback.length)firstRequests.set(task.taskId,(firstRequests.get(task.taskId)??0)+1);
+    }else check(prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY"&&prompt.independentFeedback.includes("EXACT_OBJECTIVE_MISMATCH")
+      &&prompt.lastAdmittedEquations===null,"formulation receives original rejection, not an oracle answer or invented executed program");
+    check(request.inferencePolicy==="REASONING_JSON"&&request.reasoningControl==="SUPER_HOSTED_NATIVE"
+      &&request.reasoningBudgetTokens===2048&&request.maxTokens===8192,"shared repair arms retain identical reasoning-enabled model wire controls");
+    return responseFor(formulation?{problemDigest:theoryDigest(task.problem),equations:task.outputLabels.map(label=>({label,expression:`public definition of ${label}`})),assumptions:[]}:
+      {action:"SUBMIT",analysisRequest:null,certificate:{outputs:succeeds&&prompt.publicModelRevision?expectedProcedureOutputs(task):
+        task.outputLabels.map(label=>({label,value:"0"})),confidence:0.5}});
+  },{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"DIRECT_REFORMULATION");
+  check(epoch.complete&&epoch.providerStable&&epoch.repairAssessment?.firstProposalMatched
+    &&firstRequests.size===4&&[...firstRequests.values()].every(n=>n===1),"one actual common proposal is replayed into independent sessions for each task");
+  check(epoch.repairAssessment?.exposures.length===4&&epoch.summaries[0].accepted===0
+    &&epoch.summaries[1].accepted===(succeeds?4:0)&&epoch.scopedRepairSignal===succeeds,
+    "E3 composition/scoring distinguishes delivered repair benefit from an unhelpful public formulation");
+  check(epoch.summaries.every(s=>s.firstAttemptAccepted===0&&s.usage.toolRequests===0&&s.nativeExecutions===0)
+    &&epoch.summaries[1].repairedAccepted===(succeeds?4:0)&&epoch.summaries[1].formulationCalls===4,
+    "no fresh first-attempt or tool capability is fabricated from a scripted repair");
+  check(epoch.physicalInferenceTotals?.calls===(succeeds?24:28)&&epoch.physicalLogicalCalls===(succeeds?24:28)
+    &&epoch.logicalCalls===(succeeds?28:32)&&epoch.totals.calls===epoch.logicalCalls
+    &&[...calls.values()].every(n=>n<=4)&&epoch.pairs.every(p=>p.boundedNoMoreModelCompute),
+    "common inference is physically counted once but charged to both arms, including formulation cost");
+  check(!JSON.stringify(epoch).includes("public definition of")&&epoch.promotion.startsWith("NONE_"),
+    "raw public equations/private reasoning are not persisted; successful test doubles cannot promote cognition");
+}
+const firstSuccess=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content),task=DIRECT_REFORMULATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  check(typeof request.responseFormat!=="object"||request.responseFormat.name!=="nyx_public_model_formulation","accepted first proposals must not trigger extra mathematical formulation");
+  return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:expectedProcedureOutputs(task),confidence:0.5}});
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"DIRECT_REFORMULATION");
+check(firstSuccess.physicalLogicalCalls===4&&firstSuccess.logicalCalls===8&&firstSuccess.summaries.every(s=>s.firstAttemptAccepted===4&&s.formulationCalls===0)
+  &&firstSuccess.repairAssessment?.exposures.length===0&&!firstSuccess.scopedRepairSignal,
+  "already-correct shared first answers are retained without attribution to an unexercised repair mechanism");
+let prefixClock=Date.now(),prefixCalls=0;
+const exhaustedPrefix=await runNativeGenerationEpoch(async request=>{
+  prefixCalls++;prefixClock+=DIRECT_REFORMULATION_EPOCH.maxStageMs+1;
+  const prompt=JSON.parse(request.messages[1].content),task=DIRECT_REFORMULATION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:expectedProcedureOutputs(task),confidence:0.5}});
+},{candidate:"0".repeat(40),sourceDigests:{}},()=>prefixClock,async()=>{},"DIRECT_REFORMULATION");
+check(prefixCalls===4&&exhaustedPrefix.rows.filter(r=>r.blocked==="SHARED_PREFIX_TASK_BUDGET_EXHAUSTED").length===4
+  &&exhaustedPrefix.rows.filter(r=>r.run).every(r=>r.run!.outcome==="LATE_RESPONSE_NOT_ADMITTED")
+  &&!exhaustedPrefix.complete&&!exhaustedPrefix.scopedRepairSignal,
+  "replaying common inference cannot replenish an exhausted original stage lease or admit a late correct answer");
 // Terminal live evidence is immutable; these checks bind custody and accounting,
 // not a claim that a successful E3 test double establishes model reasoning.
 const contextReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-repair-context-e6682829.json","utf8"));

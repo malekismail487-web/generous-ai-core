@@ -39,6 +39,8 @@ export function publicRun(run: QuantitativeRun) {
     attempts: run.attempts.map(a => ({ call: a.call, outcome: a.outcome, findings: a.findings, confidence: a.confidence,
       proposalDigest: a.proposalDigest, verificationDigest: a.resultDigest, programDigest: a.executedProgram ? theoryDigest(a.executedProgram) : null,
       procedureReference: a.procedureReference ?? null,
+      ...(a.cognitiveStage==="MODEL_FORMULATION"||a.formulationArtifactDigest?{
+        cognitiveStage:a.cognitiveStage,formulationArtifactDigest:a.formulationArtifactDigest??null}:{}),
       ...(a.nativeRejectionStructure?{nativeRejectionStructure:a.nativeRejectionStructure}:{}),
       ...(a.outputStructure?{outputStructure:a.outputStructure}:{}),
       ...(a.repairContextDigest?{repairContextDigest:a.repairContextDigest,repairContextProgramDigest:a.repairContextProgramDigest??null}:{}),

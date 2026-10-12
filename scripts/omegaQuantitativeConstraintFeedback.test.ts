@@ -557,5 +557,39 @@ for(const run of transferredModelReport.results){const task=MODEL_REPAIR_REPLICA
       "independent mathematical oracle reproduces successful repairs and unchanged control rejections");
   }}finally{session.revoke();}
 }
+// Separate development objective, not an exposed live case. Shared test-double
+// cognition reproduces applicability; it is explicitly NOT model capability evidence.
+let directFormCount=0;
+const directModelProvider=NvidiaNimProvider.create({providerId:"DIRECT-MODEL-E3",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async(_url,init)=>{const wire=JSON.parse(String(init?.body)),prompt=JSON.parse(wire.messages[1].content),isForm=wire.response_format.json_schema.name==="nyx_public_model_formulation";
+    if(isForm){directFormCount++;check(prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY"&&prompt.lastAdmittedEquations===null
+      &&prompt.independentFeedback.includes("VALUE_MISMATCH"),"direct reformulation consumes actual falsification and never receives the oracle");}
+    else check(prompt.availableTool===null&&prompt.artifactReference===null&&wire.response_format.json_schema.schema.anyOf.length===1,
+      "reasoning-only reformulation cannot implicitly grant native tool access");
+    if(prompt.publicModelRevision)check(prompt.modelRevisionInstruction.includes("ONLY SUBMIT")
+      &&prompt.publicModelRevision.grantsAuthority===false,"manual repair instruction follows actual available authority, not a native-IR assumption");
+    return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(isForm?form():
+      {action:"SUBMIT",analysisRequest:null,certificate:certificate(prompt.publicModelRevision?"1":"2")})}}],usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+const directPair=createSharedFirstProposal(r=>directModelProvider.complete(r));
+for(const treatment of [false,true]){const branch=directPair.branch();let verifierCalls=0;
+  const run=await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"DIRECT-MODEL-DEVELOPMENT",objective:"Return p=1.",problem:contextProblem,
+    outputLabels:["p"],limits:modelLimits(),reformulateAfterRejection:treatment,complete:r=>branch.complete(r),verify:c=>{verifierCalls++;return modelVerify(c);}});
+  check(run.accepted===treatment&&run.calls===(treatment?3:4)&&run.toolRequests===0&&!run.authorityIncrease
+    &&verifierCalls===(treatment?2:4),"direct formulation spends an existing call but is not a certificate or a tool execution");
+  check(!JSON.stringify(run).includes("p = 1"),"direct formulation text remains ephemeral; results retain provenance digests only");
+}
+check(directFormCount===1,"a failed direct answer may receive one bounded formulation, never an autonomous retry loop");
+let hostileCalls=0,hostileVerifies=0;
+const hostileDirectProvider=NvidiaNimProvider.create({providerId:"DIRECT-MODEL-HOSTILE-E3",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+  credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+  transport:async()=>{hostileCalls++;return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(hostileCalls===1?
+    {action:"SUBMIT",analysisRequest:null,certificate:certificate("2")}:hostileCalls===2?form():modelIntents(true))}}],
+    usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+const forbiddenAfterForm=await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"DIRECT-FORM-NO-AUTHORITY",objective:"Return p=1.",problem:contextProblem,
+  outputLabels:["p"],limits:modelLimits(),reformulateAfterRejection:true,complete:r=>hostileDirectProvider.complete(r),verify:c=>{hostileVerifies++;return modelVerify(c);}});
+check(!forbiddenAfterForm.accepted&&forbiddenAfterForm.toolRequests===0&&hostileVerifies===1&&hostileCalls===4
+  &&forbiddenAfterForm.attempts.slice(2).every(a=>a.outcome==="AUTHORIZATION_REJECTION"),
+  "actual post-formulation native action requests remain denied; public reasoning cannot grant its own authority");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

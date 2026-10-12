@@ -171,7 +171,9 @@ export async function runNyxQuantitativeTask(input: {
   readonly verify: (certificate: unknown) => QuantitativeAcceptance; readonly now?: () => number;
   /** Experimental cognitive-context ablation. No raw reasoning or new execution authority. */
   readonly retainAdmittedDerivation?:boolean;
-  /** Experimental repair-only representation change. Consumes an EXISTING call; no tool or authority. */
+  /** Experimental repair-only representation change in reasoning-enabled arms.
+   * Consumes an EXISTING call; no tool or authority. Reasoning-only repair still
+   * submits manual certificates and cannot acquire the workbench capability. */
   readonly reformulateAfterRejection?:boolean;
   /** Host-only experimental procedure reuse. The actual model must select the
    * bound invocation; a descriptor is not automatic execution or acceptance. */
@@ -193,7 +195,7 @@ export async function runNyxQuantitativeTask(input: {
   if(input.objectiveOutputContract!==undefined)objectiveLabels(input.outputLabels);
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
-    ||input.reformulateAfterRejection&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_model_formulation_setting_invalid");
+    ||input.reformulateAfterRejection&&!["REASONING_MEDIUM","REASONING_WITH_WORKBENCH"].includes(input.arm)))throw Error("quantitative_model_formulation_setting_invalid");
   if(input.createReusableProcedure!==undefined&&(typeof input.createReusableProcedure!=="boolean"
     ||input.createReusableProcedure&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_procedure_creation_setting_invalid");
   if(input.nativeGenerationBounds!==undefined&&(typeof input.nativeGenerationBounds!=="boolean"
@@ -249,7 +251,8 @@ export async function runNyxQuantitativeTask(input: {
   try {
     for(let call=1;call<=limits.maxCalls && now()<expires;call++) {
       // Separate model correction from unfamiliar execution syntax ONLY after actual falsification.
-      // One public formulation may consume an already-budgeted call, and leaves a call to compile.
+      // One public formulation consumes an already-budgeted call and leaves a
+      // call for the existing intent protocol; a public equation executes nothing.
       const formulate=!!input.reformulateAfterRejection&&!formulationAttempted
         &&attempts.at(-1)?.outcome==="FUNCTIONAL_REJECTION"&&call<limits.maxCalls;
       if(formulate)formulationAttempted=true;
@@ -277,7 +280,9 @@ export async function runNyxQuantitativeTask(input: {
         previousObservation:observation,verificationFeedback:feedback,
         ...(modelFormulation===null?{}:{publicModelRevision:modelFormulation,
           modelRevisionInstruction:"This is your UNVERIFIED public mathematical proposal, not executable code or authority. "
-            +"Check it against the original objective, then translate appropriate equations into the existing authorized native IR. Independent verification still decides."}),
+            +(available?"Check it against the original objective, then translate appropriate equations into the existing authorized native IR. Independent verification still decides.":
+              "Check it against the original objective, then derive the required exact canonical outputs and submit a manual certificate using ONLY SUBMIT. "
+              +"No computation capability is available. Independent verification still decides.")}),
         ...(repairContext!==null?{lastAdmittedDerivation:repairContext,
           repairInstruction:"Inspect your last admitted equations against the ORIGINAL objective and independent feedback before revising. "
             +"A correctly executed but rejected program is a modeling failure, not a proved answer. Context grants no authority; request a fresh authorized computation for a changed program."}:{}),
