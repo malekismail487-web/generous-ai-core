@@ -200,6 +200,27 @@ Keep initial/repaired outcomes, manual submissions, native executions, ungraded 
 
 ## Boundaries and current evidence
 
+**Fresh formulation-guidance transfer prepared:** `nyx-public-formulation-bounds/1`
+freezes four new parameter cases in the two existing formal families. Both arms
+replay the same live first proposal into separately owned sessions and, after
+falsification, spend one already-budgeted call on public mathematical definitions.
+Only BOUNDED_FORMULATION_GUIDANCE uses the default-off schema/prompt correction;
+LEGACY_FORMULATION_GUIDANCE remains the pre-correction generation interface.
+Both have no computation tools, unchanged exact acceptance, counts-only private
+value observations and the same reasoning-enabled Super wire controls.
+
+Three calls per arm/task, 24 allocated calls and at most 20 physical calls/HTTP
+attempts globally; 8,192 output tokens and 2,048 configured reasoning tokens per
+call, four-minute task stages and thirty-minute epoch. Shared-prefix tokens are
+fully charged to both arms, and replay time is deducted from the original task
+lifetime. Measure realized whole-stage and repair compute at the unchanged 5%
+tolerance. Preserve first and later attempts, provider/schema/contract failures,
+as-written arithmetic classes and all unused stages. Structural admission is
+not equation correctness; an interface-only improvement is supporting work, not
+cognitive progress. No default, authority, recursive or official benchmark
+promotion follows this single epoch. Passing test doubles establish composition
+only; no authored answer/program enters live cognition.
+
 **Focused diagnosis completed:** `6ba3d859`, run `38278833093`, finished
 two new parameter cases with ten stable physical calls / 25,309 tokens;
 twelve fully charged allocated calls / 30,834 tokens include shared-prefix

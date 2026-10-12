@@ -20,6 +20,7 @@ import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NAT
   EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,
   DIRECT_REFORMULATION_CASES,DIRECT_REFORMULATION_EPOCH,DIRECT_REFORMULATION_CORPUS_DIGEST,
   QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
+  FORMULATION_BOUNDS_CASES,FORMULATION_BOUNDS_EPOCH,FORMULATION_BOUNDS_CORPUS_DIGEST,
   expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
@@ -1679,5 +1680,66 @@ check(frozenDiagnosis.complete&&frozenDiagnosis.sourceUnchanged&&frozenDiagnosis
   &&frozenDiagnosis.diagnosticOnly&&!frozenDiagnosis.scopedFunctionalSignal&&!frozenDiagnosis.scopedRepairSignal
   &&frozenDiagnosis.repairAssessment.verdict==="DIAGNOSTIC_ONLY_NOT_A_PROMOTION_EPOCH"&&!frozenDiagnosis.repairAssessment.causalPromotionEligible,
   "complete negative diagnosis, fewer tokens and a valid public shape never imply cognitive or default promotion");
+check(FORMULATION_BOUNDS_CASES.length===4&&theoryDigest(FORMULATION_BOUNDS_CASES)===FORMULATION_BOUNDS_CORPUS_DIGEST
+  &&FORMULATION_BOUNDS_EPOCH.maxLogicalCalls===24&&FORMULATION_BOUNDS_EPOCH.maxPhysicalLogicalCalls===20
+  &&FORMULATION_BOUNDS_EPOCH.maxHttpAttemptsPerEpoch===20&&FORMULATION_BOUNDS_EPOCH.maxCallsPerStage===3
+  &&FORMULATION_BOUNDS_CASES.every(t=>![...NATIVE_GENERATION_CASES,...EXPRESSION_TRANSFER_CASES,...REPAIR_CONTEXT_CASES,
+    ...DIRECT_NATIVE_CASES,...DIRECT_REFORMULATION_CASES,...QUANTITATIVE_DIAGNOSIS_CASES]
+    .some(prior=>theoryDigest(prior.problem)===theoryDigest(t.problem))),
+  "formulation generation comparison freezes four new values and finite caps without recycling exposed inputs");
+for(const mode of ["IGNORED_GUIDANCE","STRUCTURE_ONLY","EXACT_REPAIR"] as const){
+  const firstCalls=new Map<string,number>(),formulationCalls=new Map<string,number>();let physicalCalls=0;
+  const boundEpoch=await runNativeGenerationEpoch(async(request,stage)=>{
+    physicalCalls++;const prompt=JSON.parse(request.messages[1].content),task=FORMULATION_BOUNDS_CASES.find(t=>t.taskId===prompt.taskId)!;
+    const formulation=typeof request.responseFormat==="object"&&request.responseFormat.name==="nyx_public_model_formulation";
+    const bounded=stage.endsWith("/BOUNDED_FORMULATION_GUIDANCE");
+    check(request.inferencePolicy==="REASONING_JSON"&&request.reasoningControl==="SUPER_HOSTED_NATIVE"
+      &&request.reasoningBudgetTokens===2048&&request.maxTokens===8192,
+      "both formulation arms have the identical provider reasoning and output caps");
+    if(formulation){formulationCalls.set(stage,(formulationCalls.get(stage)??0)+1);
+      const schema=(request.responseFormat as any).schema,contract=prompt.formulationContract;
+      check(bounded?schema.properties.equations.minItems===task.outputLabels.length&&contract.requiredCount===task.outputLabels.length:
+        !("minItems" in schema.properties.equations)&&contract===undefined,
+        "only the formulation step changes original-output generation guidance; no answer is inserted");
+      check(prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY"&&prompt.lastAdmittedEquations===null
+        &&prompt.independentFeedback.includes("EXACT_OBJECTIVE_MISMATCH"),"both formulation arms receive their own real falsification, not oracle values");
+      return responseFor({problemDigest:theoryDigest(task.problem),equations:bounded&&mode!=="IGNORED_GUIDANCE"?
+        task.outputLabels.map(label=>({label,expression:"development-only model definition"})):[],assumptions:[]});
+    }
+    check(prompt.availableTool===null&&prompt.artifactReference===null&&(request.responseFormat as any).schema.anyOf.length===1,
+      "formulation comparison retains manual certificates only, not arithmetic, shell or other authority");
+    if(!prompt.verificationFeedback.length)firstCalls.set(task.taskId,(firstCalls.get(task.taskId)??0)+1);
+    check(!("formulationContract" in prompt),"generation bounds are not silently added to first or later intent calls");
+    return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:bounded&&mode==="EXACT_REPAIR"&&prompt.publicModelRevision?
+      expectedProcedureOutputs(task):task.outputLabels.map(label=>({label,value:"0"})),confidence:0.5}});
+  },{candidate:"0".repeat(40),sourceDigests:{}},()=>1000,async()=>{},"FORMULATION_BOUNDS");
+  check(boundEpoch.complete&&boundEpoch.providerStable&&firstCalls.size===4&&[...firstCalls.values()].every(n=>n===1)
+    &&physicalCalls===20&&boundEpoch.physicalInferenceTotals!.calls===20&&boundEpoch.logicalCalls===24,
+    "shared first proposals are physically generated once while twenty-four allocations charge both owned sessions");
+  check(formulationCalls.size===8&&[...formulationCalls.values()].every(n=>n===1)
+    &&boundEpoch.summaries.every(s=>s.formulationCalls===4&&s.firstAttemptAccepted===0&&s.usage.toolRequests===0),
+    "both arms spend one existing call per falsified case on formulation; no free added cognition or tool call");
+  check(boundEpoch.summaries[0].accepted===0&&boundEpoch.summaries[1].accepted===(mode==="EXACT_REPAIR"?4:0)
+    &&boundEpoch.summaries[0].admittedFormulations===0&&boundEpoch.summaries[1].admittedFormulations===(mode==="IGNORED_GUIDANCE"?0:4),
+    "structural admission is distinct from exact acceptance; ignored guidance still fails closed");
+  check(boundEpoch.formulationGenerationSignal===(mode!=="IGNORED_GUIDANCE")&&boundEpoch.scopedFunctionalSignal===(mode==="EXACT_REPAIR")
+    &&boundEpoch.pairs.every(p=>p.realizedComputeMatched&&p.repairComputeMatched&&p.boundedNoMoreModelCompute)
+    &&boundEpoch.promotion.startsWith("NONE_")&&!boundEpoch.safety.authorityIncrease,
+    "E3 scoring separates a formulation-only signal from independently correct repair and never promotes cognition");
+  check(!JSON.stringify(boundEpoch).includes("development-only model definition")
+    &&boundEpoch.rows.every(r=>r.run!.attempts.filter(a=>a.cognitiveStage==="MODEL_FORMULATION")
+      .every(a=>!!a.formulationStructure&&!a.formulationStructure.grantsAuthority)),
+    "comparison keeps bounded contract observations and provenance, not raw public equations");
+}
+let boundFirstCalls=0;
+const boundsAlreadyCorrect=await runNativeGenerationEpoch(async request=>{boundFirstCalls++;
+  const prompt=JSON.parse(request.messages[1].content),task=FORMULATION_BOUNDS_CASES.find(t=>t.taskId===prompt.taskId)!;
+  check(typeof request.responseFormat!=="object"||request.responseFormat.name!=="nyx_public_model_formulation",
+    "passing common first proposals never spend a gratuitous formulation call");
+  return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:expectedProcedureOutputs(task),confidence:0.5}});
+},{candidate:"0".repeat(40),sourceDigests:{}},()=>1000,async()=>{},"FORMULATION_BOUNDS");
+check(boundFirstCalls===4&&boundsAlreadyCorrect.logicalCalls===8&&boundsAlreadyCorrect.summaries.every(s=>s.firstAttemptAccepted===4&&s.formulationCalls===0)
+  &&!boundsAlreadyCorrect.formulationGenerationSignal&&!boundsAlreadyCorrect.scopedFunctionalSignal,
+  "first successes stay first successes, not evidence for an unexercised repair profile");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

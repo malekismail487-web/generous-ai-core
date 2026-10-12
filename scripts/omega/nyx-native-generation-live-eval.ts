@@ -14,17 +14,19 @@ import {NATIVE_GENERATION_CASES,NATIVE_GENERATION_EPOCH,NATIVE_GENERATION_CORPUS
   DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,DIRECT_NATIVE_CORPUS_DIGEST,
   DIRECT_REFORMULATION_CASES,DIRECT_REFORMULATION_EPOCH,DIRECT_REFORMULATION_CORPUS_DIGEST,
   QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
+  FORMULATION_BOUNDS_CASES,FORMULATION_BOUNDS_EPOCH,FORMULATION_BOUNDS_CORPUS_DIGEST,
   diagnoseProcedureCertificate,type ProcedureCertificateDiagnosis,verifyProcedureOutputs} from "./nyx-procedure-reuse-fixtures";
 import {createSharedFirstProposal,assessConstraintFeedbackComparison,type FeedbackComparisonRun,type SharedProposalReceipt} from "./nyx-quantitative-coupled-transfer-fixtures";
 
-type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR";
-type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS";
+type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR"|"LEGACY_FORMULATION_GUIDANCE"|"BOUNDED_FORMULATION_GUIDANCE";
+type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS"|"FORMULATION_BOUNDS";
 const STUDIES={GENERATION_BOUNDS:{tasks:NATIVE_GENERATION_CASES,epoch:NATIVE_GENERATION_EPOCH,digest:NATIVE_GENERATION_CORPUS_DIGEST,file:"native-generation"},
   EXPRESSION_GRAPH:{tasks:EXPRESSION_TRANSFER_CASES,epoch:EXPRESSION_TRANSFER_EPOCH,digest:EXPRESSION_TRANSFER_CORPUS_DIGEST,file:"expression-transfer"},
   REPAIR_CONTEXT:{tasks:REPAIR_CONTEXT_CASES,epoch:REPAIR_CONTEXT_EPOCH,digest:REPAIR_CONTEXT_CORPUS_DIGEST,file:"repair-context"},
   DIRECT_NATIVE:{tasks:DIRECT_NATIVE_CASES,epoch:DIRECT_NATIVE_EPOCH,digest:DIRECT_NATIVE_CORPUS_DIGEST,file:"direct-native"},
   DIRECT_REFORMULATION:{tasks:DIRECT_REFORMULATION_CASES,epoch:DIRECT_REFORMULATION_EPOCH,digest:DIRECT_REFORMULATION_CORPUS_DIGEST,file:"direct-model-repair"},
-  FAILURE_DIAGNOSIS:{tasks:QUANTITATIVE_DIAGNOSIS_CASES,epoch:QUANTITATIVE_DIAGNOSIS_EPOCH,digest:QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,file:"quantitative-diagnosis"}};
+  FAILURE_DIAGNOSIS:{tasks:QUANTITATIVE_DIAGNOSIS_CASES,epoch:QUANTITATIVE_DIAGNOSIS_EPOCH,digest:QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,file:"quantitative-diagnosis"},
+  FORMULATION_BOUNDS:{tasks:FORMULATION_BOUNDS_CASES,epoch:FORMULATION_BOUNDS_EPOCH,digest:FORMULATION_BOUNDS_CORPUS_DIGEST,file:"formulation-bounds"}};
 type Row={taskId:string;family:string;arm:Arm;run:ReturnType<typeof publicRun>|null;blocked:string|null;
   sharedProposal?:SharedProposalReceipt|null;sharedPrefixChargedMs?:number;allocatedElapsedMs?:number;
   physicalInference?:{calls:number;reportedTokens:number;unknownUsageCalls:number;httpAttempts:number};
@@ -38,8 +40,10 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
   experiment:Experiment="GENERATION_BOUNDS") {
   if(!Object.prototype.hasOwnProperty.call(STUDIES,experiment))throw Error("representation_experiment_invalid");
   const {tasks:TASKS,epoch:EPOCH,digest:corpusDigest}=STUDIES[experiment];
-  const diagnosticOnly=experiment==="FAILURE_DIAGNOSIS",sharedRepair=diagnosticOnly||experiment==="DIRECT_REFORMULATION";
-  const physicalCallLimit=diagnosticOnly?QUANTITATIVE_DIAGNOSIS_EPOCH.maxPhysicalLogicalCalls:DIRECT_REFORMULATION_EPOCH.maxPhysicalLogicalCalls;
+  const diagnosticOnly=experiment==="FAILURE_DIAGNOSIS",formulationBounds=experiment==="FORMULATION_BOUNDS";
+  const observeFailures=diagnosticOnly||formulationBounds,sharedRepair=observeFailures||experiment==="DIRECT_REFORMULATION";
+  const physicalCallLimit=formulationBounds?FORMULATION_BOUNDS_EPOCH.maxPhysicalLogicalCalls:
+    diagnosticOnly?QUANTITATIVE_DIAGNOSIS_EPOCH.maxPhysicalLogicalCalls:DIRECT_REFORMULATION_EPOCH.maxPhysicalLogicalCalls;
   const began=now(),expires=began+EPOCH.maxEpochMs,rows:Row[]=[],repairRuns:FeedbackComparisonRun[]=[];let logicalCalls=0,physicalLogicalCalls=0;
   const freeze={...binding,configuration:EPOCH,corpusDigest,
     tasks:TASKS.map(t=>({taskId:t.taskId,family:t.family,digest:theoryDigest(t)}))};
@@ -99,17 +103,22 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
         contrast:direct?.accepted&&native?.accepted?"BOTH_ACCEPTED":direct?.accepted?"DIRECT_ONLY_ACCEPTED":
           native?.accepted?"NATIVE_ONLY_ACCEPTED":grade(direct)&&grade(native)?"BOTH_REJECTED_MATHEMATICS":
           "NEITHER_ACCEPTED_WITH_UNGRADED_BOUNDARY"}; }):null;
-    const observedAssessment=sharedRepair?assessConstraintFeedbackComparison(repairRuns,TASKS.map(t=>t.taskId),stable,"PUBLIC_MODEL_REPAIR"):null;
+    const observedAssessment=sharedRepair&&!formulationBounds?assessConstraintFeedbackComparison(repairRuns,TASKS.map(t=>t.taskId),stable,"PUBLIC_MODEL_REPAIR"):null;
     const repairAssessment=diagnosticOnly&&observedAssessment?{...observedAssessment,
       diagnosticOnly:true,observedComparisonVerdict:observedAssessment.verdict,
       verdict:"DIAGNOSTIC_ONLY_NOT_A_PROMOTION_EPOCH",causalPromotionEligible:false}:observedAssessment;
     return {schemaVersion:1,candidate:binding.candidate,freeze,freezeDigest:theoryDigest(freeze),rows,summaries,pairs,totals,logicalCalls,complete,providerStable:stable,
-      ...(repairAssessment?{repairAssessment,physicalLogicalCalls,physicalInferenceTotals:rows.reduce((n,r)=>({
+      ...(repairAssessment?{repairAssessment}:{}),
+      ...(sharedRepair?{physicalLogicalCalls,physicalInferenceTotals:rows.reduce((n,r)=>({
         calls:n.calls+(r.physicalInference?.calls??0),reportedTokens:n.reportedTokens+(r.physicalInference?.reportedTokens??0),
         unknownUsageCalls:n.unknownUsageCalls+(r.physicalInference?.unknownUsageCalls??0),httpAttempts:n.httpAttempts+(r.physicalInference?.httpAttempts??0)}),
         {calls:0,reportedTokens:0,unknownUsageCalls:0,httpAttempts:0}),computeAccounting:"COMMON_PREFIX_FULLY_ALLOCATED_BOTH_ARMS_PHYSICAL_USAGE_COUNTED_ONCE"}:{}),
       elapsedMs:Math.max(0,now()-began),stopReason:now()>=expires?"GLOBAL_BUDGET":complete?"PREDECLARED_PAIRS_COMPLETE":"INCOMPLETE",
       ...(diagnosticOnly?{diagnosticOnly:true}:{}),
+      ...(formulationBounds?{formulationGenerationSignal:complete&&stable&&summaries[1].admittedFormulations!>summaries[0].admittedFormulations!
+        &&summaries[0].formulationCalls===summaries[1].formulationCalls&&pairs.every(p=>p.boundedNoMoreModelCompute
+          &&Number(p.boundedAccepted)>=Number(p.originalAccepted)),
+        formulationAssessmentScope:"STRUCTURAL_ADMISSION_ONLY_NOT_FORMULA_CORRECTNESS_OR_COGNITIVE_PROMOTION"}:{}),
       scopedFunctionalSignal:!diagnosticOnly&&complete&&stable&&summaries[1].accepted>summaries[0].accepted
         &&(experiment!=="DIRECT_REFORMULATION"||!!repairAssessment?.causalPromotionEligible)
         &&pairs.every(p=>Number(p.boundedAccepted)>=Number(p.originalAccepted)&&p.boundedNoMoreModelCompute),
@@ -140,22 +149,23 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
     let stageCalls=0;const certificateValueDiagnostics:{call:number;value:ProcedureCertificateDiagnosis}[]=[];
     const result=await runNyxQuantitativeTask({...task,arm:arm==="DIRECT_REASONED"||sharedRepair?"REASONING_MEDIUM":"REASONING_WITH_WORKBENCH",nativeGenerationBounds:arm==="NATIVE_BOUNDS",
       nativeExpressionGraph:arm==="EXPRESSION_GRAPH"||experiment==="REPAIR_CONTEXT"||arm==="NATIVE_GRAPH",
-      reformulateAfterRejection:arm==="DIRECT_MODEL_REPAIR",
-      ...(diagnosticOnly?{observeModelFormulation:true}:{}),
+      reformulateAfterRejection:formulationBounds||arm==="DIRECT_MODEL_REPAIR",
+      ...(formulationBounds?{boundedModelFormulation:arm==="BOUNDED_FORMULATION_GUIDANCE"}:{}),
+      ...(observeFailures?{observeModelFormulation:true}:{}),
       ...(experiment==="REPAIR_CONTEXT"||experiment==="DIRECT_NATIVE"||sharedRepair?{objectiveOutputContract:"ENFORCE" as const,retainAdmittedDerivation:arm==="GRAPH_WITH_ADMITTED_CONTEXT"}:{}),now,
       limits:{maxCalls:EPOCH.maxCallsPerStage,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:remainingStageMs,expiresAtEpochMs:expires,
         maxToolRequests:EPOCH.maxToolRequestsPerStage,maxToolWorkUnits:EPOCH.maxToolWorkUnitsPerStage,maxToolElapsedMs:EPOCH.maxToolElapsedMsPerStage},
       complete:request=>{stageCalls++;if(++logicalCalls>EPOCH.maxLogicalCalls)throw Error("native_generation_logical_call_cap");
         const wire=procedureInferenceRequest(request);return branch?branch.complete(wire):complete(wire,`${task.taskId}/${arm}`);},
       verify:certificate=>{const checked=verifyProcedureOutputs(task,certificate);
-        if(diagnosticOnly)certificateValueDiagnostics.push({call:stageCalls,value:diagnoseProcedureCertificate(task,certificate)});
+        if(observeFailures)certificateValueDiagnostics.push({call:stageCalls,value:diagnoseProcedureCertificate(task,certificate)});
         return checked;}});
     const physical=branch?.accounting();
-    if(shared)repairRuns.push({...result,comparisonArm:arm==="DIRECT_MODEL_REPAIR"?"PUBLIC_FEEDBACK_MODEL_REPAIR":"PUBLIC_FEEDBACK_DIRECT_IR",sharedProposal:physical?.receipt??null});
+    if(shared&&!formulationBounds)repairRuns.push({...result,comparisonArm:arm==="DIRECT_MODEL_REPAIR"?"PUBLIC_FEEDBACK_MODEL_REPAIR":"PUBLIC_FEEDBACK_DIRECT_IR",sharedProposal:physical?.receipt??null});
     rows.push({taskId:task.taskId,family:task.family,arm,run:publicRun(result),blocked:null,...(physical?{
       sharedProposal:physical.receipt,sharedPrefixChargedMs:prefix,allocatedElapsedMs:result.elapsedMs+prefix,
       physicalInference:{calls:physical.physicalCalls,reportedTokens:physical.physicalTokens,unknownUsageCalls:physical.unknownUsageCalls,httpAttempts:physical.httpAttempts}}:{}),
-      ...(diagnosticOnly?{certificateValueDiagnostics}:{} )});await checkpoint(report());
+      ...(observeFailures?{certificateValueDiagnostics}:{} )});await checkpoint(report());
     console.log(`NYX_NATIVE_GENERATION_STAGE ${JSON.stringify({taskId:task.taskId,arm,outcome:result.outcome,accepted:result.accepted,calls:result.calls})}`);
   }
   }
@@ -174,7 +184,7 @@ async function main() {
     "src/lib/codelab/research/quantitativeEquationCompiler.ts","src/lib/codelab/research/quantitativeProcedureReuse.ts","src/lib/codelab/research/analysisArtifactReference.ts",
     "src/lib/codelab/research/theoryContracts.ts","src/lib/codelab/model/nvidiaNimProvider.ts","src/lib/codelab/model/nvidiaCapacity.ts",
     "src/lib/codelab/research/quantitativeExpressionCompiler.ts",
-    ...(experiment==="DIRECT_REFORMULATION"||experiment==="FAILURE_DIAGNOSIS"?["scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts"]:[])];
+    ...(experiment==="DIRECT_REFORMULATION"||experiment==="FAILURE_DIAGNOSIS"||experiment==="FORMULATION_BOUNDS"?["scripts/omega/nyx-quantitative-coupled-transfer-fixtures.ts"]:[])];
   const sourceDigests=Object.fromEntries(paths.map(path=>[path,theoryDigest(readFileSync(path,"utf8"))]));
   const provider=NvidiaNimProvider.create({providerId:"NYX-NATIVE-GENERATION-TRANSFER",model:EPOCH.model,authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource:nvidiaNimCredentialFromEnvironment(process.env),maxPromptBytes:32000,maxOutputTokens:EPOCH.maxOutputTokensPerCall,timeoutMs:120000})
