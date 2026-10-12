@@ -34,7 +34,7 @@ These are primary-source-informed design inferences for NYX, not replications or
 
 | Source | Relevant finding | NYX inference / limit |
 | --- | --- | --- |
-| [S01 — SWE-agent](https://arxiv.org/abs/2405.15793) | Agent/computer interface design influences coding-agent performance. | Investigate edit representation and feedback before adding a cognition layer. This does not establish benefit for the current NYX model. Abstract inspected. |
+| [S01 — SWE-agent](https://arxiv.org/abs/2405.15793) | Agent/computer interface design influences coding-agent performance. | Investigate edit representation and feedback before adding a cognition layer. Methods 2–3, interface ablations 5.1 and behavior analysis 5.2 inspected on 2026-10-12; not replicated in NYX. |
 | [S02 — Darwin Gödel Machine](https://arxiv.org/html/2505.22954v3) | Versioned coding-agent self-modification and an archive were empirically evaluated, including transfer and safety limitations. Foundation models were frozen. | Study tool/workflow candidates first; measure later improvement ability directly, rather than inferring recursion from a coding score. Methods, transfer and safety sections inspected. |
 | [S03 — HyperAgents](https://arxiv.org/html/2603.19461v1) | Task and improvement mechanisms can be jointly changed in experiments. The outer evaluation remains fixed, and evaluation gaming is explicitly discussed. | Propose bounded improvement-process experiments while keeping authoritative evaluation external. Count search compute, not just final inference. Methods, limitations, safety and cost portions inspected. |
 | [S04 — Voyager](https://arxiv.org/html/2305.16291v2) | Executable skills, curriculum and feedback iteration were investigated in Minecraft. | Test transferable tool artifacts with explicit preconditions. Domain-specific results do not establish general intelligence. Methods 2.2–2.3, transfer 3.3, ablations 3.4/B.3 inspected on 2026-10-12; not replicated. |
@@ -221,6 +221,39 @@ then test fresh shared-start repairs under unchanged acceptance, finite caps
 and honest realized compute. Treat source-reference admission as an independent
 interface bottleneck. This is the next falsifiable question, not a launched
 epoch or an achieved correction. H005/H009/H045/H048 remain unproved.
+
+**Shared-first public-model repair completed, negative:** frozen `3da83e22`,
+run `38249820307`, completed all eight stages with 28 stable physical Super
+calls / 73,397 tokens. Four common first proposals were charged to both arms:
+32 allocated calls / 84,418 tokens. Neither arm accepted any of the four first
+or repaired candidates. Control rejected 16 exact certificates; treatment
+rejected 12, admitted one unverified public formulation and rejected three
+other formulation contracts. The one admitted formulation was actually used
+but did not repair the answer. Its structural rejections are distinct interface
+failures; their precise offending fields were not retained and remain unknown.
+
+All 28 allocated certificate output sets were complete. Every certificate
+reported confidence 1 and failed exact acceptance; noncanonical-equivalent
+numbers were not separately assessed. Every pair used no more treatment model
+compute, but only one met the 5% repair-only token tolerance. Zero accepted
+outcomes do not establish efficiency, cognition, tool invention or recursion.
+The verified frozen artifact is preserved in
+`docs/omega/evidence/nyx-direct-model-repair-3da83e22.json`; default Ultra,
+authority, exact oracle and all earlier outcomes remain unchanged.
+
+**Next evidence-supported diagnosis:** reproduce public-formulation contract
+failures on separate development inputs and expose bounded reason codes/counts
+without storing raw proposals or changing admission. Prospectively distinguish
+canonical-answer serialization from incorrect arithmetic; do not regrade this
+epoch or supply reference values to cognition. Select a correction from actual
+observed causes, not another identical rerun or an additional brain layer.
+
+Research refinement: [SWE-agent's interface/ablation study](https://arxiv.org/html/2405.15793)
+supports testing concise action feedback and guardrails as empirical hypotheses.
+Its guardrails also constrain edit order, and its automatic failure labels were
+imperfect. These results do not justify copying unrestricted shell access,
+unbounded retries, or assuming extra reasoning turns solve NYX's current defect.
+Use independent, prospectively versioned failure classification instead.
 
 - Authority delta from this amendment: **NONE**. Default Ultra configuration, benchmark graders and production state remain unchanged.
 - The prior shared-start guarded epoch (`docs/omega/evidence/nyx-shared-guarded-ba26a0e.json`) and the latest source-site epoch (`docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json`) showed no accepted live repairs or selected guarded/site proposals. Quality repair sometimes destroyed passing behavior. The source-site catalogue increased cost and one prompt exceeded its bound. General presentation/classification corrections are supporting work, not a demonstrated cognitive gain. These negative outcomes constrain the next research intervention rather than justify more layers.

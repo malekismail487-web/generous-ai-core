@@ -1517,5 +1517,68 @@ check(frozenDirect.complete&&frozenDirect.sourceUnchanged&&frozenDirect.directCe
   &&directReceipt.diagnosis.cognitiveGainDemonstrated===false&&!directReceipt.diagnosis.defaultChanged
   &&directReceipt.frozenMetadataAnnotation.frozenOutcomeAltered===false,
   "one lower-compute diagnostic success is not causal, cognitive, default, authority or recursive promotion");
+const reformReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-direct-model-repair-3da83e22.json","utf8"));
+const frozenReform=reformReceipt.frozenReport,reformBytes=Buffer.from(JSON.stringify(frozenReform,null,2)+"\n");
+check(createHash("sha256").update(reformBytes).digest("hex")===reformReceipt.integrity.reportSha256
+  &&reformBytes.length===reformReceipt.integrity.reportBytes&&theoryDigest(frozenReform.freeze)===frozenReform.freezeDigest,
+  "public-model repair receipt reconstructs the exact verified artifact, not a regraded epoch");
+for(const [path,digest] of Object.entries(frozenReform.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_reform_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${reformReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `public-model repair receipt binds historical source ${path}`);
+}
+check(theoryDigest(frozenReform.freeze.configuration)===theoryDigest(DIRECT_REFORMULATION_EPOCH)
+  &&frozenReform.freeze.tasks.length===4&&frozenReform.freeze.tasks.every((b:any)=>DIRECT_REFORMULATION_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "shared repair comparison retains the frozen fresh inputs, model, exact oracle and finite limits");
+const reformAllocated=frozenReform.rows.flatMap((r:any)=>r.run.attempts);
+const reformPhysical=frozenReform.rows.flatMap((r:any)=>r.run.attempts.filter((_:any,i:number)=>!(i===0&&r.sharedProposal.replayed)));
+const reformPrefixes=frozenReform.rows.filter((r:any)=>r.sharedProposal.replayed);
+check(reformPrefixes.length===4&&reformPrefixes.every((r:any)=>{
+  const original=frozenReform.rows.find((a:any)=>a.taskId===r.taskId&&!a.sharedProposal.replayed);
+  return original&&theoryDigest(original.run.attempts[0])===theoryDigest(r.run.attempts[0])
+    &&original.sharedProposal.intentDigest===r.sharedProposal.intentDigest
+    &&original.sharedProposal.sourceEvidenceId===r.sharedProposal.sourceEvidenceId
+    &&r.sharedPrefixChargedMs===r.sharedProposal.prefixElapsedMs&&r.allocatedElapsedMs===r.run.usage.elapsedMs+r.sharedPrefixChargedMs;
+}),"both owned sessions receive the identical first model proposal and charge its inference time without renewing the original budget");
+check(reformAllocated.length===32&&reformPhysical.length===28&&frozenReform.logicalCalls===32&&frozenReform.physicalLogicalCalls===28
+  &&frozenReform.totals.calls===32&&frozenReform.physicalInferenceTotals.calls===28
+  &&frozenReform.totals.reportedTokens===84418&&frozenReform.physicalInferenceTotals.reportedTokens===73397
+  &&reformPhysical.reduce((n:number,a:any)=>n+a.modelEvidence.usage.totalTokens,0)===73397
+  &&reformPrefixes.reduce((n:number,r:any)=>n+r.run.attempts[0].modelEvidence.usage.totalTokens,0)===11021,
+  "four shared-prefix replays are fully charged to both arms but are not invented as four additional physical model calls");
+check(reformPhysical.every((a:any)=>a.modelEvidence.evidenceClass==="E4"&&a.modelEvidence.model===DIRECT_REFORMULATION_EPOCH.model
+  &&a.modelEvidence.statusCode===200&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null
+  &&a.modelEvidence.delivery.httpAttempts===1&&!a.modelEvidence.delivery.authorityRenewed)
+  &&frozenReform.providerStable&&frozenReform.totals.unknownUsageCalls===0&&frozenReform.totals.unknownUsageHttpAttempts===0
+  &&reformReceipt.accounting.physicalUnknownUsageHttpAttempts===0,
+  "all twenty-eight physical deliveries have known usage; the negative result is not a provider or truncation failure");
+check(frozenReform.rows.length===8&&frozenReform.rows.every((r:any)=>r.blocked===null&&r.run.usage.calls===4
+  &&r.run.usage.toolRequests===0&&r.run.attempts.every((a:any)=>a.nativeExecution===null))
+  &&frozenReform.summaries.every((s:any)=>s.graded===4&&s.accepted===0&&s.firstAttemptAccepted===0&&s.repairedAccepted===0&&s.unexecuted===0),
+  "all eight stages reached exact acceptance with no tools, ungraded boundary, first success or successful repair");
+check(reformAllocated.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJECTION").length===8
+  &&reformAllocated.filter((a:any)=>a.call>1&&a.outcome==="FUNCTIONAL_REJECTION").length===20
+  &&reformPhysical.filter((a:any)=>a.outcome==="FUNCTIONAL_REJECTION").length===24
+  &&reformReceipt.accounting.firstAttempts.physicallyGeneratedProposals===4,
+  "allocated first and later failures are not conflated with independent physical proposals or distinct tasks");
+check(frozenReform.summaries[0].formulationCalls===0&&frozenReform.summaries[0].functionalRejections===16
+  &&frozenReform.summaries[1].formulationCalls===4&&frozenReform.summaries[1].admittedFormulations===1
+  &&frozenReform.summaries[1].functionalRejections===12&&frozenReform.summaries[1].outcomes.MODEL_FORMULATION_REJECTION===3
+  &&frozenReform.repairAssessment.firstProposalMatched&&frozenReform.repairAssessment.exposures.length===1
+  &&frozenReform.repairAssessment.exposures[0].repaired===false,
+  "one delivered unverified formulation failed to repair; three contract rejections remain separate interface failures of unknown precise cause");
+check(reformAllocated.filter((a:any)=>a.confidence!==null).length===28
+  &&reformAllocated.filter((a:any)=>a.confidence!==null).every((a:any)=>a.confidence===1&&a.outputStructure.matches&&a.outputStructure.inspectionComplete)
+  &&reformReceipt.frozenMetadataAnnotation.gradedCounterMeaning==="EXACT_ACCEPTANCE_CALLBACK_REACHED_NOT_DIRECT_NONCANONICAL_EQUIVALENCE_CLASSIFICATION",
+  "complete output sets and confidence one do not overrule exact acceptance or establish whether noncanonical values were equivalent");
+check(frozenReform.summaries[0].usage.reportedTokens===44197&&frozenReform.summaries[1].usage.reportedTokens===40221
+  &&frozenReform.pairs.every((p:any)=>p.boundedNoMoreModelCompute)
+  &&frozenReform.pairs.filter((p:any)=>p.realizedComputeMatched).length===1
+  &&frozenReform.pairs.filter((p:any)=>p.repairComputeMatched).length===1
+  &&frozenReform.repairAssessment.verdict==="NO_COMPUTE_DEFENSIBLE_FEEDBACK_ADVANTAGE"
+  &&!frozenReform.repairAssessment.causalPromotionEligible&&!frozenReform.scopedFunctionalSignal&&!frozenReform.scopedRepairSignal
+  &&frozenReform.sourceUnchanged&&frozenReform.complete&&!reformReceipt.diagnosis.cognitiveGainDemonstrated
+  &&!reformReceipt.diagnosis.defaultChanged&&!reformReceipt.diagnosis.authorityChanged,
+  "lower tokens without accepted solutions support no cognitive, efficiency, default, authority or recursion promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

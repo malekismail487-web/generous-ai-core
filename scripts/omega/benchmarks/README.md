@@ -3491,3 +3491,40 @@ build 10.36s, package and independent native replay. Default Ultra and all
 authority/acceptance boundaries remain unchanged. Next isolate direct
 mathematical generation from native-IR generation before adding a mechanism;
 this receipt does not launch that diagnostic.
+
+## Direct/native diagnostic and shared-first public-model repair
+
+The [direct/native receipt](../../../docs/omega/evidence/nyx-direct-native-ad83dc8e.json)
+preserves frozen `ad83dc8e`, run `38245924053`: 15 stable Super calls / 55,474
+tokens. Direct accepted one first proposal of four; native accepted zero;
+neither repaired a rejection. Five native source-reference failures left two
+stages ungraded. A direct-only success with unmatched realized tokens is a
+scoped diagnostic, not broad cognitive or default promotion.
+
+Frozen `3da83e22`, [run 38249820307](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38249820307),
+tested the existing public-model-reformulation mechanism on four new values
+in the same two formal families. Both arms used reasoning-enabled Super,
+no tools, the same physically generated first proposal, owned Omega sessions
+and unchanged exact acceptance. Control and treatment both accepted **0/4**
+first try and **0/4** after repair. The treatment made four formulation calls:
+one unverified proposal was structurally admitted and actually used; three
+failed formulation contracts. Their precise offending fields remain unknown.
+All later exact certificates were rejected, with complete output sets.
+
+All 28 physical calls delivered successfully with known usage: 73,397 tokens.
+Each shared first proposal is fully charged to both arms, giving 32 allocated
+calls / 84,418 tokens, not 32 independent model calls. Control used 44,197
+allocated tokens; treatment 40,221. One pair met the 5% repair-only realized
+token tolerance; every pair used no more treatment compute. Zero solutions
+cannot support an efficiency or cognitive gain. Exact-string rejection was
+not separately assessed for noncanonical mathematical equivalence.
+
+The [verified receipt](../../../docs/omega/evidence/nyx-direct-model-repair-3da83e22.json)
+binds historical sources, tasks, model/configuration, archive SHA256
+`468a4d8bcabe62095d5f9195f48d66c36dd2693c136d405a4e445ea653c97c64`,
+CRC and terminal-log agreement. Clean Linux CI passed 109 suites / 14,834
+checks, TypeScript 5.8.3 zero, build, package and independent arithmetic replay.
+Next diagnose contract and canonicalization failure classes on separate
+development tasks without weakening acceptance or regrading this negative
+epoch. Default Ultra, authority, original benchmark results and the active
+unachieved goal remain unchanged. The temporary one-shot push hook is removed.
