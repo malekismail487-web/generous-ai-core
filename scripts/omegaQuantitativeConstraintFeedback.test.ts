@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { createQuantitativeConstraintFeedback, type QuantitativeNecessaryCondition } from "../src/lib/codelab/research/quantitativeConstraintFeedback";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { runNyxQuantitativeTask, quantitativeModelFormulationStructure } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { runNyxQuantitativeTask, quantitativeModelFormulationStructure,quantitativeModelFormulationSchema } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import { diagnoseProcedureCertificate, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
@@ -698,5 +698,71 @@ const privateValueObservation=diagnoseProcedureCertificate(exactDiagnosisTask,di
 check(!JSON.stringify(privateValueObservation).includes("1/2")&&!JSON.stringify(privateValueObservation).includes("2/4")
   &&Object.isFrozen(privateValueObservation)&&privateValueObservation.diagnosticOnly&&!privateValueObservation.admissionChanged,
   "exact-value diagnosis retains counts/classes, not candidate/reference values, answer hashes or new admission authority");
+// Prospective generation correction on a separate two-output development objective.
+// The live diagnosis remains frozen; this is E3 contract evidence, not a model gain.
+const developmentLabels=["sum","product"];
+const legacyFormSchema=quantitativeModelFormulationSchema(formulationDiagnosisBinding,developmentLabels);
+const boundedFormSchema=quantitativeModelFormulationSchema(formulationDiagnosisBinding,developmentLabels,true);
+check(JSON.stringify(legacyFormSchema)===JSON.stringify({type:"object",additionalProperties:false,required:["problemDigest","equations","assumptions"],
+  properties:{problemDigest:{type:"string",enum:[formulationDiagnosisBinding]},equations:{type:"array",items:{type:"object",additionalProperties:false,
+    required:["label","expression"],properties:{label:{type:"string",enum:developmentLabels},expression:{type:"string"}}}},
+    assumptions:{type:"array",items:{type:"string"}}}}),"default schema preserves the independent pre-correction byte representation");
+check(!("minItems" in legacyFormSchema.properties.equations)&&!("maxItems" in legacyFormSchema.properties.assumptions),
+  "default public formulation schema remains byte-for-byte legacy collection guidance");
+check(boundedFormSchema.properties.equations.minItems===2&&boundedFormSchema.properties.equations.maxItems===2
+  &&boundedFormSchema.properties.assumptions.maxItems===8&&boundedFormSchema.properties.equations.items.properties.expression.minLength===1,
+  "experimental grammar mirrors original output cardinality and assumption count without supplying mathematics");
+for(const count of [1,3,16]){const schema=quantitativeModelFormulationSchema(formulationDiagnosisBinding,Array.from({length:count},(_,i)=>`q${i}`),true);
+  check(schema.properties.equations.minItems===count&&schema.properties.equations.maxItems===count,
+    "formulation guidance derives cardinality from the current objective, not a memorized task");}
+for(const setting of [1,"true",null])check(throws(()=>quantitativeModelFormulationSchema(formulationDiagnosisBinding,developmentLabels,setting as unknown as boolean)),
+  "nonboolean generation profiles are rejected without coercion");
+for(const labels of [[],["same","same"],Array.from({length:17},(_,i)=>`q${i}`)])check(throws(()=>quantitativeModelFormulationSchema(formulationDiagnosisBinding,labels,true)),
+  "bounded formulation schema rejects invalid objective identities and cardinality before inference");
+const developmentForm={problemDigest:formulationDiagnosisBinding,equations:[{label:"product",expression:"one * one"},{label:"sum",expression:"one + one"}],assumptions:[]};
+const developmentForms=[developmentForm,{...developmentForm,equations:[]},
+  {...developmentForm,equations:[developmentForm.equations[0],developmentForm.equations[0]]},
+  {...developmentForm,equations:[{label:"product",expression:" "},developmentForm.equations[1]]},
+  {...developmentForm,assumptions:Array(9).fill("assumption")},
+  {...developmentForm,equations:[{label:"product",expression:"x".repeat(4096)},developmentForm.equations[1]]}];
+for(const candidateForm of developmentForms){const versions:{accepted:boolean;outcomes:string[];calls:number;verified:number;requests:unknown[]}[]=[];
+  for(const boundedModelFormulation of [false,true]){const started=Date.now(),requests:unknown[]=[];let verified=0;
+    const p=NvidiaNimProvider.create({providerId:"FORMULATION-BOUNDS-DEVELOPMENT-E3",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+      credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+      transport:async(_url,init)=>{const wire=JSON.parse(String(init?.body)),isForm=wire.response_format.json_schema.name==="nyx_public_model_formulation";
+        requests.push(wire);if(isForm){const contract=JSON.parse(wire.messages[1].content).formulationContract;
+          check(boundedModelFormulation?contract.requiredCount===2&&contract.maxBytes===4096&&contract.requiredLabels.join(",")==="sum,product":contract===undefined,
+            "only the explicit host profile adds original public output requirements, never private reference values");}
+        return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(isForm?candidateForm:
+          {action:"SUBMIT",analysisRequest:null,certificate:{outputs:developmentLabels.map(label=>({label,value:"0"})),confidence:1}})}}],
+          usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+    const r=await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"FORMULATION-BOUNDS-DEVELOPMENT",objective:"Define the sum and product of the original ones.",
+      problem:contextProblem,outputLabels:developmentLabels,limits:{...modelLimits(),maxCalls:3,expiresAtEpochMs:started+10000},now:()=>started,
+      reformulateAfterRejection:true,boundedModelFormulation,observeModelFormulation:true,complete:q=>p.complete(q),
+      verify:()=>{verified++;return {accepted:false,findings:["INDEPENDENT_DEVELOPMENT_REJECTION"],verificationDigest:theoryDigest("independent-development-rejection")};}});
+    versions.push({accepted:r.accepted,outcomes:r.attempts.map(a=>a.outcome),calls:r.calls,verified,requests});
+    check(r.calls===3&&r.toolRequests===0&&!r.authorityIncrease&&r.attempts[1].formulationStructure!.structurallyValid===(candidateForm===developmentForm),
+      "provider can ignore grammar; duplicates, blank definitions, excess assumptions and bytes still fail unchanged admission");
+    check(!JSON.stringify(r).includes("one * one")&&!JSON.stringify(r).includes("one + one"),"generation profile does not persist public formula text");
+  }
+  check(theoryDigest(versions[0].outcomes)===theoryDigest(versions[1].outcomes)&&versions[0].verified===versions[1].verified
+    &&!versions[0].accepted&&!versions[1].accepted,"generation guidance changes neither admission nor independent scoring of identical responses");
+  const manualSemantics=(request:unknown)=>{const wire=JSON.parse(JSON.stringify(request)),prompt=JSON.parse(wire.messages[1].content);
+    // Different formulation requests legitimately receive different source evidence
+    // identities. Compare semantics while preserving that provenance in real requests.
+    if(prompt.publicModelRevision)delete prompt.publicModelRevision.sourceEvidenceId;
+    wire.messages[1].content=JSON.stringify(prompt);return wire;};
+  check(theoryDigest(versions[0].requests[0])===theoryDigest(versions[1].requests[0])
+    &&theoryDigest(manualSemantics(versions[0].requests[2]))===theoryDigest(manualSemantics(versions[1].requests[2])),
+    "first proposal stays identical; later manual semantics change only in legitimate formulation provenance");
+}
+for(const setting of [1,"true",null])check(await(async()=>{try{await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"INVALID-FORMULATION-BOUNDS",
+  objective:"Define sum and product.",problem:contextProblem,outputLabels:developmentLabels,limits:modelLimits(),reformulateAfterRejection:true,
+  boundedModelFormulation:setting as unknown as boolean,complete:async()=>{throw Error("must_not_infer")},verify:modelVerify});return false;
+  }catch(e){return e instanceof Error&&e.message==="quantitative_formulation_bounds_setting_invalid";}})(),"invalid host formulation settings fail before model calls");
+check(await(async()=>{try{await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"ORPHAN-FORMULATION-BOUNDS",objective:"Define sum and product.",
+  problem:contextProblem,outputLabels:developmentLabels,limits:modelLimits(),boundedModelFormulation:true,
+  complete:async()=>{throw Error("must_not_infer")},verify:modelVerify});return false;
+  }catch(e){return e instanceof Error&&e.message==="quantitative_formulation_bounds_setting_invalid";}})(),"generation profile cannot implicitly enable formulation or extra cognition calls");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

@@ -200,6 +200,26 @@ Keep initial/repaired outcomes, manual submissions, native executions, ungraded 
 
 ## Boundaries and current evidence
 
+**Focused diagnosis completed:** `6ba3d859`, run `38278833093`, finished
+two new parameter cases with ten stable physical calls / 25,309 tokens;
+twelve fully charged allocated calls / 30,834 tokens include shared-prefix
+replays. Both arms accepted zero first or later solutions. All submitted values
+were numerically wrong as written, not mathematically equivalent noncanonical
+strings. One public formulation omitted all three required outputs; the other
+met the structural contract but did not repair the answer. Raw equations and
+reference values remain unretained, so formula correctness is unknown.
+Preserve the [exact diagnostic receipt](../evidence/nyx-quantitative-diagnosis-6ba3d859.json).
+
+**General interface correction, not cognition:** the host-only, default-off
+`boundedModelFormulation` profile makes original output count, assumption count
+and nonempty definitions explicit in generation guidance. It does not fill
+missing mathematics, canonicalize wrong answers, add calls, weaken local
+admission or modify the independent oracle. Separate development tests preserve
+fail-closed behavior when grammar is ignored. Live transfer is not yet measured.
+The numerical failures remain a separate reason to investigate model-created
+parameterized procedures under existing bounded computation, not another
+identical manual-certificate repair epoch or an unverified cognition layer.
+
 **Bounded general correction prepared:** public mathematical reformulation is
 now opt-in for REASONING_MEDIUM as well as the existing workbench arm. Only
 an independently rejected exact certificate can trigger it, once, with a later

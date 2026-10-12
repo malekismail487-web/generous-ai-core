@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Counts-only failure diagnosis and general contract correction (2026-10-12)
+
+Frozen `6ba3d859`, run `38278833093`, completed two new parameter cases in
+two known families. Both direct repair and public-formulation repair accepted
+**0/2** first or later solutions. Ten stable physical Super calls used 25,309
+reported tokens; common prefixes charged to both arms give twelve allocated
+calls / 30,834 tokens. No provider, truncation, syntax or authority failure
+occurred. Neither pair met 5% realized whole-stage or repair-token matching.
+
+The independent value observer classified every submitted value as wrong as
+written, not equivalent noncanonical text. One public formulation met the
+structural contract but failed to repair. The other supplied **zero equations
+for three required outputs**, with matching binding and valid assumption/byte
+bounds. This is a distinct measured interface failure, not the explanation
+for every wrong answer. Mathematical correctness of public formulas is unknown.
+
+Exact artifact SHA256/CRC, source identity, log agreement and original outcomes
+are preserved in the [sanitized receipt](../../../docs/omega/evidence/nyx-quantitative-diagnosis-6ba3d859.json).
+Clean Linux verification passed 109 suites / 15,021 checks, TypeScript 5.8.3
+zero, build and package smoke. This diagnostic earns no cognition promotion.
+
+The resulting **default-off** `boundedModelFormulation` generation profile
+mirrors original equation count, assumption count and nonempty-string guidance
+in the schema and concise public prompt. Independent local admission, unique
+labels, byte bound, oracle, call limits and authority stay unchanged. Separate
+two-output development tests cover ignored schemas, omissions, duplicates,
+whitespace, excessive assumptions/bytes and unchanged scoring. This is an E3
+interface correction; live transfer and numerical improvement remain unproved.
+The temporary push launch hook is removed, with manual-only experiments retained.
+
+Next demonstrated question: can the same generation correction improve
+formulation admission on fresh objectives without worsening correctness or
+spending extra realized compute? Next theoretical question: can a model-created
+parameterized procedure offload repeated exact arithmetic and survive unseen
+instances? Reuse existing finite-IR/procedure capabilities; do not supply an
+authored solution, expose the oracle, add a brain layer or weaken acceptance.
+
 ### Direct reasoning versus native-tool diagnostic (2026-10-12)
 
 Frozen `ad83dc8e`, run `38245924053`, completed four fresh parameter cases

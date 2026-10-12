@@ -1631,5 +1631,53 @@ for(const successfulTreatment of [false,true]){
     .every(a=>a.formulationStructure!.structurallyValid&&!a.formulationStructure!.grantsAuthority)),
     "public evidence projection retains bounded formulation counts but no equation text");
 }
+const diagnosisReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-quantitative-diagnosis-6ba3d859.json","utf8"));
+const frozenDiagnosis=diagnosisReceipt.frozenReport,diagnosisBytes=Buffer.from(JSON.stringify(frozenDiagnosis,null,2)+"\n");
+check(createHash("sha256").update(diagnosisBytes).digest("hex")===diagnosisReceipt.integrity.reportSha256
+  &&diagnosisBytes.length===diagnosisReceipt.integrity.reportBytes&&theoryDigest(frozenDiagnosis.freeze)===frozenDiagnosis.freezeDigest,
+  "counts-only diagnosis receipt reconstructs the exact archive report and frozen identity");
+for(const [path,digest] of Object.entries(frozenDiagnosis.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_diagnosis_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${diagnosisReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `counts-only diagnosis retains historical source ${path}`);
+}
+check(theoryDigest(frozenDiagnosis.freeze.configuration)===theoryDigest(QUANTITATIVE_DIAGNOSIS_EPOCH)
+  &&frozenDiagnosis.freeze.corpusDigest===QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST
+  &&frozenDiagnosis.freeze.tasks.length===2&&frozenDiagnosis.freeze.tasks.every((b:any)=>QUANTITATIVE_DIAGNOSIS_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "diagnosis freezes two prospective cases, unchanged exact oracle, model and finite limits");
+const diagnosticAllocated=frozenDiagnosis.rows.flatMap((r:any)=>r.run.attempts);
+const diagnosticPhysical=frozenDiagnosis.rows.flatMap((r:any)=>r.run.attempts.filter((_:any,i:number)=>!(i===0&&r.sharedProposal.replayed)));
+check(diagnosticAllocated.length===12&&diagnosticPhysical.length===10&&frozenDiagnosis.totals.calls===12
+  &&frozenDiagnosis.physicalInferenceTotals.calls===10&&frozenDiagnosis.totals.reportedTokens===30834
+  &&frozenDiagnosis.physicalInferenceTotals.reportedTokens===25309
+  &&diagnosticPhysical.reduce((n:number,a:any)=>n+a.modelEvidence.usage.totalTokens,0)===25309,
+  "twelve allocated calls are ten physical calls; 5525 common-prefix tokens are charged twice, not invented compute");
+check(frozenDiagnosis.rows.filter((r:any)=>r.sharedProposal.replayed).length===2
+  &&frozenDiagnosis.rows.filter((r:any)=>r.sharedProposal.replayed).every((r:any)=>{const original=frozenDiagnosis.rows.find((a:any)=>a.taskId===r.taskId&&!a.sharedProposal.replayed);
+    return theoryDigest(original.run.attempts[0])===theoryDigest(r.run.attempts[0])&&original.sharedProposal.sourceEvidenceId===r.sharedProposal.sourceEvidenceId
+      &&r.sharedPrefixChargedMs===r.sharedProposal.prefixElapsedMs&&r.allocatedElapsedMs===r.run.usage.elapsedMs+r.sharedPrefixChargedMs;}),
+  "diagnostic common starts preserve owned sessions, identical evidence and original elapsed budgets");
+check(diagnosticPhysical.every((a:any)=>a.modelEvidence.evidenceClass==="E4"&&a.modelEvidence.model===QUANTITATIVE_DIAGNOSIS_EPOCH.model
+  &&a.modelEvidence.statusCode===200&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.delivery.httpAttempts===1)
+  &&frozenDiagnosis.providerStable&&frozenDiagnosis.totals.unknownUsageCalls===0&&frozenDiagnosis.totals.unknownUsageHttpAttempts===0,
+  "ten stable deliveries leave observed mathematical and formulation failures separate from provider failures");
+const numericObservations=frozenDiagnosis.rows.flatMap((r:any)=>r.certificateValueDiagnostics);
+check(numericObservations.length===10&&numericObservations.every((d:any)=>d.value.verdict==="AS_WRITTEN_NUMERIC_MISMATCH"
+  &&d.value.incorrectExactValueCount===d.value.expectedOutputs&&d.value.canonicalExactMatchCount===0
+  &&d.value.equivalentNoncanonicalCount===0&&d.value.unclassifiedValueTextCount===0&&!d.value.admissionChanged)
+  &&numericObservations.reduce((n:number,d:any)=>n+d.value.incorrectExactValueCount,0)===25,
+  "all allocated values are wrong as written, not unclassified text or equivalent noncanonical serialization");
+const structuralObservations=diagnosticAllocated.filter((a:any)=>a.formulationStructure);
+const missingForm=structuralObservations.find((a:any)=>a.outcome==="MODEL_FORMULATION_REJECTION")?.formulationStructure;
+check(structuralObservations.length===2&&structuralObservations.filter((a:any)=>a.outcome==="MODEL_FORMULATION_READY_NOT_EXECUTED").length===1
+  &&missingForm?.problemBinding==="MATCH"&&missingForm.actualEquations===0&&missingForm.expectedOutputs===3&&missingForm.missingLabels===3
+  &&missingForm.inspectionComplete&&theoryDigest(missingForm.reasons)===theoryDigest(["EQUATION_COUNT","OUTPUT_LABEL_SET"]),
+  "one public formulation is structurally admitted; the other omitted all original outputs under otherwise valid bounds");
+check(frozenDiagnosis.complete&&frozenDiagnosis.sourceUnchanged&&frozenDiagnosis.rows.every((r:any)=>r.blocked===null&&r.run.usage.toolRequests===0)
+  &&frozenDiagnosis.summaries.every((s:any)=>s.attempted===2&&s.graded===2&&s.accepted===0&&s.firstAttemptAccepted===0&&s.repairedAccepted===0)
+  &&frozenDiagnosis.pairs.every((p:any)=>p.boundedNoMoreModelCompute&&!p.realizedComputeMatched&&!p.repairComputeMatched)
+  &&frozenDiagnosis.diagnosticOnly&&!frozenDiagnosis.scopedFunctionalSignal&&!frozenDiagnosis.scopedRepairSignal
+  &&frozenDiagnosis.repairAssessment.verdict==="DIAGNOSTIC_ONLY_NOT_A_PROMOTION_EPOCH"&&!frozenDiagnosis.repairAssessment.causalPromotionEligible,
+  "complete negative diagnosis, fewer tokens and a valid public shape never imply cognitive or default promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

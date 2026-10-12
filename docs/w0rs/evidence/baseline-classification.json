@@ -7443,6 +7443,7 @@
           "scripts/omegaLuminaLiveBoundary.test.ts",
           "scripts/omegaNyxConnectomeCognitionAdapter.test.ts",
           "scripts/omegaNyxTextBenchmark.test.ts",
+          "scripts/omegaQuantitativeConstraintFeedback.test.ts",
           "scripts/orchestraO2.test.ts",
           "src/components/SubjectsSection.tsx",
           "src/components/admin/BudgetOptimizationReport.tsx",

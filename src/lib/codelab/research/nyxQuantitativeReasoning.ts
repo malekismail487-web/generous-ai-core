@@ -165,11 +165,14 @@ export function quantitativeModelFormulationStructure(problemDigest:string,label
     malformedAssumptions,reasons,grantsAuthority:false});
 }
 /** Public mathematical artifact, NOT private reasoning, executable syntax, or a certificate. */
-export function quantitativeModelFormulationSchema(problemDigest:string,labels:readonly string[]){
-  const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
+export function quantitativeModelFormulationSchema(problemDigest:string,labels:readonly string[],boundedCollections=false){
+  if(typeof boundedCollections!=="boolean")throw Error("quantitative_formulation_bounds_setting_invalid");
+  const requiredLabels=boundedCollections?objectiveLabels(labels):labels;
+  const object=<T extends Record<string,unknown>>(properties:T)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   return object({problemDigest:{type:"string",enum:[problemDigest]},
-    equations:{type:"array",items:object({label:{type:"string",enum:labels},expression:{type:"string"}})},
-    assumptions:{type:"array",items:{type:"string"}}});
+    equations:{type:"array",...(boundedCollections?{minItems:requiredLabels.length,maxItems:requiredLabels.length}:{}),
+      items:object({label:{type:"string",enum:requiredLabels},expression:{type:"string",...(boundedCollections?{minLength:1}:{})}})},
+    assumptions:{type:"array",...(boundedCollections?{maxItems:8}:{}),items:{type:"string",...(boundedCollections?{minLength:1}:{})}}});
 }
 /** Legacy guidance uses structural keywords; stricter collection bounds are opt-in.
  * Native semantic and whole-program resource validation always remain independent. */
@@ -231,6 +234,9 @@ export async function runNyxQuantitativeTask(input: {
   /** Host opt-in counts-only diagnosis. Does not alter model requests, admission,
    * verification feedback, budgets or authority; no raw formulation is retained. */
   readonly observeModelFormulation?:boolean;
+  /** Host-selected generation guidance only. Mirrors existing formulation bounds;
+   * does not fill equations, accept duplicates, alter verification or add calls. */
+  readonly boundedModelFormulation?:boolean;
   /** Host-only experimental procedure reuse. The actual model must select the
    * bound invocation; a descriptor is not automatic execution or acceptance. */
   readonly procedure?: Readonly<{ artifact: BoundQuantitativeProcedure; mode: "CONTEXT_ONLY" | "BOUND_INVOCATION" }>;
@@ -251,6 +257,9 @@ export async function runNyxQuantitativeTask(input: {
   if(input.objectiveOutputContract!==undefined)objectiveLabels(input.outputLabels);
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   if(input.observeModelFormulation!==undefined&&typeof input.observeModelFormulation!=="boolean")throw Error("quantitative_formulation_observation_setting_invalid");
+  if(input.boundedModelFormulation!==undefined&&(typeof input.boundedModelFormulation!=="boolean"
+    ||input.boundedModelFormulation&&!input.reformulateAfterRejection))throw Error("quantitative_formulation_bounds_setting_invalid");
+  if(input.boundedModelFormulation)objectiveLabels(input.outputLabels);
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
     ||input.reformulateAfterRejection&&!["REASONING_MEDIUM","REASONING_WITH_WORKBENCH"].includes(input.arm)))throw Error("quantitative_model_formulation_setting_invalid");
   if(input.createReusableProcedure!==undefined&&(typeof input.createReusableProcedure!=="boolean"
@@ -375,11 +384,16 @@ export async function runNyxQuantitativeTask(input: {
           {role:"user",content:JSON.stringify({...task,problemDigest:session.problemDigest,failedObservation:observation,
             lastAdmittedEquations:admittedDerivation?.program??null,independentFeedback:feedback,
             requirement:"Define each named output mathematically from the original constants and explicitly state necessary assumptions.",
+            ...(input.boundedModelFormulation?{formulationContract:{version:"nyx-public-formulation-generation/1",
+              requiredLabels:task.outputLabels,requiredCount:task.outputLabels.length,maxAssumptions:8,maxBytes:MAX_MODEL_FORMULATION_BYTES,
+              instruction:"Supply one nonempty mathematical definition for EACH original required output, exactly once in any order. "
+                +"Do not return an empty equation list or substitute assumptions for output definitions. Derive your own expressions from the original constants; "
+                +"no missing definition is synthesized. Schema guidance cannot establish mathematical correctness or grant authority."}}:{}),
             authority:"NONE_PUBLIC_MODEL_PROPOSAL_ONLY"})}]:
         [{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
           {role:"user",content:JSON.stringify({...prompt,...procedurePrompt,...generationPrompt,...outputPrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
-        responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels)}:
+        responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels,!!input.boundedModelFormulation)}:
         {type:"JSON_SCHEMA",name:input.nativeExpressionGraph?"nyx_quantitative_expression_exchange":input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
           invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds,!!input.nativeExpressionGraph,
