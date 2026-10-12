@@ -50,6 +50,10 @@ import { SHARED_GUARDED_REPAIR_TASKS, SHARED_GUARDED_REPAIR_EPOCH, sharedGuarded
   type SharedGuardedWireControl } from "./omega/benchmarks/sharedGuardedRepairTasks";
 import { executeSharedGuardedStage, inspectSharedGuardedCaptures, sharedGuardedStageBounds,
   SHARED_GUARDED_LIMITS } from "./omega/nyx-shared-guarded-repair";
+import { SOURCE_SITE_REPAIR_EPOCH, SOURCE_SITE_REPAIR_TASKS, sourceSiteRepairTasks, sourceSiteRepairConfiguration,
+  sourceSitePairAssessment } from "./omega/benchmarks/sourceSiteRepairFreshTasks";
+import { SOURCE_SITE_TRANSFER_LIMITS, sourceSiteWireVerified, sourceSiteRepairComputeMatched,
+  type SourceSiteWireControl } from "./omega/nyx-source-site-transfer";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
 import { LOCAL_REFACTOR_TRANSFER_TASKS, localRefactorTransferConfiguration,
@@ -2427,6 +2431,113 @@ for(const probe of SOURCE_LITERAL_PROBES) {
     provider(async()=>{throw Error("expired_must_not_invoke");},SHARED_GUARDED_LIMITS.model));
   check(expired.row.infrastructureFailure&&expired.row.usage.physicalCalls===0&&expired.returnedSource===null,
     "expired sandbox creation returns bounded infrastructure evidence without model dispatch or lease renewal");
+}
+{
+  const fresh = sourceSiteRepairTasks();
+  check(fresh.length === 4 && new Set(fresh.map(task => task.id)).size === 4
+    && new Set(fresh.map(task => task.domain)).size === 2 && SOURCE_SITE_REPAIR_EPOCH.authoredCandidates === false,
+    "source-site epoch freezes two objective domains and two repeats without treating repeats as independent tasks");
+  const control = sourceSiteRepairConfiguration("WHOLE_SOURCE"), treatment = sourceSiteRepairConfiguration("SOURCE_SITES");
+  const { sourceSiteEmission: _site, ...common } = treatment;
+  check(theoryDigest(control) === theoryDigest(common) && treatment.sourceSiteEmission === "SOURCE_BOUND_FRAGMENTS",
+    "source-site treatment changes only optional fragment emission, not reasoning compute, source policy or acceptance");
+  rejects(() => sourceSiteRepairConfiguration("RELAX" as never), "unknown source-site arm does not relax acceptance");
+  check(SOURCE_SITE_TRANSFER_LIMITS.model === SHARED_GUARDED_LIMITS.model && SOURCE_SITE_TRANSFER_LIMITS.modelCallsMaximum === 12
+    && !SOURCE_SITE_TRANSFER_LIMITS.sourceMutations && !SOURCE_SITE_TRANSFER_LIMITS.defaultChanged,
+    "fresh source-site trial retains separately labeled Super and finite existing authority and provider budgets");
+  const wire: SourceSiteWireControl = { model: SOURCE_SITE_TRANSFER_LIMITS.model, outputTokens: 8192, effort: "high", reasoningBudget: 2048,
+    temperature: 0, policy: SOURCE_SITE_REPAIR_EPOCH.admissionPolicyId, initial: false, originalBudgetVersion: null,
+    originalBudgetPolicy: null, qualityPhase: true, sites: 3, siteVersion: "nyx-source-bound-site-emission/1",
+    binding: "a".repeat(64), siteSchema: true, hostSelectionSchema: false, promptDigest: "b".repeat(64), schemaDigest: "c".repeat(64) };
+  check(sourceSiteWireVerified("SOURCE_SITES", [wire]), "source-site wire binds a real quality phase, catalogue and closed provider schema");
+  for (const altered of [{ ...wire, model: "other" }, { ...wire, outputTokens: 16384 }, { ...wire, reasoningBudget: 4096 },
+    { ...wire, qualityPhase: false }, { ...wire, sites: 33 }, { ...wire, binding: "stale" }, { ...wire, hostSelectionSchema: true }])
+    check(!sourceSiteWireVerified("SOURCE_SITES", [altered]), "scope/model/compute/catalogue or interface drift prevents attribution");
+  check(!sourceSiteWireVerified("WHOLE_SOURCE", [wire]) && !sourceSiteWireVerified("SOURCE_SITES", [wire, wire]),
+    "source-site treatment cannot masquerade as whole-source control or spend an additional unaccounted call");
+  const dormant = { ...wire, sites: 0, siteVersion: null, binding: null, siteSchema: false };
+  check(sourceSiteWireVerified("SOURCE_SITES", [dormant]) && sourceSiteWireVerified("WHOLE_SOURCE", [dormant]),
+    "honest zero catalogue remains valid delivery evidence, not evidence of mechanism efficacy");
+  const first = { candidateSourceDigest: "d".repeat(64), functionalAccepted: true, quality: "REJECTED" };
+  const base = { accepted: false, perIteration: [first] }, next = { accepted: true, perIteration: [first], sourceSiteReceipts: [{ outcome: "RESOLVED" }] };
+  const initial = { sourceDigest: first.candidateSourceDigest, live: true, stable: true };
+  check(sourceSitePairAssessment(initial, base, next, true).qualifyingQualityRepairGain,
+    "source-site attribution requires the exact same independently correct but quality-rejected live start");
+  for (const altered of [{ ...initial, live: false }, { ...initial, stable: false }, { ...initial, sourceDigest: "e".repeat(64) }])
+    check(!sourceSitePairAssessment(altered, base, next, true).qualifyingQualityRepairGain,
+      "authored, unstable or different source cannot earn fresh live causal credit");
+  check(!sourceSitePairAssessment(initial, base, { ...next, sourceSiteReceipts: [] }, true).qualifyingQualityRepairGain
+    && !sourceSitePairAssessment(initial, base, next, false).qualifyingQualityRepairGain
+    && !sourceSitePairAssessment(initial, { ...base, accepted: true }, next, true).qualifyingQualityRepairGain,
+    "unexercised interface, extra compute and equal successes cannot become a cognitive improvement claim");
+  const references = [
+    `export function transform(input) {
+  const points = [...new Set(input.flatMap(segment => [segment.start, segment.end]))].sort((a,b) => a-b);
+  const runs = []; let integral = 0;
+  for (let index = 0; index + 1 < points.length; index++) {
+    const start = points[index], end = points[index+1];
+    const weight = input.reduce((sum,segment) => sum + (segment.start <= start && segment.end >= end ? segment.weight : 0),0);
+    integral += weight * (end-start);
+    if (!weight) continue;
+    const last = runs.at(-1);
+    if (last && last[1] === start && last[2] === weight) last[1] = end;
+    else runs.push([start,end,weight]);
+  }
+  return [runs,integral];
+}`,
+    `export function transform(input) {
+  const from = [...input.from], to = [...input.to];
+  const table = Array.from({length:from.length+1},()=>Array(to.length+1));
+  for (let i = from.length; i >= 0; i--) for (let j = to.length; j >= 0; j--) {
+    const choices = [];
+    if (i < from.length) choices.push([table[i+1][j][0]+1,"D"+table[i+1][j][1]]);
+    if (j < to.length) choices.push([table[i][j+1][0]+1,"I"+table[i][j+1][1]]);
+    if (i < from.length && j < to.length) choices.push([table[i+1][j+1][0]+(from[i]===to[j]?0:2),(from[i]===to[j]?"M":"R")+table[i+1][j+1][1]]);
+    choices.sort((a,b)=>a[0]-b[0] || (a[1]<b[1]?-1:a[1]>b[1]?1:0));
+    table[i][j] = choices[0] ?? [0,""];
+  }
+  return table[0][0];
+}`,
+  ];
+  for (const [index, task] of SOURCE_SITE_REPAIR_TASKS.entries()) {
+    const reference = new Function(references[index].replace("export function", "return function"))() as (input: unknown) => unknown;
+    for (const test of [...task.publicCases, ...task.privateCases]) check(theoryDigest(reference(structuredClone(test.input))) === theoryDigest(test.expected),
+      "finite-cell/exhaustive-path oracle agrees with an independently implemented event-sweep/dynamic-programming witness");
+    const marker = "ENGINEERING_PREDICTIONS " + JSON.stringify(task.privateCases.map(c => ({ value: c.expected, inputUnchanged: true, resultDetached: true })));
+    check(scoreRepresentationArtifact(task, marker).accepted && !scoreRepresentationArtifact(task, marker + "\n" + marker).accepted,
+      "fresh exact grader remains strict about complete unambiguous evidence");
+    check(!representationRepositoryFiles(task)["tools/verify.mjs"].includes(JSON.stringify(task.privateCases)),
+      "private expected answers and evaluator reference sources do not enter repository observations");
+    const stage = await executeSharedGuardedStage(task, "a".repeat(40), Date.now()+60000, "SHARED_INITIAL",
+      provider(async () => reply(intent(references[index])), SHARED_GUARDED_LIMITS.model), undefined, "SOURCE_SITES_FRESH_1");
+    check(stage.row.functionalAccepted && !stage.row.infrastructureFailure && stage.returnedSource !== null
+      && contentHash(stage.returnedSource) === stage.row.perIteration[0].candidateSourceDigest
+      && stage.row.evidenceClass !== "E4" && sharedGuardedStageBounds(stage.row),
+      "new task uses the same real disposable executor and independent private grading without relabeling the test double as live");
+    check(sourceSiteRepairComputeMatched(stage.row, stage.row)
+      && !sourceSiteRepairComputeMatched(stage.row, { ...stage.row, usage: { ...stage.row.usage, physicalCalls: 4 } }),
+      "repair matching rejects extra realized provider compute despite equal nominal token ceilings");
+  }
+  for (const [variant, trial] of [["SOURCE_SITES", undefined], ["V4_COVERAGE", "SOURCE_SITES_FRESH_1"],
+    ["WHOLE_SOURCE", "UNKNOWN"]] as const) {
+    let rejected = false;
+    try { await executeSharedGuardedStage(SOURCE_SITE_REPAIR_TASKS[0], "a".repeat(40), Date.now()+60000,
+      variant as never, provider(async () => { throw Error("must_not_invoke"); }, SHARED_GUARDED_LIMITS.model), "source", trial as never); }
+    catch { rejected = true; }
+    check(rejected, "unknown or mixed evaluation profiles fail before creating or executing a candidate");
+  }
+  const raw = JSON.stringify({ decision: "PROPOSE_SOURCE_SITES", edits: [{ siteRef: "SOURCE-SITE-test", lines: ["const count=0;"], lineEnding: "LF" }] });
+  const receipt = { version: "nyx-source-bound-site-emission/1", outcome: "RESOLVED", reason: "bound", bindingDigest: "a".repeat(64),
+    selectedSiteRefs: ["SOURCE-SITE-test"], inputDigest: theoryDigest(JSON.parse(raw)), outputDigest: "b".repeat(64),
+    sourceDigests: [{ path: "src/transform.mjs", base: "c".repeat(64), proposed: "d".repeat(64) }],
+    sourceOrigin: "MODEL_GENERATED_FRAGMENTS_NOT_HOST_ALGORITHM", semanticEquivalenceCertified: false, authorityGranted: false, acceptanceGranted: false } as const;
+  const inspect = (sourceSiteEmission: typeof receipt | undefined) => inspectNyxSourceEmission({ content: raw, finishReason: "stop",
+    providerResponseDigest: contentHash(raw), expectedTarget: "src/transform.mjs", representation: "LINES", sourceSiteEmission });
+  check((await inspect(receipt)).outcome === "SOURCE_SITE_RESOLVED" && (await inspect(receipt)).sourceDigest === receipt.sourceDigests[0].proposed,
+    "emission diagnostics correlate reified source digest without persisting model fragments or granting acceptance");
+  check((await inspect(undefined)).outcome === "SOURCE_SITE_REFUSED"
+    && (await inspect({ ...receipt, inputDigest: "e".repeat(64) })).outcome === "SOURCE_SITE_REFUSED",
+    "missing or unrelated reification receipt cannot silently classify arbitrary source-site text as valid code");
 }
 console.log(`passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

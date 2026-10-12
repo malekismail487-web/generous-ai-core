@@ -1,0 +1,46 @@
+name: Omega NYX source-site fresh matched repair
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-site-transfer:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-source-sites-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify fresh independent oracles, source-site confinement and unchanged admission
+        run: |
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaArcNyxIntegration.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3DNyxNemotronCognition.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaR3EBoundedRepairLoop.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaCandidateEngineeringAdmission.test.ts
+          npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-source-site-transfer.ts scripts/omegaArcNyxIntegration.test.ts
+      - name: Generate shared live starts and compare one-call whole-source and source-site repairs
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-source-site-transfer.ts
+      - name: Preserve sanitized evidence without sources or private reasoning
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-source-site-transfer-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-source-site-transfer-*.json
+          if-no-files-found: error

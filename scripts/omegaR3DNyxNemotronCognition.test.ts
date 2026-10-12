@@ -1923,6 +1923,21 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
   check(result.decision === "PROPOSED" && result.hypothesis?.changes[0].replacementContent === proposed
     && result.evidence.sourceSiteEmission?.outcome === "RESOLVED" && !result.omegaAuthorityGranted,
     "existing cognition/compiler derives an ordinary host-hashed edit from model-written fragments");
+  const longWire = wire(entry.siteRef, ['const third = input.initial' + ' + 0'.repeat(40) + ';']);
+  const safeHost = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-SITE-FORMAT-BOUNDARY",
+    provider: provider(transportFor(JSON.stringify(longWire))), maxPromptBytes: 50000, maxOutputTokens: 1024,
+    sourceRepresentation: "LINES", sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS", intentCompilationMode: "SAFE_CANONICALIZATION" });
+  const longResult = await safeHost.proposeRepair(req);
+  check(longResult.decision === "COGNITION_ERROR" && longResult.evidence.sourceSiteEmission?.outcome === "RESOLVED"
+    && longResult.evidence.intentCompilation.mode === "STRICT" && !longResult.hypothesis,
+    "resolved fragments cannot trigger whole-file canonical formatting of untouched source; overlong local edits fail unchanged line limits");
+  const safeShortHost = NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-SITE-FORMAT-SHORT",
+    provider: provider(transportFor(JSON.stringify(wire()))), maxPromptBytes: 50000, maxOutputTokens: 1024,
+    sourceRepresentation: "LINES", sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS", intentCompilationMode: "SAFE_CANONICALIZATION" });
+  const shortResult = await safeShortHost.proposeRepair(req);
+  check(shortResult.decision === "PROPOSED" && shortResult.hypothesis?.changes[0].replacementContent === proposed
+    && shortResult.evidence.sourceSiteEmission?.sourceDigests[0].proposed === shortResult.hypothesis.changes[0].replacementContentHash,
+    "safe-canonicalization host still preserves exactly reified site source and receipt identity on ordinary bounded fragments");
   check((await host(false, wire()).proposeRepair(req)).decision === "COGNITION_ERROR",
     "the new action has no authority or acceptance when its host opt-in is absent");
   for (const altered of [{ ...wire(), changes: [] }, { ...wire(), selectedProposalRef: "FORGED" },
@@ -1953,7 +1968,7 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
     && buildNyxSourceSiteCatalog(makeRequest(program, { allowedMutationPaths: [] })) === null,
     "no catalog is invented before provenance-bound passing quality feedback or outside mutation scope");
   const schema = withNyxSourceSiteSchema(buildNyxRepairIntentContract(req, "LINES", true).providerSchema, catalog);
-  const validator = new Ajv({ strict: false }).compile(schema);
+  const validator = new Ajv().compile(schema);
   check(validator(wire()) && !validator({ ...wire(), changes: [] }) && !validator(wire("UNKNOWN")),
     "provider gets a separate closed schema branch without weakening ordinary complete-source schema");
   const noOpportunity = makeRequest('export function fold(input) { return input; }\n');

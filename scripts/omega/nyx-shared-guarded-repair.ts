@@ -15,6 +15,7 @@ import { inspectNyxSourceEmission } from "./nyx-source-emission-diagnostics";
 import { v3NativeReasoningConfiguration } from "./benchmarks/v3NativeReasoningTransferTasks";
 import { SHARED_GUARDED_REPAIR_EPOCH, sharedGuardedRepairTasks, sharedGuardedRepairConfiguration,
   sharedGuardedWireVerified, sharedGuardedPairAssessment, type SharedGuardedWireControl } from "./benchmarks/sharedGuardedRepairTasks";
+import { SOURCE_SITE_REPAIR_EPOCH, sourceSiteRepairConfiguration, type SourceSiteRepairVariant } from "./benchmarks/sourceSiteRepairFreshTasks";
 
 export const SHARED_GUARDED_LIMITS = Object.freeze({model:"nvidia/nemotron-3-super-120b-a12b",temperature:0,
   maxOutputTokens:8192,reasoningTokens:2048,maxPromptBytes:48000,maxPatchBytes:12000,providerTimeoutMs:65000,
@@ -27,7 +28,8 @@ export const SHARED_GUARDED_LIMITS = Object.freeze({model:"nvidia/nemotron-3-sup
   wallClockPolicy:"SHARED_STAGE_ELAPSED_CHARGED_TO_EACH_ARM_IDLE_OTHER_ARM_TIME_REPORTED_AT_EPOCH_LEVEL_NO_LEASE_RENEWAL",
   sourceMutations:false,generalShell:false,generalNetwork:false,production:false,hostileCodeSandbox:false,
   candidateNetworkIsolation:"NOT_PROVEN",defaultChanged:false,broadPromotion:"NONE"});
-type StageVariant="SHARED_INITIAL"|"V3_CONTROL"|"V4_COVERAGE";
+type GuardedStageVariant="SHARED_INITIAL"|"V3_CONTROL"|"V4_COVERAGE";
+type StageVariant=GuardedStageVariant|"WHOLE_SOURCE"|"SOURCE_SITES";
 type LoopResult=Awaited<ReturnType<R3BoundedRepairLoop["run"]>>;
 const evidenceFor=(result:LoopResult|null)=>[...(result?.iterations.map(i=>i.cognitionEvidence)??[]),
   ...(result?.cognitionFailures.map(i=>i.cognitionEvidence)??[]),...(result?.evidenceAcquisitions.map(i=>i.cognitionEvidence)??[]),
@@ -39,8 +41,10 @@ const evidenceFor=(result:LoopResult|null)=>[...(result?.iterations.map(i=>i.cog
  * returnedSource is transient data and must never enter logs or the report.
  */
 export async function executeSharedGuardedStage(task:RepresentationTask,candidate:string,deadline:number,
-  variant:StageVariant,provider:NvidiaNimProvider,replaySource?:string) {
-  if(!["SHARED_INITIAL","V3_CONTROL","V4_COVERAGE"].includes(variant)
+  variant:StageVariant,provider:NvidiaNimProvider,replaySource?:string,trial?:"SOURCE_SITES_FRESH_1") {
+  if(trial!==undefined&&trial!=="SOURCE_SITES_FRESH_1")throw Error("shared_stage_trial_invalid");
+  const sourceSites=trial==="SOURCE_SITES_FRESH_1", epoch=sourceSites?SOURCE_SITE_REPAIR_EPOCH:SHARED_GUARDED_REPAIR_EPOCH;
+  if(!(sourceSites?["SHARED_INITIAL","WHOLE_SOURCE","SOURCE_SITES"]:["SHARED_INITIAL","V3_CONTROL","V4_COVERAGE"]).includes(variant)
     ||(variant==="SHARED_INITIAL")!==(replaySource===undefined)
     ||provider.profile().model!==SHARED_GUARDED_LIMITS.model)throw Error("shared_stage_config_invalid");
   const began=Date.now();
@@ -57,11 +61,12 @@ export async function executeSharedGuardedStage(task:RepresentationTask,candidat
       sourceRepresentation:"LINES",intentCompilationMode:"SAFE_CANONICALIZATION",repairFeedbackPolicy:"TRANSIENT_REJECTED_SOURCE_WINDOW",
       experimentVariant:"CURRENT",comparisonInferencePolicy:"CONSTRAINED_JSON",preserveProviderArrayBounds:true,
       comparisonReasoningControl:"SUPER_HOSTED_NATIVE",
-      ...(variant==="SHARED_INITIAL"?v3NativeReasoningConfiguration("NATIVE_BOUNDED_REASONING"):sharedGuardedRepairConfiguration(variant))});
+      ...(sourceSites?sourceSiteRepairConfiguration(variant as SourceSiteRepairVariant)
+        :variant==="SHARED_INITIAL"?v3NativeReasoningConfiguration("NATIVE_BOUNDED_REASONING"):sharedGuardedRepairConfiguration(variant))});
     const replay=replaySource===undefined?null:suppliedCandidateThenLive(live,replaySource);
     fixtureEvidence=replay?.fixtureEvidence??[];
-    const loop=R3BoundedRepairLoop.create({loopId:`SHARED-${task.id}-${variant}`,evaluatorVersion:SHARED_GUARDED_REPAIR_EPOCH.version,
-      observerIdentity:"EXISTING-OMEGA-SHARED-CANDIDATE-EVALUATOR",candidateAdmissionPolicyId:SHARED_GUARDED_REPAIR_EPOCH.admissionPolicyId,
+    const loop=R3BoundedRepairLoop.create({loopId:`SHARED-${task.id}-${variant}`,evaluatorVersion:epoch.version,
+      observerIdentity:"EXISTING-OMEGA-SHARED-CANDIDATE-EVALUATOR",candidateAdmissionPolicyId:epoch.admissionPolicyId,
       cognition:replay?.cognition??live,candidateBuilder:{builderIdentity:"EXISTING-OMEGA-R3",prepare:h=>activeSession.prepare(h)},
       maxIterations:replay?2:1,maxModelInteractions:replay?2:1,maxCognitionCorrections:0,
       maxWallClockMs:Math.max(100,deadline-Date.now()-5000),maxChangesPerIteration:1,maxPatchBytesPerIteration:12000,maxDiagnosisCharacters:1500});
@@ -110,6 +115,7 @@ export async function executeSharedGuardedStage(task:RepresentationTask,candidat
     terminalProviderDelivery:result?.lastCognitionEvidence?.delivery??null,
     schemaFailureClasses:result?.cognitionFailures.map(f=>({reason:f.reason,categories:f.diagnostics.map(d=>d.category)}))??[],
     guardedSelectionReceipts:liveEvidence.flatMap(e=>e.refactorSelection?[e.refactorSelection]:[]),cleanup,
+    ...(sourceSites?{sourceSiteReceipts:liveEvidence.flatMap(e=>e.sourceSiteEmission?[e.sourceSiteEmission]:[])}:{}),
     repairedAccepted:final.accepted&&(result?.iterations.length??0)>1&&usage.physicalCalls>0,
     retainedReplayWithoutLiveRepair:replaySource!==undefined&&(result?.iterations.length??0)===1&&usage.physicalCalls===0,
     privateScorerWorkUnits:perIteration.reduce((n,i)=>n+i.privateScorerWorkUnits,0)};
@@ -169,7 +175,7 @@ export async function runSharedGuardedRepairEpoch() {
   const freezeDigest=theoryDigest({candidate,frozen,sourceDigests,tasks});
   console.log(`NYX_REPRESENTATION_FREEZE ${JSON.stringify({candidate,frozen,sourceDigests,tasks,freezeDigest})}`);
   const began=Date.now(),globalDeadline=began+frozen.globalWallClockMs,results:any[]=[],initialResults:any[]=[],pairs:any[]=[];
-  const run=async(task:RepresentationTask,variant:StageVariant,remainingMs:number,replaySource?:string)=>{
+  const run=async(task:RepresentationTask,variant:GuardedStageVariant,remainingMs:number,replaySource?:string)=>{
     const controls:SharedGuardedWireControl[]=[],captures:{content:string|null;finishReason:string|null}[]=[];
     const provider=NvidiaNimProvider.create({providerId:`NYX-SHARED-${variant}`,model:frozen.model,
       authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",credentialSource:nvidiaNimCredentialFromEnvironment(process.env),

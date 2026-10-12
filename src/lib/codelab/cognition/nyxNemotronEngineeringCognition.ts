@@ -981,7 +981,10 @@ export class NyxNemotronEngineeringCognition {
     if (sourceSites?.value === null) return this.#result("COGNITION_ERROR", "nyx_source_site_intent_invalid", request, null, null,
       completion.evidence, [diagnostic("SEMANTIC_REPAIR_INVALID", "$", "fresh syntax-bound local source emission", sourceSites.evidence.reason)],
       undefined, feedbackPresented, undefined, undefined, sourceSites.evidence);
-    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,
+    // A bound site preserves untouched bytes. Whole-file formatting after
+    // reification would break that guarantee and its proposed-source digest.
+    // Strict validation still enforces the unchanged syntax and line limits.
+    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: sourceSites ? "STRICT" : this.#intentCompilationMode,
       sourceRepresentation: this.#sourceRepresentation, maxCounterexamples: request.maxCounterexamples,
       maxPatchBytes: request.maxPatchBytes, maxLineLength: request.sourceQualityConstraints.maxLineLength,
       maxSourceLines: NYX_SOURCE_LINES_POLICY.maxLines });

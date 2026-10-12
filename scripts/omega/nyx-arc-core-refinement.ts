@@ -623,6 +623,12 @@ const sourceSiteEmissionRefinement: [string, string, number][] = [
   ]
 ];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === cognitivePath) {
+    const after = '    // A bound site preserves untouched bytes. Whole-file formatting after\n    // reification would break that guarantee and its proposed-source digest.\n    // Strict validation still enforces the unchanged syntax and line limits.\n    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: sourceSites ? "STRICT" : this.#intentCompilationMode,\n';
+    const before = '    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n';
+    if (current.split(after).length !== 2) throw Error("arc_source_site_format_boundary_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   // Retain historical ARC core identity; never retroactively rewrite its scored source.
   if (path === loopPath) for (const [before, after] of [
     ["", '  /** Latest completed candidate only; earlier public passes remain in iterations. */\n'],

@@ -2,12 +2,13 @@ import { createHash } from "node:crypto";
 import { validateNyxSourceSyntax } from "../../src/lib/codelab/cognition/nyxRepairIntentCompiler";
 import type { NyxRefactorSelectionEvidence } from "../../src/lib/codelab/cognition/nyxSourceBoundRefactorSelection";
 import type { NyxFunctionBodyEvidence } from "../../src/lib/codelab/cognition/nyxFunctionBodyEmission";
+import type { NyxSourceSiteEvidence } from "../../src/lib/codelab/cognition/nyxSourceSiteEmission";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 
 export type NyxEmissionOutcome = "TRUNCATED" | "INCOMPLETE_FINISH" | "NO_PROVIDER_CONTENT" | "ADAPTER_DIGEST_MISMATCH"
   | "NON_JSON_CONTENT" | "NO_SOURCE_PROPOSED" | "MALFORMED_REPLACEMENT_BOUNDARY" | "INVALID_TARGET"
   | "SYNTAX_REJECTED" | "SYNTACTICALLY_VALID" | "HOST_SOURCE_SELECTION_RESOLVED" | "SOURCE_SELECTION_REFUSED"
-  | "SOURCE_BODY_RESOLVED" | "SOURCE_BODY_REFUSED";
+  | "SOURCE_BODY_RESOLVED" | "SOURCE_BODY_REFUSED" | "SOURCE_SITE_RESOLVED" | "SOURCE_SITE_REFUSED";
 
 export interface NyxEmissionInspection {
   readonly outcome: NyxEmissionOutcome;
@@ -61,6 +62,7 @@ export async function inspectNyxSourceEmission(input: {
   readonly representation: "LINES" | "TEXT";
   readonly refactorSelection?: NyxRefactorSelectionEvidence;
   readonly functionBodyEmission?: NyxFunctionBodyEvidence;
+  readonly sourceSiteEmission?: NyxSourceSiteEvidence;
 }): Promise<NyxEmissionInspection> {
   if (input.finishReason === "length") return result("TRUNCATED", input.representation, input.providerResponseDigest);
   if (input.finishReason !== "stop") return result("INCOMPLETE_FINISH", input.representation, input.providerResponseDigest);
@@ -74,6 +76,13 @@ export async function inspectNyxSourceEmission(input: {
     return result("MALFORMED_REPLACEMENT_BOUNDARY", input.representation, digest);
   }
   const intent = body as Record<string, unknown>;
+  if (intent.decision === "PROPOSE_SOURCE_SITES") {
+    const receipt = input.sourceSiteEmission;
+    const source = receipt?.outcome === "RESOLVED" && receipt.inputDigest === theoryDigest(body)
+      && !Object.hasOwn(intent, "changes") ? receipt.sourceDigests.find(item => item.path === input.expectedTarget) : undefined;
+    return Object.freeze({ ...result(source ? "SOURCE_SITE_RESOLVED" : "SOURCE_SITE_REFUSED", input.representation, digest),
+      sourceDigest: source?.proposed ?? null });
+  }
   if (intent.decision === "SELECT_LOCAL_REFACTOR") {
     const receipt=input.refactorSelection;
     const resolved=receipt?.outcome==="RESOLVED"&&receipt.path===input.expectedTarget

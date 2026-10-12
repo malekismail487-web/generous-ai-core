@@ -1,5 +1,40 @@
 # NYX benchmark capability program
 
+### Fresh source-site versus whole-source repair epoch (2026-10-12)
+
+`nyx-source-site-fresh-repair/1` freezes signed half-open coverage runs and
+Unicode minimum-cost canonical edit traces, with two predeclared repeats per
+objective. Unit-cell and exhaustive-path oracles are validated against separate
+event-sweep and dynamic-programming witnesses. The sequence-alignment family
+has appeared previously; this is a new trace/tie-break objective, not a claim
+of family-disjoint holdout, independent authorship or unknown pretraining exposure.
+
+One unseeded live Super candidate is transiently replayed into both arms using
+the existing R3 session/loop. The arms differ only by optional model-written
+source-site fragments; there are no host-authored repair algorithms. Model,
+reasoning/output ceiling, call limits, original-state V3 policy, functional and
+private oracles, source scope, verifier and per-arm wall limits are identical.
+Up to 12 unique physical calls may be made, including shared starts; live repairs
+and E3 replay work are separately charged. Actual repair compute is checked at
+10% tolerance, not declared equal merely because both arms have 8192-token caps.
+Unknown usage, provider failures, missing coverage, unexercised sites or differing
+starts prevent causal credit. First attempts, retained successes and repaired
+solutions remain separate. No broader/default promotion occurs automatically.
+
+The development tests caught a formatter interaction: whole-file canonicalization
+after local reification could break untouched-byte preservation and receipt hashes.
+Resolved site proposals now use strict compilation; unchanged source/line limits
+remain mandatory, and overlong fragments are rejected rather than reformatted.
+Ordinary full-source canonicalization remains unchanged. Frozen ARC source is
+preserved through exact inverse hunks. An unsupported, previously ignored AJV6
+test option was removed without changing closed-schema validation.
+
+Runner: `scripts/omega/nyx-source-site-transfer.ts`. Only the existing configured
+NVIDIA endpoint and injected GitHub secret are used; default Ultra, production,
+reserved evaluation answers and broader Omega authority remain unchanged. The
+Node executor is not claimed to provide hostile-code/network isolation. This
+small conditional synthetic experiment is not an official benchmark score.
+
 ### Disposable source-site integration and terminal-result correction (2026-10-12)
 
 The opt-in source-site interface now traverses the existing real R3A/R3B/R3E
