@@ -5475,10 +5475,12 @@
         "firstPartyCodeReferences": [
           "scripts/omega/benchmarks/generalReasoningTasks.ts",
           "scripts/omega/benchmarks/publicExecutionFailures.ts",
+          "scripts/omega/nyx-procedure-reuse-fixtures.ts",
           "scripts/omega/nyx-source-representation-cycle.ts",
           "scripts/omegaBenchmarkCapabilityHarness.test.ts",
           "scripts/omegaNyxEngineeringQualityAssurance.test.ts",
           "scripts/omegaPlanCoverageTraceability.test.ts",
+          "scripts/omegaQuantitativeConstraintFeedback.test.ts",
           "scripts/omegaR3FLiveEngineerAssurance.test.ts",
           "scripts/omegaResearchExecutableTransfer.test.ts",
           "scripts/omegaVerificationIntegrity.test.ts",

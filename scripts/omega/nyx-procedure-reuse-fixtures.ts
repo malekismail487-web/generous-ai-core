@@ -133,6 +133,23 @@ export const DIRECT_REFORMULATION_EPOCH=immutableTheoryValue({...NATIVE_GENERATI
     "PUBLIC_FORMULATION_USES_ONE_EXISTING_CALL_NOT_A_FREE_ADDITIONAL_CALL",
     "COMMON_PREFIX_TIME_DEDUCTED_FROM_REPLAY_ARM_TASK_BUDGET","CAPS_MATCHED_REALIZED_REPAIR_COMPUTE_MEASURED_NOT_ASSUMED",
     "EXACT_CANONICAL_ACCEPTANCE_NONCANONICAL_EQUIVALENCE_NOT_SEPARATELY_GRADED","NO_BROAD_DEFAULT_OR_RECURSION_PROMOTION"]});
+/** New observations, not a rerun/regrade or cognitive-promotion epoch. The
+ * numerical oracle and cognitive requests are unchanged; observers expose only
+ * bounded contract classes and as-written exact-value comparisons. */
+export const QUANTITATIVE_DIAGNOSIS_CASES=immutableTheoryValue([
+  task("INTERPOLATION","DIAG-INTERPOLATION-1",{x0:"-14/11",x1:"17/9",x2:"31/7",y0:"47/23",y1:"-29/17",y2:"19/13",t:"13/12"}),
+  task("PASSIVE_NETWORK","DIAG-NETWORK-1",{g0:"29/19",g1:"31/23",g01:"17/12",i0:"-61/19",i1:"43/13"})
+]);
+export const QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST=theoryDigest(QUANTITATIVE_DIAGNOSIS_CASES);
+export const QUANTITATIVE_DIAGNOSIS_EPOCH=immutableTheoryValue({...DIRECT_REFORMULATION_EPOCH,version:"nyx-quantitative-failure-diagnosis/1",
+  maxCallsPerStage:3,maxHttpAttemptsPerStage:3,maxLogicalCalls:12,maxPhysicalLogicalCalls:10,maxHttpAttemptsPerEpoch:10,
+  changedVariable:"COUNTS_ONLY_FORMULATION_CONTRACT_AND_PRIVATE_EXACT_VALUE_OBSERVATION",
+  diagnosticOnly:true,support:"OBSERVED_FAILURE_CLASSIFICATION_NOT_COGNITIVE_OR_DEFAULT_PROMOTION",
+  limitations:["TWO_NEW_VALUES_IN_TWO_KNOWN_FORMAL_FAMILIES_NOT_OFFICIAL_BENCHMARK",
+    "SAME_REASONING_ENABLED_MODEL_AND_NO_TOOLS_BOTH_ARMS","SHARED_FIRST_PROPOSAL_FULLY_CHARGED_BOTH_ARMS",
+    "OBSERVERS_DO_NOT_CHANGE_COGNITIVE_REQUESTS_OR_VERIFICATION_FEEDBACK","FINITE_DIAGNOSTIC_LIMITS_NOT_PRIOR_EPOCH_REGRADING",
+    "UNCHANGED_EXACT_CANONICAL_ACCEPTANCE_NONCANONICAL_EQUIVALENCE_DIAGNOSED_ONLY",
+    "NO_RAW_EQUATIONS_ASSUMPTIONS_CERTIFICATES_OR_REFERENCE_VALUES_RETAINED","NO_COGNITIVE_OR_DEFAULT_PROMOTION"]});
 function q(n: bigint, d = 1n): Q {
   if (!d) throw Error("procedure_oracle_division_by_zero");
   if (d < 0n) { n = -n; d = -d; }
@@ -185,4 +202,45 @@ export function verifyProcedureOutputs(task: ProcedureCase, certificate: unknown
   const accepted = !!shaped && expected.every(v => c!.outputs!.some(o => o.label === v.label && o.value === v.value));
   return immutableTheoryValue({ accepted, findings: accepted ? [] : [shaped ? "EXACT_OBJECTIVE_MISMATCH" : "CERTIFICATE_SCHEMA_INVALID"],
     verificationDigest: theoryDigest({ task: theoryDigest(task), candidate: c, accepted, oracle: "independent-gaussian-elimination/1" }) });
+}
+export interface ProcedureCertificateDiagnosis {
+  readonly version:"nyx-exact-output-diagnosis/1";readonly diagnosticOnly:true;
+  readonly verdict:"EXACT_CANONICAL"|"EQUIVALENT_NONCANONICAL"|"AS_WRITTEN_NUMERIC_MISMATCH"|"UNCLASSIFIED_VALUE_TEXT"|"MALFORMED_CERTIFICATE";
+  readonly expectedOutputs:number;readonly canonicalExactMatchCount:number;readonly equivalentNoncanonicalCount:number;
+  readonly incorrectExactValueCount:number;readonly unclassifiedValueTextCount:number;readonly admissionChanged:false;
+}
+/** Exact cross-product comparison independent of the native arithmetic engine.
+ * Finite decimals are classified as their AS-WRITTEN exact value, not an inferred
+ * intended answer. Unsupported/oversized text remains unknown. No normalization
+ * replaces the original certificate, and no numeric/reference value is returned. */
+export function diagnoseProcedureCertificate(task:ProcedureCase,certificate:unknown):ProcedureCertificateDiagnosis {
+  const expected=expectedProcedureOutputs(task);let owned:unknown;
+  try{owned=snapshotBoundedReasoningData(certificate);}catch{owned=null;}
+  const checked=verifyProcedureOutputs(task,owned);
+  const base={version:"nyx-exact-output-diagnosis/1" as const,diagnosticOnly:true as const,expectedOutputs:expected.length,
+    canonicalExactMatchCount:0,equivalentNoncanonicalCount:0,incorrectExactValueCount:0,unclassifiedValueTextCount:0,admissionChanged:false as const};
+  if(checked.findings.includes("CERTIFICATE_SCHEMA_INVALID"))
+    return immutableTheoryValue({...base,verdict:"MALFORMED_CERTIFICATE" as const});
+  const proposal=owned as {outputs:{label:string;value:string}[]};
+  if(!expected.every(e=>proposal.outputs.some(o=>o.label===e.label)))
+    return immutableTheoryValue({...base,verdict:"MALFORMED_CERTIFICATE" as const});
+  function exactText(s:string):readonly[bigint,bigint]|null {
+    if(s.length>520)return null;const t=s.trim();
+    const f=/^([+-]?\d{1,256})(?:\/([+-]?\d{1,256}))?$/.exec(t);
+    if(f){const d=BigInt(f[2]??"1");return d===0n?null:[BigInt(f[1]),d];}
+    const dec=/^([+-]?)(\d{1,256})\.(\d{1,256})$/.exec(t);
+    return dec?[BigInt(dec[2]+dec[3])*(dec[1]==="-"?-1n:1n),10n**BigInt(dec[3].length)]:null;
+  }
+  const counts={...base};
+  for(const e of expected){
+    const value=proposal.outputs.find(o=>o.label===e.label)!.value;
+    if(value===e.value){counts.canonicalExactMatchCount++;continue;}
+    const a=exactText(value),b=exactText(e.value);
+    if(!a||!b)counts.unclassifiedValueTextCount++;
+    else if(a[0]*b[1]===b[0]*a[1])counts.equivalentNoncanonicalCount++;
+    else counts.incorrectExactValueCount++;
+  }
+  const verdict=counts.canonicalExactMatchCount===expected.length?"EXACT_CANONICAL":counts.incorrectExactValueCount?
+    "AS_WRITTEN_NUMERIC_MISMATCH":counts.unclassifiedValueTextCount?"UNCLASSIFIED_VALUE_TEXT":"EQUIVALENT_NONCANONICAL";
+  return immutableTheoryValue({...counts,verdict});
 }

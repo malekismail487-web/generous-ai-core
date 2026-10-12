@@ -43,6 +43,7 @@ export function publicRun(run: QuantitativeRun) {
         cognitiveStage:a.cognitiveStage,formulationArtifactDigest:a.formulationArtifactDigest??null}:{}),
       ...(a.nativeRejectionStructure?{nativeRejectionStructure:a.nativeRejectionStructure}:{}),
       ...(a.outputStructure?{outputStructure:a.outputStructure}:{}),
+      ...(a.formulationStructure?{formulationStructure:a.formulationStructure}:{}),
       ...(a.repairContextDigest?{repairContextDigest:a.repairContextDigest,repairContextProgramDigest:a.repairContextProgramDigest??null}:{}),
       nativeExecution: a.computation ? { status: a.computation.status, resultDigest: a.computation.resultDigest,
         requestDigest: a.computation.requestDigest, workUnits: a.computation.workUnits, elapsedMs: a.computation.elapsedMs,

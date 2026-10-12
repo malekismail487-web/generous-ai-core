@@ -19,6 +19,7 @@ import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantita
 import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
   EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,
   DIRECT_REFORMULATION_CASES,DIRECT_REFORMULATION_EPOCH,DIRECT_REFORMULATION_CORPUS_DIGEST,
+  QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
   expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
@@ -1580,5 +1581,55 @@ check(frozenReform.summaries[0].usage.reportedTokens===44197&&frozenReform.summa
   &&frozenReform.sourceUnchanged&&frozenReform.complete&&!reformReceipt.diagnosis.cognitiveGainDemonstrated
   &&!reformReceipt.diagnosis.defaultChanged&&!reformReceipt.diagnosis.authorityChanged,
   "lower tokens without accepted solutions support no cognitive, efficiency, default, authority or recursion promotion");
+check(QUANTITATIVE_DIAGNOSIS_CASES.length===2&&QUANTITATIVE_DIAGNOSIS_EPOCH.maxLogicalCalls===12
+  &&QUANTITATIVE_DIAGNOSIS_EPOCH.maxPhysicalLogicalCalls===10&&QUANTITATIVE_DIAGNOSIS_EPOCH.maxHttpAttemptsPerEpoch===10
+  &&QUANTITATIVE_DIAGNOSIS_EPOCH.maxCallsPerStage===3&&QUANTITATIVE_DIAGNOSIS_EPOCH.diagnosticOnly
+  &&QUANTITATIVE_DIAGNOSIS_CASES.every(t=>![...DIRECT_REFORMULATION_CASES,...DIRECT_NATIVE_CASES,...REPAIR_CONTEXT_CASES]
+    .some(prior=>theoryDigest(t.problem)===theoryDigest(prior.problem))),
+  "prospective failure diagnosis uses fresh parameters and smaller finite limits, not a regrade or a benchmark promotion");
+for(const successfulTreatment of [false,true]){
+  let physicalDiagnosticCalls=0;const diagnosticInputs:unknown[]=[];
+  const diagnosticEpoch=await runNativeGenerationEpoch(async(request)=>{
+    physicalDiagnosticCalls++;const prompt=JSON.parse(request.messages[1].content);
+    diagnosticInputs.push(prompt);const t=QUANTITATIVE_DIAGNOSIS_CASES.find(task=>task.taskId===prompt.taskId)!;
+    check(prompt.availableTool===null||prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY",
+      "direct diagnostic does not give either arm native or general execution authority");
+    if(prompt.authority==="NONE_PUBLIC_MODEL_PROPOSAL_ONLY")return responseFor({problemDigest:theoryDigest(t.problem),
+      equations:t.outputLabels.map(label=>({label,expression:"public definition fixture"})),assumptions:[]});
+    const expected=expectedProcedureOutputs(t);
+    const callOrdinal=Number(/-(\d+)-[a-f0-9]{12}$/.exec(request.requestId)?.[1]);
+    check(callOrdinal>=1&&callOrdinal<=3,"E3 diagnostic fixture binds its scripted response to the actual call identity");
+    const outputs=prompt.publicModelRevision&&successfulTreatment?expected:callOrdinal===1?
+      expected.map(v=>({...v,value:"0"})):expected.map(v=>{const [n,d="1"]=v.value.split("/");
+        return {...v,value:`${BigInt(n)*2n}/${BigInt(d)*2n}`};});
+    return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs,confidence:1}});
+  },{candidate:"0".repeat(40),sourceDigests:{}},()=>1000,async()=>{},"FAILURE_DIAGNOSIS");
+  check(diagnosticEpoch.complete&&diagnosticEpoch.diagnosticOnly&&diagnosticEpoch.freeze.corpusDigest===QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST
+    &&diagnosticEpoch.rows.length===4&&diagnosticEpoch.logicalCalls===12&&physicalDiagnosticCalls===10
+    &&diagnosticEpoch.physicalLogicalCalls===10&&diagnosticEpoch.physicalInferenceTotals!.calls===10,
+    "diagnostic still charges twelve owned calls, ten actual calls and the shared prefix separately");
+  check(!diagnosticEpoch.scopedFunctionalSignal&&!diagnosticEpoch.scopedRepairSignal&&!diagnosticEpoch.repairAssessment!.causalPromotionEligible
+    &&diagnosticEpoch.repairAssessment!.verdict==="DIAGNOSTIC_ONLY_NOT_A_PROMOTION_EPOCH",
+    "even a scripted successful repair cannot promote a counts-only diagnosis into a cognitive gain");
+  check(diagnosticEpoch.rows.filter(r=>r.sharedProposal?.replayed).length===2
+    &&diagnosticEpoch.summaries[1].formulationCalls===2&&diagnosticEpoch.summaries[1].admittedFormulations===2
+    &&diagnosticEpoch.rows.every(r=>r.run!.usage.toolRequests===0&&r.run!.attempts.every(a=>a.nativeExecution===null)),
+    "two actual formulation observations remain unverified proposals within the existing no-tool boundary");
+  check(diagnosticEpoch.rows.every(r=>r.certificateValueDiagnostics!.length===r.run!.attempts
+    .filter(a=>["ACCEPTED","FUNCTIONAL_REJECTION","CERTIFICATE_SCHEMA_REJECTION"].includes(a.outcome)).length
+    &&r.certificateValueDiagnostics!.every(d=>d.call>=1&&d.call<=3&&!d.value.admissionChanged)),
+    "each certificate diagnostic binds its original call; formulation turns are never falsely graded as answers");
+  check(diagnosticEpoch.rows.every(r=>r.certificateValueDiagnostics![0].value.verdict==="AS_WRITTEN_NUMERIC_MISMATCH")
+    &&diagnosticEpoch.rows.filter(r=>r.arm==="DIRECT_REPAIR").every(r=>r.certificateValueDiagnostics!.slice(1)
+      .every(d=>d.value.verdict==="EQUIVALENT_NONCANONICAL"&&!d.value.admissionChanged))
+    &&diagnosticEpoch.totals.reportedTokens===diagnosticEpoch.physicalInferenceTotals!.reportedTokens+2*150,
+    "scripted mathematical failure, noncanonical equivalence and replay-token accounting stay distinct without normalizing answers");
+  check(diagnosticInputs.every(p=>!JSON.stringify(p).includes("certificateValueDiagnostics")
+    &&!JSON.stringify(p).includes("formulationStructure")&&!JSON.stringify(p).includes("canonicalExactMatchCount")),
+    "private value/contract observations are not added to model feedback, reference answers or authority");
+  check(diagnosticEpoch.rows.every(r=>r.run!.attempts.filter(a=>a.cognitiveStage==="MODEL_FORMULATION")
+    .every(a=>a.formulationStructure!.structurallyValid&&!a.formulationStructure!.grantsAuthority)),
+    "public evidence projection retains bounded formulation counts but no equation text");
+}
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

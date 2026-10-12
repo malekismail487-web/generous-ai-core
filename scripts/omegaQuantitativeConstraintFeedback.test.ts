@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import type { QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { createQuantitativeConstraintFeedback, type QuantitativeNecessaryCondition } from "../src/lib/codelab/research/quantitativeConstraintFeedback";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { runNyxQuantitativeTask } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { runNyxQuantitativeTask, quantitativeModelFormulationStructure } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { diagnoseProcedureCertificate, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { BoundedReasoningSession } from "../src/lib/codelab/research/boundedReasoningWorkbench";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { CONSTRAINT_TRANSFER_TASKS, constraintExpectedQuantities, verifyConstraintTransferSubmission } from "./omega/nyx-quantitative-constraint-transfer-fixtures";
@@ -591,5 +592,111 @@ const forbiddenAfterForm=await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",ta
 check(!forbiddenAfterForm.accepted&&forbiddenAfterForm.toolRequests===0&&hostileVerifies===1&&hostileCalls===4
   &&forbiddenAfterForm.attempts.slice(2).every(a=>a.outcome==="AUTHORIZATION_REJECTION"),
   "actual post-formulation native action requests remain denied; public reasoning cannot grant its own authority");
+// Counts-only diagnosis must not become either model feedback or acceptance.
+const formulationDiagnosisBinding=theoryDigest(contextProblem);
+const formulationDiagnosis=(v:unknown)=>quantitativeModelFormulationStructure(formulationDiagnosisBinding,["p"],v);
+const validFormObservation=formulationDiagnosis(form());
+check(validFormObservation.structurallyValid&&validFormObservation.inspectionComplete&&validFormObservation.problemBinding==="MATCH"
+  &&validFormObservation.reasons.length===0&&!validFormObservation.grantsAuthority,
+  "bounded public formulation observer records valid shape without accepting its equations");
+const diagnosisMalformed:[unknown,string][]=[
+  [{...form(),extra:true},"OBJECT_SHAPE"],
+  [{...form(),problemDigest:binding},"PROBLEM_BINDING"],
+  [{...form(),problemDigest:1},"PROBLEM_BINDING"],
+  [{...form(),equations:null},"EQUATION_CONTAINER"],
+  [{...form(),equations:[]},"EQUATION_COUNT"],
+  [{...form(),equations:[{label:"p",expression:" "}]},"EMPTY_EXPRESSION"],
+  [{...form(),equations:[{label:"p",expression:1}]},"EQUATION_SHAPE"],
+  [{...form(),equations:[{label:"p",expression:"p=1",action:"SHELL"}]},"EQUATION_SHAPE"],
+  [{...form(),equations:[{label:"foreign",expression:"p=1"}]},"OUTPUT_LABEL_SET"],
+  [{...form(),equations:[...form().equations,...form().equations]},"OUTPUT_LABEL_SET"],
+  [{...form(),assumptions:null},"ASSUMPTION_CONTAINER"],
+  [{...form(),assumptions:Array(9).fill("extra")},"ASSUMPTION_COUNT"],
+  [{...form(),assumptions:["",1]},"ASSUMPTION_CONTENT"],
+  [form("🙂".repeat(1100)),"BYTE_BOUND"]
+];
+for(const [value,reason] of diagnosisMalformed){
+  const observation=formulationDiagnosis(value);
+  check(!observation.structurallyValid&&observation.reasons.includes(reason),"formulation diagnosis identifies a public contract class without coercion");
+  check(!JSON.stringify(observation).includes("p=1")&&!JSON.stringify(observation).includes(formulationDiagnosisBinding)
+    &&Object.isFrozen(observation)&&Object.isFrozen(observation.reasons),"counts-only formulation evidence excludes raw expressions and binding digests");
+}
+const largeForm={...form(),equations:Array(24).fill({label:"p",expression:"p=1"}),assumptions:Array(12).fill("safe")};
+const largeObservation=formulationDiagnosis(largeForm);
+check(!largeObservation.inspectionComplete&&largeObservation.inspectedEquations===16&&largeObservation.inspectedAssumptions===8,
+  "formulation observation reports incomplete inspection rather than inspecting an unbounded array");
+let diagnosticGetterCalls=0;const hostileForm={...form()};
+Object.defineProperty(hostileForm,"equations",{enumerable:true,get(){diagnosticGetterCalls++;return []}});
+check(formulationDiagnosis(hostileForm).problemBinding==="UNINSPECTABLE"&&diagnosticGetterCalls===0,
+  "formulation detector snapshots hostile objects without invoking candidate accessors");
+const circularForm:{self?:unknown}={};circularForm.self=circularForm;
+check(formulationDiagnosis(circularForm).reasons.includes("UNINSPECTABLE_DATA"),"cyclic host data is an uninspectable formulation, not executable reasoning");
+const boundaryForm=form();const baselineFormBytes=new TextEncoder().encode(JSON.stringify(boundaryForm)).length;
+check(formulationDiagnosis(form("x".repeat(4096-baselineFormBytes+boundaryForm.equations[0].expression.length))).structurallyValid
+  &&formulationDiagnosis(form("x".repeat(4097-baselineFormBytes+boundaryForm.equations[0].expression.length))).reasons.includes("BYTE_BOUND"),
+  "observer uses the same inclusive UTF-8 formulation byte bound as unchanged admission");
+
+// Compare actual requests/feedback, not just the observer's shape implementation.
+for(const candidateForm of [form(),...diagnosisMalformed.map(([v])=>v)]){
+  const observationNow=Date.now();
+  const observations:{requests:unknown[];outcomes:string[];findings:unknown[];calls:number;verified:number;accepted:boolean}[]=[];
+  for(const observeModelFormulation of [false,true]){
+    const requests:unknown[]=[];let verified=0;
+    const p=NvidiaNimProvider.create({providerId:"COUNTS-ONLY-INVARIANCE-E3",model:"nvidia/nemotron-3-ultra-550b-a55b",authorityMode:"TEST_DOUBLE_ONLY",
+      credentialSource:{sourceIdentity:"test-only",read:()=>"synthetic-test-only"},maxPromptBytes:32000,maxOutputTokens:512,timeoutMs:1000,
+      transport:async(_url,init)=>{const wire=JSON.parse(String(init?.body));requests.push(wire);
+        const isForm=wire.response_format.json_schema.name==="nyx_public_model_formulation";
+        return new Response(JSON.stringify({choices:[{finish_reason:"stop",message:{content:JSON.stringify(isForm?candidateForm:
+          {action:"SUBMIT",analysisRequest:null,certificate:certificate("2")})}}],usage:{prompt_tokens:20,completion_tokens:20,total_tokens:40}}),{status:200});}});
+    const r=await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"COUNTS-ONLY-INVARIANCE",objective:"Return p=1.",problem:contextProblem,
+      outputLabels:["p"],limits:{...modelLimits(),expiresAtEpochMs:observationNow+10000},now:()=>observationNow,reformulateAfterRejection:true,observeModelFormulation,
+      complete:req=>p.complete(req),verify:cert=>{verified++;return modelVerify(cert);}});
+    observations.push({requests,outcomes:r.attempts.map(a=>a.outcome),findings:r.attempts.map(a=>a.findings),calls:r.calls,verified,accepted:r.accepted});
+    const observed=r.attempts.filter(a=>a.formulationStructure!==undefined);
+    check(observed.length===(observeModelFormulation?r.attempts.filter(a=>a.cognitiveStage==="MODEL_FORMULATION").length:0)
+      &&r.attempts.some(a=>a.cognitiveStage==="MODEL_FORMULATION")&&r.toolRequests===0&&!r.authorityIncrease,
+      "only host opt-in adds formulation telemetry; direct cognition never acquires a native tool");
+    if(observeModelFormulation){check(observed.length>0&&observed.every(a=>a.formulationStructure!.structurallyValid===(a.outcome==="MODEL_FORMULATION_READY_NOT_EXECUTED")),
+      "prospective structural classification agrees with independent unchanged run admission");}
+  }
+  check(theoryDigest(observations[0])===theoryDigest(observations[1]),
+    "observation ON/OFF produces identical model wire prompts/schema, feedback, verifier calls, decisions and usage");
+}
+check(await(async()=>{try{await runNyxQuantitativeTask({arm:"REASONING_MEDIUM",taskId:"BAD-OBSERVATION-FLAG",objective:"Return p=1.",problem:contextProblem,
+  outputLabels:["p"],limits:modelLimits(),observeModelFormulation:1 as unknown as boolean,complete:async()=>{throw Error("must_not_dispatch")},verify:modelVerify});
+  return false;}catch(e){return e instanceof Error&&e.message==="quantitative_formulation_observation_setting_invalid";}})(),
+  "nonboolean host observation settings fail before inference or execution");
+
+// Independent development input with a simple known line, not a frozen live case.
+const exactDiagnosisTask:ProcedureCase={taskId:"EXACT-OBSERVER-DEVELOPMENT",family:"INTERPOLATION",objective:"Observe a simple line.",
+  problem:{kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"x0",value:"0"},{id:"x1",value:"1"},{id:"x2",value:"2"},
+    {id:"y0",value:"1/2"},{id:"y1",value:"3/2"},{id:"y2",value:"5/2"},{id:"t",value:"0"}]},outputLabels:["value","slope"]};
+const diagnosticCert=(a:string,b="1")=>({outputs:[{label:"value",value:a},{label:"slope",value:b}],confidence:1});
+const canonicalCertificate=diagnosticCert("1/2");
+check(verifyProcedureOutputs(exactDiagnosisTask,canonicalCertificate).accepted
+  &&diagnoseProcedureCertificate(exactDiagnosisTask,canonicalCertificate).verdict==="EXACT_CANONICAL",
+  "exact value observer independently recognizes canonical accepted data without replacing acceptance");
+for(const [a,b] of [["2/4","2/2"],["-1/-2","+1"],["0.5","1.000"],[" 1/2 ","01"]]){
+  const candidate=diagnosticCert(a,b),before=theoryDigest(candidate),o=diagnoseProcedureCertificate(exactDiagnosisTask,candidate);
+  check(o.verdict==="EQUIVALENT_NONCANONICAL"&&o.equivalentNoncanonicalCount===2&&!o.admissionChanged
+    &&!verifyProcedureOutputs(exactDiagnosisTask,candidate).accepted&&before===theoryDigest(candidate),
+    "independent cross-product equivalence is diagnostic only; noncanonical certificates remain rejected and unchanged");
+}
+for(const a of ["3/4","0.499","-1/2"]){const o=diagnoseProcedureCertificate(exactDiagnosisTask,diagnosticCert(a));
+  check(o.verdict==="AS_WRITTEN_NUMERIC_MISMATCH"&&o.incorrectExactValueCount===1&&o.canonicalExactMatchCount===1,
+    "wrong fraction or finite decimal is measured as written, not guessed into an intended correct value");}
+for(const a of ["1e-1","answer is one half","1/0","9".repeat(521)]){
+  const o=diagnoseProcedureCertificate(exactDiagnosisTask,diagnosticCert(a));
+  check(o.verdict==="UNCLASSIFIED_VALUE_TEXT"&&o.unclassifiedValueTextCount===1&&o.incorrectExactValueCount===0,
+    "unsupported value text remains unclassified rather than falsely labeled a demonstrated math error");
+}
+for(const v of [null,{...canonicalCertificate,extra:true},{...canonicalCertificate,confidence:NaN},
+  {...canonicalCertificate,outputs:[{label:"value",value:"1/2"},{label:"value",value:"1"}]},
+  {...canonicalCertificate,outputs:[{label:"foreign",value:"1/2"},{label:"slope",value:"1"}]}])
+  check(diagnoseProcedureCertificate(exactDiagnosisTask,v).verdict==="MALFORMED_CERTIFICATE","malformed or foreign-output certificate never earns a numerical correctness class");
+const privateValueObservation=diagnoseProcedureCertificate(exactDiagnosisTask,diagnosticCert("2/4"));
+check(!JSON.stringify(privateValueObservation).includes("1/2")&&!JSON.stringify(privateValueObservation).includes("2/4")
+  &&Object.isFrozen(privateValueObservation)&&privateValueObservation.diagnosticOnly&&!privateValueObservation.admissionChanged,
+  "exact-value diagnosis retains counts/classes, not candidate/reference values, answer hashes or new admission authority");
 console.log(`OMEGA_QUANTITATIVE_CONSTRAINT_FEEDBACK_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if(failed)process.exitCode=1;

@@ -16,6 +16,30 @@ The original objective, retained verbatim:
 
 ## Additive goal text
 
+### Execution refinement — 2026-10-12
+
+The additive objective now explicitly includes **NYX-created tools for recurring
+task classes**, **improvement of its own bounded workflows**, and **measurement
+of whether an improved candidate creates better subsequent improvements**.
+The original application goal stays active and unchanged. This amendment does
+not assert that its wording was edited through the application API.
+
+The deeper research and competing implementation routes are recorded in
+[Tool invention and measured recursion](NYX-TOOL-INVENTION-RECURSION-RESEARCH.md).
+The 64 hypotheses and 204,800 raw configurations remain a research portfolio,
+not a claim of hundreds of thousands of individually researched discoveries.
+Expansion means adding a distinct mechanism with evidence, a simpler control
+and a falsifier; renaming combinations does not count as an invention.
+
+Alternate **completed milestones**, not arbitrary time slices: diagnose the
+current demonstrated failure, choose one relevant theoretical mechanism,
+validate it in development, freeze it, measure fresh transfer, and use the
+result to choose the next research question. A failed mechanism can be revised
+or retired; iteration must not force a positive verdict or expose final held-out
+tasks to development. The current first step is counts-only diagnosis of
+formulation contracts and exact answer values. It is supporting work until a
+later unchanged-oracle comparison demonstrates an outcome gain.
+
 ### Demonstrated path — unchanged objective
 
 Continue the existing evidence-backed benchmark and capability program. Diagnose failures by class, reproduce general defects on separate development tasks, implement the smallest coherent correction, and evaluate transfer on fresh tasks using unchanged acceptance checks and defensible compute-matched controls. Preserve original first-attempt, repaired, negative, incomplete and blocked outcomes separately. Seek at least 80% on the agreed accessible benchmarks; do not substitute confidence, selected failures, ever-correct accumulation, infrastructure checks, or a different benchmark protocol for observed results. Public benchmark exposure and untested populations remain explicit uncertainties.
@@ -49,6 +73,9 @@ These are primary-source-informed design inferences for NYX, not replications or
 | [S13 — AlphaGeometry](https://www.nature.com/articles/s41586-023-06747-5) | Neural constructions and symbolic deductions cooperate in a specialized geometry setting. Representation assumptions and omitted conditions are material. | Explore explicit proof obligations and validated translation rather than claiming universal math competence. Method, ablation and translation-limit sections inspected. |
 | [S14 — Dreamer](https://www.nature.com/articles/s41586-025-08744-2) | Learned world models support control across multiple environments; training and ablations ground the result. | Treat imagined outcomes as predictions requiring independent observation, not evidence that an action occurred. Method and representation portions inspected; not reproduced. |
 | [S15 — MLIR](https://mlir.llvm.org/docs/LangRef/) | Typed, inspectable, scoped intermediate representations have explicit syntax and semantics. | A custom NYX representation needs lossless translation and measurable benefit over the current typed protocol. Documentation inspected, not a reason to invent a new language now. |
+| [S16 — LLMs as Tool Makers](https://arxiv.org/html/2305.17126) | Tool construction and repeated tool use have separate costs and failure modes. | Sections 3–4 inspected; independent validation and total construction cost are required, not inherited from the paper's model-generated verification. See the research companion. |
+| [S17 — DreamCoder](https://arxiv.org/html/2006.08381) | Program-library abstraction and search guidance are experimentally separated from whole-solution memorization. | Wake/sleep methods and ablations inspected; typed procedure compression is a hypothesis, not permission for new recognition-model training. |
+| [S18 — TextGrad](https://arxiv.org/html/2406.07496) | Language-model feedback can guide optimization of linked system components. | Framework and appendices A/E inspected; generated advice is not authoritative evidence, and fixed final transfer is still mandatory. |
 
 The research does not establish that any combination guarantees AGI, ASI, all-benchmark success or independence from model capability. NYX still uses Nemotron for model-backed cognition. Native bounded solvers and generated executable tools can complement it, but neither lifecycle bookkeeping nor a large catalogue substitutes for trained reasoning capability.
 

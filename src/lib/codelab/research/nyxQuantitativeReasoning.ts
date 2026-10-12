@@ -18,6 +18,7 @@ export interface QuantitativeAttempt { readonly call: number; readonly outcome: 
   readonly outputStructure?: QuantitativeOutputStructure;
   readonly cognitiveStage?: "OMEGA_INTENT"|"MODEL_FORMULATION";
   readonly formulationArtifactDigest?:string|null;
+  readonly formulationStructure?:QuantitativeModelFormulationStructure;
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
   readonly repairContextDigest?:string|null;
   readonly repairContextProgramDigest?:string|null;
@@ -111,6 +112,58 @@ function rejectedProgramStructure(program: unknown, constantIds: readonly string
 }
 const MAX_ADMITTED_DERIVATION_CONTEXT_BYTES=12000;
 const MAX_MODEL_FORMULATION_BYTES=4096;
+export interface QuantitativeModelFormulationStructure {
+  readonly version:"nyx-public-formulation-diagnosis/1";
+  readonly structurallyValid:boolean;readonly inspectionComplete:boolean;
+  readonly problemBinding:"MATCH"|"MISMATCH"|"MALFORMED"|"UNINSPECTABLE";
+  readonly byteCount:number|null;readonly expectedOutputs:number;readonly actualEquations:number|null;
+  readonly inspectedEquations:number;readonly malformedEquations:number;readonly emptyExpressions:number;
+  readonly missingLabels:number;readonly duplicateLabels:number;readonly unexpectedLabels:number;
+  readonly assumptionCount:number|null;readonly inspectedAssumptions:number;readonly malformedAssumptions:number;
+  readonly reasons:readonly string[];readonly grantsAuthority:false;
+}
+/** Observation only. No proposed equations, assumptions, labels, values or
+ * digests leave this bounded inspector. The original admission predicate below
+ * remains authoritative; this detector never repairs a proposal or adds feedback. */
+export function quantitativeModelFormulationStructure(problemDigest:string,labels:readonly string[],value:unknown):QuantitativeModelFormulationStructure {
+  const expected=objectiveLabels(labels);let owned:unknown;
+  try{owned=snapshotBoundedReasoningData(value);}catch{
+    return immutableTheoryValue({version:"nyx-public-formulation-diagnosis/1",structurallyValid:false,inspectionComplete:false,
+      problemBinding:"UNINSPECTABLE",byteCount:null,expectedOutputs:expected.length,actualEquations:null,
+      inspectedEquations:0,malformedEquations:0,emptyExpressions:0,missingLabels:expected.length,duplicateLabels:0,unexpectedLabels:0,
+      assumptionCount:null,inspectedAssumptions:0,malformedAssumptions:0,reasons:["UNINSPECTABLE_DATA"],grantsAuthority:false});
+  }
+  const p=owned&&typeof owned==="object"&&!Array.isArray(owned)?owned as Record<string,unknown>:null,reasons:string[]=[];
+  const shape=keys(owned,["problemDigest","equations","assumptions"]);
+  if(!shape)reasons.push("OBJECT_SHAPE");
+  const problemBinding=typeof p?.problemDigest!=="string"?"MALFORMED":p.problemDigest===problemDigest?"MATCH":"MISMATCH";
+  if(problemBinding!=="MATCH")reasons.push("PROBLEM_BINDING");
+  const equations=Array.isArray(p?.equations)?p.equations:[],outputs=quantitativeOutputStructure(expected,p?.equations);
+  if(!Array.isArray(p?.equations))reasons.push("EQUATION_CONTAINER");
+  if(equations.length!==expected.length)reasons.push("EQUATION_COUNT");
+  let malformedEquations=0,emptyExpressions=0;
+  for(const e of equations.slice(0,OBJECTIVE_OUTPUT_POLICY.maxOutputs)){
+    if(!keys(e,["label","expression"])||typeof e.label!=="string"||typeof e.expression!=="string")malformedEquations++;
+    if(typeof e?.expression==="string"&&!e.expression.trim())emptyExpressions++;
+  }
+  if(malformedEquations)reasons.push("EQUATION_SHAPE");
+  if(emptyExpressions)reasons.push("EMPTY_EXPRESSION");
+  if(outputs.missingLabels||outputs.duplicateLabels||outputs.unexpectedLabels||outputs.malformedEntries)reasons.push("OUTPUT_LABEL_SET");
+  const assumptions=Array.isArray(p?.assumptions)?p.assumptions:[];
+  if(!Array.isArray(p?.assumptions))reasons.push("ASSUMPTION_CONTAINER");
+  if(assumptions.length>8)reasons.push("ASSUMPTION_COUNT");
+  const malformedAssumptions=assumptions.slice(0,8).filter(v=>typeof v!=="string"||!v.trim()).length;
+  if(malformedAssumptions)reasons.push("ASSUMPTION_CONTENT");
+  const byteCount=new TextEncoder().encode(JSON.stringify(owned)).byteLength;
+  if(byteCount>MAX_MODEL_FORMULATION_BYTES)reasons.push("BYTE_BOUND");
+  const inspectionComplete=outputs.inspectionComplete&&Array.isArray(p?.assumptions)&&assumptions.length<=8;
+  return immutableTheoryValue({version:"nyx-public-formulation-diagnosis/1",structurallyValid:inspectionComplete&&reasons.length===0,
+    inspectionComplete,problemBinding,byteCount,expectedOutputs:expected.length,actualEquations:Array.isArray(p?.equations)?equations.length:null,
+    inspectedEquations:outputs.inspectedCount,malformedEquations,emptyExpressions,missingLabels:outputs.missingLabels,
+    duplicateLabels:outputs.duplicateLabels,unexpectedLabels:outputs.unexpectedLabels,
+    assumptionCount:Array.isArray(p?.assumptions)?assumptions.length:null,inspectedAssumptions:Math.min(assumptions.length,8),
+    malformedAssumptions,reasons,grantsAuthority:false});
+}
 /** Public mathematical artifact, NOT private reasoning, executable syntax, or a certificate. */
 export function quantitativeModelFormulationSchema(problemDigest:string,labels:readonly string[]){
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
@@ -175,6 +228,9 @@ export async function runNyxQuantitativeTask(input: {
    * Consumes an EXISTING call; no tool or authority. Reasoning-only repair still
    * submits manual certificates and cannot acquire the workbench capability. */
   readonly reformulateAfterRejection?:boolean;
+  /** Host opt-in counts-only diagnosis. Does not alter model requests, admission,
+   * verification feedback, budgets or authority; no raw formulation is retained. */
+  readonly observeModelFormulation?:boolean;
   /** Host-only experimental procedure reuse. The actual model must select the
    * bound invocation; a descriptor is not automatic execution or acceptance. */
   readonly procedure?: Readonly<{ artifact: BoundQuantitativeProcedure; mode: "CONTEXT_ONLY" | "BOUND_INVOCATION" }>;
@@ -194,6 +250,7 @@ export async function runNyxQuantitativeTask(input: {
     throw Error("quantitative_output_contract_setting_invalid");
   if(input.objectiveOutputContract!==undefined)objectiveLabels(input.outputLabels);
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
+  if(input.observeModelFormulation!==undefined&&typeof input.observeModelFormulation!=="boolean")throw Error("quantitative_formulation_observation_setting_invalid");
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
     ||input.reformulateAfterRejection&&!["REASONING_MEDIUM","REASONING_WITH_WORKBENCH"].includes(input.arm)))throw Error("quantitative_model_formulation_setting_invalid");
   if(input.createReusableProcedure!==undefined&&(typeof input.createReusableProcedure!=="boolean"
@@ -334,6 +391,7 @@ export async function runNyxQuantitativeTask(input: {
       let computation:ReasoningToolResult|null=null;
       let nativeRejectionStructure:QuantitativeRejectionStructure|undefined;
       let outputStructure:QuantitativeOutputStructure|undefined;
+      let formulationStructure:QuantitativeModelFormulationStructure|undefined;
       const outputConforms=(outputs:unknown,origin:QuantitativeOutputStructure["origin"]):boolean=>{
         if(input.objectiveOutputContract===undefined)return true;
         outputStructure=quantitativeOutputStructure(task.outputLabels,outputs,origin);
@@ -347,7 +405,8 @@ export async function runNyxQuantitativeTask(input: {
         attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
           cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
           executedProgram,computation,...(procedureReference?{procedureReference}:{}),
-          ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),...(outputStructure?{outputStructure}:{}),modelEvidence:completion.evidence}));};
+          ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),...(outputStructure?{outputStructure}:{}),
+          ...(formulationStructure?{formulationStructure}:{}),modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -356,6 +415,7 @@ export async function runNyxQuantitativeTask(input: {
       let value:unknown;
       try {value=JSON.parse(completion.content);}catch{record("JSON_SYNTAX_REJECTION",["Return one strict JSON object, without Markdown."]);continue;}
       if(formulate){
+        if(input.observeModelFormulation)formulationStructure=quantitativeModelFormulationStructure(session.problemDigest,task.outputLabels,value);
         if(!keys(value,["problemDigest","equations","assumptions"])||value.problemDigest!==session.problemDigest
           ||!Array.isArray(value.equations)||value.equations.length!==task.outputLabels.length
           ||!value.equations.every(v=>keys(v,["label","expression"])&&typeof v.label==="string"&&task.outputLabels.includes(v.label)
