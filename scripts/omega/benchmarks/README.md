@@ -35,6 +35,43 @@ reserved evaluation answers and broader Omega authority remain unchanged. The
 Node executor is not claimed to provide hostile-code/network isolation. This
 small conditional synthetic experiment is not an official benchmark score.
 
+Terminal run `38208943788`, job `114678569953`, frozen candidate
+`6b1b32a53fa409a55fbbc8da06adb8180fa38f21`: **no promotion**. Four initial
+candidates were attempted and privately graded; three passed functional checks,
+none passed full quality acceptance. Neither arm produced an accepted repair.
+Seven live repairs emitted valid source; source sites were offered in three
+treatment calls and selected in none. Treatment returned ordinary whole source.
+One treatment failed locally before dispatch at the unchanged prompt bound.
+Another regressed from 7/12 to 2/12 private cases and failed public examples.
+No pair matched realized repair compute. Total: 11 logical/physical calls,
+121,613 reported tokens, zero unknown usage, provider failures or retries,
+31 verifier executions and 228 private-scorer work units. Eight final retained
+artifacts were graded; one was the earlier artifact, not a new live repair.
+
+The frozen report incorrectly classified the zero-dispatch blocked treatment
+as a retained replay and its pair as provider-stable. Original fields and
+grades remain preserved, with this annotation; no model delivery occurred in
+that treatment. Future reporting distinguishes prompt-bound refusal, rejected
+retained artifacts and independently accepted zero-call replay. The remaining
+quality rejection and hidden-case failures are real, not transport failures.
+
+General follow-up: the prompt now presents bound site references and UTF-16
+ranges while keeping complete source in admitted FILE evidence, rather than
+duplicating overlapping source substrings. Every site and internal reification
+binding remains unchanged; no cap, grader, quality threshold or authority is
+relaxed. Development fixtures demonstrate at least 40% fewer catalogue bytes,
+including astral Unicode reconstruction and actual provider-prompt wiring.
+This is supporting reliability work; improved live acceptance is **not yet
+evaluated**, and the frozen epoch is not regraded or rerun for promotion.
+
+The [terminal custody receipt](../../../docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json)
+preserves the sanitized report, original first attempts, per-iteration results,
+source/task identities, exact accounting and artifact/log agreement. Frozen
+clean Linux CI passed 109 suites / 13,953 checks, TypeScript zero, secret scan,
+build and package smoke. Local user UI edits are preserved, not part of that
+candidate. Broad benchmark, source-site cognition and recursive-improvement
+claims remain unestablished. Fresh transfer under unchanged checks is required.
+
 ### Disposable source-site integration and terminal-result correction (2026-10-12)
 
 The opt-in source-site interface now traverses the existing real R3A/R3B/R3E

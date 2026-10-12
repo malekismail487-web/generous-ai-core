@@ -141,6 +141,9 @@ export function classifyRepresentationFailure(input: {
     && [input.latestDelivery.rateLimitedResponses,input.latestDelivery.transientUnavailableResponses,
       input.latestDelivery.timedOutAttempts].some(count=>count>0))return "PROVIDER_FAILURE";
   if(input.reason.endsWith("nvidia_http_attempt_budget_exhausted"))return "RESOURCE_EXHAUSTION";
+  // A local prompt bound precedes dispatch; an earlier retained artifact's
+  // quality rejection must not hide the actual terminal interface refusal.
+  if(input.reason.endsWith("nyx_cognition_prompt_bound_exceeded"))return "PROMPT_BOUND_REJECTION";
   if(/provider|transport|credential|capacity/.test(input.reason))return "PROVIDER_FAILURE";
   if(/wall_clock|outer_request_aborted/.test(input.reason))return "RESOURCE_EXHAUSTION";
   const failure=input.latestSchemaFailure;

@@ -956,7 +956,13 @@ console.log("TEST_PASS source-site-integration");`;
         return providerResponse(JSON.stringify(fields));
       }
       const catalog = prompt.sourceSiteEmission;
-      const site = catalog?.entries.find((entry: { original: string }) => entry.original === aliasRun);
+      const admittedSource = prompt.admittedEvidence.find((item: { evidenceRef: string }) => item.evidenceRef === `FILE:${path}`)?.content;
+      check(catalog?.presentationVersion === "nyx-source-site-reference-presentation/1"
+        && catalog.offsetEncoding === "UTF16_CODE_UNITS" && admittedSource === redundant
+        && catalog.entries.every((entry: object) => !Object.hasOwn(entry, "original")),
+        `${arm}: real disposable repair receives exact admitted source once with compact source references`);
+      const site = catalog?.entries.find((entry: { path: string; start: number; end: number }) =>
+        entry.path === path && admittedSource?.slice(entry.start, entry.end) === aliasRun);
       siteOffered = Boolean(site) && prompt.observation.state === "TEST_PASS";
       if (!site) throw Error("source_site_not_offered_after_quality_rejection");
       delete fields.changes;
@@ -980,7 +986,7 @@ console.log("TEST_PASS source-site-integration");`;
     if (arm === "CORRECT") {
       check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && preparations === 2 && second?.passed
         && second.cognitionEvidence.sourceSiteEmission?.outcome === "RESOLVED", "source fragment traverses real R3A apply and R3B execution to admitted repair");
-      check(first.candidateAdmission?.qualityBaselineDigest === second.candidateAdmission?.qualityBaselineDigest,
+      check(Boolean(second) && first.candidateAdmission?.qualityBaselineDigest === second?.candidateAdmission?.qualityBaselineDigest,
         "source fragment repair retains the identical original quality baseline rather than forgiving cumulative debt");
       const content = await readFile(join(currentRoot, path), "utf8");
       check(content === redundant.replace(aliasRun, "const a03 = input.initial;") && content.startsWith(prefix),

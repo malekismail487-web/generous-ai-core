@@ -37,7 +37,9 @@ export function sourceSiteWireVerified(variant: SourceSiteRepairVariant, control
 }
 type StageRow = Awaited<ReturnType<typeof executeSharedGuardedStage>>["row"];
 export function sourceSiteStageStable(row: StageRow & { wireVerified: boolean; boundsVerified: boolean }) {
-  return !row.infrastructureFailure && row.toolUsageComplete && row.wireVerified && row.boundsVerified
+  const observedDeliveryOrAcceptedReplay = row.usage.physicalCalls > 0 || row.retainedReplayWithoutLiveRepair
+    && row.accepted && row.loopOutcome === "FUNCTIONALLY_REPAIRED_VERIFIED";
+  return observedDeliveryOrAcceptedReplay && !row.infrastructureFailure && row.toolUsageComplete && row.wireVerified && row.boundsVerified
     && row.usage.unknownUsageCalls === 0 && row.usage.providerFailures === 0 && row.usage.retries === 0;
 }
 export function sourceSiteRepairComputeMatched(a: StageRow, b: StageRow) {

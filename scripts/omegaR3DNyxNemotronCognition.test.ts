@@ -8,7 +8,7 @@ import { measuredQualityRepairGuidance, originalStateQualityBudget, measureBindi
 import { proposeNyxLocalRefactors, nyxLocalRefactorGuidance } from "../src/lib/codelab/cognition/nyxLocalRefactorProposals";
 import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactorSelectionSchema }
   from "../src/lib/codelab/cognition/nyxSourceBoundRefactorSelection";
-import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema }
+import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema, nyxSourceSitePromptCatalog }
   from "../src/lib/codelab/cognition/nyxSourceSiteEmission";
 import { measureEngineeringStructure, assessEngineeringQuality } from "../src/lib/codelab/assurance/engineeringQualityOracle";
 import { OMEGA_PUBLIC_STATIC_CANDIDATE_POLICY_V2 } from "../src/lib/codelab/assurance/candidateEngineeringAdmission";
@@ -1883,6 +1883,23 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
       findings: [{ code: "DECLARATION_DELTA", dimension: "UNNECESSARY_COMPLEXITY", paths: [path],
         measurement: { observed: measured.declarations - 2, limit: 4 } }] }, ...overrides });
   const req = makeRequest(), catalog = buildNyxSourceSiteCatalog(req)!;
+  const presented = nyxSourceSitePromptCatalog(catalog);
+  check(presented.bindingDigest === catalog.bindingDigest && presented.entries.length === catalog.entries.length
+    && presented.entries.every((site, index) => !Object.hasOwn(site, "original")
+      && req.files.find(file => file.relativePath === site.path)?.content.slice(site.start, site.end) === catalog.entries[index].original),
+    "reference-only presentation preserves every source-bound site and reconstructs exact UTF-16 slices from admitted files");
+  check(Object.isFrozen(presented) && presented.offsetEncoding === "UTF16_CODE_UNITS"
+    && catalog.entries.every(site => typeof site.original === "string"),
+    "presentation neither mutates the trusted full catalogue nor grants authority or semantic equivalence");
+  const wideProgram = program.replace("const first = input.initial;", "const first = input.initial;\n"
+    + Array.from({ length: 6 }, (_, index) => `  const unused${index} = [${JSON.stringify("λ😀".repeat(116))}];`).join("\n"));
+  const wideRequest = makeRequest(wideProgram), wideCatalog = buildNyxSourceSiteCatalog(wideRequest)!;
+  const referenceCatalog = nyxSourceSitePromptCatalog(wideCatalog);
+  check(Buffer.byteLength(JSON.stringify(referenceCatalog), "utf8") < 0.6 * Buffer.byteLength(JSON.stringify(wideCatalog), "utf8"),
+    "overlapping large syntax sites reduce serialized catalogue bytes without dropping sites or increasing any prompt budget");
+  check(referenceCatalog.entries.every((site, index) => site.siteRef === wideCatalog.entries[index].siteRef
+    && wideProgram.slice(site.start, site.end) === wideCatalog.entries[index].original),
+    "large Unicode site references preserve exact reconstruction and the same reification binding");
   const entry = catalog.entries.find(item => item.original ===
     'const first = input.initial;\n  const second = first;\n  const third = second;')!;
   check(Boolean(entry) && catalog.entries.length <= 32 && catalog.limits.edits === 8 && Object.isFrozen(catalog),
@@ -1919,7 +1936,15 @@ check(NYX_NEMOTRON_ENGINEERING_COGNITION_STATUS.semanticContract === NYX_SEMANTI
     cognitionId: "NYX-SITE-DEVELOPMENT", provider: provider(transport ?? transportFor(JSON.stringify(response))),
     maxPromptBytes: 50000, maxOutputTokens: 1024, sourceRepresentation: "LINES",
     ...(enabled ? { sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS" as const } : {}) });
-  const result = await host(true, wire()).proposeRepair(req);
+  let sourceSitePrompt: any = null;
+  const result = await host(true, wire(), async (url, init) => {
+    sourceSitePrompt = JSON.parse(JSON.parse(String(init.body)).messages[1].content);
+    return transportFor(JSON.stringify(wire()))(url, init);
+  }).proposeRepair(req);
+  check(sourceSitePrompt.sourceSiteEmission.presentationVersion === "nyx-source-site-reference-presentation/1"
+    && sourceSitePrompt.sourceSiteEmission.entries.every((site: any) => !Object.hasOwn(site, "original"))
+    && sourceSitePrompt.admittedEvidence.find((item: any) => item.evidenceRef === `FILE:${path}`).content === program,
+    "actual provider prompt supplies complete admitted source once and every compact bound site instead of overlapping copies");
   check(result.decision === "PROPOSED" && result.hypothesis?.changes[0].replacementContent === proposed
     && result.evidence.sourceSiteEmission?.outcome === "RESOLVED" && !result.omegaAuthorityGranted,
     "existing cognition/compiler derives an ordinary host-hashed edit from model-written fragments");

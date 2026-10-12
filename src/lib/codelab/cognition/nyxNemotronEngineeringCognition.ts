@@ -10,7 +10,7 @@ import { buildNyxRefactorSelection, resolveNyxRefactorSelection, withNyxRefactor
   type NyxRefactorSelectionEvidence } from "./nyxSourceBoundRefactorSelection";
 import { buildNyxFunctionBodyCatalog, resolveNyxFunctionBody, withNyxFunctionBodySchema,
   type NyxFunctionBodyEvidence } from "./nyxFunctionBodyEmission";
-import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema,
+import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema, nyxSourceSitePromptCatalog,
   type NyxSourceSiteEvidence } from "./nyxSourceSiteEmission";
 import { nyxDecisionRequiredProviderSchema, nyxBoundedDecisionRequiredProviderSchema,
   nyxLengthBoundedDecisionRequiredProviderSchema } from "./nyxDecisionRequiredSchema";
@@ -815,7 +815,7 @@ export class NyxNemotronEngineeringCognition {
       contractVersion: NYX_SEMANTIC_REPAIR_CONTRACT_VERSION,
       contractDigest: NYX_SEMANTIC_REPAIR_CONTRACT_DIGEST,
       ...(functionBodyCatalog ? { functionBodyEmission: functionBodyCatalog } : {}),
-      ...(sourceSiteCatalog ? { sourceSiteEmission: sourceSiteCatalog,
+      ...(sourceSiteCatalog ? { sourceSiteEmission: nyxSourceSitePromptCatalog(sourceSiteCatalog),
         sourceSiteAction: "PROPOSE_SOURCE_SITES", sourceSiteRequiredFields: ["decision", "diagnosis", "causalHypothesis",
           "evidenceRefs", "invariant", "expectedResult", "counterexamples", "edits"] } : {}),
       availableSemanticActions: sourceSiteCatalog ? [...contract.allowedActions, "PROPOSE_SOURCE_SITES"]

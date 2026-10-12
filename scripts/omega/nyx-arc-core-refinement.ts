@@ -624,6 +624,13 @@ const sourceSiteEmissionRefinement: [string, string, number][] = [
 ];
 export function arcCorePredecessorSource(path: string, current: string): string {
   if (path === cognitivePath) {
+    for (const [after, before] of [
+      ['import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema, nyxSourceSitePromptCatalog,\n', 'import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema,\n'],
+      ['      ...(sourceSiteCatalog ? { sourceSiteEmission: nyxSourceSitePromptCatalog(sourceSiteCatalog),\n', '      ...(sourceSiteCatalog ? { sourceSiteEmission: sourceSiteCatalog,\n'],
+    ]) {
+      if (current.split(after).length !== 2) throw Error("arc_source_site_presentation_hunk_mismatch");
+      current = current.split(after).join(before);
+    }
     const after = '    // A bound site preserves untouched bytes. Whole-file formatting after\n    // reification would break that guarantee and its proposed-source digest.\n    // Strict validation still enforces the unchanged syntax and line limits.\n    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: sourceSites ? "STRICT" : this.#intentCompilationMode,\n';
     const before = '    const compiled = await compileNyxRepairIntent(sourceSites?.value ?? functionBody?.value ?? selected?.value ?? parsed, { mode: this.#intentCompilationMode,\n';
     if (current.split(after).length !== 2) throw Error("arc_source_site_format_boundary_hunk_mismatch");

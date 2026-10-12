@@ -102,6 +102,16 @@ export function buildNyxSourceSiteCatalog(request: NyxRepairCognitionRequest) {
     authorityGranted: false, acceptanceGranted: false });
 }
 export type NyxSourceSiteCatalog = NonNullable<ReturnType<typeof buildNyxSourceSiteCatalog>>;
+/** Presentation only. Complete source already exists in the admitted FILE evidence.
+ * Repeating overlapping substrings at every site can exceed the prompt lease.
+ * Keep every site/reference/range; reification still uses the full internal catalog.
+ */
+export function nyxSourceSitePromptCatalog(catalog: NyxSourceSiteCatalog) {
+  return immutableTheoryValue({ ...catalog, presentationVersion: "nyx-source-site-reference-presentation/1",
+    offsetEncoding: "UTF16_CODE_UNITS", originalSourceLocation: "ADMITTED_FILE_CONTENT",
+    entries: catalog.entries.map(({ original: _duplicateSource, ...entry }) => entry),
+    instruction: catalog.instruction + " Site start/end offsets index the exact admitted FILE content as UTF-16 code units. Read that source and the site's line/range; source substrings are deliberately not duplicated here. References grant no execution or acceptance." });
+}
 export interface NyxSourceSiteEvidence {
   readonly version: typeof NYX_SOURCE_SITE_EMISSION;
   readonly outcome: "RESOLVED" | "REFUSED";

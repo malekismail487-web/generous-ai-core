@@ -117,7 +117,8 @@ export async function executeSharedGuardedStage(task:RepresentationTask,candidat
     guardedSelectionReceipts:liveEvidence.flatMap(e=>e.refactorSelection?[e.refactorSelection]:[]),cleanup,
     ...(sourceSites?{sourceSiteReceipts:liveEvidence.flatMap(e=>e.sourceSiteEmission?[e.sourceSiteEmission]:[])}:{}),
     repairedAccepted:final.accepted&&(result?.iterations.length??0)>1&&usage.physicalCalls>0,
-    retainedReplayWithoutLiveRepair:replaySource!==undefined&&(result?.iterations.length??0)===1&&usage.physicalCalls===0,
+    retainedReplayWithoutLiveRepair:replaySource!==undefined&&final.accepted
+      &&result?.outcome==="FUNCTIONALLY_REPAIRED_VERIFIED"&&(result?.iterations.length??0)===1&&usage.physicalCalls===0,
     privateScorerWorkUnits:perIteration.reduce((n,i)=>n+i.privateScorerWorkUnits,0)};
   const first=result?.iterations[0];
   const returnedSource=variant==="SHARED_INITIAL"&&first?.applicationDecision==="APPLIED"

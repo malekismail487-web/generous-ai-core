@@ -52,7 +52,7 @@ import { executeSharedGuardedStage, inspectSharedGuardedCaptures, sharedGuardedS
   SHARED_GUARDED_LIMITS } from "./omega/nyx-shared-guarded-repair";
 import { SOURCE_SITE_REPAIR_EPOCH, SOURCE_SITE_REPAIR_TASKS, sourceSiteRepairTasks, sourceSiteRepairConfiguration,
   sourceSitePairAssessment } from "./omega/benchmarks/sourceSiteRepairFreshTasks";
-import { SOURCE_SITE_TRANSFER_LIMITS, sourceSiteWireVerified, sourceSiteRepairComputeMatched,
+import { SOURCE_SITE_TRANSFER_LIMITS, sourceSiteWireVerified, sourceSiteRepairComputeMatched, sourceSiteStageStable,
   type SourceSiteWireControl } from "./omega/nyx-source-site-transfer";
 import { BEHAVIOR_REPAIR_TRANSFER_TASKS, behaviorRepairTransferConfiguration,
   behaviorRepairWireControlVerified } from "./omega/benchmarks/behaviorRepairTransferTasks";
@@ -2071,6 +2071,8 @@ for(const development of [
   const base={accepted:false,infrastructureFailure:false,reason:"repair_iteration_budget_exhausted",
     qualityRejected:true,publicFailed:false,privateFailure:null};
   check(classifyRepresentationFailure(base)==="QUALITY_REJECTION","exhausted quality repairs classified by genuine defect rather than generic resource budget");
+  check(classifyRepresentationFailure({...base,reason:"repair_cognition_nyx_cognition_prompt_bound_exceeded"})==="PROMPT_BOUND_REJECTION",
+    "zero-dispatch prompt refusal is not concealed by earlier candidate quality rejection");
   check(classifyRepresentationFailure({...base,reason:"repair_wall_clock_budget_exhausted"})==="RESOURCE_EXHAUSTION",
     "actual wall-clock exhaustion remains a separate resource failure");
   check(classifyRepresentationFailure({...base,reason:"nvidia_provider_http_503"})==="PROVIDER_FAILURE",
@@ -2517,6 +2519,14 @@ for(const probe of SOURCE_LITERAL_PROBES) {
     check(sourceSiteRepairComputeMatched(stage.row, stage.row)
       && !sourceSiteRepairComputeMatched(stage.row, { ...stage.row, usage: { ...stage.row.usage, physicalCalls: 4 } }),
       "repair matching rejects extra realized provider compute despite equal nominal token ceilings");
+    const blockedReplay = { ...stage.row, accepted: false, loopOutcome: "BLOCKED" as const,
+      retainedReplayWithoutLiveRepair: true, wireVerified: true, boundsVerified: true,
+      usage: { ...stage.row.usage, physicalCalls: 0 } };
+    check(!sourceSiteStageStable(blockedReplay),
+      "retained rejected artifact with a local prompt refusal does not establish complete model delivery");
+    check(sourceSiteStageStable({ ...blockedReplay, accepted: true,
+      loopOutcome: "FUNCTIONALLY_REPAIRED_VERIFIED" as const }),
+      "independently accepted zero-call replay is distinguishable from a blocked repair attempt");
   }
   for (const [variant, trial] of [["SOURCE_SITES", undefined], ["V4_COVERAGE", "SOURCE_SITES_FRESH_1"],
     ["WHOLE_SOURCE", "UNKNOWN"]] as const) {
