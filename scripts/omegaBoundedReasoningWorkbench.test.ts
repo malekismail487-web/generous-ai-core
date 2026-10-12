@@ -16,9 +16,11 @@ import { COMMAND_TRANSFER_TASKS,verifyCommandTransferSubmission } from "./omega/
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
-import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH, expectedProcedureOutputs, verifyProcedureOutputs, type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
+import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
+  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
+import {lowerQuantitativeExpressions,quantitativeExpressionSchema,type QuantitativeExpressionGraph} from "../src/lib/codelab/research/quantitativeExpressionCompiler";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -660,7 +662,7 @@ function procedureWitness(task: ProcedureCase): QuantitativeProgram {
   }
   return { schemaVersion: 1, registers, blocks: [{ iterations: 1, mode: "SEQUENTIAL", steps }], outputs };
 }
-for (const task of [...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh]),...NATIVE_GENERATION_CASES]) {
+for (const task of [...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh]),...NATIVE_GENERATION_CASES,...EXPRESSION_TRANSFER_CASES]) {
   const native = BoundedReasoningSession.create(task.problem, { maxWorkUnits: 100000, maxElapsedMs: 2000, maxRequests: 1, expiresAtEpochMs: Date.now()+10000 });
   const result = native.analyze({ schemaVersion: 1, operation: "ANALYZE_FINITE_PROBLEM", problemDigest: native.problemDigest, program: procedureWitness(task) });
   check(result.status === "CONSTRUCTED" && verifyProcedureOutputs(task, { outputs: result.payload!.outputs, confidence: 0.8 }).accepted,
@@ -908,7 +910,8 @@ const retriedGenerationEpoch=await runNativeGenerationEpoch(async request=>{
     httpAttempts:2,rateLimitedResponses:1,transientUnavailableResponses:0,timedOutAttempts:0,capacityWaitMs:1,state:"DELIVERED",notBeforeEpochMs:null,authorityRenewed:false}}};
 },{candidate:"0".repeat(40),sourceDigests:{}});
 check(retriedGenerationEpoch.totals.httpAttempts===16&&retriedGenerationEpoch.totals.knownUsageHttpAttempts===8
-  &&retriedGenerationEpoch.totals.unknownUsageHttpAttempts===8&&!retriedGenerationEpoch.providerStable&&!retriedGenerationEpoch.scopedFunctionalSignal,
+  &&retriedGenerationEpoch.totals.unknownUsageHttpAttempts===8&&!retriedGenerationEpoch.providerStable&&!retriedGenerationEpoch.scopedFunctionalSignal
+  &&retriedGenerationEpoch.pairs.every(p=>!p.realizedComputeMatched&&!p.boundedNoMoreModelCompute),
   "successful final delivery cannot conceal unreported usage from earlier physical retry attempts or establish compute-matched gain");
 let nativeWireChecks=0;
 const generationWire=NvidiaNimProvider.create({providerId:"TEST-NATIVE-GENERATION-WIRE",model:NATIVE_GENERATION_EPOCH.model,authorityMode:"TEST_DOUBLE_ONLY",
@@ -976,5 +979,132 @@ check(observedGeneration.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJ
   &&generationReceipt.accounting.independentlyGradedStages===4&&generationReceipt.accounting.ungradedAttemptedStages===4
   &&generationReceipt.diagnosis.defaultChanged===false&&frozenGeneration.sourceUnchanged===true,
   "first and second proposal grades are not conflated with unique graded stages or broad authority promotion");
+const graphProblem:QuantitativeProblem={kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"q0",value:"7"},{id:"a",value:"-3"},
+  {id:"b",value:"5"},{id:"one",value:"1"},{id:"zero",value:"0"},{id:"six",value:"6"},{id:"three",value:"3"}]};
+const graphLimits={maxWorkUnits:100000,maxElapsedMs:2000,maxRequests:1,expiresAtEpochMs:Date.now()+120000};
+function graphNative(program:unknown,maximum=100000){
+  const session=BoundedReasoningSession.create(graphProblem,{...graphLimits,maxWorkUnits:maximum},Date.now,{expressionGraphs:true});
+  try{return session.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:session.problemDigest,program});}
+  finally{session.revoke();}
+}
+const dataGraph:QuantitativeExpressionGraph={schemaVersion:4,expressions:[{op:"SUB",left:"b",right:"a"},
+  {op:"DIV",left:0,right:"b"},{op:"ADD",left:0,right:1}],outputs:[{label:"result",source:2},{label:"retained",source:0}]};
+const graphResult=graphNative(dataGraph);
+check(graphResult.status==="CONSTRUCTED"&&JSON.stringify(graphResult.payload!.outputs)===JSON.stringify([{label:"result",value:"48/5"},{label:"retained",value:"8"}])
+  &&graphResult.loweringVersion==="nyx-expression-lowering/1", "positional graph preserves noncommutative operands, shared values and output lifetime through the existing interpreter");
+const noGraph=BoundedReasoningSession.create(graphProblem,graphLimits);
+check(throws(()=>noGraph.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:noGraph.problemDigest,program:dataGraph}))
+  &&!noGraph.descriptor().expressionPolicy, "expression frontend remains opt-in; model cannot activate it by sending a new version");noGraph.revoke();
+check(throws(()=>BoundedReasoningSession.create(triangle,graphLimits,Date.now,{expressionGraphs:true})), "expression option cannot expand a non-arithmetic capability");
+const longGraph:QuantitativeExpressionGraph={schemaVersion:4,expressions:Array.from({length:64},(_,i)=>({op:"ADD" as const,left:i?i-1:"zero",right:"one"})),
+  outputs:[{label:"sum",source:63}]};
+const loweredLong=lowerQuantitativeExpressions(graphProblem,longGraph);
+check(loweredLong.registers.length===1&&loweredLong.registers[0].id!=="q0"&&loweredLong.blocks[0].steps.length===64
+  &&(graphNative(longGraph).payload!.outputs as any[])[0].value==="64", "64-expression chain reuses one register, avoids constant collisions and preserves the 64-step ceiling");
+check(graphNative(dataGraph,1).status==="BUDGET_EXHAUSTED", "compiler work is charged inside the same native work budget, not added as free tool computation");
+const constantGraph={schemaVersion:4,expressions:[],outputs:[{label:"value",source:"a"}]};
+check((graphNative(constantGraph).payload!.outputs as any[])[0].value==="-3", "constant-only output needs neither implicit zero nor a fabricated operation");
+const badGraphs=[{...longGraph,expressions:[...longGraph.expressions,{op:"ADD",left:63,right:"one"}]},
+  {...dataGraph,expressions:[{op:"ADD",left:0,right:"a"}]},{...dataGraph,expressions:[{op:"ADD",left:"0",right:"a"}]},
+  {...dataGraph,expressions:[{op:"ADD",left:-1,right:"a"}]},{...dataGraph,expressions:[{op:"ADD",left:0.5,right:"a"}]},
+  {...dataGraph,expressions:[{op:"SHELL",left:"a",right:"b"}]},{...dataGraph,expressions:[{id:"duplicate",op:"ADD",left:"a",right:"b"}]},
+  {...dataGraph,outputs:[{label:"x",source:0},{label:"x",source:1}]},{...dataGraph,outputs:[{label:"x",source:3}]},
+  {...dataGraph,outputs:[{label:"x",source:"q1"}]},{...dataGraph,constants:[]},{...dataGraph,iterations:1000000}];
+for(const g of badGraphs)check(throws(()=>graphNative(g)), "malformed, forward, unbound, injected or over-limit expression graph fails closed");
+const pressure:QuantitativeExpressionGraph={schemaVersion:4,expressions:[...Array.from({length:33},()=>({op:"ADD" as const,left:"a",right:"b"})),
+  ...Array.from({length:31},(_,i)=>({op:"ADD" as const,left:i,right:i+2}))],outputs:[{label:"x",source:63}]};
+check(throws(()=>graphNative(pressure)), "33 simultaneously live values reject without memory spill, increased register limits or operation reordering");
+const unusedBad={schemaVersion:4,expressions:[{op:"DIV",left:"one",right:"zero"}],outputs:[{label:"x",source:"a"}]};
+check(graphNative(unusedBad).status==="INSUFFICIENT_EVIDENCE", "unused bad arithmetic is not optimized away to hide a failure");
+let graphGetterRead=false;
+const hostileGraph={schemaVersion:4,get expressions(){graphGetterRead=true;return[];},outputs:[]};
+check(throws(()=>graphNative(hostileGraph))&&!graphGetterRead, "native snapshot rejects graph accessors before reading them");
+const graphCycle:any={schemaVersion:4,expressions:[],outputs:[]};graphCycle.expressions.push(graphCycle);
+check(throws(()=>graphNative(graphCycle)), "cyclic graph host data is not an expression dependency or executable authority");
+const leaseGraph=BoundedReasoningSession.create(graphProblem,graphLimits,Date.now,{expressionGraphs:true});
+const graphRequest={schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:leaseGraph.problemDigest,program:dataGraph};
+check(throws(()=>leaseGraph.analyze({...graphRequest,problemDigest:"stale"})), "expression lowering never bypasses problem binding");
+leaseGraph.analyze(graphRequest);check(throws(()=>leaseGraph.analyze(graphRequest)), "expression request obeys the original request-count lease");
+leaseGraph.revoke();check(throws(()=>leaseGraph.analyze(graphRequest)), "revoked expression session cannot execute");
+const graphSchemaValidator=createRequire(import.meta.url)("ajv");
+const validateGraph=new graphSchemaValidator({allErrors:true}).compile(quantitativeExpressionSchema(["result","retained"],graphProblem.constants.map(c=>c.id)));
+check(validateGraph(dataGraph)&&!validateGraph({...dataGraph,expressions:[{op:"ADD",left:64,right:"a"}]}), "guided schema bounds are separate from mandatory topological/native checks");
+// Independent oracle stores every SSA value permanently; it has no register
+// allocation, native compiler, native validation or native evaluator dependency.
+type OracleQ=readonly[bigint,bigint];
+function graphQ(n:bigint,d=1n):OracleQ{if(d<0n){n=-n;d=-d;}let a=n<0n?-n:n,b=d;while(b){[a,b]=[b,a%b];}return[n/a,d/a];}
+function graphOracle(g:QuantitativeExpressionGraph){
+  const c=Object.fromEntries(graphProblem.constants.map(c=>[c.id,graphQ(BigInt(c.value))])),values:OracleQ[]=[];
+  const resolve=(s:string|number)=>typeof s==="string"?c[s]:values[s];
+  for(const e of g.expressions){const [a,b]=resolve(e.left),[d,f]=resolve(e.right);let result:OracleQ;
+    switch(e.op){case "ADD":result=graphQ(a*f+d*b,b*f);break;case "SUB":result=graphQ(a*f-d*b,b*f);break;
+      case "MUL":result=graphQ(a*d,b*f);break;case "DIV":result=graphQ(a*f,b*d);break;
+      case "MIN":result=a*f<=d*b?[a,b]:[d,f];break;case "MAX":result=a*f>=d*b?[a,b]:[d,f];break;
+      case "BINOMIAL":{let ways=0n;for(let mask=0;mask<2**Number(a);mask++)if(mask.toString(2).replaceAll("0","").length===Number(d))ways++;
+        result=[ways,1n];break;}}
+    values.push(result);
+  }
+  return g.outputs.map(o=>{const[n,d]=resolve(o.source);return{label:o.label,value:d===1n?String(n):`${n}/${d}`};});
+}
+let graphSeed=7919;const nextGraph=()=>{graphSeed=(Math.imul(graphSeed,1664525)+1013904223)>>>0;return graphSeed;};
+for(let sample=0;sample<120;sample++){
+  const expressions:QuantitativeExpressionGraph["expressions"][number][]=[{op:"BINOMIAL",left:"six",right:"three"}];
+  const operations=["ADD","SUB","MUL","DIV","MIN","MAX"] as const;
+  for(let i=1;i<24;i++){const op=operations[nextGraph()%operations.length];
+    expressions.push({op,left:nextGraph()%i,right:op==="DIV"?"b":nextGraph()%2?"a":"b"});}
+  const g:QuantitativeExpressionGraph={schemaVersion:4,expressions,outputs:[{label:"head",source:0},{label:"tail",source:23},
+    {label:"middle",source:7},{label:"constant",source:"q0"}]};
+  check(JSON.stringify(graphNative(g).payload!.outputs)===JSON.stringify(graphOracle(g)),
+    "independent permanent-SSA oracle agrees with register-reused execution across all allowed operations and noncommutative cases");
+}
+const graphExchange={action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(freshSum.problem),
+  program:{schemaVersion:4,expressions:[{op:"ADD",left:"x",right:"y"}],outputs:[{label:"sum",source:0}]}},certificate:{confidence:0.8}};
+const graphLoop=await runNyxQuantitativeTask({...reuseInput,nativeExpressionGraph:true,complete:async request=>{
+  const prompt=JSON.parse(request.messages[1].content);check(prompt.nativeExpressionGraph.schemaVersion===4&&!prompt.nativeGenerationBounds,
+    "graph cognition sees only actual opt-in representation and resource contract");return responseFor(graphExchange);}});
+check(graphLoop.accepted&&graphLoop.attempts[0].computation?.loweringVersion==="nyx-expression-lowering/1",
+  "model-shaped action composes native graph lowering and independent acceptance under E3 test double");
+const wrongGraphLoop=await runNyxQuantitativeTask({...reuseInput,nativeExpressionGraph:true,verify:sumCheck("9"),complete:async()=>responseFor(graphExchange)});
+check(!wrongGraphLoop.accepted&&wrongGraphLoop.outcome==="FUNCTIONAL_REJECTION", "compiler success cannot override a wrong objective result");
+const legacyGraphLoop=await runNyxQuantitativeTask({...reuseInput,nativeExpressionGraph:true,complete:async()=>responseFor(equationExchange(sumEquations))});
+check(legacyGraphLoop.outcome==="PROTOCOL_REJECTION"&&legacyGraphLoop.toolRequests===0, "graph treatment cannot fall back to a legacy representation silently");
+// Authored witness conversion exists ONLY inside this E3 unit harness. No
+// generated or reference program is provided to the live completion callback.
+function testExpressionWitness(t:ProcedureCase):QuantitativeExpressionGraph{
+  const p=procedureWitness(t),bindings=new Map<string,string|number>(t.problem.constants.map(c=>[c.id,c.id]));
+  for(const r of p.registers)bindings.set(r.id,bindings.get(r.source)!);
+  const expressions:QuantitativeExpressionGraph["expressions"][number][]=[];
+  for(const b of p.blocks){if(b.iterations!==1||b.mode!=="SEQUENTIAL")throw Error("unsupported_test_witness");
+    for(const s of b.steps){const left=bindings.get(s.left)!,right=bindings.get(s.right)!;
+      bindings.set(s.target,expressions.length);expressions.push({op:s.op,left,right});}}
+  return{schemaVersion:4,expressions,outputs:p.outputs.map(o=>({label:o.label,source:bindings.get(o.source)!}))};
+}
+for(const t of EXPRESSION_TRANSFER_CASES){
+  const s=BoundedReasoningSession.create(t.problem,graphLimits,Date.now,{expressionGraphs:true});
+  const result=s.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:s.problemDigest,program:testExpressionWitness(t)});s.revoke();
+  check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(t,{outputs:result.payload!.outputs,confidence:1}).accepted,
+    "new parameter case can be represented without changing elimination oracle, expression order or native arithmetic");
+}
+check(EXPRESSION_TRANSFER_CASES.every(t=>![...NATIVE_GENERATION_CASES,...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh])]
+  .some(old=>theoryDigest(old.problem)===theoryDigest(t.problem))), "graph live epoch does not replay exposed parameter values");
+let representationCalls=0;
+const representationEpoch=await runNativeGenerationEpoch(async(request,stage)=>{
+  representationCalls++;const prompt=JSON.parse(request.messages[1].content),t=EXPRESSION_TRANSFER_CASES.find(t=>t.taskId===prompt.taskId)!;
+  check(request.reasoningBudgetTokens===2048&&request.maxTokens===8192&&request.reasoningControl==="SUPER_HOSTED_NATIVE",
+    "new representation comparison preserves model, inference controls and caps");
+  const graph=stage.endsWith("EXPRESSION_GRAPH"),program=graph?testExpressionWitness(t):procedureWitness(t);
+  check(Boolean(prompt.nativeExpressionGraph)===graph&&Boolean(prompt.nativeGenerationBounds)===!graph,
+    "only graph arm sees positional representation; control preserves bounded equations");
+  return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(t.problem),program},certificate:{confidence:0.8}});
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"EXPRESSION_GRAPH");
+check(representationCalls===8&&representationEpoch.complete&&representationEpoch.summaries.every(s=>s.accepted===4)
+  &&representationEpoch.pairs.every(p=>p.realizedComputeMatched)&&!representationEpoch.scopedFunctionalSignal,
+  "matched E3 equality validates composition without being manufactured into a live capability gain");
+const badReferenceEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content);return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(prompt.problem),
+    program:{schemaVersion:4,expressions:[{op:"ADD",left:0,right:"one"}],outputs:[{label:prompt.outputLabels[0],source:0}]}},certificate:{confidence:0.8}});
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"EXPRESSION_GRAPH");
+check(badReferenceEpoch.summaries[1].irRejections===8&&badReferenceEpoch.summaries[1].nativeAuthorizationRejections===0
+  &&badReferenceEpoch.summaries[1].graded===0, "graph source rejection is separate from authority refusal or unreached mathematical grading");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

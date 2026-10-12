@@ -523,9 +523,66 @@ function finiteProbabilitySchema(labels, constants) {
   });
 }
 
+// src/lib/codelab/research/quantitativeExpressionCompiler.ts
+var EXPRESSION_COMPILER_POLICY = Object.freeze({
+  version: "nyx-expression-lowering/1",
+  schemaVersion: 4,
+  maxExpressions: EXACT_DERIVATION_POLICY.maxSteps,
+  maxRegisters: EXACT_DERIVATION_POLICY.maxRegisters,
+  maxOutputs: EXACT_DERIVATION_POLICY.maxOutputs,
+  grantsAuthority: false,
+  experimental: true,
+  optimization: "LIFETIME_REGISTER_REUSE_ONLY_NO_DEAD_CODE_ELIMINATION"
+});
+var keys3 = (v, n) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("\0") === [...n].sort().join("\0");
+function lowerQuantitativeExpressions(problem, value) {
+  const fail2 = (code) => {
+    throw Error(`quantitative_expressions_invalid:${code}`);
+  };
+  if (!keys3(value, ["schemaVersion", "expressions", "outputs"]) || value.schemaVersion !== 4 || !Array.isArray(value.expressions) || value.expressions.length > EXPRESSION_COMPILER_POLICY.maxExpressions || !Array.isArray(value.outputs) || value.outputs.length < 1 || value.outputs.length > EXPRESSION_COMPILER_POLICY.maxOutputs) return fail2("SHAPE_OR_BOUND");
+  const constants = new Set(problem.constants.map((c) => c.id)), count = value.expressions.length;
+  const lastUse = Array.from({ length: count }, (_, i) => i);
+  const source = (v, before) => typeof v === "string" ? constants.has(v) : Number.isSafeInteger(v) && Number(v) >= 0 && Number(v) < before;
+  for (const [i, e] of value.expressions.entries()) {
+    if (!keys3(e, ["op", "left", "right"]) || !EXACT_DERIVATION_OPERATIONS.includes(e.op)) return fail2("EXPRESSION_SHAPE");
+    for (const operand of [e.left, e.right]) {
+      if (!source(operand, i)) return fail2("SOURCE_NOT_BOUND");
+      if (typeof operand === "number") lastUse[operand] = i;
+    }
+  }
+  const labels = /* @__PURE__ */ new Set();
+  for (const o of value.outputs) {
+    if (!keys3(o, ["label", "source"]) || typeof o.label !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(o.label) || labels.has(o.label) || !source(o.source, count)) return fail2("OUTPUT_BINDING");
+    labels.add(o.label);
+    if (typeof o.source === "number") lastUse[o.source] = count;
+  }
+  const names = Array.from({ length: EXPRESSION_COMPILER_POLICY.maxRegisters + constants.size }, (_, i) => `q${i}`).filter((id3) => !constants.has(id3)).slice(0, EXPRESSION_COMPILER_POLICY.maxRegisters);
+  const locations = /* @__PURE__ */ new Map(), live = /* @__PURE__ */ new Map(), used = /* @__PURE__ */ new Set();
+  const steps = [];
+  const resolve7 = (s) => typeof s === "string" ? s : locations.get(s) ?? fail2("INTERNAL_BINDING");
+  for (const [i, raw] of value.expressions.entries()) {
+    const e = raw;
+    const left = resolve7(e.left), right = resolve7(e.right);
+    for (const [position] of live) if (lastUse[position] <= i) live.delete(position);
+    const occupied = new Set(live.values()), target = names.find((n) => !occupied.has(n)) ?? fail2("REGISTER_PRESSURE");
+    used.add(target);
+    locations.set(i, target);
+    live.set(i, target);
+    steps.push({ target, op: e.op, left, right });
+  }
+  const program = {
+    schemaVersion: 1,
+    registers: names.filter((id3) => used.has(id3)).map((id3) => ({ id: id3, source: problem.constants[0].id })),
+    blocks: steps.length ? [{ iterations: 1, mode: "SEQUENTIAL", steps }] : [],
+    outputs: value.outputs.map((o) => ({ label: o.label, source: resolve7(o.source) }))
+  };
+  if (quantitativeProgramFinding(problem, program) !== null) return fail2("LOWERED_PROGRAM_REJECTED");
+  return program;
+}
+
 // src/lib/codelab/research/boundedReasoningWorkbench.ts
 var NYX_REASONING_WORKBENCH = Object.freeze({
-  version: "nyx-bounded-reasoning-workbench/6",
+  version: "nyx-bounded-reasoning-workbench/7",
   grantsAuthority: false,
   maxInputBytes: 128e3,
   planCoverage: Object.freeze({
@@ -542,7 +599,7 @@ var NYX_REASONING_WORKBENCH = Object.freeze({
     superseded: ["REPEATING_CERTIFICATE_GUESSES_WITHOUT_COMPUTATIONAL_HELP"]
   })
 });
-function keys3(value, expected) {
+function keys4(value, expected) {
   return !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join("\0") === [...expected].sort().join("\0");
 }
 function text(value) {
@@ -571,19 +628,19 @@ function plainData(value, ancestors = /* @__PURE__ */ new Set(), counter = { nod
   return true;
 }
 function validTable(value) {
-  return strings(value.mechanismIds, 64) && strings(value.experimentIds, 12) && Array.isArray(value.predictions) && value.predictions.length === value.mechanismIds.length && new Set(value.predictions.map((row) => row?.mechanismId)).size === value.mechanismIds.length && value.predictions.every((row) => keys3(row, ["mechanismId", "outcomes"]) && text(row.mechanismId) && value.mechanismIds.includes(row.mechanismId) && Array.isArray(row.outcomes) && row.outcomes.length === value.experimentIds.length && row.outcomes.every(text));
+  return strings(value.mechanismIds, 64) && strings(value.experimentIds, 12) && Array.isArray(value.predictions) && value.predictions.length === value.mechanismIds.length && new Set(value.predictions.map((row) => row?.mechanismId)).size === value.mechanismIds.length && value.predictions.every((row) => keys4(row, ["mechanismId", "outcomes"]) && text(row.mechanismId) && value.mechanismIds.includes(row.mechanismId) && Array.isArray(row.outcomes) && row.outcomes.length === value.experimentIds.length && row.outcomes.every(text));
 }
 function validProblem(value) {
   if (!plainData(value) || new TextEncoder().encode(JSON.stringify(value)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes) return false;
   const p = value;
   if (p?.kind === "EXACT_QUANTITATIVE_DERIVATION") return validQuantitativeProblem(p);
-  if (p?.kind === "COLORING") return keys3(p, ["kind", "vertices", "edges", "colors", "cliqueSize"]) && strings(p.vertices, 96) && Array.isArray(p.colors) && p.colors.length > 0 && p.colors.length <= 8 && p.colors.every((color) => integer(color, 1, 256)) && new Set(p.colors).size === p.colors.length && integer(p.cliqueSize, 1, Math.min(8, p.vertices.length)) && Array.isArray(p.edges) && p.edges.length <= 4560 && p.edges.every((edge) => Array.isArray(edge) && edge.length === 2 && p.vertices.includes(edge[0]) && p.vertices.includes(edge[1]) && edge[0] !== edge[1]) && new Set(p.edges.map(([a, b]) => JSON.stringify([a, b].sort()))).size === p.edges.length;
-  if (p?.kind === "REACHABILITY") return keys3(p, ["kind", "states", "initialState", "unsafeStates", "transitions"]) && strings(p.states, 2048) && p.states.includes(p.initialState) && strings(p.unsafeStates, 2048, true) && p.unsafeStates.every((state) => p.states.includes(state)) && Array.isArray(p.transitions) && p.transitions.length <= 8192 && p.transitions.every((transition) => keys3(transition, ["from", "to", "action"]) && text(transition.from) && text(transition.to) && p.states.includes(transition.from) && p.states.includes(transition.to) && text(transition.action));
-  if (p?.kind === "EXPERIMENT_SELECTION") return keys3(p, ["kind", "mechanismIds", "experimentIds", "predictions"]) && validTable(p);
-  if (p?.kind === "HYPOTHESIS_ELIMINATION") return keys3(
+  if (p?.kind === "COLORING") return keys4(p, ["kind", "vertices", "edges", "colors", "cliqueSize"]) && strings(p.vertices, 96) && Array.isArray(p.colors) && p.colors.length > 0 && p.colors.length <= 8 && p.colors.every((color) => integer(color, 1, 256)) && new Set(p.colors).size === p.colors.length && integer(p.cliqueSize, 1, Math.min(8, p.vertices.length)) && Array.isArray(p.edges) && p.edges.length <= 4560 && p.edges.every((edge) => Array.isArray(edge) && edge.length === 2 && p.vertices.includes(edge[0]) && p.vertices.includes(edge[1]) && edge[0] !== edge[1]) && new Set(p.edges.map(([a, b]) => JSON.stringify([a, b].sort()))).size === p.edges.length;
+  if (p?.kind === "REACHABILITY") return keys4(p, ["kind", "states", "initialState", "unsafeStates", "transitions"]) && strings(p.states, 2048) && p.states.includes(p.initialState) && strings(p.unsafeStates, 2048, true) && p.unsafeStates.every((state) => p.states.includes(state)) && Array.isArray(p.transitions) && p.transitions.length <= 8192 && p.transitions.every((transition) => keys4(transition, ["from", "to", "action"]) && text(transition.from) && text(transition.to) && p.states.includes(transition.from) && p.states.includes(transition.to) && text(transition.action));
+  if (p?.kind === "EXPERIMENT_SELECTION") return keys4(p, ["kind", "mechanismIds", "experimentIds", "predictions"]) && validTable(p);
+  if (p?.kind === "HYPOTHESIS_ELIMINATION") return keys4(
     p,
     ["kind", "mechanismIds", "experimentIds", "predictions", "observations"]
-  ) && validTable(p) && Array.isArray(p.observations) && p.observations.length <= p.experimentIds.length && new Set(p.observations.map((item) => item?.experimentId)).size === p.observations.length && new Set(p.observations.map((item) => item?.evidenceRef)).size === p.observations.length && p.observations.every((item) => keys3(item, ["experimentId", "outcome", "evidenceRef"]) && text(item.experimentId) && p.experimentIds.includes(item.experimentId) && text(item.outcome) && text(item.evidenceRef));
+  ) && validTable(p) && Array.isArray(p.observations) && p.observations.length <= p.experimentIds.length && new Set(p.observations.map((item) => item?.experimentId)).size === p.observations.length && new Set(p.observations.map((item) => item?.evidenceRef)).size === p.observations.length && p.observations.every((item) => keys4(item, ["experimentId", "outcome", "evidenceRef"]) && text(item.experimentId) && p.experimentIds.includes(item.experimentId) && text(item.outcome) && text(item.evidenceRef));
   return false;
 }
 var SearchBudgetExceeded = class extends Error {
@@ -841,20 +898,23 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
   #problem;
   #limits;
   #now;
+  #expressionGraphs;
   #requests = 0;
   #workUnits = 0;
   #revoked = false;
   problemDigest;
-  constructor(problem, limits, now) {
+  constructor(problem, limits, now, expressionGraphs) {
     this.#problem = immutableTheoryValue(JSON.parse(JSON.stringify(problem)));
     this.#limits = Object.freeze({ ...limits });
     this.#now = now;
     this.problemDigest = theoryDigest(this.#problem);
+    this.#expressionGraphs = expressionGraphs;
   }
-  static create(problem, limits, now = () => Date.now()) {
+  static create(problem, limits, now = () => Date.now(), options = { expressionGraphs: false }) {
     if (!validProblem(problem)) throw new Error("reasoning_problem_invalid");
-    if (!keys3(limits, ["maxWorkUnits", "maxElapsedMs", "maxRequests", "expiresAtEpochMs"]) || !integer(limits.maxWorkUnits, 1, 1e6) || !integer(limits.maxElapsedMs, 1, 1e4) || !integer(limits.maxRequests, 1, 8) || !integer(limits.expiresAtEpochMs, 1, Number.MAX_SAFE_INTEGER) || !Number.isFinite(now()) || limits.expiresAtEpochMs <= now()) throw new Error("reasoning_limits_invalid");
-    return new _BoundedReasoningSession(problem, limits, now);
+    if (!plainData(options) || !keys4(options, ["expressionGraphs"]) || typeof options.expressionGraphs !== "boolean" || options.expressionGraphs && problem.kind !== "EXACT_QUANTITATIVE_DERIVATION") throw Error("reasoning_session_options_invalid");
+    if (!keys4(limits, ["maxWorkUnits", "maxElapsedMs", "maxRequests", "expiresAtEpochMs"]) || !integer(limits.maxWorkUnits, 1, 1e6) || !integer(limits.maxElapsedMs, 1, 1e4) || !integer(limits.maxRequests, 1, 8) || !integer(limits.expiresAtEpochMs, 1, Number.MAX_SAFE_INTEGER) || !Number.isFinite(now()) || limits.expiresAtEpochMs <= now()) throw new Error("reasoning_limits_invalid");
+    return new _BoundedReasoningSession(problem, limits, now, options.expressionGraphs);
   }
   descriptor() {
     return Object.freeze({
@@ -873,7 +933,8 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
         programRequired: true,
         programPolicy: EXACT_DERIVATION_POLICY,
         equationPolicy: EQUATION_COMPILER_POLICY,
-        probabilityPolicy: FINITE_PROBABILITY_POLICY
+        probabilityPolicy: FINITE_PROBABILITY_POLICY,
+        ...this.#expressionGraphs ? { expressionPolicy: EXPRESSION_COMPILER_POLICY } : {}
       } : {}
     });
   }
@@ -887,14 +948,16 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
     if (!plainData(request)) throw new Error("reasoning_request_invalid:NON_DATA");
     if (new TextEncoder().encode(JSON.stringify(request)).byteLength > NYX_REASONING_WORKBENCH.maxInputBytes)
       throw new Error("reasoning_request_invalid:BYTE_BOUND");
-    if (!keys3(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"] : ["schemaVersion", "operation", "problemDigest"])) throw new Error("reasoning_request_invalid:HEADER_SHAPE");
+    if (!keys4(request, quantitative ? ["schemaVersion", "operation", "problemDigest", "program"] : ["schemaVersion", "operation", "problemDigest"])) throw new Error("reasoning_request_invalid:HEADER_SHAPE");
     if (request.schemaVersion !== 1) throw new Error("reasoning_request_invalid:HEADER_VERSION");
     if (request.operation !== "ANALYZE_FINITE_PROBLEM") throw new Error("reasoning_request_invalid:OPERATION");
     if (request.problemDigest !== this.problemDigest) throw new Error("reasoning_request_invalid:PROBLEM_BINDING");
     let executedProgram = null;
     const probabilityModel = quantitative && request.program?.schemaVersion === 3;
+    const expressionGraph = quantitative && request.program?.schemaVersion === 4;
+    if (expressionGraph && !this.#expressionGraphs) throw Error("reasoning_request_invalid:EXPRESSION_GRAPH_NOT_ENABLED");
     if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel) {
-      executedProgram = request.program?.schemaVersion === 2 ? lowerQuantitativeEquations(this.#problem, request.program) : request.program;
+      executedProgram = expressionGraph ? lowerQuantitativeExpressions(this.#problem, request.program) : request.program?.schemaVersion === 2 ? lowerQuantitativeEquations(this.#problem, request.program) : request.program;
       const finding = quantitativeProgramFinding(this.#problem, executedProgram);
       if (finding) throw new Error(`quantitative_program_invalid:${finding}`);
     }
@@ -912,7 +975,7 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
     try {
       if (probabilityModel && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
         executedProgram = lowerFiniteProbability(this.#problem, request.program, () => budget.tick()).program;
-      if (executedProgram && request.program?.schemaVersion === 2)
+      if (executedProgram && (expressionGraph || request.program?.schemaVersion === 2))
         for (let at = 0; at < executedProgram.registers.length + executedProgram.blocks.reduce((n, b) => n + b.steps.length, 0); at++) budget.tick();
       if (this.#problem.kind === "COLORING") construction = colorGraph(this.#problem, budget);
       else if (this.#problem.kind === "REACHABILITY") construction = explore(this.#problem, budget);
@@ -936,7 +999,7 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
       elapsedMs: Math.max(0, this.#now() - budget.started),
       ...executedProgram ? {
         executedProgramDigest: theoryDigest(executedProgram),
-        loweringVersion: probabilityModel ? FINITE_PROBABILITY_POLICY.version : request.program?.schemaVersion === 2 ? EQUATION_COMPILER_POLICY.version : null
+        loweringVersion: expressionGraph ? EXPRESSION_COMPILER_POLICY.version : probabilityModel ? FINITE_PROBABILITY_POLICY.version : request.program?.schemaVersion === 2 ? EQUATION_COMPILER_POLICY.version : null
       } : {},
       evidenceClass: "E3",
       acceptanceRequiresIndependentVerifier: true,
@@ -4919,9 +4982,9 @@ var NyxLocalApprovalBroker = class {
     this.#pending?.finish(false);
   }
 };
-function exactKeys2(value, keys4) {
+function exactKeys2(value, keys5) {
   const actual = Object.keys(value).sort();
-  const expected = [...keys4].sort();
+  const expected = [...keys5].sort();
   return actual.length === expected.length && actual.every((item, index) => item === expected[index]);
 }
 function parseSetup(value) {

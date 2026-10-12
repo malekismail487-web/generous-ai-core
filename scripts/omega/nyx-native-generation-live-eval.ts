@@ -8,18 +8,24 @@ import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment,type NvidiaNimCompl
 import {runNyxQuantitativeTask} from "../../src/lib/codelab/research/nyxQuantitativeReasoning";
 import {theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
 import {procedureInferenceRequest,publicRun,sumUsage} from "./nyx-procedure-reuse-live-eval";
-import {NATIVE_GENERATION_CASES as TASKS,NATIVE_GENERATION_EPOCH as EPOCH,NATIVE_GENERATION_CORPUS_DIGEST,verifyProcedureOutputs} from "./nyx-procedure-reuse-fixtures";
+import {NATIVE_GENERATION_CASES,NATIVE_GENERATION_EPOCH,NATIVE_GENERATION_CORPUS_DIGEST,
+  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,EXPRESSION_TRANSFER_CORPUS_DIGEST,verifyProcedureOutputs} from "./nyx-procedure-reuse-fixtures";
 
-type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS";
+type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH";
 type Row={taskId:string;family:string;arm:Arm;run:ReturnType<typeof publicRun>|null;blocked:string|null};
 /** Same cognition, typed exchange, native engine, independent oracle and evidence
  * projection as the existing procedure study. No new executor or auto-repair.
  * New values and a direct ablation isolate the generation correction itself.
  */
 export async function runNativeGenerationEpoch(complete:(request:NvidiaNimCompletionRequest,stage:string)=>Promise<NvidiaNimCompletionResult>,
-  binding:{candidate:string;sourceDigests:Record<string,string>},now=Date.now,checkpoint:(r:unknown)=>Promise<void>=async()=>{}) {
+  binding:{candidate:string;sourceDigests:Record<string,string>},now=Date.now,checkpoint:(r:unknown)=>Promise<void>=async()=>{},
+  experiment:"GENERATION_BOUNDS"|"EXPRESSION_GRAPH"="GENERATION_BOUNDS") {
+  if(!["GENERATION_BOUNDS","EXPRESSION_GRAPH"].includes(experiment))throw Error("representation_experiment_invalid");
+  const TASKS=experiment==="EXPRESSION_GRAPH"?EXPRESSION_TRANSFER_CASES:NATIVE_GENERATION_CASES,
+    EPOCH=experiment==="EXPRESSION_GRAPH"?EXPRESSION_TRANSFER_EPOCH:NATIVE_GENERATION_EPOCH,
+    corpusDigest=experiment==="EXPRESSION_GRAPH"?EXPRESSION_TRANSFER_CORPUS_DIGEST:NATIVE_GENERATION_CORPUS_DIGEST;
   const began=now(),expires=began+EPOCH.maxEpochMs,rows:Row[]=[];let logicalCalls=0;
-  const freeze={...binding,configuration:EPOCH,corpusDigest:NATIVE_GENERATION_CORPUS_DIGEST,
+  const freeze={...binding,configuration:EPOCH,corpusDigest,
     tasks:TASKS.map(t=>({taskId:t.taskId,family:t.family,digest:theoryDigest(t)}))};
   function report() {
     const all=rows.flatMap(r=>r.run?[r.run]:[]),totals=sumUsage(all);
@@ -31,15 +37,16 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
         unexecuted:TASKS.length-runs.filter(r=>r.usage.calls>0).length,usage:sumUsage(runs),nativeExecutions:attempts.filter(a=>a.nativeExecution!==null).length,
         constructedNativeProposals:attempts.filter(a=>a.nativeExecution?.status==="CONSTRUCTED").length,
         irRejections:attempts.filter(a=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"
-          &&a.findings.some(f=>/^quantitative_(?:equations|program)_invalid:/.test(f))).length,
+          &&a.findings.some(f=>/^quantitative_(?:equations|program|expressions)_invalid:/.test(f))).length,
         nativeAuthorizationRejections:attempts.filter(a=>a.outcome==="AUTHORIZATION_REJECTION"
-          ||a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&!a.findings.some(f=>/^quantitative_(?:equations|program)_invalid:/.test(f))).length,
+          ||a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&!a.findings.some(f=>/^quantitative_(?:equations|program|expressions)_invalid:/.test(f))).length,
         functionalRejections:attempts.filter(a=>a.outcome==="FUNCTIONAL_REJECTION").length,
         outcomes:Object.fromEntries([...new Set(attempts.map(a=>a.outcome))].sort().map(state=>[state,attempts.filter(a=>a.outcome===state).length])),
         secondAttempts:runs.filter(r=>r.repairDepth>0).length};});
-    const pairs=TASKS.map(t=>{const a=rows.find(r=>r.taskId===t.taskId&&r.arm==="ORIGINAL_GENERATION")?.run??null,
-      b=rows.find(r=>r.taskId===t.taskId&&r.arm==="NATIVE_BOUNDS")?.run??null;
-      const known=!!a&&!!b&&a.usage.unknownUsageCalls===0&&b.usage.unknownUsageCalls===0;
+    const pairs=TASKS.map(t=>{const a=rows.find(r=>r.taskId===t.taskId&&r.arm===EPOCH.arms[0])?.run??null,
+      b=rows.find(r=>r.taskId===t.taskId&&r.arm===EPOCH.arms[1])?.run??null;
+      const known=!!a&&!!b&&a.usage.unknownUsageCalls===0&&b.usage.unknownUsageCalls===0
+        &&a.usage.unknownUsageHttpAttempts===0&&b.usage.unknownUsageHttpAttempts===0;
       return {taskId:t.taskId,originalAccepted:a?.accepted??null,boundedAccepted:b?.accepted??null,
         originalCalls:a?.usage.calls??null,boundedCalls:b?.usage.calls??null,originalTokens:a?.usage.reportedTokens??null,boundedTokens:b?.usage.reportedTokens??null,
         realizedComputeMatched:known&&a!.usage.calls===b!.usage.calls&&a!.usage.httpAttempts===b!.usage.httpAttempts
@@ -58,7 +65,8 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
   for(const [index,task] of TASKS.entries())for(let offset=0;offset<2;offset++) {
     const arm=EPOCH.arms[(index+offset)%2] as Arm;
     if(now()>=expires){rows.push({taskId:task.taskId,family:task.family,arm,run:null,blocked:"GLOBAL_BUDGET"});await checkpoint(report());continue;}
-    const result=await runNyxQuantitativeTask({...task,arm:"REASONING_WITH_WORKBENCH",nativeGenerationBounds:arm==="NATIVE_BOUNDS",now,
+    const result=await runNyxQuantitativeTask({...task,arm:"REASONING_WITH_WORKBENCH",nativeGenerationBounds:arm==="NATIVE_BOUNDS",
+      nativeExpressionGraph:arm==="EXPRESSION_GRAPH",now,
       limits:{maxCalls:EPOCH.maxCallsPerStage,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:EPOCH.maxStageMs,expiresAtEpochMs:expires,
         maxToolRequests:EPOCH.maxToolRequestsPerStage,maxToolWorkUnits:EPOCH.maxToolWorkUnitsPerStage,maxToolElapsedMs:EPOCH.maxToolElapsedMsPerStage},
       complete:request=>{if(++logicalCalls>EPOCH.maxLogicalCalls)throw Error("native_generation_logical_call_cap");return complete(procedureInferenceRequest(request),`${task.taskId}/${arm}`);},
@@ -69,6 +77,9 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
   return report();
 }
 async function main() {
+  const experiment=process.env.NYX_QUANTITATIVE_EXPERIMENT??"GENERATION_BOUNDS";
+  if(!["GENERATION_BOUNDS","EXPRESSION_GRAPH"].includes(experiment))throw Error("representation_experiment_invalid");
+  const EPOCH=experiment==="EXPRESSION_GRAPH"?EXPRESSION_TRANSFER_EPOCH:NATIVE_GENERATION_EPOCH;
   if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim())throw Error("explicit_network_and_injected_secret_required");
   const git=(...a:string[])=>execFileSync("git",a,{encoding:"utf8"}).trim(),candidate=process.env.GITHUB_SHA??git("rev-parse","HEAD");
   if(!/^[a-f0-9]{40}$/.test(candidate)||candidate!==git("rev-parse","HEAD")||git("status","--porcelain"))throw Error("clean_candidate_required");
@@ -76,17 +87,18 @@ async function main() {
   const paths=["scripts/omega/nyx-native-generation-live-eval.ts","scripts/omega/nyx-procedure-reuse-live-eval.ts","scripts/omega/nyx-procedure-reuse-fixtures.ts",
     "src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/research/boundedReasoningWorkbench.ts","src/lib/codelab/research/exactQuantitativeDerivation.ts",
     "src/lib/codelab/research/quantitativeEquationCompiler.ts","src/lib/codelab/research/quantitativeProcedureReuse.ts","src/lib/codelab/research/analysisArtifactReference.ts",
-    "src/lib/codelab/research/theoryContracts.ts","src/lib/codelab/model/nvidiaNimProvider.ts","src/lib/codelab/model/nvidiaCapacity.ts"];
+    "src/lib/codelab/research/theoryContracts.ts","src/lib/codelab/model/nvidiaNimProvider.ts","src/lib/codelab/model/nvidiaCapacity.ts",
+    "src/lib/codelab/research/quantitativeExpressionCompiler.ts"];
   const sourceDigests=Object.fromEntries(paths.map(path=>[path,theoryDigest(readFileSync(path,"utf8"))]));
   const provider=NvidiaNimProvider.create({providerId:"NYX-NATIVE-GENERATION-TRANSFER",model:EPOCH.model,authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource:nvidiaNimCredentialFromEnvironment(process.env),maxPromptBytes:32000,maxOutputTokens:EPOCH.maxOutputTokensPerCall,timeoutMs:120000})
     .withHttpAttemptBudget(EPOCH.maxHttpAttemptsPerEpoch,"WITHIN_SHARED_BUDGET");
-  const stages=new Map<string,NvidiaNimProvider>(),path=join(process.env.RUNNER_TEMP??tmpdir(),`nyx-native-generation-${candidate}.json`);
+  const stages=new Map<string,NvidiaNimProvider>(),path=join(process.env.RUNNER_TEMP??tmpdir(),`nyx-${experiment==="EXPRESSION_GRAPH"?"expression-transfer":"native-generation"}-${candidate}.json`);
   const persist=(r:unknown)=>writeFile(path,JSON.stringify(r,null,2)+"\n");
   const report=await runNativeGenerationEpoch((request,stage)=>{
     if(!stages.has(stage))stages.set(stage,provider.withHttpAttemptBudget(EPOCH.maxHttpAttemptsPerStage,"WITHIN_SHARED_BUDGET"));
     return stages.get(stage)!.complete(request);
-  },{candidate,sourceDigests},Date.now,persist);
+  },{candidate,sourceDigests},Date.now,persist,experiment as "GENERATION_BOUNDS"|"EXPRESSION_GRAPH");
   const sourceUnchanged=theoryDigest(git("ls-files","-s"))===before&&git("rev-parse","HEAD")===candidate&&!git("status","--porcelain"),final={...report,sourceUnchanged};
   await persist(final);console.log(`NYX_NATIVE_GENERATION_REPORT ${JSON.stringify(final)}`);if(!sourceUnchanged)throw Error("source_repository_changed");
 }

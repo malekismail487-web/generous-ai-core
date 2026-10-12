@@ -1,10 +1,12 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
+  push:
+    branches: [sol/omega-institutional-spine]
   workflow_dispatch:
     inputs:
       experiment:
         type: choice
-        options: [native-generation, procedure-reuse]
+        options: [native-generation, procedure-reuse, expression-graph]
         default: native-generation
         required: true
 permissions:
@@ -14,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-native-generation-once]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-expression-graph-once]')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -34,10 +36,17 @@ jobs:
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-native-generation-live-eval.ts scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omegaBoundedReasoningWorkbench.test.ts
       - name: Compare original and native-bound generation on four fresh cases
-        if: github.event_name == 'push' || inputs.experiment == 'native-generation'
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'native-generation'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
+      - name: Compare bounded equations and positional expressions on four new parameter cases
+        if: github.event_name == 'push' || inputs.experiment == 'expression-graph'
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_QUANTITATIVE_EXPERIMENT: EXPRESSION_GRAPH
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-native-generation-live-eval.ts
       - name: Generate two procedures once and compare recompute, context and bound invocation on fresh values
         if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'procedure-reuse'
@@ -53,4 +62,5 @@ jobs:
           path: |
             ${{ runner.temp }}/nyx-procedure-reuse-*.json
             ${{ runner.temp }}/nyx-native-generation-*.json
+            ${{ runner.temp }}/nyx-expression-transfer-*.json
           if-no-files-found: error

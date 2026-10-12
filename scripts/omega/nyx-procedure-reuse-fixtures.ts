@@ -58,6 +58,18 @@ export const NATIVE_GENERATION_EPOCH = immutableTheoryValue({version:"nyx-native
   limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","INTERFACE_CORRECTION_NOT_NEW_COGNITIVE_LAYER",
     "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_NO_DEFAULT_OR_BROAD_PROMOTION"],authorityIncrease:false});
 type Q = readonly [bigint, bigint];
+/** New representation epoch; old corpora and their oracle identities remain unchanged. */
+export const EXPRESSION_TRANSFER_CASES=immutableTheoryValue([
+  task("INTERPOLATION","EXPR-INTERPOLATION-1",{x0:"-8/5",x1:"7/6",x2:"17/4",y0:"31/9",y1:"-13/7",y2:"5/11",t:"-2/3"}),
+  task("PASSIVE_NETWORK","EXPR-NETWORK-1",{g0:"17/9",g1:"11/13",g01:"7/6",i0:"-23/5",i1:"37/8"}),
+  task("INTERPOLATION","EXPR-INTERPOLATION-2",{x0:"-9",x1:"2",x2:"6",y0:"23",y1:"-7",y2:"11",t:"4/5"}),
+  task("PASSIVE_NETWORK","EXPR-NETWORK-2",{g0:"13",g1:"7",g01:"5",i0:"-31",i1:"17"})
+]);
+export const EXPRESSION_TRANSFER_CORPUS_DIGEST=theoryDigest(EXPRESSION_TRANSFER_CASES);
+export const EXPRESSION_TRANSFER_EPOCH=immutableTheoryValue({...NATIVE_GENERATION_EPOCH,version:"nyx-expression-graph-transfer/1",
+  arms:["NATIVE_BOUNDS","EXPRESSION_GRAPH"],changedVariable:"GENERATION_REPRESENTATION_WITH_HOST_OWNED_TEMPORARY_BINDING_AND_REGISTER_REUSE",
+  limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","INTERFACE_LOWERING_NOT_NEW_COGNITIVE_LAYER",
+    "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_REQUIRES_REPLICATION","PAIR_ORIGINAL_FIELDS_DENOTE_CONTROL_BOUNDED_FIELDS_DENOTE_TREATMENT"]});
 function q(n: bigint, d = 1n): Q {
   if (!d) throw Error("procedure_oracle_division_by_zero");
   if (d < 0n) { n = -n; d = -d; }

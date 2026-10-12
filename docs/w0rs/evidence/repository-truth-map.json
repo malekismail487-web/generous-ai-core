@@ -2502,6 +2502,12 @@
       ]
     },
     {
+      "name": "NYX_QUANTITATIVE_EXPERIMENT",
+      "files": [
+        "scripts/omega/nyx-native-generation-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_QUANTITATIVE_FRESH",
       "files": [
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts"

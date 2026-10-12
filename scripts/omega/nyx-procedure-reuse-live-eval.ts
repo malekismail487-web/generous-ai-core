@@ -127,6 +127,7 @@ export async function runProcedureReuseEpoch(complete: Complete, binding: { cand
     if (now()>=expires) break;
     const start=now(), seed=await run(family.seed,undefined,true);
     const authored=seed.accepted?[...seed.attempts].reverse().find(a=>a.outcome==="ACCEPTED"&&a.executedProgram!==null):undefined;
+    if(authored?.executedProgram?.schemaVersion===4)throw Error("expression_graph_reuse_not_enabled");
     const admissionExpiry=Math.min(expires,start+EPOCH.maxStageMs);
     const admitted=authored?.executedProgram&&now()<admissionExpiry?BoundQuantitativeProcedure.admit({ task: family.seed, program: authored.executedProgram,
       parameterIds: family.seed.problem.constants.filter(c=>!["zero","one","two"].includes(c.id)).map(c=>c.id),
