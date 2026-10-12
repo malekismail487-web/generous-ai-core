@@ -7,7 +7,7 @@ import { BoundedReasoningSession, snapshotBoundedReasoningData, type ReasoningPr
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { QUANTITATIVE_TASKS, expectedQuantities, referenceQuantitativeProgram, verifyQuantitativeSubmission } from "./omega/nyx-quantitative-transfer-fixtures";
 import type { QuantitativeProblem, QuantitativeProgram } from "../src/lib/codelab/research/exactQuantitativeDerivation";
-import { runNyxQuantitativeTask, quantitativeExchangeSchema } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
+import { runNyxQuantitativeTask, quantitativeExchangeSchema,quantitativeOutputStructure,OBJECTIVE_OUTPUT_POLICY } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import { FRESH_QUANTITATIVE_TASKS,referenceFreshQuantitativeProgram,verifyFreshQuantitativeSubmission } from "./omega/nyx-quantitative-fresh-fixtures";
 import { SLOT_TRANSFER_TASKS,referenceSlotTransferProgram,verifySlotTransferSubmission } from "./omega/nyx-quantitative-slot-transfer-fixtures";
 import { EQUATION_TRANSFER_TASKS,verifyEquationTransferSubmission } from "./omega/nyx-quantitative-equation-transfer-fixtures";
@@ -17,7 +17,8 @@ import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } f
 import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
 import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
-  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
+  EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,
+  expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
 import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
 import {lowerQuantitativeExpressions,quantitativeExpressionSchema,type QuantitativeExpressionGraph} from "../src/lib/codelab/research/quantitativeExpressionCompiler";
@@ -1147,5 +1148,137 @@ check(frozenExpression.complete&&frozenExpression.sourceUnchanged&&frozenExpress
   &&frozenExpression.summaries[0].usage.reportedTokens===40545&&frozenExpression.summaries[1].usage.reportedTokens===35676
   &&expressionReceipt.diagnosis.cognitiveGainDemonstrated===false&&expressionReceipt.diagnosis.defaultChanged===false,
   "narrow emission and lower model compute signal does not become functional, default, authority or recursion promotion");
+// Separate development reproduction, not any frozen interpolation/network case.
+const outputTask={taskId:"DEV-OUTPUT-CONTRACT",objective:"Compute sum=x+y and product=x*y exactly.",outputLabels:["sum","product"],
+  problem:{kind:"EXACT_QUANTITATIVE_DERIVATION" as const,constants:[{id:"zero",value:"0"},{id:"x",value:"5"},{id:"y",value:"-11"}]}};
+const outputProgram:QuantitativeExpressionGraph={schemaVersion:4,expressions:[{op:"ADD",left:"x",right:"y"},{op:"MUL",left:"x",right:"y"}],
+  outputs:[{label:"sum",source:0},{label:"product",source:1}]};
+const partialOutputProgram={...outputProgram,outputs:outputProgram.outputs.slice(0,1)};
+let outputOracleCalls=0;
+const outputOracle=(certificate:unknown)=>{
+  outputOracleCalls++;const c=snapshotBoundedReasoningData(certificate) as {outputs?:{label:string;value:string}[];confidence?:number};
+  const shaped=!!c&&Object.keys(c).sort().join() === "confidence,outputs"&&typeof c.confidence==="number"&&Number.isFinite(c.confidence)
+    &&c.confidence>=0&&c.confidence<=1&&Array.isArray(c.outputs)&&c.outputs.length===2&&new Set(c.outputs.map(o=>o.label)).size===2
+    &&c.outputs.every(o=>Object.keys(o).sort().join()==="label,value"&&typeof o.label==="string"&&typeof o.value==="string");
+  // Independent integer specification: no native arithmetic/compiler helper.
+  const x=BigInt(outputTask.problem.constants[1].value),y=BigInt(outputTask.problem.constants[2].value);
+  const expected={sum:String(x+y),product:String(x*y)};
+  const accepted=!!shaped&&Object.entries(expected).every(([label,value])=>c.outputs!.some(o=>o.label===label&&o.value===value));
+  return {accepted,findings:accepted?[]:[shaped?"EXACT_OBJECTIVE_MISMATCH":"CERTIFICATE_SCHEMA_INVALID"],verificationDigest:theoryDigest({certificate,accepted})};
+};
+const outputInput={...outputTask,arm:"REASONING_WITH_WORKBENCH" as const,nativeExpressionGraph:true,limits:reuseLimits,verify:outputOracle,now:()=>1000};
+const outputExchange=(program:unknown)=>({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(outputTask.problem),program},certificate:{confidence:0.8}});
+let legacyOutputRequest:any,observedOutputRequest:any;
+const legacyOutputRun=await runNyxQuantitativeTask({...outputInput,complete:async request=>{legacyOutputRequest=request;return responseFor(outputExchange(partialOutputProgram));}});
+const observedOutputRun=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"OBSERVE",complete:async request=>{observedOutputRequest=request;return responseFor(outputExchange(partialOutputProgram));}});
+check(legacyOutputRun.outcome==="CERTIFICATE_SCHEMA_REJECTION"&&legacyOutputRun.toolRequests===1&&!legacyOutputRun.attempts[0].outputStructure
+  &&observedOutputRun.outcome===legacyOutputRun.outcome&&observedOutputRun.toolRequests===1&&outputOracleCalls===2,
+  "separate task reproduces missing-output schema rejection after native construction; observation alone changes no admission");
+check(JSON.stringify(legacyOutputRequest)===JSON.stringify(observedOutputRequest)&&observedOutputRun.attempts[0].outputStructure?.actualCount===1
+  &&observedOutputRun.attempts[0].outputStructure?.missingLabels===1,
+  "counts-only observation preserves default model prompt, schema, budget and legacy classification exactly");
+const enforcedOutputRun=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",complete:async()=>responseFor(outputExchange(partialOutputProgram))});
+check(enforcedOutputRun.outcome==="OUTPUT_CONTRACT_REJECTION"&&enforcedOutputRun.toolRequests===0&&outputOracleCalls===2
+  &&enforcedOutputRun.attempts[0].computation===null&&enforcedOutputRun.attempts[0].executedProgram===null,
+  "enforcement rejects an incomplete objective before execution or oracle use, never supplies the omitted quantity");
+let outputRepairCalls=0;
+const repairedOutputs=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",limits:{...reuseLimits,maxCalls:2},complete:async request=>{
+  outputRepairCalls++;const prompt=JSON.parse(request.messages[1].content);
+  check(prompt.objectiveOutputContract.requiredCount===2&&prompt.objectiveOutputContract.requiredLabels.join() === "sum,product",
+    "trusted opt-in exposes the public objective contract, not evaluator answers");
+  if(outputRepairCalls===2)check(prompt.verificationFeedback.includes("OBJECTIVE_OUTPUT_LABEL_SET_INVALID")&&!prompt.previousObservation,
+    "rejected output shape yields bounded actionable feedback without manufacturing a computed observation");
+  return responseFor(outputExchange(outputRepairCalls===1?partialOutputProgram:outputProgram));}});
+check(repairedOutputs.accepted&&repairedOutputs.calls===2&&repairedOutputs.toolRequests===1
+  &&repairedOutputs.attempts[0].outcome==="OUTPUT_CONTRACT_REJECTION"&&repairedOutputs.attempts[1].outcome==="ACCEPTED",
+  "E3 repair composes an independently supplied correct proposal; it is not a live reasoning-improvement claim");
+const wrongOutputMath={...outputProgram,expressions:[{op:"SUB" as const,left:"x",right:"y"},outputProgram.expressions[1]]};
+const wrongOutputRun=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",complete:async()=>responseFor(outputExchange(wrongOutputMath))});
+check(!wrongOutputRun.accepted&&wrongOutputRun.outcome==="FUNCTIONAL_REJECTION"&&wrongOutputRun.toolRequests===1
+  &&wrongOutputRun.attempts[0].outputStructure?.matches,
+  "complete output shape is not evidence of correct equations and cannot override the independent mathematical oracle");
+const reorderedOutputRun=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",complete:async()=>responseFor(outputExchange({...outputProgram,outputs:[...outputProgram.outputs].reverse()}))});
+check(reorderedOutputRun.accepted,"objective set contract does not invent a fixed output-order requirement");
+for(const badOutputs of [[outputProgram.outputs[0],outputProgram.outputs[0]],[{label:"unexpected",source:0},outputProgram.outputs[1]],[],null]){
+  const r=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",complete:async()=>responseFor(outputExchange({...outputProgram,outputs:badOutputs}))});
+  check(r.outcome==="OUTPUT_CONTRACT_REJECTION"&&r.toolRequests===0,"duplicate, unexpected, absent and non-array outputs fail closed before execution");
+}
+const manualMissing=await runNyxQuantitativeTask({...outputInput,arm:"CURRENT_DIRECT",nativeExpressionGraph:false,objectiveOutputContract:"ENFORCE",
+  complete:async()=>responseFor({action:"SUBMIT",analysisRequest:null,certificate:{confidence:0.8,outputs:[{label:"sum",value:"-6"}]}})});
+check(manualMissing.outcome==="OUTPUT_CONTRACT_REJECTION"&&manualMissing.toolRequests===0
+  &&manualMissing.attempts[0].outputStructure?.origin==="CERTIFICATE_OUTPUTS","manual certificates obey the same output set without granting a control computation tool");
+const staleOutputRun=await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"ENFORCE",complete:async()=>responseFor({...outputExchange(outputProgram),
+  analysisRequest:{problemDigest:"stale",program:outputProgram}})});
+check(staleOutputRun.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&staleOutputRun.toolRequests===0,
+  "output contract does not bypass native problem binding, expiry or authority");
+let hostileOutputReads=0;
+const hostileOutputs=[{get label(){hostileOutputReads++;return "sum";},source:0}];
+check(quantitativeOutputStructure(outputTask.outputLabels,hostileOutputs).inputState==="UNINSPECTABLE_DATA"&&hostileOutputReads===0,
+  "structural diagnostics reuse the native guard and reject accessors without invocation");
+const cyclicOutputs:any=[];cyclicOutputs.push({label:"sum",source:cyclicOutputs});
+check(quantitativeOutputStructure(outputTask.outputLabels,cyclicOutputs).inputState==="UNINSPECTABLE_DATA",
+  "cyclic data cannot become an output-shape observation");
+const opaqueShape=quantitativeOutputStructure(outputTask.outputLabels,[{label:"sum",value:"opaque_fixture_value"},{label:"product",value:"not_a_number"}]);
+check(opaqueShape.matches&&!JSON.stringify(opaqueShape).includes("opaque_fixture_value")&&!JSON.stringify(opaqueShape).includes("sum"),
+  "shape observations contain no values or candidate label strings and do not pretend to validate numerical content");
+for(let size=1;size<=16;size++){
+  const labels=Array.from({length:size},(_,i)=>`answer${i}`),entries=labels.map(label=>({label,source:"zero"}));
+  check(quantitativeOutputStructure(labels,[...entries].reverse()).matches,"all native-supported output arities admit a complete set in any order");
+  check(!quantitativeOutputStructure(labels,entries.slice(1)).matches,"all output arities reject omitted quantities");
+  const duplicates=[...entries];duplicates[duplicates.length-1]=entries[0];
+  check(size===1||!quantitativeOutputStructure(labels,duplicates).matches,"same count cannot hide a duplicated and missing quantity");
+  check(!quantitativeOutputStructure(labels,[...entries,{label:"extra",source:"zero"}]).matches,"unrequested quantities do not enlarge the objective contract");
+}
+check(!quantitativeOutputStructure(["answer"],Array.from({length:17},()=>({label:"answer",source:"zero"}))).inspectionComplete,
+  "oversized output arrays are bounded observations, not fully inspected or matching contracts");
+for(const badLabels of [[],["a","a"],["invalid label"],Array.from({length:17},(_,i)=>`a${i}`)])
+  check(throws(()=>quantitativeOutputStructure(badLabels,[])),"host objective label sets must be nonempty, distinct, bounded native identifiers");
+const strictOutputSchema=quantitativeExchangeSchema(outputTask.outputLabels,true,false,theoryDigest(outputTask.problem),["zero","x","y"],null,null,false,true,true);
+const strictOutputValidator=new graphSchemaValidator({allErrors:true}).compile(strictOutputSchema);
+check(strictOutputValidator(outputExchange(outputProgram))&&!strictOutputValidator(outputExchange(partialOutputProgram)),
+  "guided schema mirrors exact output cardinality without replacing local set/authority validation");
+check(strictOutputValidator(outputExchange({...outputProgram,outputs:[outputProgram.outputs[0],outputProgram.outputs[0]]}))
+  &&!quantitativeOutputStructure(outputTask.outputLabels,[outputProgram.outputs[0],outputProgram.outputs[0]]).matches,
+  "JSON-schema collection count is not label uniqueness; local contract remains mandatory");
+let invalidOutputSettingCalled=false;
+try{await runNyxQuantitativeTask({...outputInput,objectiveOutputContract:"MODEL_CHOSEN" as any,complete:async()=>{
+  invalidOutputSettingCalled=true;return responseFor(outputExchange(outputProgram));}});check(false,"invalid output mode must reject");}
+catch{check(!invalidOutputSettingCalled,"model text cannot create an output-policy mode or new authority");}
+const outputEvidenceProjection=JSON.stringify(publicRunForOutput(enforcedOutputRun));
+function publicRunForOutput(run:typeof enforcedOutputRun){return {attempts:run.attempts.map(a=>({outcome:a.outcome,structure:a.outputStructure}))};}
+check(!outputEvidenceProjection.includes("source")&&!outputEvidenceProjection.includes("sum")&&!outputEvidenceProjection.includes("-11")
+  &&OBJECTIVE_OUTPUT_POLICY.authorityGranted===false&&OBJECTIVE_OUTPUT_POLICY.mathematicsSupplied===false,
+  "count diagnosis does not persist raw programs, candidate names/values or become a mathematical generator");
+check(REPAIR_CONTEXT_CASES.every(t=>![...EXPRESSION_TRANSFER_CASES,...NATIVE_GENERATION_CASES,...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh])]
+  .some(old=>theoryDigest(old.problem)===theoryDigest(t.problem))),"repair-context comparison does not reuse any exposed parameter set");
+for(const task of REPAIR_CONTEXT_CASES){
+  const s=BoundedReasoningSession.create(task.problem,graphLimits,Date.now,{expressionGraphs:true});
+  const result=s.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:s.problemDigest,program:testExpressionWitness(task)});s.revoke();
+  check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:result.payload!.outputs,confidence:0.8}).accepted,
+    "new context case is representable under the unchanged independent oracle and native resource bounds");
+}
+let contextEpochCalls=0;
+const contextEpoch=await runNativeGenerationEpoch(async(request,stage)=>{
+  contextEpochCalls++;const prompt=JSON.parse(request.messages[1].content),task=REPAIR_CONTEXT_CASES.find(t=>t.taskId===prompt.taskId)!;
+  const treatment=stage.endsWith("GRAPH_WITH_ADMITTED_CONTEXT"),second=prompt.verificationFeedback.length>0;
+  check(prompt.objectiveOutputContract.requiredCount===task.outputLabels.length&&prompt.nativeExpressionGraph.schemaVersion===4
+    &&request.reasoningControl==="SUPER_HOSTED_NATIVE"&&request.reasoningBudgetTokens===2048&&request.maxTokens===8192,
+    "both context arms share model, tool representation, objective completeness and inference caps");
+  check(Boolean(prompt.lastAdmittedDerivation) === (treatment&&second),
+    "only a later treatment call receives its own admitted candidate; no first-call or control state injection");
+  if(prompt.lastAdmittedDerivation)check(prompt.lastAdmittedDerivation.independentEvaluation.accepted===false
+    &&prompt.lastAdmittedDerivation.independentEvaluation.findings.includes("EXACT_OBJECTIVE_MISMATCH")
+    &&prompt.lastAdmittedDerivation.grantsAuthority===false&&JSON.stringify(prompt.lastAdmittedDerivation).length<=REPAIR_CONTEXT_EPOCH.maxAdmittedContextBytes,
+    "bounded repair context carries original falsification and provenance, never oracle answers or authority");
+  const wrong={schemaVersion:4,expressions:[],outputs:task.outputLabels.map(label=>({label,source:"zero"}))};
+  const program=treatment&&second?testExpressionWitness(task):wrong;
+  return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(task.problem),program},certificate:{confidence:0.8}});
+},{candidate:"0".repeat(40),sourceDigests:{}},Date.now,async()=>{},"REPAIR_CONTEXT");
+check(contextEpochCalls===16&&contextEpoch.summaries[0].accepted===0&&contextEpoch.summaries[1].accepted===4
+  &&contextEpoch.summaries[1].firstAttemptAccepted===0&&contextEpoch.summaries[1].repairedAccepted===4
+  &&contextEpoch.summaries[0].admittedContextAttempts===0&&contextEpoch.summaries[1].admittedContextAttempts===4,
+  "E3 injected corrector validates context custody and separate first/repair accounting, not actual model capability");
+check(contextEpoch.scopedRepairSignal&&contextEpoch.pairs.every(p=>p.realizedComputeMatched&&p.addedAcceptedRepairAgainstGradedFailure)
+  &&contextEpoch.promotion.startsWith("NONE_"),"E3 scoring recognizes a supported repaired-outcome pattern but never automatically promotes it");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

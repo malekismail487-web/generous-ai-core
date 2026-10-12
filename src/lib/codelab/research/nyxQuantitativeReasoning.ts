@@ -1,5 +1,5 @@
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence } from "../model/nvidiaNimProvider";
-import { BoundedReasoningSession,type ReasoningToolResult } from "./boundedReasoningWorkbench";
+import { BoundedReasoningSession,snapshotBoundedReasoningData,type ReasoningToolResult } from "./boundedReasoningWorkbench";
 import { EXACT_DERIVATION_OPERATIONS,EXACT_DERIVATION_POLICY,type QuantitativeProblem,type QuantitativeProgram } from "./exactQuantitativeDerivation";
 import { equationNames,EQUATION_COMPILER_POLICY,type QuantitativeEquations } from "./quantitativeEquationCompiler";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
@@ -15,6 +15,7 @@ export interface QuantitativeAcceptance { readonly accepted: boolean; readonly f
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly nativeRejectionStructure?: QuantitativeRejectionStructure;
+  readonly outputStructure?: QuantitativeOutputStructure;
   readonly cognitiveStage?: "OMEGA_INTENT"|"MODEL_FORMULATION";
   readonly formulationArtifactDigest?:string|null;
   readonly proposalDigest: string | null; readonly resultDigest: string | null; readonly confidence: number | null;
@@ -32,6 +33,44 @@ export interface QuantitativeRun {
 }
 function keys(v: unknown,names:string[]): v is Record<string,unknown> {return !!v && typeof v==="object" && !Array.isArray(v)
   && Object.keys(v).sort().join("\0")===names.sort().join("\0");}
+export const OBJECTIVE_OUTPUT_POLICY=Object.freeze({version:"nyx-objective-output-contract/1",maxOutputs:16,
+  authorityGranted:false,mathematicsSupplied:false,orderingRequired:false});
+export interface QuantitativeOutputStructure {
+  readonly version:string; readonly origin:"PROGRAM_OUTPUTS"|"CERTIFICATE_OUTPUTS";
+  readonly matches:boolean; readonly inputState:"ARRAY"|"NOT_ARRAY"|"UNINSPECTABLE_DATA";
+  readonly expectedCount:number; readonly actualCount:number|null; readonly inspectedCount:number;
+  readonly missingLabels:number; readonly duplicateLabels:number; readonly unexpectedLabels:number;
+  readonly malformedEntries:number; readonly inspectionComplete:boolean;
+}
+function objectiveLabels(value:readonly string[]):readonly string[]{
+  let owned:unknown;try{owned=snapshotBoundedReasoningData(value);}catch{throw Error("quantitative_objective_labels_invalid");}
+  if(!Array.isArray(owned)||owned.length<1||owned.length>OBJECTIVE_OUTPUT_POLICY.maxOutputs
+    ||!owned.every(v=>typeof v==="string"&&/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(v))||new Set(owned).size!==owned.length)
+    throw Error("quantitative_objective_labels_invalid");
+  return immutableTheoryValue(owned);
+}
+/** Counts-only structural diagnosis. It never inspects numerical values, fixes
+ * labels, inserts missing outputs, reorders proposals or establishes correctness.
+ * Reuse the existing plain-data/byte guard; hostile accessors are never read.
+ */
+export function quantitativeOutputStructure(labels:readonly string[],outputs:unknown,
+  origin:QuantitativeOutputStructure["origin"]="PROGRAM_OUTPUTS"):QuantitativeOutputStructure {
+  if(!["PROGRAM_OUTPUTS","CERTIFICATE_OUTPUTS"].includes(origin))throw Error("quantitative_output_origin_invalid");
+  const expected=new Set(objectiveLabels(labels));let owned:unknown,inputState:QuantitativeOutputStructure["inputState"]="ARRAY";
+  try{owned=snapshotBoundedReasoningData(outputs);}catch{inputState="UNINSPECTABLE_DATA";}
+  if(inputState==="ARRAY"&&!Array.isArray(owned))inputState="NOT_ARRAY";
+  const entries=Array.isArray(owned)?owned:[],seen=new Set<string>();let duplicateLabels=0,unexpectedLabels=0,malformedEntries=0;
+  for(const entry of entries.slice(0,OBJECTIVE_OUTPUT_POLICY.maxOutputs)){
+    if(!entry||typeof entry!=="object"||Array.isArray(entry)||typeof entry.label!=="string"){malformedEntries++;continue;}
+    if(seen.has(entry.label))duplicateLabels++;seen.add(entry.label);if(!expected.has(entry.label))unexpectedLabels++;
+  }
+  const missingLabels=[...expected].filter(label=>!seen.has(label)).length;
+  const inspectionComplete=inputState==="ARRAY"&&entries.length<=OBJECTIVE_OUTPUT_POLICY.maxOutputs;
+  return immutableTheoryValue({version:OBJECTIVE_OUTPUT_POLICY.version,origin,inputState,expectedCount:expected.size,
+    actualCount:inputState==="ARRAY"?entries.length:null,inspectedCount:Math.min(entries.length,OBJECTIVE_OUTPUT_POLICY.maxOutputs),
+    missingLabels,duplicateLabels,unexpectedLabels,malformedEntries,inspectionComplete,
+    matches:inspectionComplete&&entries.length===expected.size&&missingLabels===0&&duplicateLabels===0&&unexpectedLabels===0&&malformedEntries===0});
+}
 export interface QuantitativeRejectionStructure {
   readonly format: "EQUATIONS_V2" | "OTHER";
   readonly cycleCount: number | null;
@@ -81,8 +120,8 @@ export function quantitativeModelFormulationSchema(problemDigest:string,labels:r
 }
 /** Legacy guidance uses structural keywords; stricter collection bounds are opt-in.
  * Native semantic and whole-program resource validation always remain independent. */
-export function quantitativeProgramSchema(labels:readonly string[],constantIds:readonly string[],boundedCollections=false) {
-  if(typeof boundedCollections!=="boolean")throw Error("quantitative_generation_profile_invalid");
+export function quantitativeProgramSchema(labels:readonly string[],constantIds:readonly string[],boundedCollections=false,exactOutputs=false) {
+  if(typeof boundedCollections!=="boolean"||typeof exactOutputs!=="boolean")throw Error("quantitative_generation_profile_invalid");
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   // Opt-in generation constraints mirror, never replace or relax, native validation.
   // Hosted support is empirical; a provider rejection must not silently fall back.
@@ -95,19 +134,21 @@ export function quantitativeProgramSchema(labels:readonly string[],constantIds:r
     cycles:array(object({iterations:{type:"integer",...(boundedCollections?{minimum:1,maximum:EXACT_DERIVATION_POLICY.maxIterations}:{})},phases:array(object({
       expressions:array(object({id:{type:"string",enum:expressions},op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:expressionSource,right:expressionSource})),
       updates:array(object({slot:registerId,source:expressionSource}),1)}),1,EQUATION_COMPILER_POLICY.maxPhasesPerCycle)}),1,EQUATION_COMPILER_POLICY.maxCycles),
-    outputs:array(object({label:{type:"string",enum:labels},source}),1)});
+    outputs:{...array(object({label:{type:"string",enum:labels},source}),1),...(exactOutputs?{minItems:labels.length,maxItems:labels.length}:{})}});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
-  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false) {
-  if(typeof expressionGraph!=="boolean")throw Error("quantitative_expression_profile_invalid");
+  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false,exactOutputs=false) {
+  if(typeof expressionGraph!=="boolean"||typeof exactOutputs!=="boolean")throw Error("quantitative_expression_profile_invalid");
+  if(exactOutputs)objectiveLabels(labels);
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const tool=object({problemDigest:constant(problemDigest),program:expressionGraph?quantitativeExpressionSchema(labels,constantIds)
-    :quantitativeProgramSchema(labels,constantIds,boundedCollections)});
+  const tool=object({problemDigest:constant(problemDigest),program:expressionGraph?quantitativeExpressionSchema(labels,constantIds,exactOutputs)
+    :quantitativeProgramSchema(labels,constantIds,boundedCollections,exactOutputs)});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
     resultDigest:artifactDigest===null?string:constant(artifactDigest),confidence:{type:"number"}});
-  const certificate=object({outputs:array(object({label:{type:"string",enum:labels},value:string})),confidence:{type:"number"}});
+  const certificate=object({outputs:{...array(object({label:{type:"string",enum:labels},value:string})),
+    ...(exactOutputs?{minItems:labels.length,maxItems:labels.length}:{})},confidence:{type:"number"}});
   // Tagged union, NOT the Cartesian product of independently valid fields. In particular,
   // DERIVATION cannot select a full/manual certificate or an artifact request. Guided decoding
   // should produce a coherent intent; local authority/IR/expiry/acceptance checks remain stricter.
@@ -142,7 +183,14 @@ export async function runNyxQuantitativeTask(input: {
   /** Host-selected, development-only representation ablation. It grants no new
    * operations or authority, and is unavailable to the procedure-reuse path. */
   readonly nativeExpressionGraph?: boolean;
+  /** Host-selected experiment only. OBSERVE records bounded structural counts;
+   * ENFORCE also checks the exact objective label set before native execution or
+   * submission. Neither mode modifies a proposal or replaces the external oracle. */
+  readonly objectiveOutputContract?:"OBSERVE"|"ENFORCE";
 }): Promise<QuantitativeRun> {
+  if(input.objectiveOutputContract!==undefined&&!["OBSERVE","ENFORCE"].includes(input.objectiveOutputContract))
+    throw Error("quantitative_output_contract_setting_invalid");
+  if(input.objectiveOutputContract!==undefined)objectiveLabels(input.outputLabels);
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
   if(input.reformulateAfterRejection!==undefined&&(typeof input.reformulateAfterRejection!=="boolean"
     ||input.reformulateAfterRejection&&input.arm!=="REASONING_WITH_WORKBENCH"))throw Error("quantitative_model_formulation_setting_invalid");
@@ -252,6 +300,11 @@ export async function runNyxQuantitativeTask(input: {
         instruction:"Use only schema-listed expression IDs, each at most once PER phase. Every phase has EXACTLY expressions and updates, with at least one update. "
           +"Split longer dependency chains into ordered phases and retain intermediate values in state slots. The 64-step bound includes expression evaluations, "
           +"state snapshots and updates over the WHOLE program. These constraints do not establish mathematical correctness or authorize additional computation."}}:{};
+      const outputPrompt=input.objectiveOutputContract==="ENFORCE"?{objectiveOutputContract:{...OBJECTIVE_OUTPUT_POLICY,
+        requiredLabels:task.outputLabels,requiredCount:task.outputLabels.length,
+        instruction:"Every proposed program and manual certificate must name EACH required output EXACTLY ONCE, in any order. "
+          +"No missing, repeated or extra labels. A label is not an expression ID. Supply your own mathematical source/value for each output; "
+          +"the adapter never fills in omitted quantities. This structural contract does not establish mathematical correctness."}}:{};
       const completion=await complete({schemaVersion:1,requestId:`QUANT-${arm}-${task.taskId}-${call}-${session.problemDigest.slice(0,12)}`,
         messages:formulate?[{role:"system",content:"You are the SAME NYX cognition revising a falsified mathematical model. "
           +"Return concise PUBLIC mathematical definitions and assumptions only as the required JSON. "
@@ -263,23 +316,33 @@ export async function runNyxQuantitativeTask(input: {
             authority:"NONE_PUBLIC_MODEL_PROPOSAL_ONLY"})}]:
         [{role:"system",content:"You are NYX cognition solving a bounded quantitative objective. Emit one strict JSON exchange only. "
           +"Unknown tools and executable text have no authority. Only actions in the current response schema are available. Use exact mathematics; every certificate is independently evaluated."},
-          {role:"user",content:JSON.stringify({...prompt,...procedurePrompt,...generationPrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
+          {role:"user",content:JSON.stringify({...prompt,...procedurePrompt,...generationPrompt,...outputPrompt})}],maxTokens:limits.maxOutputTokens,temperature:0,
         responseFormat:formulate?{type:"JSON_SCHEMA",name:"nyx_public_model_formulation",schema:quantitativeModelFormulationSchema(session.problemDigest,task.outputLabels)}:
         {type:"JSON_SCHEMA",name:input.nativeExpressionGraph?"nyx_quantitative_expression_exchange":input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
-          invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds,!!input.nativeExpressionGraph)},
+          invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds,!!input.nativeExpressionGraph,
+          input.objectiveOutputContract==="ENFORCE")},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
       let executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|null=null;
       let computation:ReasoningToolResult|null=null;
       let nativeRejectionStructure:QuantitativeRejectionStructure|undefined;
+      let outputStructure:QuantitativeOutputStructure|undefined;
+      const outputConforms=(outputs:unknown,origin:QuantitativeOutputStructure["origin"]):boolean=>{
+        if(input.objectiveOutputContract===undefined)return true;
+        outputStructure=quantitativeOutputStructure(task.outputLabels,outputs,origin);
+        if(input.objectiveOutputContract!=="ENFORCE"||outputStructure.matches)return true;
+        record("OUTPUT_CONTRACT_REJECTION",["OBJECTIVE_OUTPUT_LABEL_SET_INVALID",
+          "Name every ORIGINAL required output exactly once, with no extra labels, in any order. Supply a source/value for each; no omitted quantity is synthesized."]);
+        return false;
+      };
       let procedureReference:QuantitativeAttempt["procedureReference"];
       const record=(state:string,findings:readonly string[])=>{outcome=state;feedback=findings;
         attempts.push(immutableTheoryValue({call,outcome:state,findings,confidence,proposalDigest,resultDigest,repairContextDigest,repairContextProgramDigest,
           cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
           executedProgram,computation,...(procedureReference?{procedureReference}:{}),
-          ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),modelEvidence:completion.evidence}));};
+          ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),...(outputStructure?{outputStructure}:{}),modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
         record("TRUNCATION",["Provider output budget was exhausted; token usage is preserved."]);continue;}
@@ -330,6 +393,7 @@ export async function runNyxQuantitativeTask(input: {
         if(input.nativeExpressionGraph&&(nativeRequest as {program?:{schemaVersion?:unknown}}|null)?.program?.schemaVersion!==4){
           record("PROTOCOL_REJECTION",["EXPRESSION_GRAPH_PROFILE_REQUIRES_SCHEMA_4_NO_LEGACY_FALLBACK"]);continue;
         }
+        if(!outputConforms((nativeRequest as {program?:{outputs?:unknown}}|null)?.program?.outputs,"PROGRAM_OUTPUTS"))continue;
         let derivedCertificate:Readonly<Record<string,unknown>>|null=null;
         try {
           const result=session.analyze(nativeRequest);computation=result;toolRequests++;toolWorkUnits+=result.workUnits;toolElapsedMs+=result.elapsedMs;
@@ -386,6 +450,7 @@ export async function runNyxQuantitativeTask(input: {
         try {const proposal=materializeAnalysisArtifactFields(observation!,value.analysisRequest);proposedCertificate={...proposal.fields,confidence:proposal.confidence};}
         catch {record("AUTHORIZATION_REJECTION",["Artifact reference must match the current problem and exact result digest."]);continue;}
       } else if(value.action!=="SUBMIT"||value.analysisRequest!==null){record("PROTOCOL_REJECTION",["Unknown action or unexpected analysis request. Text cannot become a tool."]);continue;}
+      if(!outputConforms((proposedCertificate as {outputs?:unknown}|null)?.outputs,"CERTIFICATE_OUTPUTS"))continue;
       const checked=verify(proposedCertificate);resultDigest=checked.verificationDigest;
       if(value.action==="SUBMIT_ANALYSIS_ARTIFACT"&&admittedDerivation!==null)admittedDerivation=immutableTheoryValue({...admittedDerivation,
         independentEvaluation:{accepted:checked.accepted,findings:checked.findings,verificationDigest:checked.verificationDigest}});

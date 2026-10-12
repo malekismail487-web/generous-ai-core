@@ -67,12 +67,13 @@ export function lowerQuantitativeExpressions(problem:QuantitativeProblem,value:u
   if(quantitativeProgramFinding(problem,program)!==null)return fail("LOWERED_PROGRAM_REJECTED");
   return program;
 }
-export function quantitativeExpressionSchema(labels:readonly string[],constantIds:readonly string[]) {
+export function quantitativeExpressionSchema(labels:readonly string[],constantIds:readonly string[],exactOutputs=false) {
+  if(typeof exactOutputs!=="boolean")throw Error("quantitative_expression_output_profile_invalid");
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const source={anyOf:[{type:"string",enum:constantIds},{type:"integer",minimum:0,maximum:EXPRESSION_COMPILER_POLICY.maxExpressions-1}]};
   return object({schemaVersion:{type:"integer",enum:[4]},
     expressions:{type:"array",minItems:0,maxItems:EXPRESSION_COMPILER_POLICY.maxExpressions,
       items:object({op:{type:"string",enum:EXACT_DERIVATION_OPERATIONS},left:source,right:source})},
-    outputs:{type:"array",minItems:1,maxItems:EXPRESSION_COMPILER_POLICY.maxOutputs,
+    outputs:{type:"array",minItems:exactOutputs?labels.length:1,maxItems:exactOutputs?labels.length:EXPRESSION_COMPILER_POLICY.maxOutputs,
       items:object({label:{type:"string",enum:labels},source})}});
 }

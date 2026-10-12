@@ -70,6 +70,25 @@ export const EXPRESSION_TRANSFER_EPOCH=immutableTheoryValue({...NATIVE_GENERATIO
   arms:["NATIVE_BOUNDS","EXPRESSION_GRAPH"],changedVariable:"GENERATION_REPRESENTATION_WITH_HOST_OWNED_TEMPORARY_BINDING_AND_REGISTER_REUSE",
   limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","INTERFACE_LOWERING_NOT_NEW_COGNITIVE_LAYER",
     "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_REQUIRES_REPLICATION","PAIR_ORIGINAL_FIELDS_DENOTE_CONTROL_BOUNDED_FIELDS_DENOTE_TREATMENT"]});
+/** Existing repair state was not enabled in the preceding positional-graph
+ * experiment. Both arms now share the exact public output contract; only
+ * treatment receives its OWN most recently admitted IR on a later call.
+ * No old case/answer/program is supplied, and no new persistent memory exists. */
+export const REPAIR_CONTEXT_CASES=immutableTheoryValue([
+  task("INTERPOLATION","CTX-INTERPOLATION-1",{x0:"-11/7",x1:"9/8",x2:"19/6",y0:"37/13",y1:"-17/9",y2:"7/5",t:"-3/4"}),
+  task("PASSIVE_NETWORK","CTX-NETWORK-1",{g0:"19/11",g1:"13/17",g01:"11/8",i0:"-29/7",i1:"41/9"}),
+  task("INTERPOLATION","CTX-INTERPOLATION-2",{x0:"-8",x1:"3",x2:"9",y0:"29",y1:"-11",y2:"17",t:"7/6"}),
+  task("PASSIVE_NETWORK","CTX-NETWORK-2",{g0:"17",g1:"11",g01:"7",i0:"-43",i1:"23"})
+]);
+export const REPAIR_CONTEXT_CORPUS_DIGEST=theoryDigest(REPAIR_CONTEXT_CASES);
+export const REPAIR_CONTEXT_EPOCH=immutableTheoryValue({...NATIVE_GENERATION_EPOCH,version:"nyx-admitted-repair-context/1",
+  arms:["GRAPH_WITH_OUTPUT_CONTRACT","GRAPH_WITH_ADMITTED_CONTEXT"],objectiveOutputContract:"ENFORCE",maxAdmittedContextBytes:12000,
+  changedVariable:"SECOND_CALL_OWN_ADMITTED_PROGRAM_CONTEXT_UNDER_COMMON_OBJECTIVE_OUTPUT_CONTRACT",
+  support:"MORE_FRESH_ACCEPTED_REPAIRS_WITHOUT_MORE_REALIZED_MODEL_COMPUTE_NO_CASE_REGRESSION_REQUIRES_REPLICATION",
+  limitations:["FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES","EXISTING_CONTEXT_FEATURE_NOT_NEW_COGNITIVE_LAYER",
+    "INDEPENDENT_FIRST_PROPOSALS_NOT_SHARED_START_CAUSAL_IDENTIFICATION","FIRST_AND_REPAIRED_OUTCOMES_SEPARATE",
+    "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED","SINGLE_EPOCH_REQUIRES_REPLICATION",
+    "PAIR_ORIGINAL_FIELDS_DENOTE_CONTROL_BOUNDED_FIELDS_DENOTE_TREATMENT"]});
 function q(n: bigint, d = 1n): Q {
   if (!d) throw Error("procedure_oracle_division_by_zero");
   if (d < 0n) { n = -n; d = -d; }

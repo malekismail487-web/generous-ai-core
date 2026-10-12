@@ -1010,8 +1010,15 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
 };
 
 // src/lib/codelab/research/nyxQuantitativeReasoning.ts
-function quantitativeProgramSchema(labels, constantIds, boundedCollections = false) {
-  if (typeof boundedCollections !== "boolean") throw Error("quantitative_generation_profile_invalid");
+var OBJECTIVE_OUTPUT_POLICY = Object.freeze({
+  version: "nyx-objective-output-contract/1",
+  maxOutputs: 16,
+  authorityGranted: false,
+  mathematicsSupplied: false,
+  orderingRequired: false
+});
+function quantitativeProgramSchema(labels, constantIds, boundedCollections = false, exactOutputs = false) {
+  if (typeof boundedCollections !== "boolean" || typeof exactOutputs !== "boolean") throw Error("quantitative_generation_profile_invalid");
   const object = (properties) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
   const array2 = (items, min = 0, max = EQUATION_COMPILER_POLICY.stateSlots) => ({ type: "array", items, ...boundedCollections ? { minItems: min, maxItems: max } : {} });
   const constant = (value) => ({ type: typeof value === "number" ? "integer" : "string", enum: [value] });
@@ -1026,7 +1033,7 @@ function quantitativeProgramSchema(labels, constantIds, boundedCollections = fal
       expressions: array2(object({ id: { type: "string", enum: expressions }, op: { type: "string", enum: EXACT_DERIVATION_OPERATIONS }, left: expressionSource, right: expressionSource })),
       updates: array2(object({ slot: registerId, source: expressionSource }), 1)
     }), 1, EQUATION_COMPILER_POLICY.maxPhasesPerCycle) }), 1, EQUATION_COMPILER_POLICY.maxCycles),
-    outputs: array2(object({ label: { type: "string", enum: labels }, source }), 1)
+    outputs: { ...array2(object({ label: { type: "string", enum: labels }, source }), 1), ...exactOutputs ? { minItems: labels.length, maxItems: labels.length } : {} }
   });
 }
 

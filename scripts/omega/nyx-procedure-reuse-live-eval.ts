@@ -40,6 +40,8 @@ export function publicRun(run: QuantitativeRun) {
       proposalDigest: a.proposalDigest, verificationDigest: a.resultDigest, programDigest: a.executedProgram ? theoryDigest(a.executedProgram) : null,
       procedureReference: a.procedureReference ?? null,
       ...(a.nativeRejectionStructure?{nativeRejectionStructure:a.nativeRejectionStructure}:{}),
+      ...(a.outputStructure?{outputStructure:a.outputStructure}:{}),
+      ...(a.repairContextDigest?{repairContextDigest:a.repairContextDigest,repairContextProgramDigest:a.repairContextProgramDigest??null}:{}),
       nativeExecution: a.computation ? { status: a.computation.status, resultDigest: a.computation.resultDigest,
         requestDigest: a.computation.requestDigest, workUnits: a.computation.workUnits, elapsedMs: a.computation.elapsedMs,
         executedProgramDigest: a.computation.executedProgramDigest, loweringVersion: a.computation.loweringVersion } : null,
