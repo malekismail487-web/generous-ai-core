@@ -941,5 +941,40 @@ const expiredEpoch=await runNativeGenerationEpoch(async request=>{
 },{candidate:"0".repeat(40),sourceDigests:{}},()=>expiryClock);
 check(!expiredEpoch.complete&&expiredEpoch.rows.filter(r=>r.blocked==="GLOBAL_BUDGET").length===7&&expiredEpoch.logicalCalls===1,
   "global expiry does not renew task leases or dispatch seven remaining stages");
+const generationReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-native-generation-b42b7e72.json","utf8"));
+const frozenGeneration=generationReceipt.frozenReport, generationBytes=Buffer.from(JSON.stringify(frozenGeneration,null,2)+"\n");
+check(createHash("sha256").update(generationBytes).digest("hex")===generationReceipt.integrity.reportSha256
+  &&generationBytes.length===generationReceipt.integrity.reportBytes&&theoryDigest(frozenGeneration.freeze)===frozenGeneration.freezeDigest,
+  "generation receipt reconstructs exact independently verified artifact bytes and freeze identity");
+for(const [path,digest] of Object.entries(frozenGeneration.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_generation_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${generationReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `generation receipt binds exact historical source ${path}`);
+}
+for(const binding of frozenGeneration.freeze.tasks)check(NATIVE_GENERATION_CASES.some(t=>t.taskId===binding.taskId&&theoryDigest(t)===binding.digest),
+  "new public corpus identity is preserved without answer-specific repairs");
+const observedGeneration=frozenGeneration.rows.flatMap((r:any)=>r.run.attempts);
+check(observedGeneration.length===16&&observedGeneration.every((a:any)=>a.modelEvidence.evidenceClass==="E4"
+  &&a.modelEvidence.model===NATIVE_GENERATION_EPOCH.model&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null)
+  &&frozenGeneration.totals.calls===16&&frozenGeneration.totals.httpAttempts===16&&frozenGeneration.totals.reportedTokens===74096
+  &&frozenGeneration.totals.unknownUsageHttpAttempts===0, "stable live delivery and all realized model compute remain separately accounted");
+const originalObserved=frozenGeneration.rows.filter((r:any)=>r.arm==="ORIGINAL_GENERATION").flatMap((r:any)=>r.run.attempts);
+const boundedObserved=frozenGeneration.rows.filter((r:any)=>r.arm==="NATIVE_BOUNDS").flatMap((r:any)=>r.run.attempts);
+check(originalObserved.filter((a:any)=>a.findings.includes("quantitative_equations_invalid:PHASE_BOUND")).length===4
+  &&boundedObserved.every((a:any)=>!a.findings.includes("quantitative_equations_invalid:PHASE_BOUND"))
+  &&boundedObserved.filter((a:any)=>a.findings.includes("quantitative_equations_invalid:EXPRESSION_SHAPE")
+    &&a.nativeRejectionStructure.phases.some((p:any)=>p.duplicateExpressionIds>0)).length===4
+  &&boundedObserved.filter((a:any)=>a.findings.some((f:string)=>f.startsWith("quantitative_equations_invalid:EXPRESSION_SOURCE_NOT_BOUND"))).length===1,
+  "phase bounds improved one structural class, while duplicate identifiers and unavailable phase references remain observed");
+check(frozenGeneration.summaries.every((s:any)=>s.accepted===0&&s.irRejections===5&&s.nativeExecutions===3&&s.functionalRejections===3
+  &&s.nativeAuthorizationRejections===0)&&frozenGeneration.pairs.filter((p:any)=>p.realizedComputeMatched).length===2
+  &&frozenGeneration.pairs.every((p:any)=>!p.boundedNoMoreModelCompute)&&frozenGeneration.complete&&frozenGeneration.providerStable
+  &&!frozenGeneration.scopedFunctionalSignal&&!frozenGeneration.emissionSignal&&frozenGeneration.promotion==="NONE_REQUIRES_REPLICATION_FRESH_OUTCOMES_AND_REALIZED_COMPUTE_ASSESSMENT",
+  "unchanged total emission/functional failure and higher treatment compute cannot be promoted as cognition or efficiency gain");
+check(observedGeneration.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJECTION").length===2
+  &&observedGeneration.filter((a:any)=>a.call===2&&a.outcome==="FUNCTIONAL_REJECTION").length===4
+  &&generationReceipt.accounting.independentlyGradedStages===4&&generationReceipt.accounting.ungradedAttemptedStages===4
+  &&generationReceipt.diagnosis.defaultChanged===false&&frozenGeneration.sourceUnchanged===true,
+  "first and second proposal grades are not conflated with unique graded stages or broad authority promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

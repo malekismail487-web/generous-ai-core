@@ -7,8 +7,6 @@ on:
         options: [native-generation, procedure-reuse]
         default: native-generation
         required: true
-  push:
-    branches: [sol/omega-institutional-spine]
 permissions:
   contents: read
 concurrency:

@@ -3362,3 +3362,27 @@ An opt-in native-bound generation aid is separately reproduced locally; its
 live effectiveness requires a newly frozen comparison under unchanged native
 limits and independent acceptance. Default Ultra, production authority and
 all prior benchmark results remain unchanged.
+
+## Native-generation bounds — complete comparison, no promotion
+
+Frozen candidate `b42b7e72`, run `38222633177`: four fresh parameter cases,
+two known formal families, two arms, all eight stages attempted. Sixteen stable
+Super calls used 74,096 reported tokens; no unknown usage or provider failure.
+Both arms had five native-IR rejections, three executed incorrect proposals,
+and zero accepted solutions. Four unique stages reached grading; four did not.
+Initial attempts: two graded, zero correct. Second attempts: four graded,
+zero correct. These are separate proposal outcomes, not six unique tasks.
+
+The bounds profile reduced `PHASE_BOUND` from four to zero, but four duplicate-ID
+failures and one unavailable expression reference remained in treatment.
+Counts-only structural evidence narrows diagnosis without retaining raw IR.
+Treatment used 38,418 tokens versus 35,678 control; two of four pairs matched
+within five percent. Neither emission nor functional gain was demonstrated.
+No default, capability, authority or benchmark-score promotion is supported.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-native-generation-b42b7e72.json)
+binds exact archive/report hashes, CRC, terminal-log agreement, historical source,
+public corpus and the unchanged oracle. Clean Linux CI: 109 suites / 14,123
+checks, TypeScript 5.8.3 zero. Next investigate automatic temporary binding in
+a bounded data-only frontend to the existing interpreter on separate development
+tasks and a fresh comparison. Preserve this negative epoch unchanged.
