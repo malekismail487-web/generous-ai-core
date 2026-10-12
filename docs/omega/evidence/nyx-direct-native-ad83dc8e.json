@@ -1,0 +1,1936 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-DIRECT-NATIVE-DIAGNOSTIC-001",
+  "evaluatedCandidate": "ad83dc8e5afbba0bb25d72438c3748734d8cbfdf",
+  "runId": 38245924053,
+  "jobId": 114799633276,
+  "diagnosis": {
+    "result": "SCOPED_DIRECT_CERTIFICATE_SIGNAL_NATIVE_INTERFACE_AND_REPAIR_FAILURES_REMAIN",
+    "cognitiveGainDemonstrated": false,
+    "goalStatus": "ACTIVE_NOT_ACHIEVED",
+    "defaultChanged": false,
+    "authorityChanged": false,
+    "conclusions": [
+      "All fifteen live Super calls delivered complete JSON with known logical and physical usage. No provider failure, retry, truncation, JSON syntax rejection or local delivery block was observed.",
+      "Direct reasoning attempted all four cases and accepted one first proposal. Six other direct proposals failed unchanged exact certificate acceptance; no direct repair succeeded. The native-available arm attempted all four cases and accepted none.",
+      "The native arm made three actual tool requests: two constructed incorrect native proposals reached independent acceptance, and one execution was insufficient. Five proposals failed source-reference admission. The two interpolation stages never reached mathematical grading; no authority refusal occurred.",
+      "Six distinct arm/task stages reached exact mathematical/certificate grading, two remained ungraded, and none were unexecuted. Eight proposals were rejected by exact acceptance and one was accepted. First attempts comprised one acceptance, five exact rejections and two native-IR rejections; second attempts comprised three exact rejections, three native-IR rejections and one insufficient native derivation.",
+      "All fifteen output sets were complete; certificate-schema and objective-output rejections were zero. Direct exact-string mismatches were not separately assessed for mathematically equivalent noncanonical representations. Frozen BOTH_REJECTED_MATHEMATICS labels denote exact acceptance rejection, not a recovered proof that every direct number was mathematically false.",
+      "Direct used seven logical/physical calls and 19231 reported tokens; native used eight and 36243. Every pair used no more direct calls, HTTP attempts and tokens, while zero pairs met the five-percent realized matching tolerance. Tool availability and representation deliberately differed. The single direct-only success is a scoped diagnostic signal, not broad cognitive improvement or causal attribution.",
+      "All seven direct submissions reported confidence 1; six failed exact acceptance. This is an observed small-sample overconfidence warning, not a calibrated task-population estimate. Native compound-certificate confidence is tool-generated and is not a comparable model-confidence measure.",
+      "Independent first proposals, one four-case epoch and two already-known formal families limit generalization. The default, authority, cognition, official benchmark score, tool invention, procedure transfer and recursion remain unpromoted."
+    ],
+    "nextGeneralCorrection": "Reuse the existing public-model-reformulation repair mechanism, which previously had a narrow positive shared-start development result, rather than adding another reasoning layer. Reproduce its applicability to exact-certificate generation separately; freeze fresh values and shared-first control/treatment repairs with unchanged acceptance, finite equal caps and full actual-compute accounting. Track native source-reference failures independently. This recommendation is not a launched campaign or a claim of successful correction."
+  },
+  "frozenMetadataAnnotation": {
+    "gradedCounterMeaning": "EXACT_ACCEPTANCE_CALLBACK_REACHED_NOT_DIRECT_NONCANONICAL_EQUIVALENCE_CLASSIFICATION",
+    "pairFieldMeaning": "original*=DIRECT_REASONED_CONTROL; bounded*=NATIVE_GRAPH_TOOL_AVAILABLE_ARM",
+    "frozenOutcomeAltered": false
+  },
+  "accounting": {
+    "selectedStages": 8,
+    "attemptedStages": 8,
+    "acceptanceEvaluatedStages": 6,
+    "mathematicallyGradedStages": 6,
+    "acceptedStages": 1,
+    "ungradedAttemptedStages": 2,
+    "unexecutedStages": 0,
+    "logicalCalls": 15,
+    "physicalHttpAttempts": 15,
+    "reportedTokens": 55474,
+    "unknownUsageCalls": 0,
+    "unknownUsageHttpAttempts": 0,
+    "providerFailures": 0,
+    "retries": 0,
+    "truncations": 0,
+    "jsonSyntaxRejections": 0,
+    "nativeIRRejections": 5,
+    "nativeAuthorizationRejections": 0,
+    "nativeIRFindings": {
+      "SOURCE_NOT_BOUND": 5
+    },
+    "exactAcceptanceRejectedProposals": 8,
+    "directExactRejectedProposals": 6,
+    "nativeConstructedRejectedProposals": 2,
+    "nativeInsufficientDerivations": 1,
+    "nativeToolRequests": 3,
+    "nativeToolWorkUnits": 630,
+    "nativeToolElapsedMs": 2,
+    "certificateSchemaRejections": 0,
+    "outputContractRejections": 0,
+    "completeOutputSets": 15,
+    "firstAttempts": {
+      "attemptedStages": 8,
+      "mathematicallyGradedStages": 6,
+      "correct": 1,
+      "exactRejected": 5,
+      "irRejected": 2
+    },
+    "secondAttempts": {
+      "attemptedStages": 7,
+      "mathematicallyGradedStages": 3,
+      "correct": 0,
+      "exactRejected": 3,
+      "irRejected": 3,
+      "insufficient": 1
+    },
+    "elapsedMs": 394198
+  },
+  "integrity": {
+    "artifactId": 11746091871,
+    "archiveSha256": "dc88170fafc69778270b2b0c397d1e6ef64997570c7c67cb27f5a10b2018dd0a",
+    "archiveBytes": 9619,
+    "reportFile": "nyx-direct-native-ad83dc8e5afbba0bb25d72438c3748734d8cbfdf.json",
+    "reportSha256": "ad251554a3b35cdf82c711f7d1c93850f67883a8560f1d7e6f739d86f9a1131b",
+    "reportBytes": 71631,
+    "crc32": 3665504047,
+    "archiveDigestVerified": true,
+    "reportLogAgreement": true,
+    "zipCrcVerified": true,
+    "crcVerified": true,
+    "sourceUnchanged": true,
+    "sourceBindingVerification": "REQUIRED_BY_RECEIPT_REGRESSION_TEST"
+  },
+  "cleanCI": {
+    "candidate": "ad83dc8e5afbba0bb25d72438c3748734d8cbfdf",
+    "runId": 38245923864,
+    "jobId": 114799631850,
+    "conclusion": "success",
+    "suites": 109,
+    "checks": 14669,
+    "typescript": "5.8.3",
+    "baselineDiagnostics": 0,
+    "currentDiagnostics": 0,
+    "secretScanFindings": 0,
+    "buildSeconds": 15.08,
+    "independentReplayCapsules": 200,
+    "independentReplayOutputs": 2000,
+    "packageVerified": true,
+    "packageBytes": 295942
+  },
+  "planCoverage": {
+    "direct": [
+      "H005_RESTRICTED_SYNTHESIS_DIAGNOSIS",
+      "DIRECT_VERSUS_NATIVE_REPRESENTATION_ABLATION",
+      "INDEPENDENT_EXACT_ACCEPTANCE",
+      "EVIDENCE_OUTRANKS_CONFIDENCE"
+    ],
+    "supporting": [
+      "NO_SELF_CERTIFICATION",
+      "FIRST_REPAIRED_OUTCOMES_SEPARATE",
+      "REALIZED_COMPUTE_ACCOUNTING",
+      "UNREACHED_GRADE_NOT_REASONING_FAILURE"
+    ],
+    "deferred": [
+      "H009_PROCEDURE_TRANSFER",
+      "H045_WORKFLOW_PROPOSALS",
+      "H048_BOUNDED_RECURSION",
+      "DEFAULT_PROFILE_PROMOTION"
+    ],
+    "conflicts": [],
+    "coverage": "PARTIAL_JUST_IN_TIME"
+  },
+  "frozenReport": {
+    "schemaVersion": 1,
+    "candidate": "ad83dc8e5afbba0bb25d72438c3748734d8cbfdf",
+    "freeze": {
+      "candidate": "ad83dc8e5afbba0bb25d72438c3748734d8cbfdf",
+      "sourceDigests": {
+        "scripts/omega/nyx-native-generation-live-eval.ts": "c96f0672b1280b7ea15bce2c7cccbd6502451ce134a09cf555cfc875c0cc1610",
+        "scripts/omega/nyx-procedure-reuse-live-eval.ts": "52bdb48e426842e8af2020ceb6fd71798eeac029ffc0ee7e5b851347e4919afe",
+        "scripts/omega/nyx-procedure-reuse-fixtures.ts": "379446b55ffdc4c10363cba78f878e3f3c4e5e0fde4777fc581b8e3730fc8d23",
+        "src/lib/codelab/research/nyxQuantitativeReasoning.ts": "b40f53169d75623a4840f1635917b30966b8cd7d943040d3b1a22545cb7d77a3",
+        "src/lib/codelab/research/boundedReasoningWorkbench.ts": "89ec1faaf0faa5369eda9a30ee706036575ec96faf8464b82aed17bc67239438",
+        "src/lib/codelab/research/exactQuantitativeDerivation.ts": "4f847285c15493178c0faa95c91573410ff8b7e3ea20d305c53c4130cba7d7e2",
+        "src/lib/codelab/research/quantitativeEquationCompiler.ts": "215bdc2c9dc543f429afb0e62e28ca8bc51a9b57d57ebc2fa985096d794b1752",
+        "src/lib/codelab/research/quantitativeProcedureReuse.ts": "6d1f7ec568e7855764be5505e5fd7f88e488023cfb454b4d5575e4f12171bb50",
+        "src/lib/codelab/research/analysisArtifactReference.ts": "a17ee808039141e4086d5c25ab30dc60b4461d56f24ed94bef6fd85dafe7847b",
+        "src/lib/codelab/research/theoryContracts.ts": "4dd491ceacc7c24bfa48680b532c89cbd952a3d3bad59bbf779c572690be2268",
+        "src/lib/codelab/model/nvidiaNimProvider.ts": "6a95ac2874c6a0a8c9442b7d44f1a39bc9ace1c9b3bc0ca8f6c2c0a0fdd87015",
+        "src/lib/codelab/model/nvidiaCapacity.ts": "11e842ecc8ed330428b4146aecc1014faf8b0585c74f763cb4e38bfcb1887aa9",
+        "src/lib/codelab/research/quantitativeExpressionCompiler.ts": "5559aaca09a7ef35b99eb43c199a3750fc3da761cf62c3a0c968a0bec64ffab2"
+      },
+      "configuration": {
+        "version": "nyx-direct-native-diagnostic/1",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "arms": [
+          "DIRECT_REASONED",
+          "NATIVE_GRAPH"
+        ],
+        "maxCallsPerStage": 2,
+        "maxHttpAttemptsPerStage": 2,
+        "maxLogicalCalls": 16,
+        "maxHttpAttemptsPerEpoch": 16,
+        "maxOutputTokensPerCall": 8192,
+        "reasoningControl": "SUPER_HOSTED_NATIVE",
+        "reasoningBudgetTokens": 2048,
+        "maxStageMs": 180000,
+        "maxEpochMs": 1800000,
+        "maxToolRequestsPerStage": 2,
+        "maxToolWorkUnitsPerStage": 100000,
+        "maxToolElapsedMsPerStage": 2000,
+        "realizedTokenMatchTolerance": 0.05,
+        "unchangedOracle": "independent-gaussian-elimination/1",
+        "changedVariable": "MANUAL_CERTIFICATE_WITHOUT_TOOL_VERSUS_EXISTING_NATIVE_GRAPH_TOOL_AVAILABILITY",
+        "support": "DIAGNOSTIC_PAIRED_OUTCOMES_NOT_DEFAULT_OR_COGNITIVE_PROMOTION",
+        "limitations": [
+          "FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES",
+          "DELIBERATE_TOOL_AVAILABILITY_AND_REPRESENTATION_DIFFERENCE",
+          "SAME_REASONING_ENABLED_MODEL_WIRE_CONTROLS_NOT_NONREASONING_DIRECT_CONTROL",
+          "FIRST_AND_REPAIRED_OUTCOMES_SEPARATE",
+          "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED",
+          "INDEPENDENT_FIRST_PROPOSALS_NOT_SHARED_START_CAUSAL_IDENTIFICATION",
+          "SINGLE_DIAGNOSTIC_NO_DEFAULT_PROMOTION",
+          "NATIVE_ARM_MAY_CHOOSE_MANUAL_SUBMISSION_TOOL_USE_MEASURED_NOT_ASSUMED",
+          "EXACT_CANONICAL_OUTPUT_ACCEPTANCE_UNCHANGED_DIRECT_NONCANONICAL_EQUIVALENCE_NOT_SEPARATELY_GRADED",
+          "PAIR_ORIGINAL_FIELDS_DENOTE_DIRECT_CONTROL_BOUNDED_FIELDS_DENOTE_NATIVE_ARM"
+        ],
+        "authorityIncrease": false,
+        "objectiveOutputContract": "ENFORCE"
+      },
+      "corpusDigest": "d7a09e89c267431642d5c3fcbbbca6722ab90547b71bad4c2af6bce172fd06c5",
+      "tasks": [
+        {
+          "taskId": "DIR-INTERPOLATION-1",
+          "family": "INTERPOLATION",
+          "digest": "bbaf091a403ee2d9725cb076c2a6ba18389dc9e9d5324bca22db31e81fb157eb"
+        },
+        {
+          "taskId": "DIR-NETWORK-1",
+          "family": "PASSIVE_NETWORK",
+          "digest": "0686e8522f0f587646e1ecd400b85b240b22e1733abc538e366052bd85874805"
+        },
+        {
+          "taskId": "DIR-INTERPOLATION-2",
+          "family": "INTERPOLATION",
+          "digest": "2228c116fba61724c1a5bd143759484aba53aaaf4c1142861169c8f5d63447e7"
+        },
+        {
+          "taskId": "DIR-NETWORK-2",
+          "family": "PASSIVE_NETWORK",
+          "digest": "5cfcfb6b243950164530724be17b98f1c57020fe5cb90818e0d819097113af44"
+        }
+      ]
+    },
+    "freezeDigest": "839a4d2df48f9cd048742ff2e785040520e0f50720c5751155c00cde247fb1a9",
+    "rows": [
+      {
+        "taskId": "DIR-INTERPOLATION-1",
+        "family": "INTERPOLATION",
+        "arm": "DIRECT_REASONED",
+        "run": {
+          "taskId": "DIR-INTERPOLATION-1",
+          "accepted": false,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 5466,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 33752
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "9c64ee8a6758b3a4635fbe10e6decc7e596bf72937c2dc984610cdff7aead028",
+              "verificationDigest": "25144add4adbd42f8c9e35e75a15bac12b3dbe569ed5891348ec940c27bb4d75",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-77f22c22716a1f2f47b0ce930e5b928d",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "77f22c22716a1f2f47b0ce930e5b928d891670290d4e72778ff5a45c9aaace96",
+                "responseDigest": "89aa5547b1c29aaabec87900a09e425eaec270458405a4d1825f16a03d49ea20",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 604,
+                  "completionTokens": 2122,
+                  "totalTokens": 2726
+                },
+                "reasoningOutputBytes": 3931,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "ef3e040fb8df902df9e522401c95cd087bf071204976af2dfda449edf7f8ce24",
+              "verificationDigest": "e20b90c4c39f51766ad13ad3b6b97dd40821640f023ee7c9ed30404ba18e5d24",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-6c800b1e5a6c9332cf126989f7aa1183",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "6c800b1e5a6c9332cf126989f7aa11837e62b92b765f4a35a39a8e2752fcc7f5",
+                "responseDigest": "cde9e7c0fa79d45c40acd10bb6bd229d985a425f66226c0b50fdba49cf3ca603",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 613,
+                  "completionTokens": 2127,
+                  "totalTokens": 2740
+                },
+                "reasoningOutputBytes": 3779,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-INTERPOLATION-1",
+        "family": "INTERPOLATION",
+        "arm": "NATIVE_GRAPH",
+        "run": {
+          "taskId": "DIR-INTERPOLATION-1",
+          "accepted": false,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 9131,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 50521
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+              "findings": [
+                "quantitative_expressions_invalid:SOURCE_NOT_BOUND",
+                "SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices.",
+                "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+              ],
+              "confidence": null,
+              "proposalDigest": "2ac90e754a35ae3731a2ccab73f1bb32dffabbe74d830d4f435f90afd47ebc3a",
+              "verificationDigest": null,
+              "programDigest": null,
+              "procedureReference": null,
+              "nativeRejectionStructure": {
+                "format": "OTHER",
+                "cycleCount": null,
+                "inspectedCycles": 0,
+                "phases": []
+              },
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-01c9cd7e1c676a785a771c8789232c3f",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "01c9cd7e1c676a785a771c8789232c3f7ff62bb77ab90d61791d55b37fd1bc37",
+                "responseDigest": "9047d515b1a076eecaeb75c04474f963ce2650efaa244bdf088ca9fed6b22f4e",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1532,
+                  "completionTokens": 2925,
+                  "totalTokens": 4457
+                },
+                "reasoningOutputBytes": 3827,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+              "findings": [
+                "quantitative_expressions_invalid:SOURCE_NOT_BOUND",
+                "SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices.",
+                "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+              ],
+              "confidence": null,
+              "proposalDigest": "d1584d2fa0535c3ba4411f20fe1577a435098528266ce65fc69074e6ee2dd145",
+              "verificationDigest": null,
+              "programDigest": null,
+              "procedureReference": null,
+              "nativeRejectionStructure": {
+                "format": "OTHER",
+                "cycleCount": null,
+                "inspectedCycles": 0,
+                "phases": []
+              },
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-6dfed1188a8bbb78eb88c636548bcbd0",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "6dfed1188a8bbb78eb88c636548bcbd05a092a66ac90ee2b0d0dfadd138af338",
+                "responseDigest": "5002bec2391db25b8e94f0cf4f273c499d2d78b6637d403f208ec74f7d037850",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1610,
+                  "completionTokens": 3064,
+                  "totalTokens": 4674
+                },
+                "reasoningOutputBytes": 3712,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-NETWORK-1",
+        "family": "PASSIVE_NETWORK",
+        "arm": "NATIVE_GRAPH",
+        "run": {
+          "taskId": "DIR-NETWORK-1",
+          "accepted": false,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 8965,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 1,
+            "toolWorkUnits": 296,
+            "toolElapsedMs": 1,
+            "elapsedMs": 54504
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 0,
+              "proposalDigest": "3152b8330d5c6c3a781a359744642fff594bba77ec8016fb2254d936ad5b3491",
+              "verificationDigest": "1531b8317749d8c8c044fc78d27cc12b88dd12566126b3717cb15371743e8387",
+              "programDigest": "fc450619354da270ed2be5aad4f339139573f4037e46e916963a2054cda3d7a1",
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": {
+                "status": "CONSTRUCTED",
+                "resultDigest": "b156ef264add531b3f04c85945a1ce0a1b1d17217503ecbe55e0f1b3d3bfc0fe",
+                "requestDigest": "9ede485c445e9cd0e9ee8a785c5baec2b9425f12f15aa25de4498a724ceab571",
+                "workUnits": 296,
+                "elapsedMs": 1,
+                "executedProgramDigest": "7d374d269d08a6a85abb80a19c25a156435ad53b1e0982de2427958f29664d35",
+                "loweringVersion": "nyx-expression-lowering/1"
+              },
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-eae63a622cb592d56d77a92f7ec3f667",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "eae63a622cb592d56d77a92f7ec3f6677855fb474f8891698f6e6d7d26a60c93",
+                "responseDigest": "0cc5aafc5b911d3d9d3e53eeded88fac0e22fda61b373a38429fafdfac88bc5d",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1590,
+                  "completionTokens": 2475,
+                  "totalTokens": 4065
+                },
+                "reasoningOutputBytes": 3399,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+              "findings": [
+                "quantitative_expressions_invalid:SOURCE_NOT_BOUND",
+                "SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices.",
+                "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+              ],
+              "confidence": null,
+              "proposalDigest": "6a63859c598c93a0afd7532c1e9d351dd3b9d5cdd90b3b50718ab485153bd958",
+              "verificationDigest": null,
+              "programDigest": null,
+              "procedureReference": null,
+              "nativeRejectionStructure": {
+                "format": "OTHER",
+                "cycleCount": null,
+                "inspectedCycles": 0,
+                "phases": []
+              },
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-eb7ac7d6e05a1518f1ca1580c8c9dae4",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "eb7ac7d6e05a1518f1ca1580c8c9dae4413b24733b3f2b53f304fc55db119233",
+                "responseDigest": "5725a7a2447b3872eb067d1f8d3bc69d46a5086e24028d4767441dfc5709863c",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 2269,
+                  "completionTokens": 2631,
+                  "totalTokens": 4900
+                },
+                "reasoningOutputBytes": 3417,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-NETWORK-1",
+        "family": "PASSIVE_NETWORK",
+        "arm": "DIRECT_REASONED",
+        "run": {
+          "taskId": "DIR-NETWORK-1",
+          "accepted": false,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 5610,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 51146
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "cc41c4cb96bde96d84ce9969ed09c3d693353de321aa6ffeab6a8d8673e4b473",
+              "verificationDigest": "b2f34a7a87c7d0d0327928eab14bd04c644f82a1f503ddc1796e4a17838c8452",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-2cdcb52bf95e864943f7dc429cb99630",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "2cdcb52bf95e864943f7dc429cb996304121339feae84f6383288f3c22580935",
+                "responseDigest": "fb7b8755f843141cfaa657b5ea4caa694c72012694c42b94532a9dbb60f346ab",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 661,
+                  "completionTokens": 2139,
+                  "totalTokens": 2800
+                },
+                "reasoningOutputBytes": 3586,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "e742a027dd5b3034038a915311dc6c0c80fe0a35f8116c641c00eeceee6c4492",
+              "verificationDigest": "dc3d5aab151220ccbbae82754900b26ab4f812ead1ee32f5cc6cf942f89893dd",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-7b2b8d690e31b4da52c0065aa1032d1f",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "7b2b8d690e31b4da52c0065aa1032d1fd50df691143ea4cc88f559b2d5c1d219",
+                "responseDigest": "a9804fc0ca104edbd63f47be04c489fdc622ac86e21d0272d87c2181fd6caa0d",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 670,
+                  "completionTokens": 2140,
+                  "totalTokens": 2810
+                },
+                "reasoningOutputBytes": 3054,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-INTERPOLATION-2",
+        "family": "INTERPOLATION",
+        "arm": "DIRECT_REASONED",
+        "run": {
+          "taskId": "DIR-INTERPOLATION-2",
+          "accepted": true,
+          "outcome": "ACCEPTED",
+          "usage": {
+            "calls": 1,
+            "reportedTokens": 2576,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 1,
+            "knownUsageHttpAttempts": 1,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 47354
+          },
+          "firstAttemptAccepted": true,
+          "repairDepth": 0,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "ACCEPTED",
+              "findings": [],
+              "confidence": 1,
+              "proposalDigest": "43ffe7c7a074ebcdec5fb6feb140f460f626cde58dab10ed86608d64663bead6",
+              "verificationDigest": "94937c77b5011f4fdf6dc3896ab5d857b9d33babe8f26ee881ec44d4580fd5e6",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-bd12ea1b3ca40447009ed0839882dec6",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "bd12ea1b3ca40447009ed0839882dec6bf73d6aeda0290c6d4130578a4ad694b",
+                "responseDigest": "02f590b4e2ec2ce9c2d167c68a10cee3c7d493b27003b3ab984d6b89a3d4a921",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 587,
+                  "completionTokens": 1989,
+                  "totalTokens": 2576
+                },
+                "reasoningOutputBytes": 3499,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-INTERPOLATION-2",
+        "family": "INTERPOLATION",
+        "arm": "NATIVE_GRAPH",
+        "run": {
+          "taskId": "DIR-INTERPOLATION-2",
+          "accepted": false,
+          "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 8943,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 70701
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+              "findings": [
+                "quantitative_expressions_invalid:SOURCE_NOT_BOUND",
+                "SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices.",
+                "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+              ],
+              "confidence": null,
+              "proposalDigest": "aa391bc67e0d15dab99c1c6e57eab9cd3d2c033e659fa2fca14ca141d5d7a915",
+              "verificationDigest": null,
+              "programDigest": null,
+              "procedureReference": null,
+              "nativeRejectionStructure": {
+                "format": "OTHER",
+                "cycleCount": null,
+                "inspectedCycles": 0,
+                "phases": []
+              },
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-01726a5ed8c10841c102fae785d298e2",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "01726a5ed8c10841c102fae785d298e2ef927679dacb332db10c9ba7dc33603c",
+                "responseDigest": "88eed6f9401f2e28caee9823e76852ecd0e9419b61b8627a37acc0334d07435c",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1513,
+                  "completionTokens": 3392,
+                  "totalTokens": 4905
+                },
+                "reasoningOutputBytes": 4123,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "AUTHORIZATION_OR_IR_REJECTION",
+              "findings": [
+                "quantitative_expressions_invalid:SOURCE_NOT_BOUND",
+                "SOURCE_NOT_BOUND: use an original named constant string or an integer index strictly LESS than this expression's zero-based position. No forward references or stringified indices.",
+                "Request must bind the available problem, use only initialized/authorized names, immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."
+              ],
+              "confidence": null,
+              "proposalDigest": "2073bc8ccdf1e76f282fcb449f43d9a298aaef1d9e45d33fc71a82807aee1c72",
+              "verificationDigest": null,
+              "programDigest": null,
+              "procedureReference": null,
+              "nativeRejectionStructure": {
+                "format": "OTHER",
+                "cycleCount": null,
+                "inspectedCycles": 0,
+                "phases": []
+              },
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 2,
+                "actualCount": 2,
+                "inspectedCount": 2,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-f6f0bf7834e681949416dcca374696ad",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "f6f0bf7834e681949416dcca374696adc85bee9c1739ff073130f9176deac966",
+                "responseDigest": "60e8cf6267c71e988e3874d2d5e7cdc258bfd8c1e2ff50c8d889445e42541a03",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1591,
+                  "completionTokens": 2447,
+                  "totalTokens": 4038
+                },
+                "reasoningOutputBytes": 3953,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-NETWORK-2",
+        "family": "PASSIVE_NETWORK",
+        "arm": "NATIVE_GRAPH",
+        "run": {
+          "taskId": "DIR-NETWORK-2",
+          "accepted": false,
+          "outcome": "DERIVATION_INSUFFICIENT",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 9204,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 2,
+            "toolWorkUnits": 334,
+            "toolElapsedMs": 1,
+            "elapsedMs": 49156
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 0,
+              "proposalDigest": "30e867b458b565f4c05825597ad56828778345543855c306bf867f846114e90a",
+              "verificationDigest": "6f298c34d440e1a20c0c079cd83f4b98ee89ff635d794ea07a4c1976dd0b44b0",
+              "programDigest": "a79ec85c6736963f6364229d798b4da460b95a2a2d7b28777656c5285aa8bc90",
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": {
+                "status": "CONSTRUCTED",
+                "resultDigest": "c74a31c406f3f9e790cba450f4495f4ba5a5cb13346a1c2063cbf212bac4a5d2",
+                "requestDigest": "d98874a4e8f987e30a6f555ad2426e1d47bfc4dfdd47ea94b73b1cda2bc7af09",
+                "workUnits": 196,
+                "elapsedMs": 0,
+                "executedProgramDigest": "178466afde55f223a2286676322dfc9554a618a2b3de3c7665591dc1d5106462",
+                "loweringVersion": "nyx-expression-lowering/1"
+              },
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-0a28944ce52e8c2ef721bc6862888462",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "0a28944ce52e8c2ef721bc6862888462a3a0391320b473a8dd18c84489fcba80",
+                "responseDigest": "0f15a6161eae76b4a7e0b9d5ddeb01513eb0e82f7f7f2258339df896f52460c8",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 1573,
+                  "completionTokens": 2492,
+                  "totalTokens": 4065
+                },
+                "reasoningOutputBytes": 3276,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "DERIVATION_INSUFFICIENT",
+              "findings": [
+                "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."
+              ],
+              "confidence": null,
+              "proposalDigest": "26a2340e9e7ac25b95f17cbf757010528e3a1e1811e4e1336f2a1286ec15395b",
+              "verificationDigest": "3cb8917aad77647f62fbbc058f9bf804c1a5c7954b9d5c83af2b591d7546d287",
+              "programDigest": "42e34a593a248a776322cc8e5eb5fb509996bf6dab28980d034ca642fd727fe5",
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "PROGRAM_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": {
+                "status": "INSUFFICIENT_EVIDENCE",
+                "resultDigest": "3cb8917aad77647f62fbbc058f9bf804c1a5c7954b9d5c83af2b591d7546d287",
+                "requestDigest": "78f4fa62a251447e35cd84c199d680fd5766fff96c941fa0ff21c3a9bc94d5e3",
+                "workUnits": 138,
+                "elapsedMs": 1,
+                "executedProgramDigest": "a28fd7ace471bd001d8df506fa4d39f805ec2d6e850ca547f4a6f7f59c432675",
+                "loweringVersion": "nyx-expression-lowering/1"
+              },
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-8a639e36632cc4b35c353f932f4e233e",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "8a639e36632cc4b35c353f932f4e233ee341a76159da0c9cd5286bdffb60c8f4",
+                "responseDigest": "fde41ad4fa521a8ad33075d2cd75e3c15e7ce24073c339dd993764716ebc3d67",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 2250,
+                  "completionTokens": 2889,
+                  "totalTokens": 5139
+                },
+                "reasoningOutputBytes": 3315,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      },
+      {
+        "taskId": "DIR-NETWORK-2",
+        "family": "PASSIVE_NETWORK",
+        "arm": "DIRECT_REASONED",
+        "run": {
+          "taskId": "DIR-NETWORK-2",
+          "accepted": false,
+          "outcome": "FUNCTIONAL_REJECTION",
+          "usage": {
+            "calls": 2,
+            "reportedTokens": 5579,
+            "unknownUsageCalls": 0,
+            "httpAttempts": 2,
+            "knownUsageHttpAttempts": 2,
+            "unknownUsageHttpAttempts": 0,
+            "providerFailures": 0,
+            "localDeliveryBlocks": 0,
+            "recoveredDisruptions": 0,
+            "toolRequests": 0,
+            "toolWorkUnits": 0,
+            "toolElapsedMs": 0,
+            "elapsedMs": 37055
+          },
+          "firstAttemptAccepted": false,
+          "repairDepth": 1,
+          "attempts": [
+            {
+              "call": 1,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "0d13078619636479849ef4c80e4f79b4910a788f236f201b49876b7c37efe4ba",
+              "verificationDigest": "5485176cc7c671750fb24899e6b15e2bc40b9e754985ace971ce62db20d063b6",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-f9831dab2e2f423f08808c17ad24433b",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "f9831dab2e2f423f08808c17ad24433bedbcb110e217e7f4a80b4f15dc1aff7c",
+                "responseDigest": "96de7939d243064f05571b7b9593aadf623119e660a142e75f17fec934b1bcde",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 645,
+                  "completionTokens": 2139,
+                  "totalTokens": 2784
+                },
+                "reasoningOutputBytes": 3342,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 1,
+                    "remainingAttempts": 1,
+                    "exhausted": false,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            },
+            {
+              "call": 2,
+              "outcome": "FUNCTIONAL_REJECTION",
+              "findings": [
+                "EXACT_OBJECTIVE_MISMATCH"
+              ],
+              "confidence": 1,
+              "proposalDigest": "b2f236128404ae00d0be49e88675fea2844635125a284939458e034d570f9430",
+              "verificationDigest": "26018cb051aa4bf165f0aaead4d840a205099403a5eef81fee89f2cf4df55494",
+              "programDigest": null,
+              "procedureReference": null,
+              "outputStructure": {
+                "version": "nyx-objective-output-contract/1",
+                "origin": "CERTIFICATE_OUTPUTS",
+                "inputState": "ARRAY",
+                "expectedCount": 3,
+                "actualCount": 3,
+                "inspectedCount": 3,
+                "missingLabels": 0,
+                "duplicateLabels": 0,
+                "unexpectedLabels": 0,
+                "malformedEntries": 0,
+                "inspectionComplete": true,
+                "matches": true
+              },
+              "nativeExecution": null,
+              "modelEvidence": {
+                "evidenceId": "NVIDIA-NIM-c1129b2b92f4fecbb137a25382268515",
+                "evidenceClass": "E4",
+                "providerId": "NYX-NATIVE-GENERATION-TRANSFER",
+                "endpointOrigin": "https://integrate.api.nvidia.com",
+                "model": "nvidia/nemotron-3-super-120b-a12b",
+                "requestDigest": "c1129b2b92f4fecbb137a25382268515aaa767d6ad120acda7253b1e358f7168",
+                "responseDigest": "f6fd496a2f1e40a112e6257eb92aec5339dabbe098356e094472382cad398751",
+                "credentialSourceIdentity": "environment:NVIDIA_API_KEY",
+                "credentialPersisted": false,
+                "promptPersisted": false,
+                "networkAttempted": true,
+                "statusCode": 200,
+                "failureCategory": null,
+                "retryability": null,
+                "providerRequestId": null,
+                "finishReason": "stop",
+                "usage": {
+                  "promptTokens": 654,
+                  "completionTokens": 2141,
+                  "totalTokens": 2795
+                },
+                "reasoningOutputBytes": 3184,
+                "contentShape": {
+                  "json": "OBJECT",
+                  "leadingMarkdownFence": false,
+                  "thinkingDelimiterPresent": false
+                },
+                "delivery": {
+                  "policy": "nvidia-capacity/1",
+                  "requestsPerMinute": 40,
+                  "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+                  "httpAttempts": 1,
+                  "rateLimitedResponses": 0,
+                  "transientUnavailableResponses": 0,
+                  "timedOutAttempts": 0,
+                  "capacityWaitMs": 0,
+                  "state": "DELIVERED",
+                  "notBeforeEpochMs": null,
+                  "authorityRenewed": false,
+                  "httpAttemptBudget": {
+                    "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                    "limit": 2,
+                    "dispatched": 2,
+                    "remainingAttempts": 0,
+                    "exhausted": true,
+                    "dispatchDenied": false,
+                    "renewed": false,
+                    "transientRecovery": "WITHIN_SHARED_BUDGET"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "blocked": null
+      }
+    ],
+    "summaries": [
+      {
+        "arm": "DIRECT_REASONED",
+        "selected": 4,
+        "attempted": 4,
+        "graded": 4,
+        "accepted": 1,
+        "firstAttemptAccepted": 1,
+        "mathematicallyGraded": 4,
+        "repairedAccepted": 0,
+        "unexecuted": 0,
+        "usage": {
+          "calls": 7,
+          "reportedTokens": 19231,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 7,
+          "knownUsageHttpAttempts": 7,
+          "unknownUsageHttpAttempts": 0,
+          "providerFailures": 0,
+          "localDeliveryBlocks": 0,
+          "recoveredDisruptions": 0,
+          "toolRequests": 0,
+          "toolWorkUnits": 0,
+          "toolElapsedMs": 0,
+          "elapsedMs": 169307
+        },
+        "nativeExecutions": 0,
+        "constructedNativeProposals": 0,
+        "irRejections": 0,
+        "nativeAuthorizationRejections": 0,
+        "functionalRejections": 6,
+        "outputContractRejections": 0,
+        "admittedContextAttempts": 0,
+        "outcomes": {
+          "ACCEPTED": 1,
+          "FUNCTIONAL_REJECTION": 6
+        },
+        "secondAttempts": 3,
+        "manualGradedProposals": 7
+      },
+      {
+        "arm": "NATIVE_GRAPH",
+        "selected": 4,
+        "attempted": 4,
+        "graded": 2,
+        "accepted": 0,
+        "firstAttemptAccepted": 0,
+        "mathematicallyGraded": 2,
+        "repairedAccepted": 0,
+        "unexecuted": 0,
+        "usage": {
+          "calls": 8,
+          "reportedTokens": 36243,
+          "unknownUsageCalls": 0,
+          "httpAttempts": 8,
+          "knownUsageHttpAttempts": 8,
+          "unknownUsageHttpAttempts": 0,
+          "providerFailures": 0,
+          "localDeliveryBlocks": 0,
+          "recoveredDisruptions": 0,
+          "toolRequests": 3,
+          "toolWorkUnits": 630,
+          "toolElapsedMs": 2,
+          "elapsedMs": 224882
+        },
+        "nativeExecutions": 3,
+        "constructedNativeProposals": 2,
+        "irRejections": 5,
+        "nativeAuthorizationRejections": 0,
+        "functionalRejections": 2,
+        "outputContractRejections": 0,
+        "admittedContextAttempts": 0,
+        "outcomes": {
+          "AUTHORIZATION_OR_IR_REJECTION": 5,
+          "DERIVATION_INSUFFICIENT": 1,
+          "FUNCTIONAL_REJECTION": 2
+        },
+        "secondAttempts": 4,
+        "manualGradedProposals": 0
+      }
+    ],
+    "pairs": [
+      {
+        "taskId": "DIR-INTERPOLATION-1",
+        "originalAccepted": false,
+        "boundedAccepted": false,
+        "originalCalls": 2,
+        "boundedCalls": 2,
+        "originalTokens": 5466,
+        "boundedTokens": 9131,
+        "realizedComputeMatched": false,
+        "boundedNoMoreModelCompute": false,
+        "directHttpAttempts": 2,
+        "nativeHttpAttempts": 2,
+        "originalNoMoreModelCompute": true
+      },
+      {
+        "taskId": "DIR-NETWORK-1",
+        "originalAccepted": false,
+        "boundedAccepted": false,
+        "originalCalls": 2,
+        "boundedCalls": 2,
+        "originalTokens": 5610,
+        "boundedTokens": 8965,
+        "realizedComputeMatched": false,
+        "boundedNoMoreModelCompute": false,
+        "directHttpAttempts": 2,
+        "nativeHttpAttempts": 2,
+        "originalNoMoreModelCompute": true
+      },
+      {
+        "taskId": "DIR-INTERPOLATION-2",
+        "originalAccepted": true,
+        "boundedAccepted": false,
+        "originalCalls": 1,
+        "boundedCalls": 2,
+        "originalTokens": 2576,
+        "boundedTokens": 8943,
+        "realizedComputeMatched": false,
+        "boundedNoMoreModelCompute": false,
+        "directHttpAttempts": 1,
+        "nativeHttpAttempts": 2,
+        "originalNoMoreModelCompute": true
+      },
+      {
+        "taskId": "DIR-NETWORK-2",
+        "originalAccepted": false,
+        "boundedAccepted": false,
+        "originalCalls": 2,
+        "boundedCalls": 2,
+        "originalTokens": 5579,
+        "boundedTokens": 9204,
+        "realizedComputeMatched": false,
+        "boundedNoMoreModelCompute": false,
+        "directHttpAttempts": 2,
+        "nativeHttpAttempts": 2,
+        "originalNoMoreModelCompute": true
+      }
+    ],
+    "totals": {
+      "calls": 15,
+      "reportedTokens": 55474,
+      "unknownUsageCalls": 0,
+      "httpAttempts": 15,
+      "knownUsageHttpAttempts": 15,
+      "unknownUsageHttpAttempts": 0,
+      "providerFailures": 0,
+      "localDeliveryBlocks": 0,
+      "recoveredDisruptions": 0,
+      "toolRequests": 3,
+      "toolWorkUnits": 630,
+      "toolElapsedMs": 2,
+      "elapsedMs": 394189
+    },
+    "logicalCalls": 15,
+    "complete": true,
+    "providerStable": true,
+    "elapsedMs": 394198,
+    "stopReason": "PREDECLARED_PAIRS_COMPLETE",
+    "scopedFunctionalSignal": false,
+    "scopedRepairSignal": false,
+    "emissionSignal": false,
+    "diagnosticContrasts": [
+      {
+        "taskId": "DIR-INTERPOLATION-1",
+        "directFirst": "FUNCTIONAL_REJECTION",
+        "nativeFirst": "AUTHORIZATION_OR_IR_REJECTION",
+        "directFinal": "FUNCTIONAL_REJECTION",
+        "nativeFinal": "AUTHORIZATION_OR_IR_REJECTION",
+        "directMathematicallyGraded": true,
+        "nativeMathematicallyGraded": false,
+        "contrast": "NEITHER_ACCEPTED_WITH_UNGRADED_BOUNDARY"
+      },
+      {
+        "taskId": "DIR-NETWORK-1",
+        "directFirst": "FUNCTIONAL_REJECTION",
+        "nativeFirst": "FUNCTIONAL_REJECTION",
+        "directFinal": "FUNCTIONAL_REJECTION",
+        "nativeFinal": "AUTHORIZATION_OR_IR_REJECTION",
+        "directMathematicallyGraded": true,
+        "nativeMathematicallyGraded": true,
+        "contrast": "BOTH_REJECTED_MATHEMATICS"
+      },
+      {
+        "taskId": "DIR-INTERPOLATION-2",
+        "directFirst": "ACCEPTED",
+        "nativeFirst": "AUTHORIZATION_OR_IR_REJECTION",
+        "directFinal": "ACCEPTED",
+        "nativeFinal": "AUTHORIZATION_OR_IR_REJECTION",
+        "directMathematicallyGraded": true,
+        "nativeMathematicallyGraded": false,
+        "contrast": "DIRECT_ONLY_ACCEPTED"
+      },
+      {
+        "taskId": "DIR-NETWORK-2",
+        "directFirst": "FUNCTIONAL_REJECTION",
+        "nativeFirst": "FUNCTIONAL_REJECTION",
+        "directFinal": "FUNCTIONAL_REJECTION",
+        "nativeFinal": "DERIVATION_INSUFFICIENT",
+        "directMathematicallyGraded": true,
+        "nativeMathematicallyGraded": true,
+        "contrast": "BOTH_REJECTED_MATHEMATICS"
+      }
+    ],
+    "directCertificateSignal": true,
+    "promotion": "NONE_REQUIRES_REPLICATION_FRESH_OUTCOMES_AND_REALIZED_COMPUTE_ASSESSMENT",
+    "safety": {
+      "defaultUltraChanged": false,
+      "authorityIncrease": false,
+      "generalShell": false,
+      "generalNetwork": false,
+      "productionAuthority": false,
+      "acceptanceWeakened": false,
+      "rawReasoningPersisted": false,
+      "programPersisted": false,
+      "independentOracle": true
+    },
+    "limitations": [
+      "FOUR_NEW_VALUES_TWO_KNOWN_FORMAL_FAMILIES",
+      "DELIBERATE_TOOL_AVAILABILITY_AND_REPRESENTATION_DIFFERENCE",
+      "SAME_REASONING_ENABLED_MODEL_WIRE_CONTROLS_NOT_NONREASONING_DIRECT_CONTROL",
+      "FIRST_AND_REPAIRED_OUTCOMES_SEPARATE",
+      "CAPS_MATCHED_REALIZED_COMPUTE_MEASURED_NOT_ASSUMED",
+      "INDEPENDENT_FIRST_PROPOSALS_NOT_SHARED_START_CAUSAL_IDENTIFICATION",
+      "SINGLE_DIAGNOSTIC_NO_DEFAULT_PROMOTION",
+      "NATIVE_ARM_MAY_CHOOSE_MANUAL_SUBMISSION_TOOL_USE_MEASURED_NOT_ASSUMED",
+      "EXACT_CANONICAL_OUTPUT_ACCEPTANCE_UNCHANGED_DIRECT_NONCANONICAL_EQUIVALENCE_NOT_SEPARATELY_GRADED",
+      "PAIR_ORIGINAL_FIELDS_DENOTE_DIRECT_CONTROL_BOUNDED_FIELDS_DENOTE_NATIVE_ARM"
+    ],
+    "sourceUnchanged": true
+  }
+}

@@ -1,5 +1,46 @@
 # NYX benchmark capability program
 
+### Direct reasoning versus native-tool diagnostic (2026-10-12)
+
+Frozen `ad83dc8e`, run `38245924053`, completed four fresh parameter cases
+in two known formal families with identical reasoning-enabled Super wire
+controls, exact oracle, output contract and finite caps. Tool availability
+and representation deliberately differed; this is not a matched-tools claim.
+Direct accepted **1/4**, on its first attempt; native accepted **0/4**.
+No repaired solution was accepted. Both arms attempted all four stages.
+
+Direct used seven calls / 19,231 reported tokens; native used eight /
+36,243. All fifteen physical calls delivered stable complete JSON, with zero
+unknown usage, provider failure, retry or truncation. Direct used no more
+compute in every pair, but no pair met the 5% realized matching tolerance.
+The lone direct-only success is a narrow diagnostic signal, not a demonstrated
+new cognitive mechanism, official benchmark score or default promotion.
+
+Six unique stages reached exact acceptance, two native interpolation stages
+remained ungraded. Six direct certificates and two constructed native
+candidates failed exact acceptance; five native proposals failed source
+references, and one native execution was insufficient. All output sets were
+complete. Direct noncanonical-equivalent numeric strings were not separately
+classified; preserve that uncertainty rather than declaring every mismatch
+mathematically false. Seven direct submissions reported confidence 1, six
+rejected: self-reported confidence cannot substitute for external evidence.
+
+Artifact SHA256, ZIP CRC, source/configuration/task bindings and exact
+report/log agreement are preserved in the [sanitized receipt](../../../docs/omega/evidence/nyx-direct-native-ad83dc8e.json).
+Clean Linux CI passed 109 suites / 14,669 checks, TypeScript 5.8.3 zero,
+secret scan, production build, package smoke and separate-language arithmetic
+replay. The one-shot trigger is removed; no reserved answers or raw reasoning
+were persisted. Original/default Ultra and every prior outcome remain unchanged.
+
+Next: reuse existing public-model reformulation after falsification, first
+reproducing applicability outside these exposed cases, then freeze fresh
+shared-start repairs under unchanged acceptance and actual-compute accounting.
+No follow-up experiment is launched by this evidence receipt. Native emission,
+exact acceptance and provider reliability remain separate failure classes.
+Omega coverage: evidence over confidence, generator/detector separation,
+first/repaired provenance and no authority expansion; tool invention, procedure
+transfer and bounded recursion remain deferred. **PARTIAL / JUST-IN-TIME**.
+
 ### Fresh source-site versus whole-source repair epoch (2026-10-12)
 
 `nyx-source-site-fresh-repair/1` freezes signed half-open coverage runs and

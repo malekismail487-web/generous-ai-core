@@ -173,6 +173,32 @@ Keep initial/repaired outcomes, manual submissions, native executions, ungraded 
 
 ## Boundaries and current evidence
 
+**Direct/native diagnostic completed:** frozen `ad83dc8e`, run `38245924053`,
+attempted all eight stages with fifteen stable live calls / 55,474 reported
+tokens. Direct accepted one first proposal of four; native accepted zero.
+Neither repaired a rejected proposal. Direct used 19,231 tokens versus 36,243
+native and no more compute in every pair, but zero pairs met 5% token matching.
+This is a scoped diagnostic signal, not cognitive or default promotion.
+
+Five native source-reference failures left two interpolation stages ungraded;
+two constructed native candidates failed exact acceptance and a third execution
+was insufficient. All direct stages reached acceptance; six direct certificates
+failed exact matching, with noncanonical-equivalent numbers not separately
+classified. Every output set was complete. All seven direct certificates
+reported confidence 1, six rejected: confidence is not the promotion mechanism.
+Source/task/configuration identity, artifact SHA/CRC and log agreement are
+preserved in `docs/omega/evidence/nyx-direct-native-ad83dc8e.json`.
+
+**Research selection after this diagnostic:** reuse the already implemented
+public-model-reformulation repair option rather than adding a new brain layer.
+Its earlier shared-start development epoch had a narrow positive result; its
+replication was provider-confounded and earns no broad claim. Reproduce its
+applicability to exact-certificate generation on separate development tasks,
+then test fresh shared-start repairs under unchanged acceptance, finite caps
+and honest realized compute. Treat source-reference admission as an independent
+interface bottleneck. This is the next falsifiable question, not a launched
+epoch or an achieved correction. H005/H009/H045/H048 remain unproved.
+
 - Authority delta from this amendment: **NONE**. Default Ultra configuration, benchmark graders and production state remain unchanged.
 - The prior shared-start guarded epoch (`docs/omega/evidence/nyx-shared-guarded-ba26a0e.json`) and the latest source-site epoch (`docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json`) showed no accepted live repairs or selected guarded/site proposals. Quality repair sometimes destroyed passing behavior. The source-site catalogue increased cost and one prompt exceeded its bound. General presentation/classification corrections are supporting work, not a demonstrated cognitive gain. These negative outcomes constrain the next research intervention rather than justify more layers.
 - GPQA original: 148 correct, 46 wrong valid choices, four ungraded provider timeouts out of 198 selected. Exposed recovery: 12 correct, 35 wrong, three timeouts out of 50. These are separate epochs, not a merged score.

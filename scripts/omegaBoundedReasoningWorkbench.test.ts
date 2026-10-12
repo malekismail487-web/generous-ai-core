@@ -1399,5 +1399,57 @@ check(frozenContext.complete&&frozenContext.sourceUnchanged&&!frozenContext.scop
   &&frozenContext.summaries[0].usage.reportedTokens===38349&&frozenContext.summaries[1].usage.reportedTokens===37250
   &&contextReceipt.diagnosis.cognitiveGainDemonstrated===false&&contextReceipt.diagnosis.defaultChanged===false,
   "zero accepted outcomes and unmatched pairs prohibit repair, cognition, default, authority or recursion promotion");
+const directReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-direct-native-ad83dc8e.json","utf8"));
+const frozenDirect=directReceipt.frozenReport,directReceiptBytes=Buffer.from(JSON.stringify(frozenDirect,null,2)+"\n");
+check(createHash("sha256").update(directReceiptBytes).digest("hex")===directReceipt.integrity.reportSha256
+  &&directReceiptBytes.length===directReceipt.integrity.reportBytes&&theoryDigest(frozenDirect.freeze)===frozenDirect.freezeDigest,
+  "direct/native receipt reconstructs independently verified exact report bytes and frozen identity");
+for(const [path,digest] of Object.entries(frozenDirect.freeze.sourceDigests)){
+  if(!/^(?:src|scripts)\/[A-Za-z0-9_./-]+\.ts$/.test(path)||path.split("/").includes(".."))throw Error("unsafe_direct_receipt_source_path");
+  check(theoryDigest(execFileSync("git",["show",`${directReceipt.evaluatedCandidate}:${path}`],{encoding:"utf8"}))===digest,
+    `direct/native receipt binds historical source ${path}`);
+}
+check(theoryDigest(frozenDirect.freeze.configuration)===theoryDigest(DIRECT_NATIVE_EPOCH)
+  &&frozenDirect.freeze.tasks.length===4&&frozenDirect.freeze.tasks.every((b:any)=>DIRECT_NATIVE_CASES.some(t=>t.taskId===b.taskId&&theoryDigest(t)===b.digest)),
+  "direct/native model, oracle, task identity and finite controls remain frozen");
+const directObserved=frozenDirect.rows.flatMap((r:any)=>r.run.attempts),directSummary=frozenDirect.summaries[0],nativeSummary=frozenDirect.summaries[1];
+check(directObserved.length===15&&directObserved.every((a:any)=>a.modelEvidence.evidenceClass==="E4"
+  &&a.modelEvidence.model===DIRECT_NATIVE_EPOCH.model&&a.modelEvidence.finishReason==="stop"&&a.modelEvidence.usage.totalTokens!==null)
+  &&frozenDirect.totals.calls===15&&frozenDirect.totals.httpAttempts===15&&frozenDirect.totals.reportedTokens===55474
+  &&frozenDirect.totals.unknownUsageCalls===0&&frozenDirect.totals.unknownUsageHttpAttempts===0&&frozenDirect.providerStable,
+  "fifteen stable live deliveries and known compute cannot be mislabeled as delivery failure or cognition gain");
+check(directObserved.every((a:any)=>a.outputStructure?.matches&&a.outputStructure.inspectionComplete)
+  &&frozenDirect.summaries.every((s:any)=>s.outputContractRejections===0&&!s.outcomes.CERTIFICATE_SCHEMA_REJECTION),
+  "all fifteen original output sets are complete; no schema or output contract is weakened for credit");
+check(directSummary.arm==="DIRECT_REASONED"&&directSummary.accepted===1&&directSummary.firstAttemptAccepted===1
+  &&directSummary.repairedAccepted===0&&directSummary.manualGradedProposals===7&&directSummary.nativeExecutions===0
+  &&directSummary.functionalRejections===6&&directSummary.usage.calls===7&&directSummary.usage.reportedTokens===19231,
+  "one direct first-attempt success and six exact-certificate failures remain separate from successful repairs");
+check(nativeSummary.arm==="NATIVE_GRAPH"&&nativeSummary.accepted===0&&nativeSummary.irRejections===5
+  &&nativeSummary.nativeExecutions===3&&nativeSummary.constructedNativeProposals===2&&nativeSummary.functionalRejections===2
+  &&nativeSummary.outcomes.DERIVATION_INSUFFICIENT===1&&nativeSummary.manualGradedProposals===0
+  &&nativeSummary.usage.calls===8&&nativeSummary.usage.reportedTokens===36243,
+  "tool availability is distinguished from three actual executions, two graded native candidates and one insufficient derivation");
+check(directObserved.filter((a:any)=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"&&a.findings[0].endsWith(":SOURCE_NOT_BOUND")).length===5
+  &&frozenDirect.summaries.every((s:any)=>s.nativeAuthorizationRejections===0)
+  &&frozenDirect.rows.filter((r:any)=>r.run.attempts.some((a:any)=>["ACCEPTED","FUNCTIONAL_REJECTION"].includes(a.outcome))).length===6
+  &&directReceipt.accounting.ungradedAttemptedStages===2&&directReceipt.accounting.unexecutedStages===0,
+  "five interface failures are not authorization failures; two unreached mathematical stages stay ungraded");
+check(directObserved.filter((a:any)=>a.call===1&&a.outcome==="ACCEPTED").length===1
+  &&directObserved.filter((a:any)=>a.call===1&&a.outcome==="FUNCTIONAL_REJECTION").length===5
+  &&directObserved.filter((a:any)=>a.call===2&&a.outcome==="FUNCTIONAL_REJECTION").length===3
+  &&directReceipt.accounting.firstAttempts.correct===1&&directReceipt.accounting.secondAttempts.correct===0,
+  "initial and second-attempt outcomes are preserved without best-of accumulation");
+const directCerts=frozenDirect.rows.filter((r:any)=>r.arm==="DIRECT_REASONED").flatMap((r:any)=>r.run.attempts);
+check(directCerts.length===7&&directCerts.every((a:any)=>a.confidence===1)
+  &&directReceipt.frozenMetadataAnnotation.gradedCounterMeaning==="EXACT_ACCEPTANCE_CALLBACK_REACHED_NOT_DIRECT_NONCANONICAL_EQUIVALENCE_CLASSIFICATION",
+  "observed confidence does not overrule exact acceptance; noncanonical-equivalence uncertainty is retained");
+check(frozenDirect.complete&&frozenDirect.sourceUnchanged&&frozenDirect.directCertificateSignal
+  &&!frozenDirect.scopedFunctionalSignal&&!frozenDirect.scopedRepairSignal
+  &&frozenDirect.pairs.every((p:any)=>p.originalNoMoreModelCompute&&!p.realizedComputeMatched)
+  &&frozenDirect.diagnosticContrasts.filter((d:any)=>d.contrast==="DIRECT_ONLY_ACCEPTED").length===1
+  &&directReceipt.diagnosis.cognitiveGainDemonstrated===false&&!directReceipt.diagnosis.defaultChanged
+  &&directReceipt.frozenMetadataAnnotation.frozenOutcomeAltered===false,
+  "one lower-compute diagnostic success is not causal, cognitive, default, authority or recursive promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
