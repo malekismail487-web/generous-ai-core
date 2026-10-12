@@ -1,8 +1,5 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-procedure-reuse-one-shot.yml]
   workflow_dispatch:
     inputs:
       experiment:

@@ -511,15 +511,15 @@ function lowerFiniteProbability(problem, value, tick = () => {
 }
 function finiteProbabilitySchema(labels, constants) {
   const object = (properties) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
-  const identifier = { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" };
+  const identifier2 = { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" };
   const list = (items, max, min = 0) => ({ type: "array", items, minItems: min, maxItems: max });
-  const assignment = list(object({ variable: identifier, value: { type: "boolean" } }), 8);
+  const assignment = list(object({ variable: identifier2, value: { type: "boolean" } }), 8);
   return object({
     schemaVersion: { type: "integer", enum: [3] },
     semantics: { type: "string", enum: ["MARKOVIAN_BINARY_DAG"] },
-    variables: list(object({ id: identifier, parents: list(identifier, 3), probabilityTrue: list({ type: "string", enum: constants }, 8, 1) }), 8, 1),
-    queries: list(object({ id: identifier, event: { ...assignment, minItems: 1 }, given: assignment, interventions: assignment }), 4, 1),
-    outputs: list(object({ label: { type: "string", enum: labels }, op: { type: "string", enum: ["IDENTITY", "SUB"] }, left: identifier, right: identifier }), 4, 1)
+    variables: list(object({ id: identifier2, parents: list(identifier2, 3), probabilityTrue: list({ type: "string", enum: constants }, 8, 1) }), 8, 1),
+    queries: list(object({ id: identifier2, event: { ...assignment, minItems: 1 }, given: assignment, interventions: assignment }), 4, 1),
+    outputs: list(object({ label: { type: "string", enum: labels }, op: { type: "string", enum: ["IDENTITY", "SUB"] }, left: identifier2, right: identifier2 }), 4, 1)
   });
 }
 
@@ -577,6 +577,142 @@ function lowerQuantitativeExpressions(problem, value) {
     outputs: value.outputs.map((o) => ({ label: o.label, source: resolve7(o.source) }))
   };
   if (quantitativeProgramFinding(problem, program) !== null) return fail2("LOWERED_PROGRAM_REJECTED");
+  return program;
+}
+
+// src/lib/codelab/research/quantitativeAlgebraicCompiler.ts
+var ALGEBRAIC_COMPILER_POLICY = Object.freeze({
+  version: "nyx-algebraic-lowering/1",
+  schemaVersion: 5,
+  maxDefinitions: 32,
+  maxExpressionCharacters: 512,
+  maxTotalCharacters: 4096,
+  maxParseDepth: 16,
+  maxOperations: EXACT_DERIVATION_POLICY.maxSteps,
+  maxOutputs: EXACT_DERIVATION_POLICY.maxOutputs,
+  experimental: true,
+  grantsAuthority: false,
+  deadCodeElimination: false
+});
+var identifier = (s) => typeof s === "string" && /^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s);
+var fields = (v, names) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("\0") === [...names].sort().join("\0");
+var functions = /* @__PURE__ */ new Set(["MIN", "MAX", "BINOMIAL"]);
+function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
+}) {
+  const fail2 = (code) => {
+    throw Error(`quantitative_algebraic_invalid:${code}`);
+  };
+  if (!fields(value, ["schemaVersion", "definitions", "outputs"]) || value.schemaVersion !== 5 || !Array.isArray(value.definitions) || value.definitions.length > ALGEBRAIC_COMPILER_POLICY.maxDefinitions || !Array.isArray(value.outputs) || !value.outputs.length || value.outputs.length > ALGEBRAIC_COMPILER_POLICY.maxOutputs)
+    return fail2("SHAPE_OR_BOUND");
+  let characters = 0;
+  const expressionValid = (v) => typeof v === "string" && v.length > 0 && v.length <= ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters && (characters += v.length) <= ALGEBRAIC_COMPILER_POLICY.maxTotalCharacters;
+  const environment = new Map(problem.constants.map((c) => [c.id, c.id]));
+  const declared = new Set(environment.keys()), labels = /* @__PURE__ */ new Set();
+  for (const d of value.definitions) {
+    tick();
+    if (!fields(d, ["id", "expression"]) || !identifier(d.id) || declared.has(d.id) || functions.has(d.id) || !expressionValid(d.expression)) return fail2("DEFINITION_SHAPE_OR_BOUND");
+    declared.add(d.id);
+  }
+  for (const o of value.outputs) {
+    tick();
+    if (!fields(o, ["label", "expression"]) || !identifier(o.label) || labels.has(o.label) || !expressionValid(o.expression)) return fail2("OUTPUT_SHAPE_OR_BOUND");
+    labels.add(o.label);
+  }
+  const zero = problem.constants.find((c) => /^-?0(?:\/[1-9][0-9]{0,127})?$/.test(c.value))?.id;
+  const expressions = [];
+  const emit = (op, left, right) => {
+    tick();
+    if (expressions.length >= ALGEBRAIC_COMPILER_POLICY.maxOperations) return fail2("OPERATION_BOUND");
+    expressions.push({ op, left, right });
+    return expressions.length - 1;
+  };
+  const parse = (text2) => {
+    const tokens = [];
+    for (let at = 0; at < text2.length; ) {
+      tick();
+      const char = text2[at];
+      if (/^[ \t\r\n]$/.test(char)) {
+        at++;
+        continue;
+      }
+      if (/^[A-Za-z]$/.test(char)) {
+        const start = at++;
+        while (at < text2.length && /^[A-Za-z0-9_]$/.test(text2[at])) {
+          tick();
+          at++;
+        }
+        const token = text2.slice(start, at);
+        if (!identifier(token)) return fail2("IDENTIFIER_BOUND");
+        tokens.push(token);
+        continue;
+      }
+      if ("+-*/(),".includes(char)) {
+        tokens.push(char);
+        at++;
+        continue;
+      }
+      return fail2("LEXICAL_TOKEN");
+    }
+    let position = 0;
+    const peek = () => tokens[position];
+    const consume = () => {
+      tick();
+      return tokens[position++];
+    };
+    const expect = (token) => {
+      if (consume() !== token) return fail2("SYNTAX");
+    };
+    function atom(depth) {
+      tick();
+      if (depth > ALGEBRAIC_COMPILER_POLICY.maxParseDepth) return fail2("DEPTH_BOUND");
+      const token = consume();
+      if (token === "+") return atom(depth + 1);
+      if (token === "-") {
+        if (zero === void 0) return fail2("ZERO_NOT_BOUND");
+        return emit("SUB", zero, atom(depth + 1));
+      }
+      if (token === "(") {
+        const result2 = sum(depth + 1);
+        expect(")");
+        return result2;
+      }
+      if (!identifier(token)) return fail2("SYNTAX");
+      if (peek() === "(") {
+        if (!functions.has(token)) return fail2("FUNCTION_NOT_ALLOWED");
+        consume();
+        const left = sum(depth + 1);
+        expect(",");
+        const right = sum(depth + 1);
+        expect(")");
+        return emit(token, left, right);
+      }
+      return environment.get(token) ?? fail2("NAME_NOT_BOUND");
+    }
+    function product(depth) {
+      let left = atom(depth);
+      while (peek() === "*" || peek() === "/") {
+        const op = consume();
+        left = emit(op === "*" ? "MUL" : "DIV", left, atom(depth));
+      }
+      return left;
+    }
+    function sum(depth) {
+      let left = product(depth);
+      while (peek() === "+" || peek() === "-") {
+        const op = consume();
+        left = emit(op === "+" ? "ADD" : "SUB", left, product(depth));
+      }
+      return left;
+    }
+    const result = sum(0);
+    if (position !== tokens.length) return fail2("TRAILING_TOKEN");
+    return result;
+  };
+  for (const d of value.definitions)
+    environment.set(d.id, parse(d.expression));
+  const outputs = value.outputs.map((o) => ({ label: o.label, source: parse(o.expression) }));
+  const program = lowerQuantitativeExpressions(problem, { schemaVersion: 4, expressions, outputs });
+  for (let at = 0; at < program.registers.length + expressions.length; at++) tick();
   return program;
 }
 
@@ -899,22 +1035,25 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
   #limits;
   #now;
   #expressionGraphs;
+  #algebraicForms;
   #requests = 0;
   #workUnits = 0;
+  #elapsedMs = 0;
   #revoked = false;
   problemDigest;
-  constructor(problem, limits, now, expressionGraphs) {
+  constructor(problem, limits, now, expressionGraphs, algebraicForms) {
     this.#problem = immutableTheoryValue(JSON.parse(JSON.stringify(problem)));
     this.#limits = Object.freeze({ ...limits });
     this.#now = now;
     this.problemDigest = theoryDigest(this.#problem);
     this.#expressionGraphs = expressionGraphs;
+    this.#algebraicForms = algebraicForms;
   }
   static create(problem, limits, now = () => Date.now(), options = { expressionGraphs: false }) {
     if (!validProblem(problem)) throw new Error("reasoning_problem_invalid");
-    if (!plainData(options) || !keys4(options, ["expressionGraphs"]) || typeof options.expressionGraphs !== "boolean" || options.expressionGraphs && problem.kind !== "EXACT_QUANTITATIVE_DERIVATION") throw Error("reasoning_session_options_invalid");
+    if (!plainData(options) || !(keys4(options, ["expressionGraphs"]) || keys4(options, ["expressionGraphs", "algebraicForms"])) || typeof options.expressionGraphs !== "boolean" || options.algebraicForms !== void 0 && typeof options.algebraicForms !== "boolean" || (options.expressionGraphs || options.algebraicForms) && problem.kind !== "EXACT_QUANTITATIVE_DERIVATION") throw Error("reasoning_session_options_invalid");
     if (!keys4(limits, ["maxWorkUnits", "maxElapsedMs", "maxRequests", "expiresAtEpochMs"]) || !integer(limits.maxWorkUnits, 1, 1e6) || !integer(limits.maxElapsedMs, 1, 1e4) || !integer(limits.maxRequests, 1, 8) || !integer(limits.expiresAtEpochMs, 1, Number.MAX_SAFE_INTEGER) || !Number.isFinite(now()) || limits.expiresAtEpochMs <= now()) throw new Error("reasoning_limits_invalid");
-    return new _BoundedReasoningSession(problem, limits, now, options.expressionGraphs);
+    return new _BoundedReasoningSession(problem, limits, now, options.expressionGraphs, !!options.algebraicForms);
   }
   descriptor() {
     return Object.freeze({
@@ -934,9 +1073,15 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
         programPolicy: EXACT_DERIVATION_POLICY,
         equationPolicy: EQUATION_COMPILER_POLICY,
         probabilityPolicy: FINITE_PROBABILITY_POLICY,
-        ...this.#expressionGraphs ? { expressionPolicy: EXPRESSION_COMPILER_POLICY } : {}
+        ...this.#expressionGraphs ? { expressionPolicy: EXPRESSION_COMPILER_POLICY } : {},
+        ...this.#algebraicForms ? { algebraicPolicy: ALGEBRAIC_COMPILER_POLICY } : {}
       } : {}
     });
+  }
+  /** Host accounting includes bounded lowering attempts that throw or exhaust
+   * resources, not just successfully returned constructions. No action authority. */
+  usage() {
+    return Object.freeze({ requests: this.#requests, workUnits: this.#workUnits, elapsedMs: this.#elapsedMs });
   }
   revoke() {
     this.#revoked = true;
@@ -955,8 +1100,10 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
     let executedProgram = null;
     const probabilityModel = quantitative && request.program?.schemaVersion === 3;
     const expressionGraph = quantitative && request.program?.schemaVersion === 4;
+    const algebraicForm = quantitative && request.program?.schemaVersion === 5;
     if (expressionGraph && !this.#expressionGraphs) throw Error("reasoning_request_invalid:EXPRESSION_GRAPH_NOT_ENABLED");
-    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel) {
+    if (algebraicForm && !this.#algebraicForms) throw Error("reasoning_request_invalid:ALGEBRAIC_FORM_NOT_ENABLED");
+    if (this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION" && !probabilityModel && !algebraicForm) {
       executedProgram = expressionGraph ? lowerQuantitativeExpressions(this.#problem, request.program) : request.program?.schemaVersion === 2 ? lowerQuantitativeEquations(this.#problem, request.program) : request.program;
       const finding = quantitativeProgramFinding(this.#problem, executedProgram);
       if (finding) throw new Error(`quantitative_program_invalid:${finding}`);
@@ -973,6 +1120,8 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
     );
     let construction = null;
     try {
+      if (algebraicForm && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
+        executedProgram = lowerQuantitativeAlgebraicForm(this.#problem, request.program, () => budget.tick());
       if (probabilityModel && this.#problem.kind === "EXACT_QUANTITATIVE_DERIVATION")
         executedProgram = lowerFiniteProbability(this.#problem, request.program, () => budget.tick()).program;
       if (executedProgram && (expressionGraph || request.program?.schemaVersion === 2))
@@ -983,12 +1132,11 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
       else if (this.#problem.kind === "HYPOTHESIS_ELIMINATION") construction = eliminate(this.#problem, budget);
       else if (executedProgram && validQuantitativeProgram(this.#problem, executedProgram)) construction = deriveQuantities(this.#problem, executedProgram, budget);
     } catch (error) {
-      if (!(error instanceof SearchBudgetExceeded)) {
-        this.#workUnits += budget.units;
-        throw error;
-      }
+      if (!(error instanceof SearchBudgetExceeded)) throw error;
+    } finally {
+      this.#workUnits += budget.units;
+      this.#elapsedMs += Math.max(0, this.#now() - budget.started);
     }
-    this.#workUnits += budget.units;
     const result = {
       version: NYX_REASONING_WORKBENCH.version,
       inputDigest: this.problemDigest,
@@ -999,7 +1147,7 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
       elapsedMs: Math.max(0, this.#now() - budget.started),
       ...executedProgram ? {
         executedProgramDigest: theoryDigest(executedProgram),
-        loweringVersion: expressionGraph ? EXPRESSION_COMPILER_POLICY.version : probabilityModel ? FINITE_PROBABILITY_POLICY.version : request.program?.schemaVersion === 2 ? EQUATION_COMPILER_POLICY.version : null
+        loweringVersion: algebraicForm ? ALGEBRAIC_COMPILER_POLICY.version : expressionGraph ? EXPRESSION_COMPILER_POLICY.version : probabilityModel ? FINITE_PROBABILITY_POLICY.version : request.program?.schemaVersion === 2 ? EQUATION_COMPILER_POLICY.version : null
       } : {},
       evidenceClass: "E3",
       acceptanceRequiresIndependentVerifier: true,
