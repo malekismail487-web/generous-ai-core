@@ -1953,5 +1953,57 @@ for(const task of ALGEBRAIC_TRANSFER_CASES){
   check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:result.payload!.outputs,confidence:0.8}).accepted,
     "development Lagrange/Cramer witnesses agree with independent Gaussian/energy oracle without entering live prompts");
 }
+const algebraReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-algebraic-transfer-8eea3a41.json","utf8")),algebraFrozen=algebraReceipt.frozenReport;
+check(algebraReceipt.candidate==="8eea3a4165d07126e60009f7aa1a35b953a902d5"&&algebraReceipt.actions.runId===38287509428
+  &&algebraReceipt.actions.jobId===114939300305&&algebraFrozen.candidate===algebraReceipt.candidate
+  &&algebraFrozen.freeze.candidate===algebraReceipt.candidate,"live formula receipt binds the original frozen candidate, not the later package fix");
+check(algebraReceipt.custody.artifactId===11764093190&&algebraReceipt.custody.archiveBytes===9247
+  &&algebraReceipt.custody.archiveSha256==="b3987d59adb0e43e8f3dc772835f9b7251c8e2a4a8f9e0c9262f77334ee640e4"
+  &&algebraReceipt.custody.reportBytes===75645&&algebraReceipt.custody.crc32===2886101699&&algebraReceipt.custody.reportLogAgreement,
+  "formula artifact has verified ZIP identity, CRC, size and terminal agreement");
+check(createHash("sha256").update(JSON.stringify(algebraFrozen,null,2)+"\n").digest("hex")===algebraReceipt.custody.reportSha256
+  &&algebraReceipt.custody.reportSha256==="d29a277d1202ce8d6632969b1db9c5849c41b266bccd17ea18880f62271729f6",
+  "committed sanitized report reproduces the artifact report bytes without raw generated formulas");
+check(theoryDigest(algebraFrozen.freeze)===algebraFrozen.freezeDigest&&theoryDigest(algebraFrozen.freeze.configuration)===theoryDigest(ALGEBRAIC_TRANSFER_EPOCH)
+  &&algebraFrozen.freeze.corpusDigest===ALGEBRAIC_TRANSFER_CORPUS_DIGEST&&algebraFrozen.freeze.tasks.every((t:any)=>
+    ALGEBRAIC_TRANSFER_CASES.some(c=>t.taskId===c.taskId&&t.family===c.family&&t.digest===theoryDigest(c))),
+  "four fresh known-family cases, same exact oracle and generation budgets remain frozen");
+check(Object.keys(algebraFrozen.freeze.sourceDigests).length===14&&"src/lib/codelab/research/quantitativeAlgebraicCompiler.ts" in algebraFrozen.freeze.sourceDigests,
+  "source custody includes the new compiler and the existing execution/oracle/inference closure");
+for(const [path,digest] of Object.entries(algebraFrozen.freeze.sourceDigests)){
+  check(/^(?:src|scripts)\/[A-Za-z0-9_./-]+$/.test(path)&&!path.includes(".."),"historical source lookup path is bounded repository data");
+  check(theoryDigest(execFileSync("git",["show",`${algebraReceipt.candidate}:${path}`],{encoding:"utf8"}))===digest,
+    "formula evidence retains actual historical source identity instead of binding to the new tip");
+}
+const algebraLiveAttempts=algebraFrozen.rows.flatMap((r:any)=>r.run.attempts);
+check(algebraLiveAttempts.length===16&&algebraLiveAttempts.every((a:any)=>a.modelEvidence.evidenceClass==="E4"
+  &&a.modelEvidence.model==="nvidia/nemotron-3-super-120b-a12b"&&a.modelEvidence.finishReason==="stop"
+  &&a.modelEvidence.usage.totalTokens!==null&&!Object.hasOwn(a,"executedProgram")),
+  "all sixteen actual Super completions are full, measured and sanitized; default Ultra identity is not relabeled");
+check(algebraFrozen.complete&&algebraFrozen.providerStable&&algebraFrozen.sourceUnchanged&&algebraFrozen.stopReason==="PREDECLARED_PAIRS_COMPLETE"
+  &&algebraFrozen.summaries.every((s:any)=>s.attempted===4&&s.accepted===1&&s.firstAttemptAccepted===0&&s.repairedAccepted===1&&s.usage.calls===8),
+  "both arms accepted the same one of four cases only after repair, not on first attempt");
+check(algebraFrozen.summaries[0].mathematicallyGraded===3&&algebraFrozen.summaries[1].mathematicallyGraded===1
+  &&algebraReceipt.accounting.mathematicallyGradedStages===4&&algebraReceipt.accounting.ungradedAttemptedStages===4
+  &&algebraFrozen.summaries[0].functionalRejections===2&&algebraFrozen.summaries[1].functionalRejections===0,
+  "unreached mathematics stays separate from two independently rejected constructed candidates");
+check(algebraFrozen.totals.calls===16&&algebraFrozen.totals.reportedTokens===69744&&algebraFrozen.totals.httpAttempts===16
+  &&algebraFrozen.totals.unknownUsageCalls===0&&algebraFrozen.totals.unknownUsageHttpAttempts===0
+  &&algebraFrozen.totals.providerFailures===0&&algebraFrozen.totals.recoveredDisruptions===0&&algebraFrozen.totals.toolRequests===11
+  &&algebraFrozen.totals.toolWorkUnits===4027,"physical compute, failed parser work and actual native construction are distinguished");
+check(algebraFrozen.summaries[0].usage.reportedTokens===36332&&algebraFrozen.summaries[1].usage.reportedTokens===33412
+  &&algebraFrozen.pairs.filter((p:any)=>p.realizedComputeMatched).length===2&&algebraFrozen.pairs.filter((p:any)=>p.boundedNoMoreModelCompute).length===3
+  &&algebraFrozen.summaries[0].irRejections===5&&algebraFrozen.summaries[1].irRejections===7,
+  "less aggregate treatment compute does not imply matched realized pairs or improved source reliability");
+check(algebraReceipt.accounting.reasonCodes["quantitative_algebraic_invalid:LEXICAL_TOKEN"]===5
+  &&algebraReceipt.accounting.reasonCodes["quantitative_algebraic_invalid:NAME_NOT_BOUND"]===1
+  &&algebraReceipt.accounting.reasonCodes["quantitative_algebraic_invalid:DEFINITION_SHAPE_OR_BOUND"]===1
+  &&algebraReceipt.accounting.reasonCodes["quantitative_expressions_invalid:SOURCE_NOT_BOUND"]===5,
+  "observed general failure codes remain distinct without reconstructing a raw model proposal");
+check(!algebraFrozen.scopedFunctionalSignal&&!algebraFrozen.emissionSignal&&!algebraFrozen.scopedRepairSignal
+  &&algebraReceipt.assessment.decision==="NO_PROMOTION"&&!algebraReceipt.assessment.cognitiveGainDemonstrated
+  &&algebraReceipt.assessment.restrictedToolSynthesisObserved&&algebraFrozen.safety.defaultUltraChanged===false
+  &&algebraFrozen.safety.authorityIncrease===false&&algebraFrozen.safety.acceptanceWeakened===false,
+  "one accepted authored formula proves bounded integration, not comparative reasoning gain, recursion or authority promotion");
 console.log(`OMEGA_BOUNDED_REASONING_WORKBENCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

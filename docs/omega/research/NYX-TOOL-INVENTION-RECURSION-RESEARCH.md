@@ -183,6 +183,18 @@ Independent development Gaussian/energy witnesses validate translation but are
 never included in live model inputs. E3 interface success alone is no capability
 promotion.
 
+Fresh live outcome at `8eea3a41`: one model-authored formula was independently
+accepted after repair, but graph control solved the same case. Both scored 1/4,
+with zero first-attempt successes. The formula interface did not improve live
+acceptance and increased source rejection; no recursive or comparative cognitive
+claim follows. Sixteen stable calls used 69,744 known tokens. Only two of four
+pairs were realized-compute matched. Preserve this negative comparison and
+diagnose lexical/binding/definition causes separately before considering further
+generation guidance. Raw formulas are not retained, so the exact rejected token
+or definition fault is **unknown**; do not infer numeric literals or powers from
+a generic `LEXICAL_TOKEN` alone. Any new diagnostic must be bounded, sanitized,
+independently tested and unable to repair or accept an otherwise invalid program.
+
 An additional primary method examined is
 [PICARD](https://aclanthology.org/2021.emnlp-main.779.pdf), sections 2--3 and
 the ablations: incremental parsing rejects invalid tokens and guards name scope;

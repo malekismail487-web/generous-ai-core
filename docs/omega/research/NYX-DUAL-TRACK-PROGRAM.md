@@ -167,6 +167,16 @@ graphs against formula notation. Realized compute is measured, not assumed.
 Default Ultra and all production authority remain unchanged; no gain is claimed
 until fresh independently accepted live outcomes exist.
 
+The frozen surface transfer (`8eea3a41`, run `38287509428`) is now complete:
+both arms accepted **1/4 after repair**, **0/4 first attempt**. The successful
+model-created formula used the existing engine and oracle, but treatment reached
+mathematical grading on only 1/4 cases versus 3/4 control. Seven treatment source
+rejections versus five control and equal success do not establish cognitive gain.
+All sixteen calls were provider-stable; 69,744 tokens, two of four realized-
+compute-matched pairs. **NO PROMOTION**. The next step is general lexical/binding
+diagnosis on separate development cases, not automatic formula repair, another
+brain layer or exposed-task memorization. The exact receipt preserves failures.
+
 **Demonstrated-path milestone completed (2026-10-12):** source-site hardening, disposable integration and the fresh shared-start comparison are now evidenced. Frozen candidate `6b1b32a` produced no quality-accepted repairs in either arm, no selected source sites and no realized-compute-matched pairs. Provider delivery was stable for all eleven actual calls; one treatment was blocked locally before dispatch. Prompt/catalogue duplication and terminal classification were corrected separately without regrading the frozen epoch. Preservation of untouched syntax is not preservation of semantics; the full oracle still decides. No causal gain or default promotion is supported. See `docs/omega/evidence/nyx-source-site-transfer-6b1b32a5.json`.
 
 **Next eligible theoretical prototype:** NYX encounters a development objective requiring evidence it cannot obtain from an existing tool. It proposes one small pure transformation/checker with typed inputs/outputs, preconditions, resource bound and failure modes. A trusted independent harness checks its behavior, adversarial cases and safety. A separately admitted executable artifact can then be reused on fresh objectives through existing Omega tool requests. Compare against a no-new-tool control under total matched resources, charging tool construction and validation as well as inference. This does not grant automatic tool registration or arbitrary host execution.

@@ -1,5 +1,46 @@
 # NYX benchmark capability program
 
+### Bounded formula tool synthesis: one accepted case, no comparative gain (2026-10-12)
+
+Frozen `8eea3a41`, [run 38287509428](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38287509428),
+completed four new parameter cases in two known formal families. Both arms used
+the same Super cognition, finite budgets, exact independent oracle, objective
+output contract and admitted repair context. Graph control and mathematical
+surface treatment each accepted **1/4 after repair**, with **0/4 first-attempt**
+successes. The same network case passed in both; neither interpolation case did.
+
+The treatment's successful model-authored formula executed through the existing
+exact interpreter. It supplies no human formula, new constant, solver, language
+execution authority or self-certification. This is one observed tool-integration
+success, not superior reasoning, reusable transfer, recursion or AGI.
+
+Control reached independent mathematical grading on **3/4** tasks; treatment on
+**1/4**. Four of eight stages were ungraded interface failures. Control had five
+positional-source rejections and two constructed mathematical rejections;
+treatment had five lexical, one unbound-name and one definition-shape/bound
+rejection. Do not call unreached mathematics a reasoning failure. No public
+formula source or private model reasoning is persisted.
+
+All **16 physical calls / 69,744 tokens** were fully accounted and provider-stable,
+with no retries, truncations or unknown usage. Treatment used **33,412** tokens
+versus **36,332** control (about 8.04% less in aggregate); only **2/4** pairs met
+the unchanged 5% realized-compute tolerance. Equal accepted counts, less grading
+coverage and more source rejection yield **NO PROMOTION**. Default Ultra,
+authority, strict canonical acceptance and all older frozen outcomes remain
+unchanged. Next: isolate lexical/binding causes on separate development inputs
+and test general lexer-compatible guidance; do not repeat these exposed values
+or automatically rewrite mathematics.
+
+Clean candidate CI passed **109 suites / 15,586 checks**, TypeScript zero and
+build, then correctly rejected a stale bundled CLI runtime. Generated runtime
+and its manifest hash were synchronized at `07a73493`, preserving seven unrelated
+user-edited files and all non-runtime user manifest fields; local package smoke
+passed. Clean Linux [corrective CI 38288513084](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38288513084)
+then passed the same 109 suites / 15,586 checks, TypeScript zero, build and
+seven-file package smoke (302,483 bytes). This packaging correction changes no frozen live experiment and removes
+the one-shot launcher. Full sanitized receipt, source binding, artifact checksum,
+coverage and resource accounting: `docs/omega/evidence/nyx-algebraic-transfer-8eea3a41.json`.
+
 ### Public-formulation bounds: stable fresh transfer, no accepted gain (2026-10-12)
 
 Frozen `162e958c`, [run 38282997508](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38282997508),
