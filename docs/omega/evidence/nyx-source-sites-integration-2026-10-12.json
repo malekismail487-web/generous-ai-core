@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "kind": "DISPOSABLE_SOURCE_SITE_INTEGRATION_AND_TERMINAL_SUMMARY_CORRECTION",
+  "baselineCommit": "9fd75470b24e375ae13c801ac927e7a612217d5c",
+  "evidenceClass": "E3",
+  "independence": "SAME_AUTHOR_DEVELOPMENT_FIXTURE_AND_TEST_DOUBLE_WITH_REAL_OMEGA_EXECUTION_NOT_LIVE_TRANSFER",
+  "environment": { "platform": "win32", "node": "24.19.0", "typescript": "5.8.3", "worktree": "UNRELATED_USER_UI_WORK_PRESERVED_NOT_CLEAN_COMMIT_EVIDENCE" },
+  "mechanism": { "version": "nyx-source-bound-site-emission/1", "defaultEnabled": false, "hostOptIn": "SOURCE_BOUND_FRAGMENTS", "semanticEquivalenceCertified": false, "authorityGranted": false },
+  "sourceIdentity": [
+    { "path": "scripts/omega/nyx-arc-core-refinement.ts", "gitBlob": "a5722f73c0001e5fbe501884387d5daaead50a11", "sha256": "3776a0bfa065b8edda3ca8218dd8e8f5f2b0ec4ad2015708d56ef8e12eb075c0" },
+    { "path": "scripts/omegaR3EBoundedRepairLoop.test.ts", "gitBlob": "6d1b6092871a814c7910732a9051c1ead86ec337", "sha256": "782cfc80dfc205466ea3c49e718a4ad8e6aff593cce493e44f1a0d53d7944b34" },
+    { "path": "src/lib/codelab/engine/r3BoundedRepairLoop.ts", "gitBlob": "d797fbd7a06a10e69b131dc0604335da3a73ce8a", "sha256": "89c9c3a2d0aabe15176fd8a194da0fea2eeefd7733f34a00d552c4c051ed8516" }
+  ],
+  "integration": {
+    "stack": ["EXISTING_R2A_DISPOSABLE_LIFECYCLE", "EXISTING_R3A_PATCH_APPLICATION", "EXISTING_R3B_ENTRYPOINT_EXECUTION", "EXISTING_R3C_OBSERVATION", "EXISTING_R3E_BOUNDED_REPAIR", "UNCHANGED_V3_ORIGINAL_STATE_QUALITY"],
+    "objective": "Preserve ordered accumulation with empty, signed and fractional inputs, input ownership, Unicode marker and unrelated export while removing redundant aliases.",
+    "firstCandidate": { "publicVerification": "PASS", "staticAdmission": "REJECTED", "declarationDelta": 13, "unchangedLimit": 12 },
+    "arms": [
+      { "identity": "CORRECT_FRAGMENT", "cognition": "TEST_DOUBLE", "modelInteractions": 2, "applications": 2, "sourceSite": "RESOLVED", "finalExecution": "PASS", "finalAdmission": "ADMITTED", "outcome": "FUNCTIONALLY_REPAIRED_VERIFIED", "unselectedBytesPreserved": true, "originalQualityBaselinePreserved": true },
+      { "identity": "SYNTAX_VALID_SEMANTICALLY_WRONG_FRAGMENT", "cognition": "TEST_DOUBLE", "modelInteractions": 2, "applications": 2, "sourceSite": "RESOLVED_NOT_SEMANTICALLY_CERTIFIED", "finalExecution": "FAIL", "outcome": "EXHAUSTED", "finalFunctionalAcceptance": "NOT_ACCEPTED", "historicalPassPreservedButNotRecycled": true },
+      { "identity": "UNKNOWN_SITE_REFERENCE", "cognition": "TEST_DOUBLE", "modelInteractions": 2, "applications": 1, "sourceSite": "REFUSED_BEFORE_APPLICATION", "outcome": "NOT_VERIFIED", "extraVerifierExecution": false }
+    ],
+    "realVerifierExecutionsIncludingBaseline": 6,
+    "testDoubleModelInteractions": 6,
+    "liveModelCalls": 0,
+    "sourcesAndPredecessorsUnchanged": true,
+    "ownedFixtureCleanup": "COMPLETED_BY_EXISTING_SUITE"
+  },
+  "defect": {
+    "class": "TERMINAL_FUNCTIONAL_SUMMARY_RECYCLED_HISTORICAL_PASS",
+    "before": "iterations.some(functionallyPassed) could report ACCEPTED after a later failed candidate.",
+    "after": "Latest completed candidate alone determines functionalAcceptance; earlier outcomes remain in iterations.",
+    "reproductions": ["QUALITY_REJECTED_PASS_THEN_WRONG_LOCAL_FRAGMENT", "ADMITTED_PASS_THEN_WRONG_BOUNDED_REVIEW"],
+    "scope": "RESULT_SUMMARY_CORRECTION_NOT_NEW_REASONING_ABILITY",
+    "functionalAndQualityAcceptanceRemainSeparate": true,
+    "historicalArcSourcePreservedByExactInverse": true
+  },
+  "previousCleanCI": { "run": 38174339728, "job": 114573388465, "candidate": "9fd75470b24e375ae13c801ac927e7a612217d5c", "conclusion": "SUCCESS", "suites": 109, "checks": 13869, "failedChecks": 0, "manifestDigest": "2da8e38cdb756eb8d6131bdad10e915127e32e7107566ad23be9b33057b6268c" },
+  "verification": {
+    "focusedR3E": { "passed": 208, "failed": 0, "baselinePassed": 186, "addedChecks": 22 },
+    "focusedArc": { "passed": 1843, "failed": 0 },
+    "typeScript": { "version": "5.8.3", "baseline": 0, "current": 0, "new": 0 },
+    "productionBuild": { "result": "PASS", "seconds": 9.33, "existingWarningsRemain": true },
+    "packageSmoke": "PASS_ASSETS_LOOPBACK_NO_IMPLICIT_CREDENTIAL",
+    "aggregate": { "suites": 109, "passedChecks": 13898, "failedSuites": 0, "failedChecks": 0, "manifestDigest": "141add05400a64d395312b4f3e6ed43d3e1cfd8dcb01c4b08eeed49cf4a6fc4c", "scope": "LOCAL_WORKTREE_INCLUDES_SEVEN_UNRELATED_UI_CHECKS_NOT_CLEAN_COMMIT_CI" }
+  },
+  "claimLimits": { "cognitivePromotion": "NONE", "freshBenchmarkGain": "NOT_EVALUATED", "agiOrAsi": "NOT_ESTABLISHED", "generalShellAuthority": false, "generalNetworkAuthority": false, "sourceRepositoryWriteAuthority": false, "productionAuthority": false, "hostileCodeIsolation": "NOT_ESTABLISHED_BY_EXISTING_NODE_RUNNER" },
+  "next": "FREEZE_FRESH_MATCHED_WHOLE_SOURCE_VS_SOURCE_SITE_REPAIR_WITH_COMMON_LIVE_START_ORIGINAL_STATE_QUALITY_AND_HONEST_REALIZED_COMPUTE",
+  "omegaPlanCoverage": { "direct": ["NO_SELF_CERTIFICATION", "CURRENT_EVIDENCE_NOT_EVER_CORRECT_ACCUMULATION", "ORIGINAL_STATE_QUALITY", "CAPABILITY_NOT_AUTHORITY"], "supporting": ["TYPED_INTENT", "GENERATOR_REQUIRES_VALIDATED_DETECTOR", "PROVENANCE", "PRESERVE_HISTORICAL_RESEARCH_EVIDENCE"], "deferred": ["LIVE_MATCHED_TRANSFER", "GENERATED_TOOL_ADMISSION", "TWO_GENERATION_RECURSION"], "conflicts": ["Public syntactic or static admission is not semantic equivalence, broad intelligence or production authority."], "coverage": "PARTIAL_JUST_IN_TIME" }
+}

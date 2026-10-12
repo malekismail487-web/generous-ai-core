@@ -623,6 +623,15 @@ const sourceSiteEmissionRefinement: [string, string, number][] = [
   ]
 ];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  // Retain historical ARC core identity; never retroactively rewrite its scored source.
+  if (path === loopPath) for (const [before, after] of [
+    ["", '  /** Latest completed candidate only; earlier public passes remain in iterations. */\n'],
+    ['      functionalAcceptance: iterations.some((item) => item.functionallyPassed) ? "ACCEPTED" : "NOT_ACCEPTED",\n',
+      '      functionalAcceptance: iterations.at(-1)?.functionallyPassed === true ? "ACCEPTED" : "NOT_ACCEPTED",\n'],
+  ]) {
+    if (current.split(after).length !== 2) throw Error("arc_terminal_functional_acceptance_hunk_mismatch");
+    current = current.split(after).join(before);
+  }
   if (path === cognitivePath) for (const [before, after, count] of sourceSiteEmissionRefinement) {
     if (current.split(after).length !== count + 1) throw Error("arc_source_site_emission_hunk_mismatch");
     current = current.split(after).join(before);

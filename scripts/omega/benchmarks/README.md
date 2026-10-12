@@ -1,5 +1,29 @@
 # NYX benchmark capability program
 
+### Disposable source-site integration and terminal-result correction (2026-10-12)
+
+The opt-in source-site interface now traverses the existing real R3A/R3B/R3E
+disposable application/execution loop in authored E3 development witnesses.
+A public-passing candidate with 13 excess declarations is rejected against the
+unchanged original-state V3 limit of 12. A test-double local fragment removes
+two aliases, preserves every unselected byte, and passes execution/admission.
+A syntax-valid incorrect fragment reaches isolated execution and fails; an
+unknown reference is refused before application. No live model gain is claimed.
+
+This exercise discovered a genuine result-summary defect: `functionalAcceptance`
+used any historical public pass even when the latest candidate failed. It now
+reports the **latest completed candidate**. Earlier successes remain recorded in
+iterations; independent quality acceptance and final loop outcome remain separate.
+The frozen ARC predecessor is reconstructed by exact inverse hunks, preserving
+historical source identity rather than retroactively regrading old evidence.
+
+The preceding clean Linux CI at `9fd75470b24e375ae13c801ac927e7a612217d5c`
+passed 109 suites / 13,869 checks. The seven additional checks in its local
+worktree receipt belong to preserved, uncommitted user UI work, not that commit.
+Current evidence: `docs/omega/evidence/nyx-source-sites-integration-2026-10-12.json`.
+Fresh whole-source versus source-site-enabled live repair transfer is still
+required before any cognitive promotion; previous failed epochs remain unchanged.
+
 ### Demonstrated-path / theoretical-goals amendment (2026-10-11)
 
 The original active application goal is preserved; the available goal tools

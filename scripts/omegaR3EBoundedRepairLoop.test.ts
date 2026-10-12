@@ -122,11 +122,13 @@ async function verification(pack: AppliedPack, label: string, probeDefinition?: 
 }
 
 function cognition(transport: NvidiaNimTransport, testCapacity?: NvidiaCapacityCoordinator,
-  onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void): NyxNemotronEngineeringCognition {
+  onCapacityProgress?: (progress: NvidiaNimCapacityProgress) => void,
+  sourceSites = false): NyxNemotronEngineeringCognition {
   const provider = NvidiaNimProvider.create({ providerId: `NYX-R3E-${sequence}`, model: "nvidia/nemotron-3-ultra",
     authorityMode: "TEST_DOUBLE_ONLY", credentialSource: { sourceIdentity: "test-double:r3e", read: () => "test-only-credential-material" },
     maxPromptBytes: 100_000, maxOutputTokens: 2_048, timeoutMs: 1_000, transport, testCapacity, onCapacityProgress });
-  return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-R3E-COGNITION", provider, maxPromptBytes: 50_000, maxOutputTokens: 1_024 });
+  return NyxNemotronEngineeringCognition.create({ cognitionId: "NYX-R3E-COGNITION", provider, maxPromptBytes: 50_000, maxOutputTokens: 1_024,
+    ...(sourceSites ? { sourceSiteEmission: "SOURCE_BOUND_FRAGMENTS" as const } : {}) });
 }
 
 const sourceRoot = join(parent, "source"); await mkdir(join(sourceRoot, "src"), { recursive: true }); await mkdir(join(sourceRoot, "tools"));
@@ -277,6 +279,8 @@ function loop(nyx: NyxNemotronEngineeringCognition, candidateBuilder = builder()
     passedCandidateReview: "ONCE_WITHIN_EXISTING_BUDGET" }).run(loopRequest());
   check(result.outcome === "EXHAUSTED" && result.iterations.length === 2 && result.iterations[0].passed
     && !result.iterations[1].passed, "a review-induced regression cannot recycle an earlier passing candidate as final success");
+  check(result.functionalAcceptance === "NOT_ACCEPTED" && result.iterations[0].functionallyPassed
+    && !result.iterations[1].functionallyPassed, "terminal functional summary reports the current failed candidate without erasing its historical public pass");
 }
 {
   const signal = new AbortController();
@@ -879,6 +883,128 @@ assert(R3_E_BOUNDED_REPAIR_LOOP_STATUS.cognition === "NYX_NVIDIA_NEMOTRON_3_ULTR
   && R3_E_BOUNDED_REPAIR_LOOP_STATUS.actuation === "OMEGA_R3_A_R3_B", "loop preserves Νύξ cognition and Omega actuation separation");
 assert(!R3_E_BOUNDED_REPAIR_LOOP_STATUS.unboundedAutonomy && !R3_E_BOUNDED_REPAIR_LOOP_STATUS.authorityGranted,
   "repair loop is bounded and grants no production/source authority");
+
+{
+  // Authored E3 integration witnesses. The model is a test double; these do not
+  // establish live cognition or transfer. Verification executes the candidate,
+  // not a string match or the source-site reifier's own semantic assumptions.
+  const path = "src/aggregate.mjs";
+  const prefix = 'export const label = "preserved-λ";\nexport function unrelated(value) { return value * 9; }\n';
+  const tail = '  for (const value of input.values) { total += value; }\n  return [total, input.values.length, label];\n}\n';
+  const canonicalSource = prefix + 'export function aggregate(input) {\n  let total = input.initial;\n' + tail;
+  const failingSource = canonicalSource.replace('let total = input.initial;', 'let total = 0;');
+  const aliasRun = 'const a01 = input.initial;\n  const a02 = a01;\n  const a03 = a02;';
+  const redundant = prefix + 'export function aggregate(input) {\n  ' + aliasRun + '\n' +
+    Array.from({ length: 10 }, (_, index) => `  const a${String(index + 4).padStart(2, "0")} = a${String(index + 3).padStart(2, "0")};`).join('\n') +
+    '\n  let total = a13;\n' + tail;
+  const fixtureRoot = join(parent, "source-site-fixture");
+  await mkdir(join(fixtureRoot, "src"), { recursive: true }); await mkdir(join(fixtureRoot, "tools"));
+  await writeFile(join(fixtureRoot, path), canonicalSource, "utf8");
+  const verifySource = `import assert from "node:assert/strict";
+import { aggregate, label, unrelated } from "../src/aggregate.mjs";
+const cases = [
+  [{initial: 11, values: []}, [11, 0, "preserved-λ"]],
+  [{initial: -3, values: [8, -5, -2]}, [-2, 3, "preserved-λ"]],
+  [{initial: 0.5, values: [0.25, -0.125]}, [0.625, 2, "preserved-λ"]],
+];
+for (const [input, expected] of cases) {
+  Object.freeze(input.values); Object.freeze(input);
+  assert.deepEqual(aggregate(input), expected);
+}
+assert.equal(label, "preserved-λ"); assert.equal(unrelated(-4), -36);
+console.log("TEST_PASS source-site-integration");`;
+  await writeFile(join(fixtureRoot, "tools/verify.mjs"), verifySource, "utf8");
+  const base = await applyChange(fixtureRoot, { kind: "MODIFY", relativePath: path,
+    expectedBaseHash: hash(canonicalSource), proposedContentHash: hash(failingSource), proposedContent: failingSource,
+    baselineEvidenceId: "evidence://source-site-base", baselineObservationId: "observation://source-site-base",
+    sandboxArtifactId: "artifact://source-site-base" }, "source-site-base");
+  const baseTool = await verification(base, "source-site-base"), baseline = await baseTool.executor.execute(baseTool.request);
+  const observed = observeEngineeringExecution({ schemaVersion: 1, observationRequestId: "SOURCE-SITE-BASE-OBS",
+    observerIdentity: "OMEGA-R3E-OBSERVER", evaluatorVersion: "r3-e/1", expected: {
+      candidateCommit: baseline.evidence.candidateCommit, disposableRepositoryId: base.application.disposableRepositoryId,
+      applicationId: base.application.applicationId, proposalDigest: base.application.proposalDigest, toolId: "TEST", toolKind: "TEST",
+      toolIdentityDigest: baseline.evidence.toolIdentityDigest, environmentIdentity: baseline.evidence.environmentIdentity },
+    candidate: baseline, baseline: null, observedAtEpochMs: Math.max(Date.now(), baseline.evidence.endedAtEpochMs) });
+  if (!observed.observation || observed.observation.state !== "TEST_FAIL") throw Error("source_site_baseline_not_failing");
+  for (const arm of ["CORRECT", "SEMANTICALLY_WRONG", "UNKNOWN_REFERENCE"] as const) {
+    let currentRoot = base.cloneRoot, calls = 0, preparations = 0, siteOffered = false;
+    const packs: AppliedPack[] = [];
+    const candidateBuilder = { builderIdentity: `SOURCE-SITES-EXISTING-R3-${arm}`,
+      prepare: async (hypothesis: NyxRepairHypothesis, iteration: number): Promise<OmegaPreparedRepairCandidate> => {
+        preparations++; const change = hypothesis.changes[0];
+        const pack = await applyChange(currentRoot, { kind: "MODIFY", relativePath: change.relativePath,
+          expectedBaseHash: change.expectedBaseHash, proposedContentHash: change.replacementContentHash,
+          proposedContent: change.replacementContent, baselineEvidenceId: `evidence://sites/${iteration}`,
+          baselineObservationId: `observation://sites/${iteration}`, sandboxArtifactId: `artifact://sites/${iteration}` }, `sites-${arm}`);
+        packs.push(pack); currentRoot = pack.cloneRoot;
+        const run = await verification(pack, `sites-${arm}-${sequence}`), content = await readFile(join(pack.cloneRoot, path), "utf8");
+        return { hypothesisId: hypothesis.hypothesisId, hypothesisDigest: hypothesis.proposalDigest, proposal: pack.proposal,
+          application: pack.application, verifications: [{ toolId: "TEST", executor: run.executor, request: run.request }],
+          files: [{ relativePath: path, content, contentSha256: hash(content) }],
+          omegaAuthorityBoundary: "R3A_APPLY_AND_R3B_EXECUTE_ISOLATED_ONLY", sourceRepositoryMutated: false, productionAuthorityGranted: false };
+      } };
+    const nyx = cognition(async (_input, init) => {
+      const prompt = JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+      const fields = JSON.parse(modelResponse(redundant, { diagnosis: "Preserve ordered accumulation and unrelated exports.",
+        causalHypothesis: "Removing only redundant aliases preserves the ordered accumulator.",
+        evidenceRefs: ["OBJECTIVE", `FILE:${path}`], invariant: "Retain initial state, order, length and unrelated exports.",
+        expectedResult: "Real repository verification passes without excess original-relative declarations.",
+        counterexamples: ["Empty input retains its initial state.", "Signed and fractional values retain exact ordered addition."],
+        changes: [{ target: path, replacement: redundant }] }));
+      if (++calls === 1) {
+        check(prompt.sourceSiteEmission == null, "source-site edits are not offered before a real provenance-bound quality rejection");
+        return providerResponse(JSON.stringify(fields));
+      }
+      const catalog = prompt.sourceSiteEmission;
+      const site = catalog?.entries.find((entry: { original: string }) => entry.original === aliasRun);
+      siteOffered = Boolean(site) && prompt.observation.state === "TEST_PASS";
+      if (!site) throw Error("source_site_not_offered_after_quality_rejection");
+      delete fields.changes;
+      fields.decision = "PROPOSE_SOURCE_SITES";
+      fields.evidenceRefs.push(catalog.evidenceRef, catalog.passingObservationRef);
+      fields.failureInterpretation = "Public verification passed, but cumulative declarations exceeded the unchanged policy.";
+      fields.edits = [{ siteRef: arm === "UNKNOWN_REFERENCE" ? "SOURCE-SITE-UNKNOWN" : site.siteRef,
+        lines: [arm === "SEMANTICALLY_WRONG" ? "const a03 = 0;" : "const a03 = input.initial;"], lineEnding: "LF" }];
+      return providerResponse(JSON.stringify(fields));
+    }, undefined, undefined, true);
+    const result = await loop(nyx, candidateBuilder, 2, undefined, 30000, undefined,
+      { maxModelInteractions: 2, maxCognitionCorrections: 0, candidateAdmissionPolicyId: "omega-public-static-candidate/3" }).run(loopRequest({
+        objective: "Preserve initial-state ordered summation, input ownership and unrelated exports while removing redundant declarations.",
+        initialObservation: observed.observation, initialFiles: [{ relativePath: path, content: failingSource, contentSha256: hash(failingSource) }],
+        allowedMutationPaths: [path], baselineExecutions: [{ toolId: "TEST", result: baseline }] }));
+    check(siteOffered && calls === 2 && result.modelCallCount === 2, `${arm}: existing bounded loop offers current source sites on quality feedback`);
+    const first = result.iterations[0], second = result.iterations[1];
+    check(first?.functionallyPassed && first.candidateAdmission?.decision === "REJECTED"
+      && first.candidateAdmission.findings.some(f => f.code === "DECLARATION_DELTA" && f.measurement?.observed === 13
+        && f.measurement.limit === 12), `${arm}: actual public checks pass while original-relative structural excess is independently rejected`);
+    if (arm === "CORRECT") {
+      check(result.outcome === "FUNCTIONALLY_REPAIRED_VERIFIED" && preparations === 2 && second?.passed
+        && second.cognitionEvidence.sourceSiteEmission?.outcome === "RESOLVED", "source fragment traverses real R3A apply and R3B execution to admitted repair");
+      check(first.candidateAdmission?.qualityBaselineDigest === second.candidateAdmission?.qualityBaselineDigest,
+        "source fragment repair retains the identical original quality baseline rather than forgiving cumulative debt");
+      const content = await readFile(join(currentRoot, path), "utf8");
+      check(content === redundant.replace(aliasRun, "const a03 = input.initial;") && content.startsWith(prefix),
+        "actual disposable candidate preserves every unselected source byte including unrelated exports");
+    } else if (arm === "SEMANTICALLY_WRONG") {
+      check(preparations === 2 && second?.cognitionEvidence.sourceSiteEmission?.outcome === "RESOLVED"
+        && second.verifications[0].execution.outcome === "FAIL" && !second.functionallyPassed && result.outcome === "EXHAUSTED",
+        "syntax-valid wrong fragment is applied only in isolation and rejected by real behavioral execution, not silently accepted");
+      check(result.functionalAcceptance !== "ACCEPTED" && !result.iterations.at(-1)?.passed,
+        "wrong local repair cannot recycle the earlier functionally passing but quality-rejected candidate");
+    } else {
+      check(preparations === 1 && result.iterations.length === 1 && result.outcome !== "FUNCTIONALLY_REPAIRED_VERIFIED"
+        && result.lastCognitionEvidence?.sourceSiteEmission?.outcome === "REFUSED",
+        "unknown source-site reference fails before application or extra verifier execution");
+    }
+    check(!result.authorityGranted && !result.sourceRepositoryWriteAuthority && !result.productionAuthority
+      && result.iterations.every(i => i.cognitionEvidence.evidenceClass === "E3" && i.hypothesis.applyAuthorized === false),
+      `${arm}: test-double integration evidence grants no source, network, shell or production authority`);
+    check(await readFile(join(fixtureRoot, path), "utf8") === canonicalSource
+      && await readFile(join(base.cloneRoot, path), "utf8") === failingSource
+      && await readFile(join(packs[0].cloneRoot, path), "utf8") === redundant,
+      `${arm}: source, failed predecessor and first candidate remain unchanged`);
+  }
+}
 
 await rm(parent, { recursive: true, force: true });
 console.log(`Omega R3-E bounded repair loop tests - passed: ${passed}, failed: ${failed}`);

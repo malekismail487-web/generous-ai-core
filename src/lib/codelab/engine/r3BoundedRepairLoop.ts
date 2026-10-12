@@ -164,6 +164,7 @@ export interface R3BoundedRepairResult {
   readonly modelCallCount: number;
   readonly lastCognitionEvidence: NyxRepairCognitionEvidence | null;
   readonly durationMs: number;
+  /** Latest completed candidate only; earlier public passes remain in iterations. */
   readonly functionalAcceptance: "ACCEPTED" | "NOT_ACCEPTED";
   readonly engineeringQualityAcceptance: "NOT_EVALUATED";
   readonly candidateAdmissionAcceptance: "ACCEPTED" | "NOT_ACCEPTED" | "INSUFFICIENT_EVIDENCE" | "NOT_EVALUATED";
@@ -569,7 +570,7 @@ export class R3BoundedRepairLoop {
       evidenceAcquisitions: Object.freeze([...evidenceAcquisitions]), cognitionFailures: Object.freeze([...cognitionFailures]),
       finalObservation, evidenceId,
       evidenceClass: "E3", modelCallCount, lastCognitionEvidence, durationMs,
-      functionalAcceptance: iterations.some((item) => item.functionallyPassed) ? "ACCEPTED" : "NOT_ACCEPTED",
+      functionalAcceptance: iterations.at(-1)?.functionallyPassed === true ? "ACCEPTED" : "NOT_ACCEPTED",
       engineeringQualityAcceptance: "NOT_EVALUATED", candidateAdmissionAcceptance,
       authorityGranted: false, sourceRepositoryWriteAuthority: false, productionAuthority: false });
   }
