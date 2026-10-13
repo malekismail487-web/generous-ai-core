@@ -4501,6 +4501,8 @@
           "scripts/omega/nyx-research-party-live-eval.ts",
           "scripts/omega/nyx-research-transfer-fixtures.ts",
           "scripts/omega/nyx-scheduler-challenge.ts",
+          "scripts/omega/nyx-semantic-proof-fixtures.ts",
+          "scripts/omega/nyx-semantic-proof-live-eval.ts",
           "scripts/omega/nyx-shared-guarded-repair.ts",
           "scripts/omega/nyx-source-emission-diagnostics.ts",
           "scripts/omega/nyx-source-emission-live.ts",

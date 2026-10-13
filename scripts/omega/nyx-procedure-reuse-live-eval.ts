@@ -19,7 +19,8 @@ export function procedureInferenceRequest(request: NvidiaNimCompletionRequest): 
   const { reasoningEffort: _ultraOnly, ...rest } = request;
   return { ...rest, reasoningControl: EPOCH.reasoningControl, reasoningBudgetTokens: EPOCH.reasoningBudgetTokens };
 }
-export function usage(run: QuantitativeRun) {
+export function usage(run: Pick<QuantitativeRun,"calls"|"toolRequests"|"toolWorkUnits"|"toolElapsedMs"|"elapsedMs">
+  & {readonly attempts:readonly Pick<QuantitativeRun["attempts"][number],"modelEvidence"|"outcome">[]}) {
   const attempts = run.attempts, disruptive = (a: typeof attempts[number]) =>
     (a.modelEvidence.delivery?.rateLimitedResponses ?? 0) + (a.modelEvidence.delivery?.transientUnavailableResponses ?? 0) + (a.modelEvidence.delivery?.timedOutAttempts ?? 0);
   return { calls: run.calls, reportedTokens: attempts.reduce((n, a) => n + (a.modelEvidence.usage.totalTokens ?? 0), 0),
@@ -56,7 +57,7 @@ type Seed = { family: string; run: ReturnType<typeof publicRun>; admission: stri
   descriptor: ReturnType<BoundQuantitativeProcedure["descriptor"]> | null;
   admissionReplay: { status: string; workUnits: number; elapsedMs: number; resultDigest: string } | null; constructionElapsedMs: number };
 const SUM_KEYS = ["calls", "reportedTokens", "unknownUsageCalls", "httpAttempts", "knownUsageHttpAttempts", "unknownUsageHttpAttempts", "providerFailures", "localDeliveryBlocks", "recoveredDisruptions", "toolRequests", "toolWorkUnits", "toolElapsedMs", "elapsedMs"] as const;
-export function sumUsage(runs: ReturnType<typeof publicRun>[]) {
+export function sumUsage(runs: readonly {usage:ReturnType<typeof usage>}[]) {
   return Object.fromEntries(SUM_KEYS.map(key => [key, runs.reduce((n, r) => n + r.usage[key], 0)])) as Record<typeof SUM_KEYS[number], number>;
 }
 /** Pure orchestrator composes existing cognition, native leases and independently

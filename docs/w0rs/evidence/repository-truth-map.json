@@ -2088,6 +2088,7 @@
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-source-site-transfer.ts",
@@ -2234,6 +2235,7 @@
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-source-site-transfer.ts",
@@ -2681,6 +2683,7 @@
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
         "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
@@ -2764,6 +2767,12 @@
       ]
     },
     {
+      "name": "OMEGA_POLYNOMIAL_PYTHON",
+      "files": [
+        "scripts/omegaSemanticPolynomialProof.test.ts"
+      ]
+    },
+    {
       "name": "OMEGA_PREVIOUS_TEST_MANIFEST_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
@@ -2825,6 +2834,7 @@
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
         "scripts/omega/nyx-source-representation-cycle.ts",
         "scripts/omega/nyx-source-site-transfer.ts",

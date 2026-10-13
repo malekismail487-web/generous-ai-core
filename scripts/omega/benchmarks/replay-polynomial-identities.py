@@ -14,6 +14,7 @@ import ast
 import json
 import re
 import sys
+import time
 
 
 class Boundary(Exception):
@@ -237,6 +238,19 @@ def main():
     if len(data) > 2_000_000:
         raise Boundary("input_bytes")
     capsules = json.loads(data)
+    if sys.argv[1:] == ["--verify-one"]:
+        if not isinstance(capsules, dict):
+            raise Boundary("single_candidate_contract")
+        start, cpu = time.perf_counter(), time.process_time()
+        observations, points = check(capsules)
+        print(json.dumps({"schemaVersion": 1, "accepted": all(o["state"] == "PROVED_IDENTITY" for o in observations),
+            "observations": observations, "exactGridPoints": points,
+            "elapsedMs": (time.perf_counter() - start) * 1000,
+            "cpuMs": (time.process_time() - cpu) * 1000,
+            "method": "INDEPENDENT_ORIGINAL_PARSE_DEGREE_BOUNDS_EXACT_GRID"}))
+        return
+    if sys.argv[1:]:
+        raise Boundary("unknown_verifier_mode")
     if not isinstance(capsules, list) or not 1 <= len(capsules) <= 128:
         raise Boundary("population_bound")
     total_points, proved, refuted = 0, 0, 0

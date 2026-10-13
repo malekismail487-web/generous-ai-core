@@ -4,16 +4,23 @@ import { compileAlgebraicExpressionGraph, type QuantitativeAlgebraicForm } from 
 /** Trusted development fixtures only: no model calls or benchmark answers.
  * Replay receives original arithmetic graphs, not the TS normal form/cache.
  */
+/** Projection only: never rerun the primary checker or manufacture its verdict.
+ * The independent Python checker parses originals and verifies these graphs.
+ */
+export function polynomialReplayInput(task:SemanticPolynomialTask,candidate:QuantitativeAlgebraicForm,
+  primary:readonly {id:string;state:string;counterexample:unknown}[]=task.obligations.map(o=>({id:o.obligationId,state:"UNVERIFIED",counterexample:null})),
+  tick:()=>void=()=>{}) {
+  const names=[...task.variables,...task.constants.map(c=>c.id)],zero=task.constants.find(c=>/^-?0(?:\/[1-9][0-9]*)?$/.test(c.value))?.id;
+  return{fixtureVersion:"polynomial-development-replay/2",task,originalCandidate:candidate,candidate:compileAlgebraicExpressionGraph(names,zero,candidate,tick),
+    goals:task.obligations.map(o=>({id:o.obligationId,substitutions:o.substitutions.map(s=>({id:s.id,sourceOutput:s.sourceOutput,
+      bindings:compileAlgebraicExpressionGraph(names,zero,{schemaVersion:5,definitions:[],outputs:s.bindings.map(b=>({label:b.variable,expression:b.expression}))},tick)})),
+      identity:compileAlgebraicExpressionGraph([...names,...task.outputLabels,...o.substitutions.map(s=>s.id)],zero,o.identity,tick)})),primary};
+}
 function capsule(task:SemanticPolynomialTask,candidate:QuantitativeAlgebraicForm) {
   const session=SemanticPolynomialSession.create(task,{maxRequests:1,maxWorkUnits:100000,maxElapsedMs:2000,expiresAtEpochMs:Date.now()+60000});
   const result=session.analyze({schemaVersion:1,operation:"CHECK_POLYNOMIAL_CANDIDATE",problemDigest:session.problemDigest,parentResultDigest:null,program:candidate});
   session.revoke();if(!("observations"in result))throw Error("polynomial_replay_fixture_insufficient");
-  const names=[...task.variables,...task.constants.map(c=>c.id)],zero=task.constants.find(c=>/^-?0(?:\/[1-9][0-9]*)?$/.test(c.value))?.id;
-  return{fixtureVersion:"polynomial-development-replay/2",task,originalCandidate:candidate,candidate:compileAlgebraicExpressionGraph(names,zero,candidate),
-    goals:task.obligations.map(o=>({id:o.obligationId,substitutions:o.substitutions.map(s=>({id:s.id,sourceOutput:s.sourceOutput,
-      bindings:compileAlgebraicExpressionGraph(names,zero,{schemaVersion:5,definitions:[],outputs:s.bindings.map(b=>({label:b.variable,expression:b.expression}))})})),
-      identity:compileAlgebraicExpressionGraph([...names,...task.outputLabels,...o.substitutions.map(s=>s.id)],zero,o.identity)})),
-    primary:result.observations.map(o=>({id:o.obligationId,state:o.state,counterexample:o.counterexample}))};
+  return polynomialReplayInput(task,candidate,result.observations.map(o=>({id:o.obligationId,state:o.state,counterexample:o.counterexample})));
 }
 export function polynomialReplayFixtures() {
   const basic=Array.from({length:61},(_,at)=>[false,true].map(wrong=>{

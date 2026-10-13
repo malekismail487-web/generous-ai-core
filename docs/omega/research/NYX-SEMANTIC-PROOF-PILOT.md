@@ -41,7 +41,7 @@ Development replay covers 128 constructed/corrupted capsules and 130 obligations
 66 proved identities, 64 refuted identities, 535 exact grid evaluations and zero
 checker disagreements. Nine planted-invalid/valid detector checks cover changed
 statements, changed source, omitted obligations, executable text, literal emission
-and false counterexamples. The component suite has 185 passing checks, including
+and false counterexamples. The original component checkpoint had 185 checks, including
 matched-profile test-double cognition/repair composition and independent rejection.
 Test doubles made no NVIDIA calls and establish no E4 cognition result.
 Independent rejection remains in model feedback and the result history; a later
@@ -75,6 +75,51 @@ The [functional-synthesis reference](https://people.csail.mit.edu/asolar/Synthes
 motivates counterexample-guided search; it does not guarantee convergence or that
 Nemotron can generate the needed mathematical constructions.
 
+## Frozen live construction pilot
+
+Version `nyx-semantic-construction-transfer/1` uses four new formal families:
+triangular polynomial-map inversion, a dynamical invariant, a normalized
+polynomial cocycle, and anchored norm composition. These are classic bounded
+mathematical constructions, not original discoveries or frontier benchmark
+proxies. They are distinct from kernel-development identities and earlier
+interpolation/network parameter cases. The statements and population freeze
+before inference; evaluator-validation witnesses exist only in offline tests
+and are never supplied to the model or installed as solving tools.
+
+The simpler control is serial NYX repair with the same native checking tool;
+the treatment adds only the owned obligation/dependency packet and guidance.
+This is not an untooled Nemotron control or a full strategy-search experiment.
+Both use the separately labeled Super model, its existing native reasoning
+profile, 2 logical/HTTP calls per stage, 8192 output-token ceiling, 2048 native
+reasoning budget, 180-second original task leases and a 30-minute epoch ceiling.
+Stage native limits are 2 requests, 100,000 work units and 2000 ms; independent
+Python verification is bounded to 5 seconds. Arm order rotates across tasks.
+Default Ultra configuration and all execution/production authority remain
+unchanged. No raw model reasoning or candidate program enters the public report.
+
+The independent oracle reuses the original Python verifier in a single-candidate
+mode. It re-parses originals, establishes degree bounds and checks exact grids;
+it does not rerun or inherit the primary normalizer's verdict. Fixed developer
+verification subprocesses do not grant NYX a shell. Unsupported degree/division,
+missing verifier, timeout and verifier-schema failures are explicitly ungraded
+verification/infrastructure outcomes, not mathematical failures. Native
+refutation and independently graded acceptance are reported separately.
+
+Report physical/logical calls, known and unknown usage, prompt/completion tokens,
+latency, native work and independent projection/grid/CPU costs. Equal ceilings
+are not equal realized compute: pair matching requires equal call/HTTP counts,
+known usage and at most 5% total-token difference. The predeclared outcome signal
+requires a stable complete epoch, more accepted treatment cases, no per-case
+regression and no greater inference compute per pair. Native work units are not
+CPU time, so no total-compute equivalence is inferred. A single four-case epoch,
+including a positive signal, cannot promote broad cognition without fresh
+replication and ablation. Calibration is not collected and is not fabricated.
+
+The updated component suite has 224 offline checks and zero model calls. It
+validates all four statements, rejects planted false candidates, tests matched
+wire settings/unique request identities, finite malformed retries, expired
+epochs, missing verifier and sanitized custody. Live outcomes are pending.
+
 ## Omega plan coverage
 
 Partial/just-in-time. Direct: D04 shared contracts, immutable proof obligations,
@@ -82,6 +127,6 @@ canonical subgoal reuse, verifier hierarchy and finite compute; D01 independent
 acceptance and honest controls. Supporting: generator/detector separation,
 critical falsification, dependency freshness, no action without provenance and
 no authority expansion. Deferred: full strategy-diverse search, formalization
-audit, Lean integration, held-out live comparison, typed abstraction transfer,
+audit, Lean integration, completed live comparison, typed abstraction transfer,
 original discovery, recursion and broad benchmarks. Conflict: a green component
 suite cannot be substituted for the plans' required cognitive gains.

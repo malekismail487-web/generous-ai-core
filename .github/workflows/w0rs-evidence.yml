@@ -27,6 +27,9 @@ jobs:
           bun-version: 1.4.0
       - name: Install frozen test dependencies without lifecycle scripts
         run: bun install --frozen-lockfile --ignore-scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Run deterministic Omega protocol and orchestration harnesses
         run: node scripts/omega/run-tests.mjs
       - name: Preserve TypeScript zero ratchet
@@ -45,6 +48,8 @@ jobs:
           scripts/omegaBoundedReasoningWorkbench.test.ts
           scripts/omegaSemanticPolynomialProof.test.ts
           scripts/omega/benchmarks/semantic-polynomial-crosscheck.ts
+          scripts/omega/nyx-semantic-proof-live-eval.ts
+          scripts/omega/nyx-semantic-proof-fixtures.ts
           scripts/omegaQuantitativeConstraintFeedback.test.ts
           scripts/omegaBenchmarkCapabilityHarness.test.ts scripts/omega/benchmark-cli.ts
           scripts/omegaArcNyxIntegration.test.ts scripts/omega/nyx-arc-live-eval.ts
@@ -58,9 +63,6 @@ jobs:
           scripts/omegaPublicFailureWitness.test.ts scripts/omega/nyx-public-witness-cycle.ts
           scripts/omega/nyx-quantitative-transfer-live-eval.ts
           scripts/omega/nyx-research-party-live-eval.ts
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       - name: Independently replay native arithmetic without model calls or benchmark answers
         run: |
           python -B scripts/omega/benchmarks/test-native-derivation-replay.py

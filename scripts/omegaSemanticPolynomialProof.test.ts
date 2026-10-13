@@ -3,6 +3,8 @@ import type { QuantitativeAlgebraicForm } from "../src/lib/codelab/research/quan
 import { runNyxSemanticProofTask } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { SEMANTIC_PROOF_CASES, SEMANTIC_PROOF_EPOCH, SEMANTIC_PROOF_CORPUS_DIGEST } from "./omega/nyx-semantic-proof-fixtures";
+import { independentPolynomialVerification, runSemanticProofEpoch } from "./omega/nyx-semantic-proof-live-eval";
 
 let passed = 0, failed = 0;
 function check(v: unknown, message: string) { if (v) passed++; else { failed++; console.error(`FAIL ${message}`); } }
@@ -131,5 +133,45 @@ const untyped = await runNyxSemanticProofTask({ task: task(), limits: loopLimits
   complete: async req => mock(req, {tool: "SHELL", arguments: "host mutation"}),
   verify: () => { throw Error("untyped candidate must not reach independent acceptance"); } });
 check(!untyped.accepted && untyped.attempts.every(a => a.outcome === "AUTHORIZATION_OR_IR_REJECTION"), "Unknown model tools remain inert data");
+// Evaluator-validation witnesses ONLY. They are not candidate-generation tools,
+// model context, reusable skills, or evidence of live mathematical intelligence.
+const witnessExpressions = [["x-(y-x)*(y-x)","y-x"],["x*x+y*y"],["two*x*y"],["a*x-b*y","b*x+a*y"]];
+const witnesses = SEMANTIC_PROOF_CASES.map((c,i):QuantitativeAlgebraicForm=>({schemaVersion:5,definitions:[],
+  outputs:c.task.outputLabels.map((label,j)=>({label,expression:witnessExpressions[i][j]}))}));
+const python=process.env.OMEGA_POLYNOMIAL_PYTHON??"python";
+for(const [i,c] of SEMANTIC_PROOF_CASES.entries()){
+  const s=SemanticPolynomialSession.create(c.task,limits()),good=s.analyze(request(s,witnesses[i]));s.revoke();
+  check("observations"in good&&good.workPacket.acceptanceState==="ACCEPTABLE",`Frozen new family ${c.family} has a satisfiable original specification`);
+  const replay=independentPolynomialVerification(c.task,witnesses[i],python);
+  check(replay.accepted&&replay.measurement.proved===c.task.obligations.length&&replay.measurement.exactGridPoints>0,
+    `Independent original-parse verifier confirms the evaluator witness for ${c.family}`);
+  const bad={...witnesses[i],outputs:witnesses[i].outputs.map(o=>({...o,expression:"zero"}))};
+  const wrong=independentPolynomialVerification(c.task,bad,python);
+  check(!wrong.accepted&&wrong.measurement.refuted>0&&wrong.measurement.state==="INDEPENDENT_REFUTED",`Planted constant false candidate is independently refuted for ${c.family}`);
+}
+check(SEMANTIC_PROOF_EPOCH.defaultUltraChanged===false&&SEMANTIC_PROOF_EPOCH.authorityIncrease===false
+  &&SEMANTIC_PROOF_CORPUS_DIGEST===theoryDigest(SEMANTIC_PROOF_CASES),"Frozen experiment/corpus is versioned without changing default model or authority");
+const requests:NvidiaNimCompletionRequest[]=[],binding={candidate:"0".repeat(40),sourceDigests:{test:theoryDigest("TEST_DOUBLE_ONLY")}};
+const fixtureIndex=(req:NvidiaNimCompletionRequest)=>SEMANTIC_PROOF_CASES.findIndex(c=>theoryDigest(c.task)===theoryDigest(JSON.parse(req.messages[1].content).task));
+const epoch=await runSemanticProofEpoch(async(req)=>{requests.push(req);const i=fixtureIndex(req);check(i>=0,"Every request carries one unchanged frozen task, not its witness");
+  check(JSON.parse(req.messages[1].content).previousCandidate===null,"The first proposal is not seeded with an evaluator solution");
+  return mock(req,witnesses[i]);},(t,p)=>independentPolynomialVerification(t,p,python),binding);
+check(epoch.complete&&epoch.arms.every(a=>a.accepted===4&&a.firstAttemptAccepted===4&&a.independentlyGraded===4),"Both matched arms use independent acceptance for all four families (test double, no live claim)");
+check(epoch.physicalLogicalCalls===8&&epoch.physicalUsage.reportedTokens===240&&epoch.rows.every(r=>r.independentChecks.length===1),"Calls, known usage and independent replay are charged physically once per branch");
+check(!epoch.scopedOutcomeSignal&&epoch.promotion.startsWith("NONE"),"Equal successes cannot promote the obligation architecture");
+check(new Set(requests.map(r=>r.requestId)).size===8&&requests.every(r=>r.reasoningControl==="SUPER_HOSTED_NATIVE"&&r.reasoningEffort===undefined
+  &&r.reasoningBudgetTokens===2048&&r.maxTokens===8192),"Unique request identities share the exact supported Super configuration in both arms");
+check(epoch.pairs.every(p=>p.realizedInferenceMatched)&&epoch.arms.every(a=>a.usage.unknownUsageCalls===0),"Matched known compute is distinguished from merely identical budget ceilings");
+check(JSON.stringify(epoch).includes("TEST_DOUBLE_NOT_LIVE")&&!JSON.stringify(epoch).includes("acceptedCandidate")
+  &&!JSON.stringify(epoch).includes('"expression"'),"Sanitized public report retains testing identity but not raw candidates or reasoning");
+let forbiddenVerifierCalls=0;
+const ir=await runSemanticProofEpoch(async req=>mock(req,{tool:"SHELL",arguments:"host mutation"}),()=>{forbiddenVerifierCalls++;throw Error("unreachable");},binding);
+check(ir.complete&&ir.physicalLogicalCalls===16&&ir.arms.every(a=>a.accepted===0&&a.nativeMathematicallyAssessed===0&&a.independentlyGraded===0),"Exhausted IR retries never become mathematical failures, grades or successful cognitive evidence");
+check(forbiddenVerifierCalls===0&&ir.physicalUsage.toolRequests===16,"Invalid requests consume tool/request budget but never independent verification");
+const expiredEpoch=await runSemanticProofEpoch(async req=>mock(req,witnesses[fixtureIndex(req)]),(t,p)=>independentPolynomialVerification(t,p,python),binding,
+  (()=>{let tick=0;return()=>tick++<1?1000:1000+SEMANTIC_PROOF_EPOCH.maxEpochMs;})());
+check(!expiredEpoch.complete&&expiredEpoch.physicalLogicalCalls===0&&expiredEpoch.rows.every(r=>r.blocked==="GLOBAL_BUDGET")&&!expiredEpoch.scopedOutcomeSignal,"An expired epoch is unexecuted, not a score or a promotion");
+const unavailable=independentPolynomialVerification(SEMANTIC_PROOF_CASES[0].task,witnesses[0],"NYX_NONEXISTENT_VERIFIER_BINARY");
+check(!unavailable.accepted&&unavailable.measurement.state==="INDEPENDENT_INFRASTRUCTURE_FAILURE"&&unavailable.measurement.cpuMs===null,"Missing verifier is an explicit infrastructure failure with unknown CPU, not a reasoning error");
 console.log(`OMEGA_SEMANTIC_POLYNOMIAL_PROOF_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

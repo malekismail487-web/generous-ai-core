@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/96",
+  "suiteVersion": "omega-institutional-suite/97",
   "criticalSuites": [
     "OMEGA-SEMANTIC-POLYNOMIAL-PROOF",
     "OMEGA-STORAGE-PREREQUISITE",
