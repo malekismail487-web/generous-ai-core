@@ -4,17 +4,101 @@ Date: 2026-10-11. Amendment requested by Malek. Repository baseline: `fc295196ef
 
 ## Application-goal status
 
-`ORIGINAL_GOAL: ACTIVE / PRESERVED`
+`ORIGINAL_GOAL: PRESERVED / LAST_OBSERVED_PAUSED_2026-10-13`
 
 `APP_OBJECTIVE_AMENDMENT: NOT_APPLIED / OBJECTIVE_EDIT_TOOL_UNAVAILABLE`
 
 This is the repository-backed working amendment, not a claim that the Codex application objective changed. The available `update_goal` tool changes status only. Creating a replacement fails while an unfinished goal exists. Do not mark the original complete, paused or blocked merely to replace its wording, edit application storage, or silently lose the original objective.
+
+The application reported `paused` after the interrupted turn when checked on
+2026-10-13. This document does not resume it or claim its objective was edited.
+Resumption remains a user/application action. Do not complete or clear the
+original goal just to replace its wording. The priority amendment below governs
+authorized resumed work while preserving the original benchmark objective.
 
 The original objective, retained verbatim:
 
 > Well look, I am going to set this as a goal, and just know that one thing must appear clear. You must never ever stop until you are extremely confident on every benchmark to get greater than or equal 80%. Do not simplify and do not improvise anything until you spit out a near 100% confidence. You must never ever stop. Do I make myself clear? I am going to set this as a goal, and you must never ever pause this goal until you actually reach what I am saying. We have been adding a lot of additions, and if we have literally barely increased anything, then what are we actually doing? The next changes you are about to do must make you extremely confident in this actually getting a greater than or equal 80% Use available research tools and GitHub integration. Discover and recommend additional plugins when they address a concrete research or engineering need. Ask before connecting new accounts, expanding permissions, incurring charges, or granting production access. Never send secrets, private repository content, or reserved benchmark answers to external research services. @Plugin Management
 
 ## Additive goal text
+
+### Urgent priority amendment — original mathematics and science, 2026-10-13
+
+Malek's new priority is **demonstrated mathematical and scientific reasoning**,
+not another increase in architectural size or confidence language. Preserve the
+original at-least-80-percent accessible-benchmark objective, all existing Ω
+invariants and the demonstrated/theoretical tracks. Give priority to mechanisms
+that can generalize to difficult mathematics, scientific investigation and novel
+problem solving. ARC, mathematical benchmarks and scientific discovery are
+separate verification surfaces; a result on one does not certify the others.
+
+**Working goal amendment:** Push NYX toward original mathematical and scientific
+work through general, evidence-backed improvements. Diagnose current reasoning
+failures, select mechanisms with explicit falsifiers, and test them on fresh
+problems with simpler matched controls. Seek independently checked mathematical
+constructions/proofs and scientific hypotheses with precommitted predictions,
+authorized discriminating experiments, uncertainty and counterexample-driven
+revision. Demonstrate transfer and reproducibility before increasing confidence.
+Keep the existing benchmark goal intact; do not substitute repeated exposed
+questions, interface reliability, a larger tool library or a synthetic demo for
+its completion. Preserve negative evidence, finite budgets, provenance,
+independent admission, rollback and human control. Model capability is a real
+constraint: if a stable interface still yields incorrect reasoning, disclose it
+and propose a separately authorized, matched model comparison rather than
+claiming that architecture guarantees compensation.
+
+#### Evidence required to make confidence substantially stronger
+
+| Target | Required evidence | What does not establish it |
+| --- | --- | --- |
+| Difficult mathematics | Correct formal statements/assumptions; independently checked derivations, proof certificates or reproducible constructions on fresh, structurally varied problems; adversarial counterexamples; first-attempt and repaired outcomes reported separately | Valid JSON, arithmetic on a supplied formula, persuasive proof prose or two known parameterized families |
+| Original mathematical work | NYX-generated conjecture/construction, a valid independently checked result, reproducible artifacts and an explicit novelty review against available prior work; unresolved global novelty remains unresolved | A private synthetic task being new to the model, a benchmark answer or a model's novelty assertion |
+| Scientific investigation | Competing falsifiable explanations, predictions committed before observation, an authorized measurement that distinguishes them, independent observations, uncertainty/error analysis, and revision after disconfirming evidence | Merely selecting from a human-supplied hypothesis table, citing papers or reporting model confidence |
+| Original scientific work | Reproducible empirical/computational result plus documented limits and independent domain assessment; simulation versus physical observation and local versus institutional replication distinguished | A correct multiple-choice GPQA answer, a single fitted simulation or an untested explanation |
+| ARC/generalization | The actual licensed benchmark protocol and environment, unseen evaluation, unchanged grader, resource accounting and complete attempted/unexecuted coverage | Home-made grid examples, a different ARC version or predicted scores from architecture |
+| Architectural contribution | Fresh paired outcomes versus current NYX and a simpler model-only control; total inference/tool/search/repair compute and ablations; clean-environment replication and regression checks | More tokens, best-of accumulation, selected recovered failures or reliability alone |
+
+These are scoped evidence standards, not a claim that the targets are already
+met. Current native arithmetic/formulation results do not justify strong
+confidence in FrontierMath, ARC or broad original discovery. No Astra comparison
+has been established by this amendment. Do not promise AGI/ASI or all-benchmark
+success, or replace measured performance with a personal confidence percentage.
+
+#### Next sequence when the user resumes the goal
+
+1. Finish and verify the interrupted algebraic-emission correction. Its
+   sanitized categories must separate serialization/binding failures from
+   executed mathematical failures without recovering raw historical formulas,
+   rewriting proposals or changing the oracle. Supporting work only.
+2. Use a fresh frozen comparison to determine whether the existing guide
+   increases independently accepted outcomes at defensible realized compute.
+   Keep both first and repaired results. If it does not, inspect mathematical
+   modeling/proof obligations rather than build another emitter indefinitely.
+3. Move beyond interpolation/network parameter changes: choose a bounded,
+   genuinely different mathematical task family with independent certificates
+   and a scientific objective with prediction-before-observation. First trace
+   and reuse the existing research-party, experiment and finite-computation
+   paths; do not assume those paths already demonstrate specialist intelligence.
+4. Test one general reasoning mechanism against simpler controls/ablations on
+   untouched transfer. Attribute gains to the supported scope only. Investigate
+   model limits separately from integration, provider or authorization failures.
+5. Attempt the original benchmark protocols wherever access and execution
+   permit. Restricted/private FrontierMath, unavailable ARC environments or
+   quota-isolated runners remain explicit dependencies, not proxy successes.
+6. Evaluate bounded tool/workflow improvement and eventually two-generation
+   recursion only after base-task improvement transfers. Self-written language,
+   entity count or self-editing must not be represented as reasoning ability.
+
+Urgency changes priority, not evidence quality or permissions. No new model
+account, charges, hostile-code execution, credential access, production changes
+or physical experiments are authorized by this goal amendment. No new benchmark
+or model run is launched by this document. Ω Plan Coverage remains
+`PARTIAL / JUST-IN-TIME`: directly implemented here are priority/claim
+traceability and evidence-over-confidence; supporting concepts are independent
+assurance, generator/detector validation and falsifiable research; original
+discovery, broad transfer and recursion remain deferred/unverified. The conflict
+between “sound confident” and “unsupported assurance” is resolved in favor of
+evidence while preserving the ambitious objective.
 
 ### Execution refinement — 2026-10-12
 
