@@ -597,10 +597,30 @@ var ALGEBRAIC_COMPILER_POLICY = Object.freeze({
 var identifier = (s) => typeof s === "string" && /^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s);
 var fields = (v, names) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("\0") === [...names].sort().join("\0");
 var functions = /* @__PURE__ */ new Set(["MIN", "MAX", "BINOMIAL"]);
+var diagnostics = /* @__PURE__ */ new WeakMap();
+var ALGEBRAIC_EMISSION_POLICY = Object.freeze({
+  version: "nyx-algebraic-emission-guidance/1",
+  admissionChanged: false,
+  // Provider guidance only. The authoritative lexer/parser still checks every
+  // token, binding, operation and bound, even if hosted decoding ignores this.
+  // Consume a delimiter (or end) after each name. Adjacent name fragments
+  // cannot create exponentially many partitions on a rejected long string.
+  tokenPattern: "^(?:[+*/(), \\t\\r\\n-]|[A-Za-z][A-Za-z0-9_]{0,47}(?:[+*/(), \\t\\r\\n-]|$))+$",
+  instruction: "Expression strings contain ONLY ASCII identifiers and + - * / ( ) , and ASCII whitespace. Never copy a numeric value into an expression: reference its original constant ID. Power notation is not part of this language; explicitly express multiplication with authorized names. A definition is a plain {id,expression} object, not an equation, assignment, comment or Markdown. Names are case-sensitive. Bind each temporary once before use; output labels do not create variables. Check each identifier against the original constants and earlier definitions. These are serialization rules, not a supplied solution or mathematical verification."
+});
 function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
 }) {
-  const fail2 = (code) => {
-    throw Error(`quantitative_algebraic_invalid:${code}`);
+  let region = "FORM", index = null;
+  const fail2 = (code, category = "OTHER") => {
+    const error = Error(`quantitative_algebraic_invalid:${code}`);
+    diagnostics.set(error, Object.freeze({
+      version: "nyx-algebraic-emission-diagnosis/1",
+      category,
+      region,
+      index,
+      admissionChanged: false
+    }));
+    throw error;
   };
   if (!fields(value, ["schemaVersion", "definitions", "outputs"]) || value.schemaVersion !== 5 || !Array.isArray(value.definitions) || value.definitions.length > ALGEBRAIC_COMPILER_POLICY.maxDefinitions || !Array.isArray(value.outputs) || !value.outputs.length || value.outputs.length > ALGEBRAIC_COMPILER_POLICY.maxOutputs)
     return fail2("SHAPE_OR_BOUND");
@@ -608,12 +628,20 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
   const expressionValid = (v) => typeof v === "string" && v.length > 0 && v.length <= ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters && (characters += v.length) <= ALGEBRAIC_COMPILER_POLICY.maxTotalCharacters;
   const environment = new Map(problem.constants.map((c) => [c.id, c.id]));
   const declared = new Set(environment.keys()), labels = /* @__PURE__ */ new Set();
-  for (const d of value.definitions) {
+  for (const [at, d] of value.definitions.entries()) {
+    region = "DEFINITION";
+    index = at;
     tick();
-    if (!fields(d, ["id", "expression"]) || !identifier(d.id) || declared.has(d.id) || functions.has(d.id) || !expressionValid(d.expression)) return fail2("DEFINITION_SHAPE_OR_BOUND");
+    if (!fields(d, ["id", "expression"])) return fail2("DEFINITION_SHAPE_OR_BOUND", "ENTRY_FIELDS");
+    if (!identifier(d.id)) return fail2("DEFINITION_SHAPE_OR_BOUND", "INVALID_IDENTIFIER");
+    if (declared.has(d.id)) return fail2("DEFINITION_SHAPE_OR_BOUND", environment.has(d.id) ? "CONSTANT_SHADOW" : "DUPLICATE_DEFINITION");
+    if (functions.has(d.id)) return fail2("DEFINITION_SHAPE_OR_BOUND", "RESERVED_NAME");
+    if (!expressionValid(d.expression)) return fail2("DEFINITION_SHAPE_OR_BOUND", "EXPRESSION_BOUND");
     declared.add(d.id);
   }
-  for (const o of value.outputs) {
+  for (const [at, o] of value.outputs.entries()) {
+    region = "OUTPUT";
+    index = at;
     tick();
     if (!fields(o, ["label", "expression"]) || !identifier(o.label) || labels.has(o.label) || !expressionValid(o.expression)) return fail2("OUTPUT_SHAPE_OR_BOUND");
     labels.add(o.label);
@@ -651,7 +679,7 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
         at++;
         continue;
       }
-      return fail2("LEXICAL_TOKEN");
+      return fail2("LEXICAL_TOKEN", /^[0-9]$/.test(char) || char === "." && /^[0-9]$/.test(text2[at + 1] ?? "") ? "NUMERIC_LITERAL" : char === "^" ? "POWER_TOKEN" : char.charCodeAt(0) > 127 ? "NON_ASCII_TOKEN" : char === "=" ? "ASSIGNMENT_TOKEN" : ".[]{}:;`\"'\\<>".includes(char) ? "HOST_OR_MARKUP_TOKEN" : "OTHER_LEXICAL_TOKEN");
     }
     let position = 0;
     const peek = () => tokens[position];
@@ -676,7 +704,7 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
         expect(")");
         return result2;
       }
-      if (!identifier(token)) return fail2("SYNTAX");
+      if (!identifier(token)) return fail2("SYNTAX", token === "*" && tokens[position - 2] === "*" ? "POWER_TOKEN" : "OTHER");
       if (peek() === "(") {
         if (!functions.has(token)) return fail2("FUNCTION_NOT_ALLOWED");
         consume();
@@ -686,7 +714,17 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
         expect(")");
         return emit(token, left, right);
       }
-      return environment.get(token) ?? fail2("NAME_NOT_BOUND");
+      const source = environment.get(token);
+      if (source !== void 0) return source;
+      let caseMismatch = false;
+      for (const name of environment.keys()) {
+        tick();
+        if (name.toLowerCase() === token.toLowerCase()) {
+          caseMismatch = true;
+          break;
+        }
+      }
+      return fail2("NAME_NOT_BOUND", caseMismatch ? "CASE_MISMATCH" : declared.has(token) ? "FORWARD_DEFINITION" : labels.has(token) ? "OUTPUT_LABEL_REFERENCE" : "UNKNOWN_NAME");
     }
     function product(depth) {
       let left = atom(depth);
@@ -708,9 +746,16 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
     if (position !== tokens.length) return fail2("TRAILING_TOKEN");
     return result;
   };
-  for (const d of value.definitions)
+  for (const [at, d] of value.definitions.entries()) {
+    region = "DEFINITION";
+    index = at;
     environment.set(d.id, parse(d.expression));
-  const outputs = value.outputs.map((o) => ({ label: o.label, source: parse(o.expression) }));
+  }
+  const outputs = value.outputs.map((o, at) => {
+    region = "OUTPUT";
+    index = at;
+    return { label: o.label, source: parse(o.expression) };
+  });
   const program = lowerQuantitativeExpressions(problem, { schemaVersion: 4, expressions, outputs });
   for (let at = 0; at < program.registers.length + expressions.length; at++) tick();
   return program;
@@ -4907,7 +4952,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
   }
   #result(decision, reason, content, finishReason, requestDigest, responseDigest, statusCode, usage, networkAttempted, providerRequestId = null, reasoningOutputBytes = null) {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
-    const diagnostics = failureDiagnostics(reason, statusCode);
+    const diagnostics2 = failureDiagnostics(reason, statusCode);
     let contentShape = null;
     if (typeof content === "string") {
       let json = "INVALID";
@@ -4935,8 +4980,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       promptPersisted: false,
       networkAttempted,
       statusCode,
-      failureCategory: diagnostics.category,
-      retryability: diagnostics.retryability,
+      failureCategory: diagnostics2.category,
+      retryability: diagnostics2.retryability,
       providerRequestId: safeProviderRequestId(providerRequestId),
       finishReason,
       usage,

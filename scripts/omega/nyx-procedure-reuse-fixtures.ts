@@ -74,6 +74,25 @@ export const ALGEBRAIC_TRANSFER_EPOCH = immutableTheoryValue({...NATIVE_GENERATI
     "REALIZED_MODEL_COMPUTE_AND_NATIVE_PARSER_WORK_MEASURED_NOT_ASSUMED_MATCHED",
     "NO_DEFAULT_CHANGE_OR_BROAD_COGNITIVE_PROMOTION"],authorityIncrease:false});
 type Q = readonly [bigint, bigint];
+/** New inputs, same formal objectives and independent oracle. Only the
+ * default-off emission bundle varies; no authored mathematics enters prompts. */
+export const ALGEBRAIC_EMISSION_CASES = immutableTheoryValue([
+  task("INTERPOLATION", "EMIT-INTERPOLATION-1", {x0:"-23/17",x1:"31/19",x2:"47/12",y0:"71/37",y1:"-43/31",y2:"37/23",t:"23/21"}),
+  task("PASSIVE_NETWORK", "EMIT-NETWORK-1", {g0:"53/29",g1:"59/37",g01:"31/26",i0:"-97/43",i1:"79/29"}),
+  task("INTERPOLATION", "EMIT-INTERPOLATION-2", {x0:"-19",x1:"11",x2:"29",y0:"67",y1:"-41",y2:"53",t:"23/17"}),
+  task("PASSIVE_NETWORK", "EMIT-NETWORK-2", {g0:"37",g1:"29",g01:"19",i0:"-89",i1:"61"}),
+]);
+export const ALGEBRAIC_EMISSION_CORPUS_DIGEST = theoryDigest(ALGEBRAIC_EMISSION_CASES);
+export const ALGEBRAIC_EMISSION_EPOCH = immutableTheoryValue({...ALGEBRAIC_TRANSFER_EPOCH,
+  version:"nyx-algebraic-emission-transfer/1",arms:["ALGEBRAIC_LEGACY_EMISSION","ALGEBRAIC_GUIDED_EMISSION"],
+  changedVariable:"LEXER_COMPATIBLE_SCHEMA_PATTERN_PROMPT_AND_SANITIZED_REJECTION_FEEDBACK_BUNDLE",
+  guidanceVersion:"nyx-algebraic-emission-guidance/1",diagnosticVersion:"nyx-algebraic-emission-diagnosis/1",
+  limitations:["FOUR_FRESH_VALUES_TWO_KNOWN_FORMAL_FAMILIES_NOT_ORIGINAL_DISCOVERY_OR_OFFICIAL_BENCHMARK",
+    "SAME_FORMULA_REPRESENTATION_MODEL_REASONING_TOOLS_ORACLE_OUTPUTS_REPAIR_CONTEXT_AND_CAPS",
+    "OBSERVER_COUNTS_IN_BOTH_ARMS_DO_NOT_SUPPLY_NAMES_CHARACTERS_FORMULAS_OR_ORACLE_VALUES",
+    "GENERATION_SCHEMA_PROMPT_AND_FEEDBACK_ARE_A_BUNDLE_NOT_COMPONENT_ABLATIONS",
+    "HOSTED_PATTERN_SUPPORT_IS_EMPIRICAL_LOCAL_PARSER_REMAINS_AUTHORITATIVE",
+    "REALIZED_COMPUTE_MATCHING_MEASURED_NOT_ASSUMED","NO_DEFAULT_OR_BROAD_COGNITIVE_PROMOTION"]});
 /** New representation epoch; old corpora and their oracle identities remain unchanged. */
 export const EXPRESSION_TRANSFER_CASES=immutableTheoryValue([
   task("INTERPOLATION","EXPR-INTERPOLATION-1",{x0:"-8/5",x1:"7/6",x2:"17/4",y0:"31/9",y1:"-13/7",y2:"5/11",t:"-2/3"}),

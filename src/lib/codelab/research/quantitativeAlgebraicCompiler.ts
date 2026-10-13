@@ -23,6 +23,37 @@ const identifier = (s: unknown): s is string => typeof s === "string" && /^[A-Za
 const fields = (v: unknown, names: readonly string[]): v is Record<string, unknown> => !!v && typeof v === "object"
   && !Array.isArray(v) && Object.keys(v).sort().join("\0") === [...names].sort().join("\0");
 const functions = new Set(["MIN", "MAX", "BINOMIAL"]);
+/** Counts/enums only. Neither a proposed expression nor an offending name or
+ * character leaves this compiler. Original error messages/admission stay fixed. */
+export interface AlgebraicEmissionDiagnostic {
+  readonly version: "nyx-algebraic-emission-diagnosis/1";
+  readonly category: "NUMERIC_LITERAL" | "POWER_TOKEN" | "NON_ASCII_TOKEN" | "ASSIGNMENT_TOKEN"
+    | "HOST_OR_MARKUP_TOKEN" | "OTHER_LEXICAL_TOKEN" | "CASE_MISMATCH" | "FORWARD_DEFINITION"
+    | "OUTPUT_LABEL_REFERENCE" | "UNKNOWN_NAME" | "CONSTANT_SHADOW" | "DUPLICATE_DEFINITION"
+    | "RESERVED_NAME" | "INVALID_IDENTIFIER" | "ENTRY_FIELDS" | "EXPRESSION_BOUND" | "OTHER";
+  readonly region: "FORM" | "DEFINITION" | "OUTPUT";
+  readonly index: number | null;
+  readonly admissionChanged: false;
+}
+const diagnostics = new WeakMap<Error, AlgebraicEmissionDiagnostic>();
+export function algebraicEmissionDiagnostic(error: unknown): AlgebraicEmissionDiagnostic | null {
+  return error instanceof Error ? diagnostics.get(error) ?? null : null;
+}
+export const ALGEBRAIC_EMISSION_POLICY = Object.freeze({
+  version: "nyx-algebraic-emission-guidance/1", admissionChanged: false,
+  // Provider guidance only. The authoritative lexer/parser still checks every
+  // token, binding, operation and bound, even if hosted decoding ignores this.
+  // Consume a delimiter (or end) after each name. Adjacent name fragments
+  // cannot create exponentially many partitions on a rejected long string.
+  tokenPattern: "^(?:[+*/(), \\t\\r\\n-]|[A-Za-z][A-Za-z0-9_]{0,47}(?:[+*/(), \\t\\r\\n-]|$))+$",
+  instruction: "Expression strings contain ONLY ASCII identifiers and + - * / ( ) , and ASCII whitespace. "
+    + "Never copy a numeric value into an expression: reference its original constant ID. "
+    + "Power notation is not part of this language; explicitly express multiplication with authorized names. "
+    + "A definition is a plain {id,expression} object, not an equation, assignment, comment or Markdown. "
+    + "Names are case-sensitive. Bind each temporary once before use; output labels do not create variables. "
+    + "Check each identifier against the original constants and earlier definitions. "
+    + "These are serialization rules, not a supplied solution or mathematical verification.",
+});
 
 /** Caller first applies the native plain-data/byte guard. tick charges lexical,
  * parser and lowering work to the SAME finite session as exact evaluation.
@@ -31,7 +62,13 @@ const functions = new Set(["MIN", "MAX", "BINOMIAL"]);
  */
 export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, value: unknown,
   tick: () => void = () => {}): QuantitativeProgram {
-  const fail = (code: string): never => { throw Error(`quantitative_algebraic_invalid:${code}`); };
+  let region: AlgebraicEmissionDiagnostic["region"] = "FORM", index: number | null = null;
+  const fail = (code: string, category: AlgebraicEmissionDiagnostic["category"] = "OTHER"): never => {
+    const error = Error(`quantitative_algebraic_invalid:${code}`);
+    diagnostics.set(error, Object.freeze({ version: "nyx-algebraic-emission-diagnosis/1", category,
+      region, index, admissionChanged: false }));
+    throw error;
+  };
   if (!fields(value, ["schemaVersion", "definitions", "outputs"]) || value.schemaVersion !== 5
     || !Array.isArray(value.definitions) || value.definitions.length > ALGEBRAIC_COMPILER_POLICY.maxDefinitions
     || !Array.isArray(value.outputs) || !value.outputs.length || value.outputs.length > ALGEBRAIC_COMPILER_POLICY.maxOutputs)
@@ -42,13 +79,18 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
     && (characters += v.length) <= ALGEBRAIC_COMPILER_POLICY.maxTotalCharacters;
   const environment = new Map<string, Source>(problem.constants.map(c => [c.id, c.id]));
   const declared = new Set(environment.keys()), labels = new Set<string>();
-  for (const d of value.definitions) {
+  for (const [at, d] of value.definitions.entries()) {
+    region = "DEFINITION"; index = at;
     tick();
-    if (!fields(d, ["id", "expression"]) || !identifier(d.id) || declared.has(d.id) || functions.has(d.id)
-      || !expressionValid(d.expression)) return fail("DEFINITION_SHAPE_OR_BOUND");
+    if (!fields(d, ["id", "expression"])) return fail("DEFINITION_SHAPE_OR_BOUND", "ENTRY_FIELDS");
+    if (!identifier(d.id)) return fail("DEFINITION_SHAPE_OR_BOUND", "INVALID_IDENTIFIER");
+    if (declared.has(d.id)) return fail("DEFINITION_SHAPE_OR_BOUND", environment.has(d.id) ? "CONSTANT_SHADOW" : "DUPLICATE_DEFINITION");
+    if (functions.has(d.id)) return fail("DEFINITION_SHAPE_OR_BOUND", "RESERVED_NAME");
+    if (!expressionValid(d.expression)) return fail("DEFINITION_SHAPE_OR_BOUND", "EXPRESSION_BOUND");
     declared.add(d.id);
   }
-  for (const o of value.outputs) {
+  for (const [at, o] of value.outputs.entries()) {
+    region = "OUTPUT"; index = at;
     tick();
     if (!fields(o, ["label", "expression"]) || !identifier(o.label) || labels.has(o.label)
       || !expressionValid(o.expression)) return fail("OUTPUT_SHAPE_OR_BOUND");
@@ -75,7 +117,9 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
         tokens.push(token); continue;
       }
       if ("+-*/(),".includes(char)) { tokens.push(char); at++; continue; }
-      return fail("LEXICAL_TOKEN");
+      return fail("LEXICAL_TOKEN", /^[0-9]$/.test(char) || char === "." && /^[0-9]$/.test(text[at + 1] ?? "") ? "NUMERIC_LITERAL" : char === "^" ? "POWER_TOKEN"
+        : char.charCodeAt(0) > 127 ? "NON_ASCII_TOKEN" : char === "=" ? "ASSIGNMENT_TOKEN"
+        : ".[]{}:;`\"'\\<>".includes(char) ? "HOST_OR_MARKUP_TOKEN" : "OTHER_LEXICAL_TOKEN");
     }
     let position = 0;
     const peek = () => tokens[position];
@@ -90,13 +134,18 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
         return emit("SUB", zero, atom(depth + 1));
       }
       if (token === "(") { const result = sum(depth + 1); expect(")"); return result; }
-      if (!identifier(token)) return fail("SYNTAX");
+      if (!identifier(token)) return fail("SYNTAX", token === "*" && tokens[position - 2] === "*" ? "POWER_TOKEN" : "OTHER");
       if (peek() === "(") {
         if (!functions.has(token)) return fail("FUNCTION_NOT_ALLOWED");
         consume(); const left = sum(depth + 1); expect(","); const right = sum(depth + 1); expect(")");
         return emit(token as Operation, left, right);
       }
-      return environment.get(token) ?? fail("NAME_NOT_BOUND");
+      const source = environment.get(token);
+      if (source !== undefined) return source;
+      let caseMismatch = false;
+      for (const name of environment.keys()) { tick(); if (name.toLowerCase() === token.toLowerCase()) { caseMismatch = true; break; } }
+      return fail("NAME_NOT_BOUND", caseMismatch ? "CASE_MISMATCH"
+        : declared.has(token) ? "FORWARD_DEFINITION" : labels.has(token) ? "OUTPUT_LABEL_REFERENCE" : "UNKNOWN_NAME");
     }
     function product(depth: number): Source {
       let left = atom(depth);
@@ -114,19 +163,24 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
     }
     const result = sum(0); if (position !== tokens.length) return fail("TRAILING_TOKEN"); return result;
   };
-  for (const d of value.definitions as QuantitativeAlgebraicForm["definitions"])
+  for (const [at, d] of (value.definitions as QuantitativeAlgebraicForm["definitions"]).entries()) {
+    region = "DEFINITION"; index = at;
     environment.set(d.id, parse(d.expression)); // no forward reference, overwrite or output-as-variable
-  const outputs = (value.outputs as QuantitativeAlgebraicForm["outputs"]).map(o => ({ label: o.label, source: parse(o.expression) }));
+  }
+  const outputs = (value.outputs as QuantitativeAlgebraicForm["outputs"]).map((o, at) => {
+    region = "OUTPUT"; index = at; return { label: o.label, source: parse(o.expression) };
+  });
   const program = lowerQuantitativeExpressions(problem, { schemaVersion: 4, expressions, outputs });
   for (let at = 0; at < program.registers.length + expressions.length; at++) tick();
   return program;
 }
 
-export function quantitativeAlgebraicSchema(labels: readonly string[], exactOutputs = false) {
-  if (typeof exactOutputs !== "boolean") throw Error("quantitative_algebraic_profile_invalid");
+export function quantitativeAlgebraicSchema(labels: readonly string[], exactOutputs = false, lexicalGuidance = false) {
+  if (typeof exactOutputs !== "boolean" || typeof lexicalGuidance !== "boolean") throw Error("quantitative_algebraic_profile_invalid");
   const object = (properties: Record<string, unknown>) => ({ type: "object", additionalProperties: false,
     required: Object.keys(properties), properties });
-  const expression = { type: "string", minLength: 1, maxLength: ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters };
+  const expression = { type: "string", minLength: 1, maxLength: ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters,
+    ...(lexicalGuidance ? { pattern: ALGEBRAIC_EMISSION_POLICY.tokenPattern } : {}) };
   return object({ schemaVersion: { type: "integer", enum: [5] },
     definitions: { type: "array", minItems: 0, maxItems: ALGEBRAIC_COMPILER_POLICY.maxDefinitions,
       items: object({ id: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" }, expression }) },

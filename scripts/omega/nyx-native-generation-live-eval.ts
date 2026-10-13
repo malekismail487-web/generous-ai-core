@@ -16,11 +16,12 @@ import {NATIVE_GENERATION_CASES,NATIVE_GENERATION_EPOCH,NATIVE_GENERATION_CORPUS
   QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
   FORMULATION_BOUNDS_CASES,FORMULATION_BOUNDS_EPOCH,FORMULATION_BOUNDS_CORPUS_DIGEST,
   ALGEBRAIC_TRANSFER_CASES,ALGEBRAIC_TRANSFER_EPOCH,ALGEBRAIC_TRANSFER_CORPUS_DIGEST,
+  ALGEBRAIC_EMISSION_CASES,ALGEBRAIC_EMISSION_EPOCH,ALGEBRAIC_EMISSION_CORPUS_DIGEST,
   diagnoseProcedureCertificate,type ProcedureCertificateDiagnosis,verifyProcedureOutputs} from "./nyx-procedure-reuse-fixtures";
 import {createSharedFirstProposal,assessConstraintFeedbackComparison,type FeedbackComparisonRun,type SharedProposalReceipt} from "./nyx-quantitative-coupled-transfer-fixtures";
 
-type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR"|"LEGACY_FORMULATION_GUIDANCE"|"BOUNDED_FORMULATION_GUIDANCE"|"ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT";
-type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS"|"FORMULATION_BOUNDS"|"ALGEBRAIC_FORM";
+type Arm="ORIGINAL_GENERATION"|"NATIVE_BOUNDS"|"EXPRESSION_GRAPH"|"GRAPH_WITH_OUTPUT_CONTRACT"|"GRAPH_WITH_ADMITTED_CONTEXT"|"DIRECT_REASONED"|"NATIVE_GRAPH"|"DIRECT_REPAIR"|"DIRECT_MODEL_REPAIR"|"LEGACY_FORMULATION_GUIDANCE"|"BOUNDED_FORMULATION_GUIDANCE"|"ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"|"ALGEBRAIC_LEGACY_EMISSION"|"ALGEBRAIC_GUIDED_EMISSION";
+type Experiment="GENERATION_BOUNDS"|"EXPRESSION_GRAPH"|"REPAIR_CONTEXT"|"DIRECT_NATIVE"|"DIRECT_REFORMULATION"|"FAILURE_DIAGNOSIS"|"FORMULATION_BOUNDS"|"ALGEBRAIC_FORM"|"ALGEBRAIC_EMISSION";
 const STUDIES={GENERATION_BOUNDS:{tasks:NATIVE_GENERATION_CASES,epoch:NATIVE_GENERATION_EPOCH,digest:NATIVE_GENERATION_CORPUS_DIGEST,file:"native-generation"},
   EXPRESSION_GRAPH:{tasks:EXPRESSION_TRANSFER_CASES,epoch:EXPRESSION_TRANSFER_EPOCH,digest:EXPRESSION_TRANSFER_CORPUS_DIGEST,file:"expression-transfer"},
   REPAIR_CONTEXT:{tasks:REPAIR_CONTEXT_CASES,epoch:REPAIR_CONTEXT_EPOCH,digest:REPAIR_CONTEXT_CORPUS_DIGEST,file:"repair-context"},
@@ -28,7 +29,8 @@ const STUDIES={GENERATION_BOUNDS:{tasks:NATIVE_GENERATION_CASES,epoch:NATIVE_GEN
   DIRECT_REFORMULATION:{tasks:DIRECT_REFORMULATION_CASES,epoch:DIRECT_REFORMULATION_EPOCH,digest:DIRECT_REFORMULATION_CORPUS_DIGEST,file:"direct-model-repair"},
   FAILURE_DIAGNOSIS:{tasks:QUANTITATIVE_DIAGNOSIS_CASES,epoch:QUANTITATIVE_DIAGNOSIS_EPOCH,digest:QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,file:"quantitative-diagnosis"},
   FORMULATION_BOUNDS:{tasks:FORMULATION_BOUNDS_CASES,epoch:FORMULATION_BOUNDS_EPOCH,digest:FORMULATION_BOUNDS_CORPUS_DIGEST,file:"formulation-bounds"},
-  ALGEBRAIC_FORM:{tasks:ALGEBRAIC_TRANSFER_CASES,epoch:ALGEBRAIC_TRANSFER_EPOCH,digest:ALGEBRAIC_TRANSFER_CORPUS_DIGEST,file:"algebraic-transfer"}};
+  ALGEBRAIC_FORM:{tasks:ALGEBRAIC_TRANSFER_CASES,epoch:ALGEBRAIC_TRANSFER_EPOCH,digest:ALGEBRAIC_TRANSFER_CORPUS_DIGEST,file:"algebraic-transfer"},
+  ALGEBRAIC_EMISSION:{tasks:ALGEBRAIC_EMISSION_CASES,epoch:ALGEBRAIC_EMISSION_EPOCH,digest:ALGEBRAIC_EMISSION_CORPUS_DIGEST,file:"algebraic-emission"}};
 type Row={taskId:string;family:string;arm:Arm;run:ReturnType<typeof publicRun>|null;blocked:string|null;
   sharedProposal?:SharedProposalReceipt|null;sharedPrefixChargedMs?:number;allocatedElapsedMs?:number;
   physicalInference?:{calls:number;reportedTokens:number;unknownUsageCalls:number;httpAttempts:number};
@@ -68,6 +70,9 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
         outputContractRejections:attempts.filter(a=>a.outcome==="OUTPUT_CONTRACT_REJECTION").length,
         admittedContextAttempts:attempts.filter(a=>a.repairContextProgramDigest).length,
         outcomes:Object.fromEntries([...new Set(attempts.map(a=>a.outcome))].sort().map(state=>[state,attempts.filter(a=>a.outcome===state).length])),
+        ...(experiment==="ALGEBRAIC_EMISSION"?{emissionFailureCategories:Object.fromEntries(
+          [...new Set(attempts.flatMap(a=>a.algebraicEmissionDiagnostic?[a.algebraicEmissionDiagnostic.category]:[]))].sort()
+            .map(category=>[category,attempts.filter(a=>a.algebraicEmissionDiagnostic?.category===category).length]))}:{}),
         secondAttempts:runs.filter(r=>r.repairDepth>0).length,
         ...(experiment==="DIRECT_NATIVE"||sharedRepair?{manualGradedProposals:attempts.filter(a=>a.nativeExecution===null&&["ACCEPTED","FUNCTIONAL_REJECTION"].includes(a.outcome)).length}:{} ),
         ...(sharedRepair?{formulationCalls:attempts.filter(a=>a.cognitiveStage==="MODEL_FORMULATION").length,
@@ -152,11 +157,13 @@ export async function runNativeGenerationEpoch(complete:(request:NvidiaNimComple
     const result=await runNyxQuantitativeTask({...task,arm:arm==="DIRECT_REASONED"||sharedRepair?"REASONING_MEDIUM":"REASONING_WITH_WORKBENCH",nativeGenerationBounds:arm==="NATIVE_BOUNDS",
       nativeExpressionGraph:arm==="EXPRESSION_GRAPH"||experiment==="REPAIR_CONTEXT"||arm==="NATIVE_GRAPH"||experiment==="ALGEBRAIC_FORM"&&arm==="GRAPH_WITH_ADMITTED_CONTEXT",
       ...(experiment==="ALGEBRAIC_FORM"?{nativeAlgebraicForm:arm==="ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"}:{}),
+      ...(experiment==="ALGEBRAIC_EMISSION"?{nativeAlgebraicForm:true,observeAlgebraicEmission:true,
+        algebraicEmissionGuide:arm==="ALGEBRAIC_GUIDED_EMISSION"}:{}),
       reformulateAfterRejection:formulationBounds||arm==="DIRECT_MODEL_REPAIR",
       ...(formulationBounds?{boundedModelFormulation:arm==="BOUNDED_FORMULATION_GUIDANCE"}:{}),
       ...(observeFailures?{observeModelFormulation:true}:{}),
-      ...(experiment==="REPAIR_CONTEXT"||experiment==="DIRECT_NATIVE"||sharedRepair||experiment==="ALGEBRAIC_FORM"?{objectiveOutputContract:"ENFORCE" as const,
-        retainAdmittedDerivation:arm==="GRAPH_WITH_ADMITTED_CONTEXT"||arm==="ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"}:{}),now,
+      ...(experiment==="REPAIR_CONTEXT"||experiment==="DIRECT_NATIVE"||sharedRepair||experiment==="ALGEBRAIC_FORM"||experiment==="ALGEBRAIC_EMISSION"?{objectiveOutputContract:"ENFORCE" as const,
+        retainAdmittedDerivation:arm==="GRAPH_WITH_ADMITTED_CONTEXT"||arm==="ALGEBRAIC_FORM_WITH_ADMITTED_CONTEXT"||experiment==="ALGEBRAIC_EMISSION"}:{}),now,
       limits:{maxCalls:EPOCH.maxCallsPerStage,maxOutputTokens:EPOCH.maxOutputTokensPerCall,maxTaskMs:remainingStageMs,expiresAtEpochMs:expires,
         maxToolRequests:EPOCH.maxToolRequestsPerStage,maxToolWorkUnits:EPOCH.maxToolWorkUnitsPerStage,maxToolElapsedMs:EPOCH.maxToolElapsedMsPerStage},
       complete:request=>{stageCalls++;if(++logicalCalls>EPOCH.maxLogicalCalls)throw Error("native_generation_logical_call_cap");

@@ -6842,6 +6842,7 @@
           "src/lib/codelab/orchestra/router.ts",
           "src/lib/codelab/research/nyxNemotronTheoryCognition.ts",
           "src/lib/codelab/research/nyxQuantitativeReasoning.ts",
+          "src/lib/codelab/research/quantitativeAlgebraicCompiler.ts",
           "src/lib/codelab/research/theoryNetwork.ts",
           "src/lib/luminaAI.ts",
           "src/lib/translations.ts",

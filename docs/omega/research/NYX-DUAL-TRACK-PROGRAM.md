@@ -4,17 +4,35 @@ Date: 2026-10-11. Amendment requested by Malek. Repository baseline: `fc295196ef
 
 ## Application-goal status
 
-`ORIGINAL_GOAL: PRESERVED / LAST_OBSERVED_PAUSED_2026-10-13`
+`ORIGINAL_SCOPE: PRESERVED / OBJECTIVE_FILE_ACTIVE_2026-10-13`
 
 `APP_OBJECTIVE_AMENDMENT: NOT_APPLIED / OBJECTIVE_EDIT_TOOL_UNAVAILABLE`
 
 This is the repository-backed working amendment, not a claim that the Codex application objective changed. The available `update_goal` tool changes status only. Creating a replacement fails while an unfinished goal exists. Do not mark the original complete, paused or blocked merely to replace its wording, edit application storage, or silently lose the original objective.
 
-The application reported `paused` after the interrupted turn when checked on
-2026-10-13. This document does not resume it or claim its objective was edited.
+The application reported `paused` after the interrupted turn when first checked
+on 2026-10-13. The user subsequently activated the objective-file goal at
+`C:/Users/loka3/.codex/attachments/42fe7079-0f87-4656-8a1b-58be2ac4ae71/goal-objective.md`;
+the file was read completely and `get_goal` confirmed `active`. This document
+records that externally controlled transition, not an assistant-side resume or
+claim that the original application text was edited through an unsupported API.
 Resumption remains a user/application action. Do not complete or clear the
 original goal just to replace its wording. The priority amendment below governs
 authorized resumed work while preserving the original benchmark objective.
+
+`OBJECTIVE_FILE_AMENDMENT: APPLIED / NINE_RESEARCH_PLANS_ADMITTED_2026-10-13`
+
+The referenced goal document itself now includes the nine user-supplied research
+plans, not merely this repository summary. All 235 pages were reviewed; a
+source-hashed companion inventory tracks 109 grouped obligations and 48
+reconciliation notes. Those groups remain pending repository audit and evidence;
+they are not a lossless atomic requirement inventory or completed capabilities.
+The active objective-file reference was reread and its duplicated formatted
+copies were verified equivalent to the reviewed amendment. The plans direct
+future scoped work, but do not establish benchmark gains, original discovery,
+new authority or confidence by themselves. Formal statement fidelity, semantic
+proof obligations, falsification and compute-matched transfer take precedence
+over additional unmeasured cognitive layers. The original PDFs remain local.
 
 The original objective, retained verbatim:
 
@@ -123,6 +141,41 @@ or retired; iteration must not force a positive verdict or expose final held-out
 tasks to development. The current first step is counts-only diagnosis of
 formulation contracts and exact answer values. It is supporting work until a
 later unchanged-oracle comparison demonstrates an outcome gain.
+
+### Interrupted emission correction — resumed 2026-10-13
+
+The existing mathematical surface parser now exposes only owned, finite
+diagnostic enums/indices for lexical, definition and binding failure. It retains
+the original rejection messages and acceptance rules, does not retain rejected
+formulas/names/characters, and charges bounded name-inspection work to the same
+native lease. Forged exception text cannot manufacture the diagnostic. The
+default-off emission guide mirrors the lexer in provider schema guidance and
+public repair feedback; it never rewrites source, supplies an equation or grants
+authority. Long rejected identifiers cannot create ambiguous regex partitions.
+
+`nyx-algebraic-emission-transfer/1` freezes four new parameter cases in the two
+known formal families. Both arms use formula notation, their own admitted repair
+context, output contract, independent Gaussian oracle and identical Super
+inference/native limits. Both record sanitized categories; only treatment gets
+the schema/prompt/feedback bundle. Sixteen physical/logical calls/HTTP attempts
+maximum, two per stage; 8,192 output/2,048 configured reasoning tokens, three
+minutes per stage and thirty minutes per epoch. Arm order rotates. Record actual
+tokens/calls/latency/native work, first/repaired outcomes, ungraded boundaries
+and five-percent realized matching; no extra retry or answer-specific fallback.
+
+[NVIDIA documents backend-dependent structured-generation/regex support](https://docs.nvidia.com/nim/large-language-models/1.15.0/structured-generation.html).
+This does not establish that the hosted endpoint enforces this pattern. Ignored
+or unsupported guidance must remain an empirical interface/provider result, not
+a relaxed parser or an inferred reasoning failure. The bundle's components are
+not independently ablated. Passing test doubles establish integration only.
+
+This is the last comparison before the urgent amendment calls for mathematical
+modeling/proof obligations rather than another indefinite emitter loop if no
+accepted-outcome benefit appears. It is not original discovery, an official
+benchmark score, cross-family generalization or a default/cognitive promotion.
+Plan coverage remains partial/just-in-time: independent evidence, finite typed
+authority, falsifiable intervention and preserved failures directly apply;
+original mathematics/science and measured recursion remain unverified.
 
 ### Demonstrated path — unchanged objective
 

@@ -42,6 +42,7 @@ export function publicRun(run: QuantitativeRun) {
       ...(a.cognitiveStage==="MODEL_FORMULATION"||a.formulationArtifactDigest?{
         cognitiveStage:a.cognitiveStage,formulationArtifactDigest:a.formulationArtifactDigest??null}:{}),
       ...(a.nativeRejectionStructure?{nativeRejectionStructure:a.nativeRejectionStructure}:{}),
+      ...(a.algebraicEmissionDiagnostic?{algebraicEmissionDiagnostic:a.algebraicEmissionDiagnostic}:{}),
       ...(a.outputStructure?{outputStructure:a.outputStructure}:{}),
       ...(a.formulationStructure?{formulationStructure:a.formulationStructure}:{}),
       ...(a.repairContextDigest?{repairContextDigest:a.repairContextDigest,repairContextProgramDigest:a.repairContextProgramDigest??null}:{}),

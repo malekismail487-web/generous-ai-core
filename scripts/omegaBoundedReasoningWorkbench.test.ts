@@ -14,7 +14,7 @@ import { EQUATION_TRANSFER_TASKS,verifyEquationTransferSubmission } from "./omeg
 import { COMPOSED_TRANSFER_TASKS,verifyComposedTransferSubmission } from "./omega/nyx-quantitative-composed-transfer-fixtures";
 import { COMMAND_TRANSFER_TASKS,verifyCommandTransferSubmission } from "./omega/nyx-quantitative-command-transfer-fixtures";
 import { equationNames,lowerQuantitativeEquations,type QuantitativeEquations } from "../src/lib/codelab/research/quantitativeEquationCompiler";
-import { NvidiaNimProvider } from "../src/lib/codelab/model/nvidiaNimProvider";
+import { NvidiaNimProvider, type NvidiaNimCompletionRequest } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { BoundQuantitativeProcedure } from "../src/lib/codelab/research/quantitativeProcedureReuse";
 import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NATIVE_GENERATION_EPOCH,
   EXPRESSION_TRANSFER_CASES,EXPRESSION_TRANSFER_EPOCH,REPAIR_CONTEXT_CASES,REPAIR_CONTEXT_EPOCH,DIRECT_NATIVE_CASES,DIRECT_NATIVE_EPOCH,
@@ -22,11 +22,13 @@ import { PROCEDURE_FAMILIES, PROCEDURE_REUSE_EPOCH, NATIVE_GENERATION_CASES, NAT
   QUANTITATIVE_DIAGNOSIS_CASES,QUANTITATIVE_DIAGNOSIS_EPOCH,QUANTITATIVE_DIAGNOSIS_CORPUS_DIGEST,
   FORMULATION_BOUNDS_CASES,FORMULATION_BOUNDS_EPOCH,FORMULATION_BOUNDS_CORPUS_DIGEST,
   expectedProcedureOutputs,verifyProcedureOutputs,type ProcedureCase } from "./omega/nyx-procedure-reuse-fixtures";
-import { runProcedureReuseEpoch } from "./omega/nyx-procedure-reuse-live-eval";
+import { runProcedureReuseEpoch, publicRun } from "./omega/nyx-procedure-reuse-live-eval";
 import { runNativeGenerationEpoch } from "./omega/nyx-native-generation-live-eval";
 import {lowerQuantitativeExpressions,quantitativeExpressionSchema,type QuantitativeExpressionGraph} from "../src/lib/codelab/research/quantitativeExpressionCompiler";
-import {lowerQuantitativeAlgebraicForm,quantitativeAlgebraicSchema,ALGEBRAIC_COMPILER_POLICY,type QuantitativeAlgebraicForm} from "../src/lib/codelab/research/quantitativeAlgebraicCompiler";
+import {lowerQuantitativeAlgebraicForm,quantitativeAlgebraicSchema,ALGEBRAIC_COMPILER_POLICY,ALGEBRAIC_EMISSION_POLICY,
+  algebraicEmissionDiagnostic,type AlgebraicEmissionDiagnostic,type QuantitativeAlgebraicForm} from "../src/lib/codelab/research/quantitativeAlgebraicCompiler";
 import {ALGEBRAIC_TRANSFER_CASES,ALGEBRAIC_TRANSFER_EPOCH,ALGEBRAIC_TRANSFER_CORPUS_DIGEST} from "./omega/nyx-procedure-reuse-fixtures";
+import {ALGEBRAIC_EMISSION_CASES,ALGEBRAIC_EMISSION_EPOCH,ALGEBRAIC_EMISSION_CORPUS_DIGEST} from "./omega/nyx-procedure-reuse-fixtures";
 import { createFrontierWorkbench, parseFrontierExchange, frontierExchangeSchema,
   materializeFrontierArtifact, frontierArtifactReviewPrompt } from "./omega/nyx-frontier-workbench";
 import { graphPrompt, protocolPrompt, causalPlanPrompt, causalConclusionPrompt, executeCausalExperiments,
@@ -1953,6 +1955,122 @@ for(const task of ALGEBRAIC_TRANSFER_CASES){
   check(result.status==="CONSTRUCTED"&&verifyProcedureOutputs(task,{outputs:result.payload!.outputs,confidence:0.8}).accepted,
     "development Lagrange/Cramer witnesses agree with independent Gaussian/energy oracle without entering live prompts");
 }
+// Separate development-only interface probes. No frozen live formulas or
+// benchmark answers are recovered; authoritative admission remains unchanged.
+const emissionProbe=(form:unknown)=>{try{lowerQuantitativeAlgebraicForm(sumTask.problem,form);return null;}
+  catch(error){return {message:error instanceof Error?error.message:"",diagnostic:algebraicEmissionDiagnostic(error)};}};
+const emissionExpression=(expression:string)=>({...sumForm,outputs:[{label:"sum",expression}]});
+const lexicalProbes:readonly[ string,AlgebraicEmissionDiagnostic["category"] ][]=[
+  ["x+2","NUMERIC_LITERAL"],["x+.25","NUMERIC_LITERAL"],["x^two","POWER_TOKEN"],["x**two","POWER_TOKEN"],
+  ["x×y","NON_ASCII_TOKEN"],["x−y","NON_ASCII_TOKEN"],["x\u00a0+y","NON_ASCII_TOKEN"],
+  ["x=y","ASSIGNMENT_TOKEN"],["x.y","HOST_OR_MARKUP_TOKEN"],["`x+y`","HOST_OR_MARKUP_TOKEN"],
+  ["globalThis[x]","HOST_OR_MARKUP_TOKEN"],["x%y","OTHER_LEXICAL_TOKEN"],
+  ["X+y","CASE_MISMATCH"],["sum+y","OUTPUT_LABEL_REFERENCE"],["undisclosedIdentifier+y","UNKNOWN_NAME"]];
+for(const [expression,category] of lexicalProbes){
+  const rejected=emissionProbe(emissionExpression(expression));
+  check(rejected?.diagnostic?.category===category&&rejected.diagnostic.region==="OUTPUT"&&rejected.diagnostic.index===0,
+    "development emission diagnosis identifies a finite category and bounded location");
+  check(rejected?.diagnostic?.admissionChanged===false&&Object.isFrozen(rejected.diagnostic)
+    &&!JSON.stringify(rejected.diagnostic).includes(expression)&&Object.keys(rejected.diagnostic).length===5,
+    "diagnosis is immutable enums/indices only, never an expression/name/token or permission");
+}
+check(emissionProbe({...sumForm,definitions:[{id:"later",expression:"future+x"},{id:"future",expression:"x+y"}]})?.diagnostic?.category==="FORWARD_DEFINITION",
+  "forward references retain their original rejection; no definition reordering repairs them");
+const definitionProbes:readonly[unknown,AlgebraicEmissionDiagnostic["category"]][]=[
+  [{id:"x",expression:"x+y"},"CONSTANT_SHADOW"],[{id:"MIN",expression:"x+y"},"RESERVED_NAME"],
+  [{id:"1bad",expression:"x+y"},"INVALID_IDENTIFIER"],[{id:"a",expression:"x+y",confidence:1},"ENTRY_FIELDS"],
+  [{id:"a",expression:""},"EXPRESSION_BOUND"],[{id:"a",expression:"x".repeat(513)},"EXPRESSION_BOUND"]];
+for(const [definition,category] of definitionProbes){const rejected=emissionProbe({...sumForm,definitions:[definition]});
+  check(rejected?.message==="quantitative_algebraic_invalid:DEFINITION_SHAPE_OR_BOUND"&&rejected.diagnostic?.category===category
+    &&rejected.diagnostic.region==="DEFINITION"&&rejected.diagnostic.index===0,"definition subcategories preserve legacy rejection messages and the same shape/limits");}
+check(emissionProbe({...sumForm,definitions:[{id:"a",expression:"x+y"},{id:"a",expression:"x-y"}]})?.diagnostic?.category==="DUPLICATE_DEFINITION",
+  "duplicate bindings are not accepted or implicitly renamed");
+check(algebraicEmissionDiagnostic(Error("quantitative_algebraic_invalid:LEXICAL_TOKEN"))===null
+  &&algebraicEmissionDiagnostic({message:"quantitative_algebraic_invalid:LEXICAL_TOKEN"})===null,
+  "arbitrary exception text and model data cannot manufacture an authoritative compiler diagnosis");
+const lexicalPattern=new RegExp(ALGEBRAIC_EMISSION_POLICY.tokenPattern);
+for(const expression of ["x+y","x1*data_2","MIN(x,y)","(x-y)/x","x\t+\ny","-x","x*y*x"])
+  check(lexicalPattern.test(expression),"optional provider pattern permits the authoritative ASCII token language");
+for(const expression of ["1","x+2","x^two","x×y","x=y","x\u00a0+y","x.y","`x`","_x"])
+  check(!lexicalPattern.test(expression),"optional provider pattern excludes unsupported lexical forms, not mathematical outcomes");
+for(const expression of ["a".repeat(48),"a1".repeat(24),"x+"+"a".repeat(48),"x,"+"B".repeat(48)])
+  check(lexicalPattern.test(expression),"lexical guidance preserves identifiers at their exact length limit");
+for(const expression of ["a".repeat(49),"x+"+"a".repeat(49),"a".repeat(512)+"^",("abc+".repeat(120))+"^",("x ".repeat(240))+"_"])
+  check(!lexicalPattern.test(expression),"long invalid names/suffixes reject without ambiguous name partitioning");
+check(lexicalPattern.test("x**y")&&emissionProbe(emissionExpression("x**y"))?.message==="quantitative_algebraic_invalid:SYNTAX",
+  "token-compatible guidance is not a substitute for the authoritative parser");
+const emissionSchemaExpression=(guided:boolean)=>(quantitativeAlgebraicSchema(["sum"],true,guided).properties.outputs as
+  {items:{properties:{expression:{pattern?:string}}}}).items.properties.expression;
+check(!("pattern" in emissionSchemaExpression(false))
+  &&emissionSchemaExpression(true).pattern===ALGEBRAIC_EMISSION_POLICY.tokenPattern,
+  "legacy schemas are unchanged and the new provider guide is explicit opt-in");
+const observeRequests:string[]=[],legacyRequests:string[]=[];
+const captureEmission=(requests:string[])=>async(request:NvidiaNimCompletionRequest)=>{
+  requests.push(JSON.stringify(request));return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(sumTask.problem),
+    program:emissionExpression("x+2")},certificate:{confidence:0.8}});};
+const legacyEmission=await runNyxQuantitativeTask({...algebraTaskInput,now:()=>12345,complete:captureEmission(legacyRequests)});
+const observedEmission=await runNyxQuantitativeTask({...algebraTaskInput,now:()=>12345,observeAlgebraicEmission:true,complete:captureEmission(observeRequests)});
+check(JSON.stringify(legacyRequests)===JSON.stringify(observeRequests)&&legacyEmission.accepted===observedEmission.accepted
+  &&JSON.stringify(legacyEmission.attempts.map(a=>a.findings))===JSON.stringify(observedEmission.attempts.map(a=>a.findings)),
+  "counts-only observation leaves every cognitive request, feedback, admission and verdict unchanged");
+check(legacyEmission.attempts.every(a=>a.algebraicEmissionDiagnostic===undefined)&&observedEmission.attempts.every(a=>
+  a.algebraicEmissionDiagnostic?.category==="NUMERIC_LITERAL")&&observedEmission.toolWorkUnits===legacyEmission.toolWorkUnits,
+  "diagnostic opt-in preserves charged parser work and does not relabel syntax rejection as reasoning failure");
+let guidedCalls=0;
+const guidedEmission=await runNyxQuantitativeTask({...algebraTaskInput,observeAlgebraicEmission:true,algebraicEmissionGuide:true,
+  complete:async request=>{guidedCalls++;const p=JSON.parse(request.messages[1].content);
+    check(p.algebraicEmissionGuide.version===ALGEBRAIC_EMISSION_POLICY.version&&JSON.stringify(request.responseFormat).includes("pattern"),
+      "experimental generation advertises its reviewed lexical guide, never a mathematical solution");
+    if(guidedCalls===2)check(p.verificationFeedback.some((f:string)=>f.startsWith("ALGEBRAIC_EMISSION_NUMERIC_LITERAL")),
+      "bounded repair receives the authoritative sanitized failure class without hidden answer information");
+    return responseFor({action:"SUBMIT_DERIVATION",analysisRequest:{problemDigest:theoryDigest(sumTask.problem),
+      program:emissionExpression(guidedCalls===1?"x+2":"x+y")},certificate:{confidence:0.8}});}});
+check(guidedEmission.accepted&&guidedEmission.calls===2&&guidedEmission.attempts[0].outcome==="AUTHORIZATION_OR_IR_REJECTION"
+  &&guidedEmission.attempts[1].outcome==="ACCEPTED"&&guidedEmission.toolRequests===2,
+  "synthetic repair preserves the failed first attempt and spends only the existing lease/calls");
+const ignoredGuidance=await runNyxQuantitativeTask({...algebraTaskInput,algebraicEmissionGuide:true,
+  complete:captureEmission([])});
+check(!ignoredGuidance.accepted&&ignoredGuidance.attempts.every(a=>a.outcome==="AUTHORIZATION_OR_IR_REJECTION"),
+  "a provider ignoring its regex cannot bypass local syntax admission or the independent oracle");
+const ignoredWrongMath=await runNyxQuantitativeTask({...algebraTaskInput,algebraicEmissionGuide:true,complete:async()=>responseFor({action:"SUBMIT_DERIVATION",
+  analysisRequest:{problemDigest:theoryDigest(sumTask.problem),program:emissionExpression("x-y")},certificate:{confidence:0.8}})});
+check(!ignoredWrongMath.accepted&&ignoredWrongMath.attempts.every(a=>a.outcome==="FUNCTIONAL_REJECTION"),
+  "valid serialization still has to pass exactly the unchanged mathematical oracle");
+for(const option of ["observeAlgebraicEmission","algebraicEmissionGuide"] as const){
+  let denied=false;try{await runNyxQuantitativeTask({...algebraTaskInput,nativeAlgebraicForm:false,[option]:true,complete:captureEmission([])});}catch{denied=true;}
+  check(denied,"emission settings cannot silently enable a native capability or apply to an unavailable representation");
+}
+const publicEmission=publicRun(observedEmission);
+check(publicEmission.attempts.every(a=>a.algebraicEmissionDiagnostic?.category==="NUMERIC_LITERAL")
+  &&!JSON.stringify(publicEmission).includes('"expression"')&&!JSON.stringify(publicEmission).includes('"executedProgram"'),
+  "public evidence retains sanitized diagnostics but no rejected/accepted source or model reasoning");
+check(ALGEBRAIC_EMISSION_CASES.length===4&&theoryDigest(ALGEBRAIC_EMISSION_CASES)===ALGEBRAIC_EMISSION_CORPUS_DIGEST
+  &&ALGEBRAIC_EMISSION_EPOCH.maxLogicalCalls===16&&ALGEBRAIC_EMISSION_EPOCH.maxCallsPerStage===2
+  &&ALGEBRAIC_EMISSION_EPOCH.maxHttpAttemptsPerEpoch===16&&ALGEBRAIC_EMISSION_EPOCH.authorityIncrease===false,
+  "fresh emission comparison has frozen identities and the unchanged sixteen-call finite authority envelope");
+for(const task of ALGEBRAIC_EMISSION_CASES)check(![...ALGEBRAIC_TRANSFER_CASES,...FORMULATION_BOUNDS_CASES,
+  ...EXPRESSION_TRANSFER_CASES,...REPAIR_CONTEXT_CASES,...DIRECT_NATIVE_CASES,...DIRECT_REFORMULATION_CASES,
+  ...QUANTITATIVE_DIAGNOSIS_CASES,...NATIVE_GENERATION_CASES,...PROCEDURE_FAMILIES.flatMap(f=>[f.seed,...f.fresh])]
+  .some(old=>theoryDigest(old.problem)===theoryDigest(task.problem)),
+  "new parameter cases are not a replay of exposed evaluation inputs");
+const emissionEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content),task=ALGEBRAIC_EMISSION_CASES.find(t=>t.taskId===prompt.taskId)!;
+  check(prompt.availableTool.algebraicPolicy.schemaVersion===5&&prompt.nativeAlgebraicForm.schemaVersion===5
+    &&prompt.objectiveOutputContract.requiredCount===task.outputLabels.length,
+    "both comparison arms receive the same actual tool/output capability contract");
+  return responseFor({action:"SUBMIT",analysisRequest:null,certificate:{outputs:expectedProcedureOutputs(task),confidence:0.8}});
+},{candidate:"a".repeat(40),sourceDigests:{}},Date.now,async()=>{},"ALGEBRAIC_EMISSION");
+check(emissionEpoch.complete&&emissionEpoch.logicalCalls===8&&emissionEpoch.summaries.every(s=>s.accepted===4&&s.firstAttemptAccepted===4)
+  &&!emissionEpoch.scopedFunctionalSignal&&!emissionEpoch.emissionSignal&&emissionEpoch.promotion.startsWith("NONE"),
+  "equal deterministic test-double outcomes cannot establish a model or emission improvement");
+const failedEmissionEpoch=await runNativeGenerationEpoch(async request=>{
+  const prompt=JSON.parse(request.messages[1].content);return responseFor({action:"SUBMIT_DERIVATION",
+    analysisRequest:{problemDigest:theoryDigest(prompt.problem),program:{schemaVersion:5,definitions:[],
+      outputs:prompt.outputLabels.map((label:string)=>({label,expression:"zero+1"}))}},certificate:{confidence:0.8}});
+},{candidate:"a".repeat(40),sourceDigests:{}},Date.now,async()=>{},"ALGEBRAIC_EMISSION");
+check(failedEmissionEpoch.complete&&failedEmissionEpoch.logicalCalls===16&&failedEmissionEpoch.summaries.every(s=>s.accepted===0
+  &&s.irRejections===8&&s.emissionFailureCategories?.NUMERIC_LITERAL===8&&s.mathematicallyGraded===0),
+  "both arms preserve all ignored-schema emissions as ungraded syntax failures, not sixteen mathematical errors");
 const algebraReceipt=JSON.parse(readFileSync("docs/omega/evidence/nyx-algebraic-transfer-8eea3a41.json","utf8")),algebraFrozen=algebraReceipt.frozenReport;
 check(algebraReceipt.candidate==="8eea3a4165d07126e60009f7aa1a35b953a902d5"&&algebraReceipt.actions.runId===38287509428
   &&algebraReceipt.actions.jobId===114939300305&&algebraFrozen.candidate===algebraReceipt.candidate

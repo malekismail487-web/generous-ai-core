@@ -6,7 +6,8 @@ import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
 import { materializeAnalysisArtifactFields } from "./analysisArtifactReference";
 import { BoundQuantitativeProcedure } from "./quantitativeProcedureReuse";
 import { quantitativeExpressionSchema, EXPRESSION_COMPILER_POLICY, type QuantitativeExpressionGraph } from "./quantitativeExpressionCompiler";
-import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
+import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, ALGEBRAIC_EMISSION_POLICY, algebraicEmissionDiagnostic,
+  type AlgebraicEmissionDiagnostic, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 
 export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
 export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;
@@ -16,6 +17,7 @@ export interface QuantitativeAcceptance { readonly accepted: boolean; readonly f
   readonly verificationDigest: string }
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly nativeRejectionStructure?: QuantitativeRejectionStructure;
+  readonly algebraicEmissionDiagnostic?: AlgebraicEmissionDiagnostic;
   readonly outputStructure?: QuantitativeOutputStructure;
   readonly cognitiveStage?: "OMEGA_INTENT"|"MODEL_FORMULATION";
   readonly formulationArtifactDigest?:string|null;
@@ -194,14 +196,14 @@ export function quantitativeProgramSchema(labels:readonly string[],constantIds:r
     outputs:{...array(object({label:{type:"string",enum:labels},source}),1),...(exactOutputs?{minItems:labels.length,maxItems:labels.length}:{})}});
 }
 export function quantitativeExchangeSchema(labels:readonly string[],toolAvailable:boolean,artifactAvailable:boolean,problemDigest:string,
-  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false,exactOutputs=false,algebraicForm=false) {
+  constantIds:readonly string[]=[],artifactDigest:string|null=null,procedureId:string|null=null,boundedCollections=false,expressionGraph=false,exactOutputs=false,algebraicForm=false,algebraicEmissionGuide=false) {
   if(typeof expressionGraph!=="boolean"||typeof exactOutputs!=="boolean"||typeof algebraicForm!=="boolean"
-    ||expressionGraph&&algebraicForm)throw Error("quantitative_expression_profile_invalid");
+    ||expressionGraph&&algebraicForm||typeof algebraicEmissionGuide!=="boolean"||algebraicEmissionGuide&&!algebraicForm)throw Error("quantitative_expression_profile_invalid");
   if(exactOutputs)objectiveLabels(labels);
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const string={type:"string"};const array=(items:unknown)=>({type:"array",items});
   const constant=(value:string|number)=>({type:typeof value==="number"?"integer":"string",enum:[value]});
-  const tool=object({problemDigest:constant(problemDigest),program:algebraicForm?quantitativeAlgebraicSchema(labels,exactOutputs)
+  const tool=object({problemDigest:constant(problemDigest),program:algebraicForm?quantitativeAlgebraicSchema(labels,exactOutputs,algebraicEmissionGuide)
     :expressionGraph?quantitativeExpressionSchema(labels,constantIds,exactOutputs)
     :quantitativeProgramSchema(labels,constantIds,boundedCollections,exactOutputs)});
   const artifact=object({schemaVersion:constant(1),operation:constant("SUBMIT_ANALYSIS_ARTIFACT"),problemDigest:constant(problemDigest),
@@ -253,6 +255,11 @@ export async function runNyxQuantitativeTask(input: {
   /** Experimental surface notation lowers to the SAME native interpreter. No
    * constants, operations, equation solving or acceptance are supplied by it. */
   readonly nativeAlgebraicForm?: boolean;
+  /** Optional sanitized rejection observation, no model-request changes. */
+  readonly observeAlgebraicEmission?: boolean;
+  /** Experimental lexer-compatible generation guidance and public enum feedback.
+   * Neither rewrites model source nor changes native admission/acceptance. */
+  readonly algebraicEmissionGuide?: boolean;
   /** Host-selected experiment only. OBSERVE records bounded structural counts;
    * ENFORCE also checks the exact objective label set before native execution or
    * submission. Neither mode modifies a proposal or replaces the external oracle. */
@@ -262,6 +269,8 @@ export async function runNyxQuantitativeTask(input: {
     throw Error("quantitative_output_contract_setting_invalid");
   if(input.objectiveOutputContract!==undefined)objectiveLabels(input.outputLabels);
   if(input.retainAdmittedDerivation!==undefined&&typeof input.retainAdmittedDerivation!=="boolean")throw Error("quantitative_repair_context_setting_invalid");
+  for (const option of [input.observeAlgebraicEmission,input.algebraicEmissionGuide])
+    if(option!==undefined&&(typeof option!=="boolean"||option&&!input.nativeAlgebraicForm))throw Error("quantitative_algebraic_emission_setting_invalid");
   if(input.observeModelFormulation!==undefined&&typeof input.observeModelFormulation!=="boolean")throw Error("quantitative_formulation_observation_setting_invalid");
   if(input.boundedModelFormulation!==undefined&&(typeof input.boundedModelFormulation!=="boolean"
     ||input.boundedModelFormulation&&!input.reformulateAfterRejection))throw Error("quantitative_formulation_bounds_setting_invalid");
@@ -383,7 +392,8 @@ export async function runNyxQuantitativeTask(input: {
           procedureInvocationInstruction:"You may choose SUBMIT_PROCEDURE with analysisRequest EXACTLY {problemDigest,procedureId} "
             +"and certificate ONLY {confidence:number 0..1}. It computes the unchanged seed procedure on CURRENT constants in this task's existing lease, "
             +"then submits to the SAME independent oracle. Reuse may be wrong. Ordinary SUBMIT_DERIVATION and SUBMIT remain available."}:{})};
-      const generationPrompt=input.nativeAlgebraicForm&&available?{nativeAlgebraicForm:ALGEBRAIC_COMPILER_POLICY}
+      const generationPrompt=input.nativeAlgebraicForm&&available?{nativeAlgebraicForm:ALGEBRAIC_COMPILER_POLICY,
+        ...(input.algebraicEmissionGuide?{algebraicEmissionGuide:ALGEBRAIC_EMISSION_POLICY}:{})}
         :input.nativeExpressionGraph&&available?{nativeExpressionGraph:EXPRESSION_COMPILER_POLICY}
         :input.nativeGenerationBounds&&available?{nativeGenerationBounds:{
         maxInitialBindings:EQUATION_COMPILER_POLICY.stateSlots,maxCycles:EQUATION_COMPILER_POLICY.maxCycles,
@@ -418,13 +428,14 @@ export async function runNyxQuantitativeTask(input: {
         {type:"JSON_SCHEMA",name:input.nativeAlgebraicForm?"nyx_quantitative_algebraic_exchange":input.nativeExpressionGraph?"nyx_quantitative_expression_exchange":input.nativeGenerationBounds?"nyx_quantitative_bounded_exchange":"nyx_quantitative_exchange",schema:quantitativeExchangeSchema(task.outputLabels,available,artifactAvailable,session.problemDigest,
           task.problem.constants.map(c=>c.id),artifactAvailable?theoryDigest(observation):null,
           invocableProcedure?String(invocableProcedure.descriptor().procedureId):null,!!input.nativeGenerationBounds,!!input.nativeExpressionGraph,
-          input.objectiveOutputContract==="ENFORCE",!!input.nativeAlgebraicForm)},
+          input.objectiveOutputContract==="ENFORCE",!!input.nativeAlgebraicForm,!!input.algebraicEmissionGuide)},
         inferencePolicy:arm==="CURRENT_DIRECT"?"CONSTRAINED_JSON":"REASONING_JSON",
         ...(arm==="CURRENT_DIRECT"?{}:{reasoningEffort:"MEDIUM" as const}),observedAtEpochMs:now(),deadlineEpochMs:expires});
       let confidence:number|null=null;let proposalDigest:string|null=null;let resultDigest:string|null=null;
       let executedProgram:QuantitativeProgram|QuantitativeEquations|QuantitativeExpressionGraph|QuantitativeAlgebraicForm|null=null;
       let computation:ReasoningToolResult|null=null;
       let nativeRejectionStructure:QuantitativeRejectionStructure|undefined;
+      let emissionDiagnostic:AlgebraicEmissionDiagnostic|undefined;
       let outputStructure:QuantitativeOutputStructure|undefined;
       let formulationStructure:QuantitativeModelFormulationStructure|undefined;
       const outputConforms=(outputs:unknown,origin:QuantitativeOutputStructure["origin"]):boolean=>{
@@ -441,6 +452,7 @@ export async function runNyxQuantitativeTask(input: {
           cognitiveStage:formulate?"MODEL_FORMULATION":"OMEGA_INTENT",formulationArtifactDigest:modelFormulation===null?null:theoryDigest(modelFormulation),
           executedProgram,computation,...(procedureReference?{procedureReference}:{}),
           ...(nativeRejectionStructure?{nativeRejectionStructure}:{}),...(outputStructure?{outputStructure}:{}),
+          ...(emissionDiagnostic?{algebraicEmissionDiagnostic:emissionDiagnostic}:{}),
           ...(formulationStructure?{formulationStructure}:{}),modelEvidence:completion.evidence}));};
       if(now()>=expires){record("LATE_RESPONSE_NOT_ADMITTED",["Original run expiry elapsed; no action was executed."]);break;}
       if(completion.evidence.statusCode===200 && completion.evidence.finishReason==="length"){
@@ -519,6 +531,8 @@ export async function runNyxQuantitativeTask(input: {
           } else record(result.status==="CONSTRUCTED"?"DERIVATION_RETURNED_NOT_ACCEPTED":"DERIVATION_INSUFFICIENT",[
             "Review the computed quantities against the ORIGINAL objective. Submit a certificate or propose a bounded correction."]);
         } catch(error) {
+          const diagnostic=algebraicEmissionDiagnostic(error);
+          if(input.observeAlgebraicEmission&&diagnostic)emissionDiagnostic=diagnostic;
           nativeRejectionStructure=rejectedProgramStructure((nativeRequest as {program?:unknown}|null)?.program,
             task.problem.constants.map(c=>c.id));
           const reason=error instanceof Error&&/^(?:quantitative_(?:program|equations|expressions|algebraic)_invalid:[A-Z_]+(?::[0-9]+(?:\.[0-9]+)?)?|reasoning_request_invalid:[A-Z_]+)$/.test(error.message)
@@ -531,7 +545,9 @@ export async function runNyxQuantitativeTask(input: {
             ["PHASE_BOUND: each phase requires exactly expressions and updates; 0..16 expressions and 1..16 updates. Check shape and counts before resubmitting."]:
             input.nativeGenerationBounds&&reason==="quantitative_equations_invalid:EXPRESSION_SHAPE"?
               ["EXPRESSION_SHAPE: each expression requires exactly id,op,left,right; use only schema-listed IDs once per phase and listed operations. No new names or fields."]:[];
-          record("AUTHORIZATION_OR_IR_REJECTION",[reason,...generationFeedback,"Request must bind the available problem, use only initialized/authorized names, "
+          const emissionFeedback=input.algebraicEmissionGuide&&diagnostic?
+            [`ALGEBRAIC_EMISSION_${diagnostic.category}: ${ALGEBRAIC_EMISSION_POLICY.instruction}`]:[];
+          record("AUTHORIZATION_OR_IR_REJECTION",[reason,...generationFeedback,...emissionFeedback,"Request must bind the available problem, use only initialized/authorized names, "
             +"immutable constants, valid operations, unique simultaneous targets, and the bounded program contract."]);
         }
         if(derivedCertificate!==null) {
