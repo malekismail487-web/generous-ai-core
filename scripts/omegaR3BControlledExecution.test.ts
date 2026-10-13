@@ -423,14 +423,18 @@ assert(R3_B_ISOLATED_CANDIDATE_STATUS.newCapability === "CONTROLLED_BUILD_TEST_E
       const executor=await R3BControlledEngineeringExecutor.create({...h.config,executorId:`RATIONAL-EXEC-${i}`,tools:[t],capability:{...h.config.capability,capabilityId,auditIdentity}});
       return{experimentId:`E${i}`,verification:{toolId:t.toolId,executor,request:request(h,t.toolId,{requestId:`RATIONAL-REQUEST-${i}`,executionId:`RATIONAL-EXECUTION-${i}`,capabilityId,auditIdentity})},outcomeByOutputDigest:{},rationalReadout:{...readout,pointId:`E${i}`}};}));
     const runner=OmegaResearchExperimentRunner.create(bindings);readout.matching[1].value="999";
+    check(runner.readMeasurement("E0")===null,"No numeric measurement is available before its separately authorized execution");
     const measured=await runner.run(target.experimentCatalog[0],target,new AbortController().signal);
     check(measured.outcome==="MODEL_B"&&measured.evidence.evidenceClass==="E3"&&!measured.authorityGranted,"Real isolated R3B measurement canonicalizes rational aliases and preserves owned interpretation despite caller mutation");
+    const numeric=runner.readMeasurement("E0");
+    check(numeric?.measurement.value==="4"&&numeric.observation.evidence.evidenceId===measured.evidence.evidenceId,"Numeric projection stays bound to the exact admitted observation, not another independent root");
     const outside=await runner.run(target.experimentCatalog[1],target,new AbortController().signal);
     check(outside.outcome==="OUTSIDE","Real observation outside generated forecasts remains outside-family evidence, not forced agreement");
     let invalid=false;try{await runner.run(target.experimentCatalog[2],target,new AbortController().signal);}catch(error){invalid=String(error).includes("rational_measurement_invalid");}
     check(invalid,"Additional executable-looking fields in measurement stdout are rejected, never interpreted as tool instructions");
     let wrongInputs=false;try{await runner.run(target.experimentCatalog[3],target,new AbortController().signal);}catch(error){wrongInputs=String(error).includes("rational_measurement_invalid");}
     check(wrongInputs,"A numerically matching response from the wrong input cannot support the planned experiment");
+    check(runner.readMeasurement("E3")===null&&runner.readMeasurement("E2")===null,"Rejected measurements cannot become numeric feedback through a side channel");
     check(await readFile(join(h.sourceRoot,"src","candidate.txt"),"utf8")==="base","Generated-model readouts do not grant source repository mutation");
   }finally{await cleanup(h);}
 }

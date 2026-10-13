@@ -99,6 +99,59 @@ claim of cognitive gain.
 
 ## Falsifiable next evaluation
 
+### Frozen prospective-model pilot / 1
+
+The next live epoch has three new deterministic scalar-response families:
+saturating/control response, coupled quadratic response and nonlinear one-step
+response. Each has five admissible calibration points, three registered probes
+(one repeated calibration and two prospective points), and five untouched
+held-out prediction points. The author simulator coefficients/formula and
+held-out inputs never enter cognition. A separately implemented Python Fraction
+oracle evaluates the generated original expression only after the arm stops;
+the oracle verdict is not repair feedback. Offline detector witnesses are never
+supplied as live generation inputs or fallback solutions.
+
+One physical generation prefix produces two or more competing derivation-checked
+models. It is charged in full to every arm. This intentionally compares later
+workflow choices, not an end-to-end unassisted Nemotron baseline: DIRECT_REVIEW
+already receives shared tool-checked generated models; NATIVE_FORECASTS also sees
+their exact prospective forecast sheet; NATIVE_EVIDENCE_GUIDANCE adds the owned
+graph's assessment and discriminating-experiment recommendation. The latter two
+have identical available tools. All arms can request the same typed measurement,
+bounded model regeneration, conclusion or no-conclusion action. Unknown tools,
+scope/identity errors and malformed data stay inert and are classified separately.
+
+Limits are two shared-generation calls, four action calls and at most one
+additional regeneration call per arm; two actual measurements per arm; 8192
+output tokens/call; Super hosted-native reasoning/2048 in every call; 240 seconds
+per arm including its allocated generation prefix; 180 seconds for generation;
+30 minutes total; at most 51 physical logical calls and 51 HTTP attempts.
+Regeneration consumes the remainder of the original eight proposal requests,
+150000 native work units and 2500 native milliseconds, not a refreshed budget.
+All models must fit preserved observations and commit unused-point predictions
+before new measurements. Single-use R3B authorities cannot be replayed.
+
+Actual R1/R2A/R3A/R3B fixtures provide pinned, read-only fixed simulator tools in
+disposable clones. No generated model source becomes a Node/Python executable.
+Each fixture's original source and cleanup are verified. The scalar readback
+uses the same admitted observation/root, not a second independent evidence vote.
+Setup, actual measurements, generation/native work, replay/grading CPU/wall,
+guidance overhead, inference calls/tokens, unknown transport usage and cleanup
+are retained separately. Model-internal compute, money, measurement CPU and peak
+memory remain unknown rather than zero. Shared allocated cost is not double-
+counted as physical cost. A first submitted conclusion is not the first generated
+model: first generation admission and first/final submitted acceptance are separate.
+
+Arm order rotates by family. The frozen five-percent realized-inference matching
+rule requires equal calls/HTTP attempts and bounded reported-token difference;
+equal ceilings alone do not satisfy it. A scoped guidance signal additionally
+requires complete independent grading, preserved cleanup, stable/known delivery,
+a strict correctness increase, no paired regression and no greater inference.
+All outcomes, including no-conclusion and unknown evidence, are preserved.
+No three-case result earns cognitive promotion, broad scientific competence,
+original discovery or official benchmark success. Fresh family-disjoint transfer,
+replication, stronger controls and the full nine-PDF requirements remain pending.
+
 Freeze new scientific model families before inference, separate from these
 development calibrations. Require prediction-before-observation and independent
 held-out functional acceptance; a function that fits sparse measurements may

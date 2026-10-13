@@ -24,6 +24,7 @@ export interface OmegaResearchExperimentBinding {
 export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
   readonly #bindings: ReadonlyMap<string, OmegaResearchExperimentBinding>;
   readonly #used = new Set<string>();
+  readonly #measurements=new Map<string,Readonly<{measurement:{schemaVersion:1;pointId:string;inputs:readonly {id:string;value:string}[];label:string;value:string};observation:ResearchExperimentObservation}>>();
 
   private constructor(bindings: readonly OmegaResearchExperimentBinding[]) {
     // Executor instances contain private state and are intentionally retained by identity.
@@ -63,6 +64,10 @@ export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
     }
     return new OmegaResearchExperimentRunner(bindings);
   }
+  /** Owned projection of a successfully admitted observation, never a new
+   * observation/evidence root or a read of some additional host resource.
+   */
+  readMeasurement(experimentId:string){const recorded=this.#measurements.get(experimentId);return recorded?immutableTheoryValue(recorded):null;}
 
   async run(experiment: ResearchExperiment, objective: ResearchPartyObjective,
     signal: AbortSignal): Promise<ResearchExperimentObservation> {
@@ -80,6 +85,7 @@ export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
     const evidence = execution.evidence;
     const outputDigest = createHash("sha256").update(evidence.stdout.trim()).digest("hex");
     let outcome = binding.outcomeByOutputDigest[outputDigest];
+    let measurement:{schemaVersion:1;pointId:string;inputs:readonly {id:string;value:string}[];label:string;value:string}|null=null;
     if(binding.rationalReadout){
       const r=binding.rationalReadout;
       if(Buffer.byteLength(evidence.stdout,"utf8")>4096)throw Error("omega_rational_readout_bytes");
@@ -92,6 +98,7 @@ export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
         ||new Set(m.inputs.map(i=>i.id)).size!==m.inputs.length
         ||m.inputs.some(i=>!r.inputs.some(w=>w.id===i.id&&canonicalRationalLiteral(w.value)===canonicalRationalLiteral(i.value))))throw Error("omega_rational_measurement_invalid");
       const value=canonicalRationalLiteral(m.value);outcome=r.matching.find(m=>canonicalRationalLiteral(m.value)===value)?.outcome??r.otherOutcome;
+      measurement={schemaVersion:1,pointId:r.pointId,inputs:r.inputs,label:r.label,value};
     }
     if (execution.outcome !== "PASS" || evidence.outcome !== execution.outcome || evidence.exitCode !== 0
       || !outcome || !experiment.possibleOutcomes.includes(outcome) || evidence.outputTruncated
@@ -108,12 +115,14 @@ export class OmegaResearchExperimentRunner implements ResearchExperimentRunner {
     }
     const content = { experimentId: experiment.experimentId, toolId: experiment.toolId, outcome,
       executionIdentity: evidence.executionId, outputDigest };
-    return immutableTheoryValue({ observationId: `OBS-${theoryDigest([evidence.evidenceId, content]).slice(0, 48)}`,
+    const observation:ResearchExperimentObservation=immutableTheoryValue({ observationId: `OBS-${theoryDigest([evidence.evidenceId, content]).slice(0, 48)}`,
       experimentId: experiment.experimentId, toolId: experiment.toolId, outcome,
       evidence: { evidenceId: `RESEARCH-${evidence.evidenceId}`, evidenceClass: "E3", kind: "EXPERIMENT_RESULT",
         summary: "Sanitized outcome admitted from a bounded Omega R3B execution.", contentDigest: theoryDigest(content),
         provenanceRoot: evidence.evidenceId, freshnessDependencies: [`CANDIDATE:${objective.candidateBinding}`],
         observedAtEpochMs: evidence.endedAtEpochMs, candidateBinding: objective.candidateBinding,
         grantsAuthority: false }, executionIdentity: evidence.executionId, outputDigest, authorityGranted: false });
+    if(measurement)this.#measurements.set(experiment.experimentId,immutableTheoryValue({measurement,observation}));
+    return observation;
   }
 }
