@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/100",
+  "suiteVersion": "omega-institutional-suite/101",
   "criticalSuites": [
     "OMEGA-SCIENTIFIC-MODEL-GENERATION",
     "OMEGA-SEMANTIC-POLYNOMIAL-PROOF",

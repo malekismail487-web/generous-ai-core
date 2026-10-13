@@ -329,6 +329,42 @@ promotion. Any descriptive fitting/selection signal requires fresh replication,
 larger family-disjoint populations and the full nine-PDF/AD10 confidence gates.
 Coverage remains partial/just-in-time; no extra cognitive architecture is added.
 
+### Fresh epoch result and independent evidence limitation
+
+The [frozen receipt](../evidence/nyx-fresh-scientific-fit-3c2c07ae.json) records
+stable delivery but no complete competing population or hidden grades. Literal
+generation proposed 32 artifacts: 15 contradicted calibration after correct
+independent replay, 10 had native insufficiency, and seven failed lexical emission.
+Native fitting proposed 34 structures: 22 were rejected at coarse structure or
+definition boundaries, seven were independently inconsistent, two had insufficient
+independent verification, two yielded admitted single artifacts, and one duplicated
+an artifact. Exact discarded source is unavailable; do not reconstruct it or infer
+that every definition rejection was a particular namespace collision.
+
+All 32 calls delivered, with 167441 known tokens and no delivery/truncation failure.
+The two single models were rank-six calibration fits, not graded generalizations.
+No real measurement/selection fixture ran. The source and strict gates remained
+intact. Fitting arithmetic is operationally composed with live NYX in this narrow
+sense, but no cognitive lift, complete prediction loop, science or discovery is
+established. No complete score or superiority claim follows.
+
+The evidence-supported next mechanism is bounded general mathematical structure
+search/formulation with exact fitting and falsification, not more model population
+or another assurance layer. First reproduce source/namespace and coarse-diagnostic
+gaps on separate development data; retain strict source/semantic validation. A
+generic grammar/search must be explicitly bounded, propose hypotheses only,
+charge its compute and compete against a same-tool deterministic control on fresh
+tasks. Never encode these eight exposed equations into the search or its repairs.
+
+CI review additionally found a metadata defect: `check(value,label)` used the
+comparison helper's third-argument label position, so changed labels could retain
+the same identity. Source hashes still bound actual test code. Future identity
+policy `/2` reads scoped local helper signatures, retains two/three-argument and
+named-action cases, handles local/parameter shadows and records its version in
+the manifest. Existing test bodies, functional acceptance and frozen manifests
+are not reinterpreted. This is reporting/genealogy correctness, not cognition;
+label identities are not proof of assertion logic, which remains source-bound.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

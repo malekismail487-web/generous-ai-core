@@ -3800,3 +3800,38 @@ execution, truncated/empty generation, unknown delivery and seven selection
 boundary classes. These are test doubles, **not** a live score. The live result
 is pending; default Ultra and production authority remain unchanged. No eight-
 case pilot establishes broad science, original discovery or frontier superiority.
+
+#### Terminal fresh-fitting result: no graded comparison
+
+Frozen `3c2c07ae`, [run 38477115181](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38477115181),
+completed all 16 physical generation prefixes. Every prefix stopped below the
+existing two-model precondition; the eight same-tool rows share native prefixes.
+**24 generation-attempted stages; zero submissions, observations or hidden grades.**
+Native fitting admitted a single calibration model in two cases after repair,
+with independent fitting/known-point replay. Their hidden generalization remains
+unknown. Unreached hidden tests are not wrong answers or a zero-percent score.
+
+All **32 logical/HTTP calls delivered stably: 167441 known tokens**, no provider,
+capacity or truncation failure. Literal used 83108; native 84333. The same-tool
+allocation repeats native cost, not physical spend. Similar aggregate generation
+cost is not a graded compute-matched correctness comparison: none exists here.
+Of 66 physical proposals, literal had 15 calibration contradictions, 10 native
+insufficiencies, five host/markup and two power lexical rejections. Native had
+10 definition-boundary rejections, 12 coarse structure rejections, seven confirmed
+inconsistent fits, two insufficient independent fits, two admissions and a
+duplicate. Discarded source and unretained diagnostic subtypes remain unknown.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-fresh-scientific-fit-3c2c07ae.json)
+preserves the complete frozen report, archive SHA256
+`7c7fee5dbe345513ab31ca930188eb5d059bf3bfbc27bb866c93b16849a2fd55`,
+CRC, terminal-log agreement, 29 source and eight task bindings. Source remained
+unchanged; zero fixtures were created, so cleanup is vacuous, not new live sandbox
+evidence. Frozen clean CI passed 111 suites / 16359 checks, scientific 409,
+TypeScript zero, secret scan, independent replay, build and package smoke.
+
+**No fitting, selection, science or cognitive promotion.** Remove the one-shot
+push launcher; do not rerun these now-exposed cases or relax two-model/point/source
+checks to force a win. Next reproduce source/namespace and diagnostic failures on
+separate development data, then investigate bounded generic structure search with
+exact fitting/falsification and a same-tool deterministic control. Account for all
+native/evaluator/model compute and measure fresh transfer, not memorized formulas.

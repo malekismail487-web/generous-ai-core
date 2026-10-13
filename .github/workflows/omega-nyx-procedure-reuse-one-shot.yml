@@ -1,10 +1,5 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths:
-      - scripts/omega/nyx-scientific-fit-live-eval.ts
-      - scripts/omega/nyx-scientific-fit-fixtures.ts
   workflow_dispatch:
     inputs:
       experiment:
@@ -19,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-scientific-fit-once]')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -46,7 +41,7 @@ jobs:
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-native-generation-live-eval.ts scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omega/nyx-semantic-proof-live-eval.ts scripts/omega/nyx-semantic-proof-fixtures.ts scripts/omega/nyx-scientific-world-live-eval.ts scripts/omega/nyx-scientific-fit-live-eval.ts scripts/omega/nyx-scientific-fit-fixtures.ts scripts/omega/scientific-world-rig.ts scripts/omegaScientificModelGeneration.test.ts scripts/omegaR3BControlledExecution.test.ts scripts/omegaBoundedReasoningWorkbench.test.ts scripts/omegaSemanticPolynomialProof.test.ts
       - name: Compare literal generation, exact fitting and same-tool selection ablation on frozen fresh structures
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-scientific-fit-once]') || github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-fit'
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-fit'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}

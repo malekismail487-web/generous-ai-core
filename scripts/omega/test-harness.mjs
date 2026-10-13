@@ -101,21 +101,55 @@ export function assessSuiteComposition(declarations, discoveredFiles) {
   return Object.freeze({ ok: issues.length === 0, issues: Object.freeze(issues), suites: Object.freeze(suites) });
 }
 
+export const SEMANTIC_TEST_IDENTITY_POLICY = "nyx-semantic-test-identities/2";
+
 export function extractSemanticTestIdentities(source, suiteId, file = "test.ts") {
   const scriptKind = file.endsWith(".mjs") ? ts.ScriptKind.JS : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKind);
   const definitions = [];
   const occurrences = new Map();
-  const visit = (node) => {
+  // Helpers in this repository use several signatures: check(value,label),
+  // check(actual,expected,label), and check(name,action). Read a local helper's
+  // declared label parameter instead of assuming every check has three args.
+  // Source hashes remain the separate detector for changed assertion logic.
+  const recordHelper = (labels, name, fn) => {
+    if (!/^(?:assert|assertEq|check)$/.test(name ?? "")) return;
+    const index = fn.parameters.findIndex(p => ts.isIdentifier(p.name)
+      && /^(?:label|name|message|msg|m|description|desc)$/.test(p.name.text));
+    if (index >= 0) labels.set(name, index); else labels.delete(name);
+  };
+  const visit = (node, helperLabels = new Map()) => {
+    if (ts.isSourceFile(node) || ts.isBlock(node)) {
+      const local = new Map(helperLabels);
+      for (const statement of node.statements) {
+        if (ts.isFunctionDeclaration(statement)) recordHelper(local, statement.name?.text, statement);
+        if (ts.isVariableStatement(statement)) for (const declaration of statement.declarationList.declarations) {
+          if (ts.isIdentifier(declaration.name) && declaration.initializer) {
+            if (ts.isArrowFunction(declaration.initializer) || ts.isFunctionExpression(declaration.initializer))
+              recordHelper(local, declaration.name.text, declaration.initializer);
+            else local.delete(declaration.name.text);
+          }
+        }
+      }
+      ts.forEachChild(node, child => visit(child, local));
+      return;
+    }
+    if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node)) {
+      const local = new Map(helperLabels);
+      for (const parameter of node.parameters) if (ts.isIdentifier(parameter.name)) local.delete(parameter.name.text);
+      ts.forEachChild(node, child => visit(child, local));
+      return;
+    }
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && /^(?:assert|assertEq|check)$/.test(node.expression.text)) {
-      const labelIndex = node.expression.text === "assert" ? 1 : 2;
+      const labelIndex = helperLabels.get(node.expression.text)
+        ?? (node.expression.text === "assert" ? 1 : node.expression.text === "assertEq" || node.arguments.length >= 3 ? 2 : 1);
       const label = node.arguments[labelIndex]?.getText(sourceFile).replace(/\s+/g, " ").trim() ?? "UNLABELED_ASSERTION";
       const semanticKey = `${node.expression.text}:${label}`;
       const occurrence = (occurrences.get(semanticKey) ?? 0) + 1;
       occurrences.set(semanticKey, occurrence);
       definitions.push(`${suiteId}::${sha256(semanticKey).slice(0, 20)}::${occurrence}`);
     }
-    ts.forEachChild(node, visit);
+    ts.forEachChild(node, child => visit(child, helperLabels));
   };
   visit(sourceFile);
   return Object.freeze(definitions);
@@ -162,7 +196,7 @@ export function buildExecutionManifest({ suiteVersion, candidateCommit, worktree
     schemaVersion: 1,
     suiteVersion,
     candidate: { commit: candidateCommit, worktreeState },
-    tools: { node: nodeVersion, typescript: typescriptVersion },
+    tools: { node: nodeVersion, typescript: typescriptVersion, testIdentityPolicy: SEMANTIC_TEST_IDENTITY_POLICY },
     predecessor,
     genealogy,
     composition: { ok: composition.ok, issues: composition.issues },

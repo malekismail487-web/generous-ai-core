@@ -9,6 +9,7 @@ import {
   isDiscoverableOmegaTest,
   loadSuiteCatalog,
   parseTestExecution,
+  SEMANTIC_TEST_IDENTITY_POLICY,
 } from "./omega/test-harness.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,6 +53,27 @@ const semanticB = extractSemanticTestIdentities(`\n${semanticSource}\n`, "S", "s
 assert(semanticA.length === 2, "semantic assertion definitions are discovered");
 assert(JSON.stringify(semanticA) === JSON.stringify(semanticB), "semantic identities survive irrelevant source positioning changes");
 assert(new Set(semanticA).size === semanticA.length, "semantic test identities are unique within a suite");
+const ids = text => extractSemanticTestIdentities(text, "LABEL-PROBE", "scripts/omegaSynthetic.test.ts");
+assert(JSON.stringify(ids("check(true,'first label')")) !== JSON.stringify(ids("check(true,'second label')")),
+  "two-argument condition/label checks distinguish a changed semantic label");
+assert(JSON.stringify(ids("check(true,false,'first label')")) !== JSON.stringify(ids("check(true,false,'second label')")),
+  "three-argument comparison checks retain the third label parameter");
+assert(JSON.stringify(ids("function check(name,action) {} check('first label',()=>{})")) !== JSON.stringify(ids("function check(name,action) {} check('second label',()=>{})")),
+  "named-action checks identify their first declared label parameter");
+assert(JSON.stringify(ids("const check=(value,label)=>{};check(true,'first label')")) !== JSON.stringify(ids("const check=(value,label)=>{};check(true,'second label')")),
+  "arrow-function helpers use their declared condition/label signature");
+assert(JSON.stringify(ids("function check(actual,expected,label) {} check(true,false,'stable')")) === JSON.stringify(ids("function check(actual,expected,label) {}\n\n check(true,false,'stable')")),
+  "signature-aware identities remain independent of line positioning");
+assert(JSON.stringify(ids("assertEq(true,false,'first label')")) !== JSON.stringify(ids("assertEq(true,false,'second label')")),
+  "comparison assertion label changes remain visible");
+assert(JSON.stringify(ids("function check(name,action){} {const check=(a,b,label)=>{}; check(true,false,'first label');}"))
+  !== JSON.stringify(ids("function check(name,action){} {const check=(a,b,label)=>{}; check(true,false,'second label');}")),
+  "nested helper shadowing cannot hide a changed local comparison label behind a global named-action signature");
+assert(JSON.stringify(ids("{const check=(a,b,label)=>{};} check(true,'stable');")) === JSON.stringify(ids("check(true,'stable');")),
+  "nested helper declarations do not change unrelated outer assertion identities");
+assert(JSON.stringify(ids("function check(name,action){} function nested(check){check(true,'first label');}"))
+  !== JSON.stringify(ids("function check(name,action){} function nested(check){check(true,'second label');}")),
+  "a function-parameter shadow cannot inherit an unrelated outer helper signature");
 
 const suite = { suiteId: "S", file: "scripts/omegaSynthetic.test.ts" };
 const good = parseTestExecution({ suite, exitCode: 0, output: "passed: 2, failed: 0", source: semanticSource, testIdentities: semanticA, durationMs: 17 });
@@ -85,6 +107,8 @@ assert(manifest.aggregate.executedSuites === 1 && manifest.aggregate.passedCheck
 assert(manifest.aggregate.semanticTestDefinitions === 2, "machine manifest records semantic test definition population");
 assert(manifest.candidate.commit === "a".repeat(40) && manifest.candidate.worktreeState === "CLEAN", "manifest binds candidate commit and worktree state");
 assert(manifest.tools.typescript === "5.8.3", "manifest records compiler identity");
+assert(manifest.tools.testIdentityPolicy === SEMANTIC_TEST_IDENTITY_POLICY && SEMANTIC_TEST_IDENTITY_POLICY.endsWith("/2"),
+  "the identity extraction correction is explicitly versioned rather than silently reinterpreting frozen manifests");
 assert(manifest.manifestDigest.length === 64, "manifest has a deterministic integrity digest");
 const selfSource = readFileSync(fileURLToPath(import.meta.url), "utf8");
 assert(extractSemanticTestIdentities(selfSource, "OMEGA-HARNESS-INTEGRITY", "scripts/omegaHarnessIntegrity.test.mjs").length > 20,

@@ -1,4 +1,4 @@
-import { assessSuiteComposition, buildExecutionManifest, compareExecutionManifests, parseTestExecution } from "./omega/test-harness.mjs";
+import { assessSuiteComposition, buildExecutionManifest, compareExecutionManifests, parseTestExecution, extractSemanticTestIdentities } from "./omega/test-harness.mjs";
 
 let passed = 0;
 let failed = 0;
@@ -39,6 +39,11 @@ assert(classifiedSuite.decision === "ACCEPTED", "suite supersession remains poss
 assert(compareExecutionManifests({}, evolved).decision === "INVALID", "malformed predecessor cannot establish genealogy");
 assert(previous.predecessor === null && previous.genealogy === null, "root manifest explicitly records absent predecessor genealogy");
 assert(previous.manifestDigest !== evolved.manifestDigest, "genealogically distinct manifests have distinct integrity digests");
+const firstLabel = extractSemanticTestIdentities("check(true,'original invariant')", "LABELS", "scripts/LABELS.test.ts");
+const changedLabel = extractSemanticTestIdentities("check(true,'different invariant')", "LABELS", "scripts/LABELS.test.ts");
+const labelDelta = compareExecutionManifests(manifest("labels/1", [execution("LABELS", firstLabel)]), manifest("labels/2", [execution("LABELS", changedLabel)]));
+assert(labelDelta.decision === "REVIEW_REQUIRED" && labelDelta.addedSemanticIds.length === 1 && labelDelta.removedSemanticIds.length === 1,
+  "unchanged assertion count cannot hide a changed two-argument invariant from genealogy review");
 
 console.log(`Omega harness genealogy tests - passed: ${passed}, failed: ${failed}`);
 if (failed > 0) { console.error("FAILURES:"); for (const failure of failures) console.error(`  - ${failure}`); process.exit(1); }
