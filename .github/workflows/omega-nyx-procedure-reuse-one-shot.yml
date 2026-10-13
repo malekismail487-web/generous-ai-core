@@ -1,8 +1,5 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-procedure-reuse-one-shot.yml]
   workflow_dispatch:
     inputs:
       experiment:
@@ -17,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[nyx-algebraic-emission-once]')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:

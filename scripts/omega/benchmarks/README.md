@@ -1,5 +1,50 @@
 # NYX benchmark capability program
 
+### Algebraic emission diagnosis: control 4/4 repaired, comparison inconclusive (2026-10-13)
+
+Frozen `add56478`, [run 38355398775](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38355398775),
+completed four fresh parameter cases in two known formal families. The unchanged
+formula control accepted **4/4 after one repair each**, **0/4 first-attempt**.
+Guided emission accepted **2/4**: one first-attempt and one repaired. Its two
+interpolation stages were ungraded because their physical requests timed out;
+each following logical call was locally blocked under the original deadline/
+capacity rules. These are delivery failures, not demonstrated reasoning errors.
+
+The new owned diagnostic observer identified two constant-shadow, one host/
+markup-token and one numeric-literal rejection in control; treatment had one
+unknown-name rejection. No expressions, offending names, private reasoning,
+secrets or hidden answer values are retained. The parser, oracle, limits and
+authority remain unchanged; the default-off guide never rewrites mathematics.
+
+Accounting: **15 logical calls, 13 HTTP attempts, 45,931 known reported tokens**;
+two timed-out HTTP attempts have unknown usage, and four logical calls retain
+unknown usage in the conservative report. Later treatment stages waited
+**119,994 ms** and recovered service without renewing authority or extending the
+frozen budgets. Six of eight stages reached mathematical grading and were
+accepted; there were no constructed wrong proposals, truncations or JSON syntax
+rejections. Only **1/4** pairs satisfied five-percent realized-compute matching.
+
+**INCONCLUSIVE / NO PROMOTION.** All predeclared signals are false. The treatment
+can deliver the guide on the two network tasks, but pattern enforcement and the
+cause of its two timeouts remain unverified. Do not compare the control's 4/4
+with a different older corpus as a causal improvement, regrade these exposed
+cases or manufacture a complete benchmark/general-discovery score. Default
+Ultra and production permissions are unchanged.
+
+Clean Linux [CI 38355398856](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38355398856)
+passed **109 suites / 15,718 checks**, TypeScript 5.8.3 zero, secret scan, independent
+native replay, build, inventory and seven-file package smoke (305,353 bytes).
+The extra seven laptop checks belong to preserved unrelated web-console edits.
+Verified archive/report hashes, fourteen-source configuration binding, arm
+outcomes and custody: `docs/omega/evidence/nyx-algebraic-emission-add56478.json`.
+The one-shot push trigger is removed in this completion milestone.
+
+Next priority follows the nine plans admitted to the actual goal: bounded
+semantic proof/search using existing native, verification and obligation
+primitives, not an indefinite emitter loop or new unmeasured brain layers.
+Existing exact arithmetic/finite refutations do not establish general formal
+proof search, original mathematics/science or completed PDF requirements.
+
 ### Bounded formula tool synthesis: one accepted case, no comparative gain (2026-10-12)
 
 Frozen `8eea3a41`, [run 38287509428](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38287509428),

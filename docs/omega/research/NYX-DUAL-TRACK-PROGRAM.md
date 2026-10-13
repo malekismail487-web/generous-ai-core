@@ -177,6 +177,28 @@ Plan coverage remains partial/just-in-time: independent evidence, finite typed
 authority, falsifiable intervention and preserved failures directly apply;
 original mathematics/science and measured recursion remain unverified.
 
+#### Frozen emission result — `add56478`, 2026-10-13
+
+The legacy formula control solved all four fresh parameter cases after one
+repair each, with zero first-attempt successes. Guided emission solved two,
+including one first-attempt result; its other two cases were ungraded provider
+timeouts, not observed mathematical errors. The report records 15 logical calls,
+13 HTTP attempts, 45,931 known tokens, two unknown-usage timed-out HTTP attempts
+and four conservative unknown-usage logical calls. Only one pair met five-percent
+realized-compute matching. All predeclared signals are false: **INCONCLUSIVE /
+NO PROMOTION**. The observer now identifies finite lexical/binding categories
+without retaining rejected formulas. No default, parser, oracle or authority is
+changed. Exact custody is in
+`docs/omega/evidence/nyx-algebraic-emission-add56478.json`.
+
+The actual repository has exact model-authored arithmetic, finite refutation
+checking and an obligation graph used by the frontier harness. The graph is not
+yet a general mathematical semantic-proof search engine, and no Lean/mathlib
+toolchain was found in the current host inventory. The adopted plans prioritize
+that missing capability and faithful statement checking; they do not certify it
+by the existence of a graph or an arithmetic interpreter. Do not continue an
+indefinite source-emission loop or call this corpus original discovery.
+
 ### Demonstrated path — unchanged objective
 
 Continue the existing evidence-backed benchmark and capability program. Diagnose failures by class, reproduce general defects on separate development tasks, implement the smallest coherent correction, and evaluate transfer on fresh tasks using unchanged acceptance checks and defensible compute-matched controls. Preserve original first-attempt, repaired, negative, incomplete and blocked outcomes separately. Seek at least 80% on the agreed accessible benchmarks; do not substitute confidence, selected failures, ever-correct accumulation, infrastructure checks, or a different benchmark protocol for observed results. Public benchmark exposure and untested populations remain explicit uncertainties.
