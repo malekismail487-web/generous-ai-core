@@ -48,4 +48,11 @@ reject(wrong_ce)
 literal = deepcopy(capsule)
 literal["originalCandidate"]["outputs"][0]["expression"] = "123"
 reject(literal)
-print(f"POLYNOMIAL_REPLAY_DETECTOR_VALIDATION passed={rejected + 1} failed=0")
+assert replay.compile_form({"schemaVersion": 5, "definitions": [], "outputs": [{"label": "p", "expression": "True+class"}]}, ["True", "class", "zero"], "zero")["expressions"][0] == {"op": "ADD", "left": "True", "right": "class"}
+try:
+    replay.compile_form({"schemaVersion": 5, "definitions": [], "outputs": [{"label": "p", "expression": "True"}]}, ["zero"], "zero")
+except replay.Boundary:
+    rejected += 1
+else:
+    raise AssertionError("unbound Python boolean became an invented constant")
+print(f"POLYNOMIAL_REPLAY_DETECTOR_VALIDATION passed={rejected + 2} failed=0")

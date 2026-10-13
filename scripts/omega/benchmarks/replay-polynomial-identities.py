@@ -28,6 +28,7 @@ def compile_form(form, names, zero):
         raise Boundary("original_form_bound")
     environment = {name: name for name in names}
     nodes, declared, total_chars = [], set(names), 0
+    source_aliases, alias_sources = {}, {}
 
     def name_ok(s):
         return isinstance(s, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,47}", s)
@@ -37,8 +38,8 @@ def compile_form(form, names, zero):
         # parenthesis/unary nesting budget. Graph operations remain bounded 64.
         if depth > 96:
             raise Boundary("syntax_depth")
-        if isinstance(n, ast.Name) and name_ok(n.id) and n.id in environment:
-            return environment[n.id]
+        if isinstance(n, ast.Name) and n.id in alias_sources and alias_sources[n.id] in environment:
+            return environment[alias_sources[n.id]]
         if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.UAdd):
             return node(n.operand, depth + 1)
         if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub) and zero in environment:
@@ -72,7 +73,19 @@ def compile_form(form, names, zero):
         total_chars += len(s)
         if total_chars > 4096:
             raise Boundary("original_total_bound")
-        return node(ast.parse(" ".join(s.split()), mode="eval").body)
+        # The original DSL permits names such as True/class/lambda. They are
+        # formal symbols, NOT Python constants/keywords. Lexically alias names
+        # before AST parsing and resolve only to the explicitly bound originals.
+        def alias(match):
+            original = match.group(0)
+            if not name_ok(original):
+                raise Boundary("original_identifier_bound")
+            if original not in source_aliases:
+                safe = f"_symbol_{len(source_aliases)}"
+                source_aliases[original], alias_sources[safe] = safe, original
+            return source_aliases[original]
+        text = re.sub(r"[A-Za-z][A-Za-z0-9_]*", alias, " ".join(s.split()))
+        return node(ast.parse(text, mode="eval").body)
 
     for d in form["definitions"]:
         if set(d) != {"id", "expression"} or not name_ok(d["id"]) or d["id"] in declared or d["id"] in ("MIN", "MAX", "BINOMIAL"):
@@ -235,7 +248,10 @@ def main():
             raise Boundary("independent_checker_disagreement")
         proved += sum(o["state"] == "PROVED_IDENTITY" for o in results)
         refuted += sum(o["state"] == "REFUTED_IDENTITY" for o in results)
-    print("POLYNOMIAL_INDEPENDENT_REPLAY " + json.dumps({"capsules": len(capsules), "proved": proved,
+    versions = {c.get("fixtureVersion", "UNSPECIFIED") for c in capsules}
+    if len(versions) != 1:
+        raise Boundary("fixture_genealogy_disagreement")
+    print("POLYNOMIAL_INDEPENDENT_REPLAY " + json.dumps({"fixtureVersion": next(iter(versions)), "capsules": len(capsules), "proved": proved,
         "refuted": refuted, "exact_grid_points": total_points, "mismatches": 0,
         "method": "INDEPENDENT_DEGREE_BOUNDS_AND_EXACT_TENSOR_GRID_NOT_RANDOM_SAMPLING",
         "model_calls": 0, "cognitive_gain_claim": False}))

@@ -38,14 +38,21 @@ The independent verifier is conservative when it cannot establish a constant
 divisor syntactically; this is unsupported verification, not a reasoning failure.
 
 Development replay covers 128 constructed/corrupted capsules and 130 obligations:
-66 proved identities, 64 refuted identities, 540 exact grid evaluations and zero
-checker disagreements. Seven planted-invalid/valid detector checks cover changed
+66 proved identities, 64 refuted identities, 535 exact grid evaluations and zero
+checker disagreements. Nine planted-invalid/valid detector checks cover changed
 statements, changed source, omitted obligations, executable text, literal emission
 and false counterexamples. The component suite has 185 passing checks, including
 matched-profile test-double cognition/repair composition and independent rejection.
 Test doubles made no NVIDIA calls and establish no E4 cognition result.
 Independent rejection remains in model feedback and the result history; a later
 positive verdict for the identical artifact cannot erase that falsification.
+
+Less-correlated parsing also discovered a verifier-interface defect: Python AST
+classified the valid original symbol `True` as a boolean and rejected keyword
+symbols such as `class`. Lexical name aliasing now preserves the original
+namespace without adding constants or weakening its grammar. Development replay
+version `/2` retains the same 128/130 counts but changes two capsule identities
+to exercise this boundary; equal counts do not imply equal evaluation coverage.
 
 The implementation is not Lean/mathlib, a general theorem prover, a full adaptive
 ProofSearch policy, independent institutional replication or evidence that a
