@@ -279,11 +279,118 @@ def check_model(capsule):
     return agrees, len(points)
 
 
+def check_fit(data):
+    """Rebuild the matrix from ORIGINAL basis/data, with Fraction elimination
+    and back substitution (not TS RREF or native-derived basis values)."""
+    if set(data) != {"task", "structure", "fit"}:
+        raise Boundary("fit_input_contract")
+    task, s, claimed = data["task"], data["structure"], data["fit"]
+    if set(s) != {"schemaVersion", "basis", "numerator", "denominator", "denominatorConstant", "assumptions", "uncertainties"} or s["schemaVersion"] != 1:
+        raise Boundary("fit_structure_contract")
+    if set(claimed) != {"linear", "draft"}:
+        raise Boundary("fit_result_contract")
+    names = s["numerator"] + s["denominator"]
+    if not s["numerator"] or not 1 <= len(names) <= 8 or len(set(names)) != len(names):
+        raise Boundary("fit_coefficient_bound")
+    def scalar(value):
+        if not isinstance(value, str) or not re.fullmatch(r"-?(?:0|[1-9][0-9]{0,1233})(?:/[1-9][0-9]{0,1233})?", value):
+            raise Boundary("fit_scalar_contract")
+        return bounded(Fraction(value))
+    def bounded(v):
+        if v.numerator.bit_length() > 4096 or v.denominator.bit_length() > 4096:
+            raise Boundary("fit_integer_bound")
+        return v
+    constants = {c["id"]: scalar(c["value"]) for c in task["constants"]}
+    offset = constants.get(s["denominatorConstant"])
+    if not offset or set(names) & (set(task["variables"]) | set(constants)):
+        raise Boundary("fit_bindings")
+    zero = next((k for k, value in constants.items() if value == 0), None)
+    basis = compile_form(s["basis"], task["variables"] + list(constants), zero)
+    if {o["label"] for o in basis["outputs"]} != set(names):
+        raise Boundary("fit_basis_labels")
+    if not 1 <= len(task["observations"]) <= 12:
+        raise Boundary("fit_observation_bound")
+    matrix, rhs = [], []
+    for o in task["observations"]:
+        env = {**constants, **{i["id"]: scalar(i["value"]) for i in o["inputs"]}}
+        values, y = graph(basis, env), scalar(o["output"])
+        matrix.append([values[n] for n in s["numerator"]] + [bounded(-y * values[n]) for n in s["denominator"]])
+        rhs.append(bounded(y * offset))
+    a = [row + [y] for row, y in zip(matrix, rhs)]
+    columns, pivots = len(names), []
+    for col in range(columns):
+        at = len(pivots)
+        pivot = next((i for i in range(at, len(a)) if a[i][col]), None)
+        if pivot is None:
+            continue
+        a[at], a[pivot] = a[pivot], a[at]
+        for i in range(at + 1, len(a)):
+            if not a[i][col]:
+                continue
+            factor = bounded(a[i][col] / a[at][col])
+            for j in range(col, columns + 1):
+                a[i][j] = bounded(a[i][j] - bounded(factor * a[at][j]))
+        pivots.append(col)
+    inconsistent = any(not any(row[:columns]) and row[columns] for row in a)
+    state = "INCONSISTENT" if inconsistent else "UNDERDETERMINED" if len(pivots) < columns else "UNIQUE"
+    solution = []
+    if state == "UNIQUE":
+        solution = [Fraction(0)] * columns
+        for i in reversed(range(len(pivots))):
+            col = pivots[i]
+            total = Fraction(0)
+            for j in range(col + 1, columns):
+                total = bounded(total + bounded(a[i][j] * solution[j]))
+            solution[col] = bounded((a[i][columns] - total) / a[i][col])
+        if any(sum((bounded(x * v) for x, v in zip(row, solution)), Fraction(0)) != y for row, y in zip(matrix, rhs)):
+            raise Boundary("fit_independent_residual")
+    expected = {"state": state, "rows": len(matrix), "columns": columns, "rank": len(pivots), "pivotColumns": pivots,
+        "values": [str(v) for v in solution]}
+    linear = claimed["linear"]
+    # Python bool compares equal to int. A planted schema defect must not gain
+    # an agreement vote merely because True == 1 in a dictionary comparison.
+    if not isinstance(linear, dict) or set(linear) != set(expected) or any(type(linear[k]) is not int for k in ("rows", "columns", "rank")) \
+            or not isinstance(linear["pivotColumns"], list) or any(type(v) is not int for v in linear["pivotColumns"]) \
+            or not isinstance(linear["values"], list) or any(not isinstance(v, str) for v in linear["values"]):
+        return False, len(matrix), state
+    agrees = linear == expected
+    if state != "UNIQUE":
+        return agrees and claimed["draft"] is None, len(matrix), state
+    draft = claimed["draft"]
+    if not draft or draft["parameters"] != [{"id": n, "value": str(v)} for n, v in zip(names, solution)]:
+        return False, len(matrix), state
+    # Check generated candidate semantics at admitted + prospective input points,
+    # never their hidden output truth. Zero-denominator fits are not usable laws.
+    original_names = task["variables"] + list(constants) + names
+    original = compile_form(draft["program"], original_names, zero)
+    fitted = {**constants, **dict(zip(names, solution))}
+    for p in task["observations"] + task["experiments"]:
+        inputs = {i["id"]: scalar(i["value"]) for i in p["inputs"]}
+        values = graph(basis, {**constants, **inputs})
+        numerator = sum((bounded(fitted[n] * values[n]) for n in s["numerator"]), Fraction(0))
+        denominator = offset + sum((bounded(fitted[n] * values[n]) for n in s["denominator"]), Fraction(0))
+        if not denominator:
+            raise Boundary("fit_degenerate_denominator")
+        predicted = bounded(numerator / denominator)
+        if graph(original, {**fitted, **inputs}) != {"response": predicted}:
+            agrees = False
+        if "output" in p and predicted != scalar(p["output"]):
+            agrees = False
+    return agrees, len(matrix), state
+
+
 def main():
     data = sys.stdin.buffer.read(2_000_001)
     if len(data) > 2_000_000:
         raise Boundary("input_bytes")
     capsules = json.loads(data)
+    if sys.argv[1:] == ["--verify-fit"]:
+        start, cpu = time.perf_counter(), time.process_time()
+        agrees, rows, state = check_fit(capsules)
+        print(json.dumps({"schemaVersion": 1, "decision": "AGREES" if agrees else "DISAGREES", "checkedRows": rows, "linearState": state,
+            "elapsedMs": (time.perf_counter() - start) * 1000, "cpuMs": (time.process_time() - cpu) * 1000,
+            "scope": "COEFFICIENT_FIT_AND_POINT_REPRESENTATION_NOT_SCIENTIFIC_TRUTH"}))
+        return
     if sys.argv[1:] == ["--verify-model"]:
         start, cpu = time.perf_counter(), time.process_time()
         agrees, points = check_model(capsules)

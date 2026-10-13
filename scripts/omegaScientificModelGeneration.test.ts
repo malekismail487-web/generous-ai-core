@@ -2,7 +2,10 @@ import { ScientificModelSession, SCIENTIFIC_MODEL_POLICY, type ScientificModelTa
 import { runNyxScientificModelGeneration } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import { canonicalRationalLiteral } from "../src/lib/codelab/research/exactQuantitativeDerivation";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
-import { scientificModelReplay } from "./omega/benchmarks/scientific-model-replay";
+import { scientificModelReplay, scientificFitReplay, type ScientificReplayCost } from "./omega/benchmarks/scientific-model-replay";
+import { fitExactLinearSystem, exactScalar } from "../src/lib/codelab/research/exactLinearFit";
+import { fitScientificStructure, type ScientificModelStructure } from "../src/lib/codelab/research/scientificModelFit";
+import { algebraicBoundaryCode, compileAlgebraicExpressionGraph } from "../src/lib/codelab/research/quantitativeAlgebraicCompiler";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { ResearchExperimentObservation } from "../src/lib/codelab/research/researchPartyContracts";
 import {spawnSync} from "node:child_process";
@@ -204,4 +207,126 @@ const failures=await runScientificWorldEpoch(async(request,stage)=>{
 check(failures.rows.filter(r=>r.arm==="DIRECT_REVIEW").every(r=>r.accepted===null&&r.experiments===0&&r.actions.map(a=>a.outcome).join("|")==="ACTION_SCOPE_REJECTION|CONCLUSION_WITHOUT_EXPERIMENT_REJECTION|NO_CONCLUSION"),"Malformed targets, conclusions without evidence and explicit uncertainty remain distinct nonacceptance outcomes");
 check(failures.rows.filter(r=>r.arm==="NATIVE_FORECASTS").every(r=>r.accepted===true&&r.actions[0].outcome==="PROVIDER_FAILURE")&&failures.physicalUsage.providerFailures===3&&!failures.providerStable,"Provider disruption is separately recorded even when a later bounded action succeeds");
 check(failures.rows.filter(r=>r.arm==="NATIVE_EVIDENCE_GUIDANCE").every(r=>r.accepted===true&&r.actions[0].outcome==="TRUNCATION")&&!failures.scopedGuidanceSignal,"Truncated action serialization is not counted as scientific reasoning failure or used to promote guidance");
+// Separate development data: NOT a rerun or reconstruction of exposed live
+// pilot formulas, and not an evaluation of model cognition/generalization.
+const fitCosts:ScientificReplayCost[]=[],fitVerify=scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>fitCosts.push(c));
+const structure=(outputs:readonly {label:string;expression:string}[],numerator:readonly string[],denominator:readonly string[]=[]):ScientificModelStructure=>({schemaVersion:1,
+  basis:{schemaVersion:5,definitions:[],outputs},numerator,denominator,denominatorConstant:"one",
+  assumptions:["Exact deterministic calibration in the declared development domain."],uncertainties:["Calibration fit does not establish extrapolation, novelty or causal validity."]});
+const fitted=(s:ScientificModelSession,p:unknown,v=fitVerify)=>s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:p},v);
+let scalarTicks=0;const countedTick=()=>{if(++scalarTicks>1000000)throw Error("development_budget");};
+const unique=fitExactLinearSystem([["0","1"],["2","1"],["4","1"]],["-3/2","5/2","13/2"],countedTick);
+check(unique.state==="UNIQUE"&&unique.rank===2&&unique.values.join("|")==="2|-3/2"&&scalarTicks>0,"Bounded exact fitting handles negative rational coefficients and an overdetermined original-row residual check");
+check(fitExactLinearSystem([["0","2"],["1","2"]],["4","5"],countedTick).values.join("|")==="1|2","Exact pivot exchange does not assume a nonzero leading matrix entry");
+check(fitExactLinearSystem([["1","2"],["2","4"]],["3","6"],countedTick).state==="UNDERDETERMINED","Rank-deficient calibration reports ambiguity rather than inventing free coefficients");
+check(fitExactLinearSystem([["1","2"],["2","4"]],["3","7"],countedTick).state==="INCONSISTENT","Contradictory calibration is distinct from insufficient rank");
+check(fitExactLinearSystem([["0","0"]],["0"],countedTick).state==="UNDERDETERMINED"
+  &&fitExactLinearSystem([["0","0"]],["1"],countedTick).state==="INCONSISTENT","Zero matrices cannot falsely produce a unique fitting solution");
+for(const bad of [[],Array.from({length:13},()=>["1"]),[["1"],["1","2"]],[["1/0"]],[["1e3"]],[["9".repeat(1234)]]])
+  throws(()=>fitExactLinearSystem(bad,["1"],countedTick),"Malformed, non-rational and oversized fitting input fails closed");
+throws(()=>fitExactLinearSystem([["1"]],["1"],()=>{throw Error("original_shared_budget");}),"Fitting cannot swallow the owning session's budget/lease exception");
+throws(()=>exactScalar("DIV","1","0",countedTick),"Native fitting does not hide division by zero");
+throws(()=>exactScalar("ADD","1".repeat(10000),"1",countedTick),"The scalar adapter bounds representation before parsing a huge integer");
+const basicStructure=structure([{label:"a",expression:"x"}],["a"]),quadraticStructure=structure([{label:"b",expression:"x*x"}],["b"]);
+const fitSession=ScientificModelSession.create(task(),limits),beforeFit=fitSession.usage(),fitResult=fitted(fitSession,basicStructure);
+check(fitResult.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&fitResult.fit.linear.values[0]==="1"&&fitSession.usage().models===0,"A fitting result is a candidate, never implicit model admission or truth");
+if(fitResult.state!=="FITTED_CANDIDATE_NOT_ADMITTED"||!fitResult.fit.draft)throw Error("development_fit_not_verified");
+const fitAdmission=propose(fitSession,fitResult.fit.draft);
+check(fitAdmission.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&fitSession.usage().requests===2&&fitSession.usage().fitRequests===1
+  &&fitSession.usage().workUnits>beforeFit.workUnits&&fitSession.usage().nativeElapsedMs>0,"Fitting, original model admission and native cost share one finite request/work/time domain");
+const deficient=ScientificModelSession.create(task(),limits),deficientResult=fitted(deficient,structure([{label:"a",expression:"x"},{label:"b",expression:"x"}],["a","b"]));
+check(deficientResult.state==="INSUFFICIENT_EVIDENCE"&&"linearState"in deficientResult&&deficientResult.linearState==="UNDERDETERMINED"&&deficientResult.rank===1,
+  "Independent fitting replay confirms insufficient identifiability without creating a model");
+const inconsistent=ScientificModelSession.create(task(),limits),inconsistentResult=fitted(inconsistent,structure([{label:"a",expression:"one"}],["a"]));
+check(inconsistentResult.state==="REJECTED"&&"linearState"in inconsistentResult&&inconsistentResult.linearState==="INCONSISTENT","Independent replay separates a wrong proposed structure from rank ambiguity");
+function calibrationTask(xs:readonly string[],ys:readonly string[]):ScientificModelTask{
+  const t=task(),observations=xs.map((value,i)=>({pointId:`Cal${i}`,inputs:[{id:"x",value}],output:ys[i],evidenceRef:`OBS${i}`}));
+  return{...t,observations,experiments:t.experiments.map((e,i)=>({...e,inputs:[{id:"x",value:i?"7":"4"}]})),objective:{...t.objective,admittedEvidence:observations.map(o=>({...t.objective.admittedEvidence[0],evidenceId:o.evidenceRef,
+    provenanceRoot:o.evidenceRef,contentDigest:theoryDigest({pointId:o.pointId,inputs:o.inputs,output:o.output})}))}};
+}
+const rationalStructure=structure([{label:"a",expression:"x"},{label:"b",expression:"one"},{label:"c",expression:"x"}],["a","b"],["c"]);
+const rationalTask=calibrationTask(["0","1","2","3"],["3","5/2","7/3","9/4"]),rationalSession=ScientificModelSession.create(rationalTask,limits),rationalFit=fitted(rationalSession,rationalStructure);
+check(rationalFit.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&rationalFit.fit.linear.values.join("|")==="2|3|1","A model-authored rational denominator is fitted by calibration cross-multiplication, not hidden structure search");
+const rationalAdmission=rationalFit.state==="FITTED_CANDIDATE_NOT_ADMITTED"?propose(rationalSession,rationalFit.fit.draft!):null;
+check(rationalAdmission?.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH",
+  "Independently replayed rational fitting still passes the existing exact point prediction admission");
+check(rationalAdmission?.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&rationalSession.inspect(rationalAdmission.model).predictions.slice(-2).map(p=>p.value).join("|")==="11/5|17/8",
+  "Fitting uses calibration outputs only; prospective development extrapolation is evaluated afterward with the existing model interpreter");
+const affineStructure=structure([{label:"slope",expression:"x"},{label:"offset",expression:"one"}],["slope","offset"]);
+for(let i=1;i<=24;i++){
+  const ys=[String(-i),String(i),String(3*i)],t=calibrationTask(["0","1","2"],ys),s=ScientificModelSession.create(t,limits),r=fitted(s,affineStructure);
+  check(r.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&r.fit.linear.values.join("|")===`${2*i}|${-i}`,"Independent original-source replay recovers fresh development coefficients without equation-specific repair");
+  check(r.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&propose(s,r.fit.draft!).state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH","Every development coefficient variation preserves ordinary model admission and future-point derivation");
+}
+const multivariateTask=task(),multiInputs=[["0","0"],["1","0"],["0","1"],["2","3"]],multiOutputs=["4","6","1","-1"];
+const multiObs=multiInputs.map((values,i)=>({pointId:`Multi${i}`,inputs:[{id:"x",value:values[0]},{id:"z",value:values[1]}],output:multiOutputs[i],evidenceRef:`MULTI${i}`}));
+const multiTask:ScientificModelTask={...multivariateTask,variables:["x","z"],observations:multiObs,
+  experiments:multivariateTask.experiments.map(e=>({...e,inputs:[{id:"x",value:"3"},{id:"z",value:"5"}]})),objective:{...multivariateTask.objective,
+    admittedEvidence:multiObs.map(o=>({...multivariateTask.objective.admittedEvidence[0],evidenceId:o.evidenceRef,provenanceRoot:o.evidenceRef,
+      contentDigest:theoryDigest({pointId:o.pointId,inputs:o.inputs,output:o.output})}))}};
+const multiFit=fitted(ScientificModelSession.create(multiTask,limits),structure([{label:"a",expression:"x"},{label:"b",expression:"z"},{label:"c",expression:"one"}],["a","b","c"]));
+check(multiFit.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&multiFit.fit.linear.values.join("|")==="2|-3|4","The same fitter handles independently replayed multivariable calibration without task-specific structures or coefficients");
+const denseMatrix=Array.from({length:12},(_,i)=>Array.from({length:8},(_,j)=>String(i**j))),denseRhs=denseMatrix.map(row=>String(row.reduce((n,v,j)=>n+Number(v)*(j+1),0)));
+check(fitExactLinearSystem(denseMatrix,denseRhs,countedTick).values.join("|")==="1|2|3|4|5|6|7|8","Dense fitting exercises the maximum 12-row/8-column domain under a finite native work budget");
+const collisionStructure={...basicStructure,basis:{...basicStructure.basis,definitions:[{id:"FitBasis0",expression:"x"}],outputs:[{label:"a",expression:"FitBasis0"}]}};
+check(fitted(ScientificModelSession.create(task(),limits),collisionStructure).state==="FITTED_CANDIDATE_NOT_ADMITTED","Deterministic generated basis bindings avoid existing model-authored namespace collisions");
+const corruptNative=fitScientificStructure(rationalTask,rationalStructure,countedTick);
+const simpleFit=fitScientificStructure(task(),basicStructure,countedTick);
+check(fitVerify(task(),basicStructure,{...simpleFit,linear:{...simpleFit.linear,rank:true as unknown as number}}).decision==="DISAGREES",
+  "Independent detector rejects boolean-as-integer rank claims instead of relying on Python dictionary numeric equality");
+check(fitVerify(rationalTask,rationalStructure,{...corruptNative,linear:{...corruptNative.linear,values:["3","3","1"]}}).decision==="DISAGREES","Independent detector rejects planted coefficient corruption");
+check(fitVerify(rationalTask,rationalStructure,{...corruptNative,linear:{...corruptNative.linear,rank:1}}).decision==="DISAGREES","Independent detector rejects planted rank corruption");
+check(fitVerify(rationalTask,rationalStructure,{...corruptNative,draft:{...corruptNative.draft!,program:{schemaVersion:5,definitions:[],outputs:[{label:"response",expression:"a*x"}]}}}).decision==="DISAGREES",
+  "Independent detector recomputes original-basis semantics instead of trusting generated candidate code");
+const underNative=fitScientificStructure(task(),structure([{label:"a",expression:"x"},{label:"b",expression:"x"}],["a","b"]),countedTick);
+check(fitVerify(task(),structure([{label:"a",expression:"x"},{label:"b",expression:"x"}],["a","b"]),{...underNative,draft:draft("x")}).decision==="DISAGREES",
+  "A non-unique fit cannot smuggle an arbitrary completed candidate past independent replay");
+const degenerate=fitted(ScientificModelSession.create(task(),limits),structure([{label:"a",expression:"one"},{label:"b",expression:"one"}],["a"],["b"]));
+check(degenerate.state==="INSUFFICIENT_EVIDENCE","Unique cross-multiplied coefficients with a zero denominator are not accepted as a scientific function");
+let observedGetter=false;const getterStructure=Object.defineProperty({},"schemaVersion",{enumerable:true,get(){observedGetter=true;return 1;}});
+const badStructures=[getterStructure,{...basicStructure,command:"execute"},{...basicStructure,denominatorConstant:"zero"},{...basicStructure,numerator:["x"]},
+  {...basicStructure,numerator:["a","a"]},{...basicStructure,denominator:["a"]},structure([{label:"a",expression:"MIN(x,one)"}],["a"]),
+  {...basicStructure,basis:{schemaVersion:5,definitions:[{id:"a",expression:"x"}],outputs:[{label:"a",expression:"a"}]}},structure([{label:"a",expression:"missing+x"}],["a"])];
+for(const bad of badStructures)check(fitted(ScientificModelSession.create(task(),limits),bad).state==="REJECTED","Malformed, accessor, shadowed, unauthorized operation or unbound fitting structure rejects before model admission");
+check(!observedGetter,"Fitting does not invoke model-provided host getters during snapshotting");
+const oneFit=ScientificModelSession.create(task(),{...limits,maxRequests:1});fitted(oneFit,basicStructure);
+throws(()=>propose(oneFit,draft("x")),"One fitting request cannot create a free extra ordinary model-proposal request");
+const resourceFit=ScientificModelSession.create(task(),{...limits,maxWorkUnits:setup+2});
+check(fitted(resourceFit,basicStructure).state==="INSUFFICIENT_EVIDENCE","Fitting stops under the original shared work bound rather than refreshing its budget");
+const foreignFit=fitSession.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:"0".repeat(64),structure:basicStructure},fitVerify);
+check(foreignFit.state==="REJECTED"&&"reason"in foreignFit&&foreignFit.reason==="FIT_CONTRACT","Fitting cannot target another task domain or manufacture experiment authority");
+const conflictSession=ScientificModelSession.create(task(),limits),disagree=()=>({decision:"DISAGREES" as const,verificationDigest:"a".repeat(64)});
+fitted(conflictSession,basicStructure,disagree);const conflict=fitted(conflictSession,basicStructure);
+check(conflict.state==="REJECTED"&&"reason"in conflict&&conflict.reason==="CRITICAL_INDEPENDENT_FIT_CONFLICT","A later positive verifier cannot vote away a critical fitting disagreement");
+const malformedFit=fitted(ScientificModelSession.create(task(),limits),basicStructure,()=>({decision:"AGREES",verificationDigest:"forged"}));
+check(malformedFit.state==="INSUFFICIENT_EVIDENCE","Invalid independent fitting custody is not an acceptance vote");
+const brokenFit=fitted(ScientificModelSession.create(task(),limits),basicStructure,()=>{throw Error("verification_infrastructure");});
+check(brokenFit.state==="INSUFFICIENT_EVIDENCE","Independent verifier outages are neither model reasoning refutations nor passes");
+const fitReentry=ScientificModelSession.create(task(),limits);let fitReentryPrevented=false;
+const fitReentryResult=fitted(fitReentry,basicStructure,(t,s,f)=>{try{fitted(fitReentry,basicStructure);}catch{fitReentryPrevented=true;}return fitVerify(t,s,f);});
+check(fitReentryPrevented&&fitReentryResult.state==="FITTED_CANDIDATE_NOT_ADMITTED"&&fitReentry.usage().requests===1,"A fitting verifier cannot recursively interleave ownership or hidden native requests");
+const revokedFit=ScientificModelSession.create(task(),limits);revokedFit.revoke();throws(()=>fitted(revokedFit,basicStructure),"Revoked fitting authority remains unavailable");
+let fitClock=now;const expiredFit=ScientificModelSession.create(task(),{...limits,expiresAtEpochMs:now+1000},()=>fitClock);
+throws(()=>fitted(expiredFit,basicStructure,(t,s,f)=>{const v=fitVerify(t,s,f);fitClock=now+1000;return v;}),"Successful independent fitting evidence cannot admit after the original lease expires");
+fitClock=now;throws(()=>fitted(expiredFit,basicStructure),"Clock rollback cannot resurrect an expired fitting session");
+const nativeCognition=await runNyxScientificModelGeneration({session:ScientificModelSession.create(task(),limits),maxCalls:1,maxOutputTokens:2048,deadlineEpochMs:now+60000,verify,
+  nativeFit:{verify:fitVerify},complete:async request=>{const p=JSON.parse(request.messages[1].content);
+    check(p.nativeFitPolicy.grantsAuthority===false&&!JSON.stringify(p).includes("heldout")&&JSON.stringify(request.responseFormat).includes("denominatorConstant"),"Opt-in NYX cognition sees the original observations and typed fitting grammar, not a hidden formula catalog");
+    return fake(request,{schemaVersion:1,models:[basicStructure,quadraticStructure]});}});
+check(nativeCognition.competingModelsAdmitted&&nativeCognition.firstAttemptAdmitted&&nativeCognition.calls===1&&nativeCognition.nativeUsage.requests===4&&nativeCognition.nativeUsage.fitRequests===2,
+  "Existing NYX cognition composes two independently fitted structures with ordinary exact proposal admission (test double, not live reasoning evidence)");
+check(nativeCognition.attempts[0].proposals.every(p=>p.fit?.linearState==="UNIQUE"&&p.fit.rank===1)&&!JSON.stringify(nativeCognition.attempts).includes('"parameters"')
+  &&!nativeCognition.scientificTruthEstablished&&!nativeCognition.cognitiveGainDemonstrated&&!nativeCognition.authorityGranted,"Public fitting evidence contains bounded outcomes/costs rather than unnecessary source, coefficients, private reasoning or authority");
+const fitCapped=await runNyxScientificModelGeneration({session:ScientificModelSession.create(task(),{...limits,maxRequests:3}),maxCalls:2,maxOutputTokens:2048,deadlineEpochMs:now+60000,verify,nativeFit:{verify:fitVerify},
+  complete:async request=>fake(request,{schemaVersion:1,models:[basicStructure,quadraticStructure]})});
+check(!fitCapped.competingModelsAdmitted&&fitCapped.calls===1&&fitCapped.nativeUsage.requests===3&&fitCapped.models.length===1,"Finite fitting/proposal capacity cannot be silently increased to manufacture two admitted hypotheses");
+for(const [expression,code] of [["x+","SYNTAX"],["x y","TRAILING_TOKEN"],["foo(x)","FUNCTION_NOT_ALLOWED"],["-x","ZERO_NOT_BOUND"]] as const){
+  let caught:unknown;try{compileAlgebraicExpressionGraph(["x","y"],undefined,{schemaVersion:5,definitions:[],outputs:[{label:"a",expression}]});}catch(e){caught=e;}
+  check(algebraicBoundaryCode(caught)===code,"Generic OTHER diagnostics now expose the exact safe parser boundary without recovering failed live source");
+  check(!JSON.stringify(algebraicBoundaryCode(caught)).includes(expression),"Structural boundary feedback contains no proposed expression or offending token");
+}
+check(algebraicBoundaryCode(Error("quantitative_algebraic_invalid:SYNTAX"))===null,"Exception text alone cannot forge structural compiler provenance");
+check(fitCosts.length>24&&fitCosts.every(c=>c.elapsedMs>=0&&(c.childCpuMs===null||c.childCpuMs>=0))&&fitCosts.some(c=>c.decision==="DISAGREES"),
+  "Independent fitting replay costs and planted detector rejections are observable separately from model usage");
+console.log(`OMEGA_SCIENTIFIC_FIT_DEVELOPMENT nativeWorkUnits=${scalarTicks} independentCalls=${fitCosts.length} independentMs=${fitCosts.reduce((n,c)=>n+c.elapsedMs,0).toFixed(2)} liveModelCalls=0 cognitiveGainDemonstrated=false`);
 console.log(`OMEGA_SCIENTIFIC_MODEL_GENERATION_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);if(failed)process.exitCode=1;

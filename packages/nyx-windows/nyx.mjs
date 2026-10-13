@@ -598,6 +598,7 @@ var identifier = (s) => typeof s === "string" && /^[A-Za-z][A-Za-z0-9_]{0,47}$/.
 var fields = (v, names) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("\0") === [...names].sort().join("\0");
 var functions = /* @__PURE__ */ new Set(["MIN", "MAX", "BINOMIAL"]);
 var diagnostics = /* @__PURE__ */ new WeakMap();
+var boundaries = /* @__PURE__ */ new WeakMap();
 var ALGEBRAIC_EMISSION_POLICY = Object.freeze({
   version: "nyx-algebraic-emission-guidance/1",
   admissionChanged: false,
@@ -626,6 +627,7 @@ function compileAlgebraicExpressionGraph(names, zero, value, tick = () => {
   let region = "FORM", index = null;
   const fail2 = (code, category = "OTHER") => {
     const error = Error(`quantitative_algebraic_invalid:${code}`);
+    boundaries.set(error, code);
     diagnostics.set(error, Object.freeze({
       version: "nyx-algebraic-emission-diagnosis/1",
       category,

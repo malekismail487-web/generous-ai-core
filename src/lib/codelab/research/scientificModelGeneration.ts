@@ -1,6 +1,7 @@
 import { BoundedReasoningSession, snapshotBoundedReasoningData } from "./boundedReasoningWorkbench";
 import { canonicalRationalLiteral, validQuantitativeProblem } from "./exactQuantitativeDerivation";
-import { compileAlgebraicExpressionGraph, algebraicEmissionDiagnostic, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
+import { compileAlgebraicExpressionGraph, algebraicEmissionDiagnostic, algebraicBoundaryCode, type AlgebraicBoundaryCode, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
+import { fitScientificStructure, type ScientificModelStructure, type ScientificFitVerifier, type ScientificStructureFit } from "./scientificModelFit";
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
 import { validResearchObjective, researchObjectiveDigest, type ResearchPartyObjective, type TheoryContribution } from "./researchPartyContracts";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
@@ -30,7 +31,10 @@ export type ScientificDerivationVerifier=(task:ScientificModelTask,draft:Scienti
 interface Artifact {readonly ref:ScientificModelRef;readonly draft:ScientificModelDraft;readonly predictions:readonly ScientificPrediction[];
   readonly independentVerificationDigest:string;readonly observedAtEpochMs:number}
 export type ScientificModelProposalResult={readonly state:"ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH";readonly model:ScientificModelRef;readonly resultDigest:string}
-  |{readonly state:"REJECTED"|"INSUFFICIENT_EVIDENCE";readonly reason:string;readonly contradictedObservationIds:readonly string[];readonly resultDigest:string};
+  |{readonly state:"REJECTED"|"INSUFFICIENT_EVIDENCE";readonly reason:string;readonly contradictedObservationIds:readonly string[];readonly resultDigest:string;readonly emissionBoundary?:AlgebraicBoundaryCode};
+export type ScientificFitResult = {readonly state:"FITTED_CANDIDATE_NOT_ADMITTED";readonly fit:ScientificStructureFit;readonly resultDigest:string}
+  | {readonly state:"REJECTED"|"INSUFFICIENT_EVIDENCE";readonly reason:string;readonly linearState?:ScientificStructureFit["linear"]["state"];
+    readonly rank?:number;readonly resultDigest:string;readonly emissionBoundary?:AlgebraicBoundaryCode};
 const keys=(v:unknown,n:readonly string[]):boolean=>!!v&&typeof v==="object"&&!Array.isArray(v)&&Object.keys(v).sort().join("|")===[...n].sort().join("|");
 const id=(v:unknown):v is string=>typeof v==="string"&&/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(v);
 const texts=(v:unknown):v is string[]=>Array.isArray(v)&&v.length>=1&&v.length<=5&&new Set(v).size===v.length
@@ -45,7 +49,8 @@ export class ScientificModelSession {
   readonly task:ScientificModelTask;readonly taskDigest:string;
   readonly #limits:ScientificModelLimits;readonly #now:()=>number;
   readonly #owned=new Map<ScientificModelRef,Artifact>();readonly #programs=new Set<string>();readonly #refutedDerivations=new Set<string>();
-  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#lastTime:number;#unavailable=false;#busy=false;
+  readonly #refutedFits=new Set<string>();
+  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#fitRequests=0;#lastTime:number;#unavailable=false;#busy=false;
   private constructor(task:ScientificModelTask,limits:ScientificModelLimits,now:()=>number,createdAt:number){
     this.task=task;this.taskDigest=theoryDigest(task);this.#limits=limits;this.#now=now;this.#lastTime=createdAt;this.#available();
   }
@@ -94,8 +99,44 @@ export class ScientificModelSession {
   #canonical(s:string){return canonicalRationalLiteral(s,()=>this.#tick());}
   revoke(){this.#unavailable=true;}
   get expiresAtEpochMs(){return this.#limits.expiresAtEpochMs;}
-  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,models:this.#owned.size});}
+  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,fitRequests:this.#fitRequests,models:this.#owned.size});}
   inspect(model:ScientificModelRef){this.#available();const a=this.#owned.get(model);if(!a)throw Error("scientific_model_foreign_reference");return a;}
+  /** Opt-in native capability: fit is one charged request; ordinary proposal is
+   * another. Neither renews the shared lease/budget or admits a model on its own. */
+  fit(request:unknown,verify:ScientificFitVerifier):ScientificFitResult{
+    this.#available();if(this.#busy)throw Error("scientific_model_reentrant_request");
+    if(this.#requests>=this.#limits.maxRequests)throw Error("scientific_model_request_budget");
+    this.#requests++;this.#fitRequests++;this.#busy=true;
+    const start=performance.now();let elapsedRecorded=false;
+    const tick=()=>{this.#tick();if(this.#nativeElapsedMs+performance.now()-start>=this.#limits.maxNativeElapsedMs)throw Error("scientific_fit_time_budget");};
+    const finishTime=()=>{if(!elapsedRecorded){this.#nativeElapsedMs+=Math.max(0,performance.now()-start);elapsedRecorded=true;}};
+    const reject=(reason:string,state:"REJECTED"|"INSUFFICIENT_EVIDENCE"="REJECTED",extra:{linearState?:ScientificStructureFit["linear"]["state"];rank?:number;emissionBoundary?:AlgebraicBoundaryCode}={}):ScientificFitResult=>{
+      const r={state,reason,...extra};return immutableTheoryValue({...r,resultDigest:theoryDigest({task:this.taskDigest,request:this.#requests,...r})});};
+    try{
+      tick();const r=snapshotBoundedReasoningData(request) as Record<string,unknown>;
+      if(!keys(r,["schemaVersion","operation","taskDigest","structure"])||r.schemaVersion!==1||r.operation!=="FIT_SCIENTIFIC_MODEL"
+        ||r.taskDigest!==this.taskDigest||typeof verify!=="function")return reject("FIT_CONTRACT");
+      const structure=r.structure as ScientificModelStructure,key=theoryDigest(structure);
+      if(this.#refutedFits.has(key))return reject("CRITICAL_INDEPENDENT_FIT_CONFLICT");
+      const fit=fitScientificStructure(this.task,structure,tick);tick();finishTime();
+      let independent:ReturnType<ScientificFitVerifier>;
+      try{independent=snapshotBoundedReasoningData(verify(this.task,structure,fit));}
+      catch{return reject("INDEPENDENT_FIT_VERIFIER_FAILURE","INSUFFICIENT_EVIDENCE");}
+      this.#available();
+      if(!keys(independent,["decision","verificationDigest"])||!["AGREES","DISAGREES","INSUFFICIENT_EVIDENCE"].includes(independent.decision)||!digest(independent.verificationDigest))
+        return reject("INDEPENDENT_FIT_VERIFIER_CONTRACT","INSUFFICIENT_EVIDENCE");
+      if(independent.decision==="DISAGREES"){this.#refutedFits.add(key);return reject("INDEPENDENT_FIT_DISAGREEMENT");}
+      if(independent.decision!=="AGREES")return reject("INDEPENDENT_FIT_INSUFFICIENT","INSUFFICIENT_EVIDENCE");
+      if(!fit.draft)return reject("CALIBRATION_"+fit.linear.state,fit.linear.state==="INCONSISTENT"?"REJECTED":"INSUFFICIENT_EVIDENCE",{linearState:fit.linear.state,rank:fit.linear.rank});
+      return immutableTheoryValue({state:"FITTED_CANDIDATE_NOT_ADMITTED",fit,resultDigest:theoryDigest({task:this.taskDigest,structure:key,fit,independent:independent.verificationDigest})});
+    }catch(error){
+      if(String(error).includes("session_unavailable"))throw error;
+      const boundary=algebraicBoundaryCode(error);
+      if(boundary)return reject("FIT_ALGEBRAIC_REJECTION","REJECTED",{emissionBoundary:boundary});
+      const resource=String(error).includes("budget"),arithmetic=String(error).includes("arithmetic_boundary");
+      return reject(resource?"FIT_RESOURCE_BUDGET":arithmetic?"FIT_ARITHMETIC_BOUNDARY":"FIT_STRUCTURE_REJECTION",resource||arithmetic?"INSUFFICIENT_EVIDENCE":"REJECTED");
+    }finally{finishTime();this.#busy=false;}
+  }
   propose(request:unknown,verify:ScientificDerivationVerifier):ScientificModelProposalResult{
     this.#available();if(this.#busy)throw Error("scientific_model_reentrant_request");
     if(this.#requests>=this.#limits.maxRequests)throw Error("scientific_model_request_budget");
@@ -122,9 +163,10 @@ export class ScientificModelSession {
       if(this.#refutedDerivations.has(programDigest))return reject("CRITICAL_INDEPENDENT_DERIVATION_CONFLICT");
       const predictions:ScientificPrediction[]=[];
       for(const point of [...this.task.observations.map(o=>({pointId:o.pointId,inputs:o.inputs})),...this.task.experiments.map(e=>({pointId:e.experimentId,inputs:e.inputs}))]){
-        this.#tick();if(this.#nativeElapsedMs>=this.#limits.maxNativeElapsedMs)return reject("NATIVE_TIME_BUDGET","INSUFFICIENT_EVIDENCE");
+        this.#tick();const remainingNativeMs=Math.floor(this.#limits.maxNativeElapsedMs-this.#nativeElapsedMs);
+        if(remainingNativeMs<1)return reject("NATIVE_TIME_BUDGET","INSUFFICIENT_EVIDENCE");
         const pointSession=BoundedReasoningSession.create({kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[...constants,...point.inputs]},
-          {maxRequests:1,maxWorkUnits:Math.max(1,this.#limits.maxWorkUnits-this.#units),maxElapsedMs:this.#limits.maxNativeElapsedMs-this.#nativeElapsedMs,
+          {maxRequests:1,maxWorkUnits:Math.max(1,this.#limits.maxWorkUnits-this.#units),maxElapsedMs:remainingNativeMs,
             expiresAtEpochMs:this.#limits.expiresAtEpochMs},()=>this.#available(),{expressionGraphs:false,algebraicForms:true});
         let result:ReturnType<BoundedReasoningSession["analyze"]>;
         try{this.#nativeRequests++;result=pointSession.analyze({schemaVersion:1,operation:"ANALYZE_FINITE_PROBLEM",problemDigest:pointSession.problemDigest,program:draft.program});}
@@ -152,7 +194,8 @@ export class ScientificModelSession {
     }catch(error){
       if(String(error).includes("session_unavailable"))throw error;
       const diagnostic=algebraicEmissionDiagnostic(error);
-      if(diagnostic)return reject("ALGEBRAIC_"+diagnostic.category);
+      if(diagnostic){const rejected=reject("ALGEBRAIC_"+diagnostic.category),emissionBoundary=algebraicBoundaryCode(error)!;
+        return immutableTheoryValue({...rejected,emissionBoundary,resultDigest:theoryDigest({previousDigest:rejected.resultDigest,emissionBoundary})});}
       return reject(String(error).includes("budget")?"RESOURCE_BUDGET":"IR_OR_DRAFT_REJECTION",String(error).includes("budget")?"INSUFFICIENT_EVIDENCE":"REJECTED");
     }finally{this.#busy=false;}
   }

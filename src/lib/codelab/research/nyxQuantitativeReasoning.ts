@@ -10,6 +10,7 @@ import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, ALGEBRAIC_EMISS
   type AlgebraicEmissionDiagnostic, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { SemanticPolynomialSession, SEMANTIC_POLYNOMIAL_POLICY, type SemanticPolynomialTask } from "./semanticPolynomialProof";
 import { ScientificModelSession, SCIENTIFIC_MODEL_POLICY, type ScientificModelDraft, type ScientificModelRef, type ScientificDerivationVerifier } from "./scientificModelGeneration";
+import { scientificStructureSchema, SCIENTIFIC_FIT_POLICY, type ScientificModelStructure, type ScientificFitVerifier } from "./scientificModelFit";
 
 /** Existing NYX cognition proposes models, not choices from a host answer list.
  * Independently checked point derivations remain hypotheses until prospective
@@ -18,27 +19,37 @@ import { ScientificModelSession, SCIENTIFIC_MODEL_POLICY, type ScientificModelDr
 export async function runNyxScientificModelGeneration(input:{readonly session:ScientificModelSession;
   readonly complete:(request:NvidiaNimCompletionRequest)=>Promise<NvidiaNimCompletionResult>;
   readonly verify:ScientificDerivationVerifier;readonly maxCalls:number;readonly maxOutputTokens:number;
-  readonly deadlineEpochMs:number;readonly now?:()=>number}){
+  readonly deadlineEpochMs:number;readonly now?:()=>number;readonly nativeFit?:{readonly verify:ScientificFitVerifier}}){
   const now=input.now??Date.now,start=now(),task=input.session.task,deadline=Math.min(input.deadlineEpochMs,task.objective.expiryEpochMs,input.session.expiresAtEpochMs);
   if(!Number.isSafeInteger(input.maxCalls)||input.maxCalls<1||input.maxCalls>4||!Number.isSafeInteger(input.maxOutputTokens)
     ||input.maxOutputTokens<128||input.maxOutputTokens>8192||!Number.isSafeInteger(deadline)||deadline<=start||deadline>start+600000
-    ||typeof input.complete!=="function"||typeof input.verify!=="function")throw Error("scientific_generation_configuration_invalid");
+    ||typeof input.complete!=="function"||typeof input.verify!=="function"
+    ||input.nativeFit!==undefined&&(typeof input.nativeFit!=="object"||!input.nativeFit||typeof input.nativeFit.verify!=="function"))throw Error("scientific_generation_configuration_invalid");
   const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
   const statements={type:"array",minItems:1,maxItems:5,items:{type:"string",minLength:1,maxLength:160}};
   const draftSchema=object({schemaVersion:{type:"integer",enum:[1]},parameters:{type:"array",minItems:0,maxItems:16,
     items:object({id:{type:"string",pattern:"^[A-Za-z][A-Za-z0-9_]{0,47}$"},value:{type:"string",maxLength:260,pattern:"^-?(0|[1-9][0-9]*)(/[1-9][0-9]*)?$"}})},
     program:quantitativeAlgebraicSchema(["response"],true),assumptions:statements,uncertainties:statements});
-  const schema=object({schemaVersion:{type:"integer",enum:[1]},models:{type:"array",minItems:2,maxItems:4,items:draftSchema}});
+  const schema=object({schemaVersion:{type:"integer",enum:[1]},models:{type:"array",minItems:2,maxItems:4,items:input.nativeFit?scientificStructureSchema():draftSchema}});
   const models:ScientificModelRef[]=[],attempts:{call:number;outcome:string;modelEvidence:NvidiaNimEvidence;
-    proposals:{state:string;reason:string|null;contradictedObservationIds:readonly string[];resultDigest:string;modelId:string|null}[]}[]=[];
-  let previous:readonly ScientificModelDraft[]|null=null,feedback:unknown=null,sessionStopped=false;
-  for(let call=1;call<=input.maxCalls&&now()<deadline&&models.length<2&&!sessionStopped&&input.session.usage().remainingRequests>0;call++){
+    proposals:{state:string;reason:string|null;contradictedObservationIds:readonly string[];resultDigest:string;modelId:string|null;
+      emissionBoundary?:string;fit?:{state:string;linearState:string|null;rank:number|null;resultDigest:string}}[]}[]=[];
+  let previous:readonly (ScientificModelDraft|ScientificModelStructure)[]|null=null,feedback:unknown=null,sessionStopped=false;
+  for(let call=1;call<=input.maxCalls&&now()<deadline&&models.length<2&&!sessionStopped&&input.session.usage().remainingRequests>=(input.nativeFit?2:1);call++){
     const result=await input.complete({schemaVersion:1,requestId:`NYX-SCIENCE-MODELS-${input.session.taskDigest.slice(0,16)}-${call}`,
-      messages:[{role:"system",content:"You are NYX cognition investigating a scientific objective under Omega. Propose two genuinely competing mathematical models consistent with the admitted measurements. "
+      messages:[{role:"system",content:(input.nativeFit?"You are NYX cognition investigating a scientific objective under Omega. Author two genuinely competing mathematical structures. "
+        +"Return the strict structure JSON contract. You choose all basis functions and structure, never a prewritten model list. "
+        +"Each basis output label names a distinct coefficient, partitioned exactly into numerator and denominator. "
+        +"The proposed response is sum(numerator coefficients times their basis outputs) divided by a named nonzero original constant plus sum(denominator coefficients times their basis outputs). "
+        +"The bounded native tool fits coefficients ONLY from admitted measurements; rank deficiency returns uncertainty, not guessed free coefficients. "
+        +"Use only original variables/constants and earlier definitions in the basis, + - * / and parentheses, no numeric literals, powers, host code or private reasoning. "
+        +"No coefficient name may shadow an original binding or definition. Supply genuine assumptions and uncertainties. "
+        +"Fitting and arithmetic do not establish scientific truth, novelty, or authority. Prospective experiments remain independently authorized."
+        :"You are NYX cognition investigating a scientific objective under Omega. Propose two genuinely competing mathematical models consistent with the admitted measurements. "
         +"Return the strict model JSON contract, not an executable script or a success claim. Models are deterministic rational response functions over the declared inputs. "
         +"Use only named variables/constants/your explicit rational parameters; use + - * / and parentheses, no numeric literals in expressions, powers, host code or private reasoning. "
-        +"Every model must include genuine assumptions and unresolved uncertainty. Training fit and correct arithmetic do not prove scientific truth. If candidate models cannot be discriminated, preserve that uncertainty."},
-      {role:"user",content:JSON.stringify({task,policy:SCIENTIFIC_MODEL_POLICY,previousCandidates:previous,feedback})}],
+        +"Every model must include genuine assumptions and unresolved uncertainty. Training fit and correct arithmetic do not prove scientific truth. If candidate models cannot be discriminated, preserve that uncertainty.")},
+      {role:"user",content:JSON.stringify({task,policy:SCIENTIFIC_MODEL_POLICY,previousCandidates:previous,feedback,...(input.nativeFit?{nativeFitPolicy:SCIENTIFIC_FIT_POLICY}: {})})}],
       maxTokens:input.maxOutputTokens,temperature:0,inferencePolicy:"REASONING_JSON",reasoningEffort:"MEDIUM",
       responseFormat:{type:"JSON_SCHEMA",name:"nyx_scientific_model_proposals",schema},observedAtEpochMs:now(),deadlineEpochMs:deadline});
     const evidence=snapshotBoundedReasoningData(result.evidence),proposals:typeof attempts[number]["proposals"]=[];
@@ -47,24 +58,39 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
     if(result.finishReason==="length"){record("TRUNCATION");feedback={reason:"COMPLETE_JSON_REQUIRED"};continue;}
     if(result.decision!=="COMPLETED"||result.content===null){record("PROVIDER_FAILURE");feedback={reason:"DELIVERY_NOT_REASONING_FAILURE"};continue;}
     if(result.finishReason!=="stop"){record("NONSTOP_REJECTION");continue;}
-    let parsed:{schemaVersion:1;models:ScientificModelDraft[]};
+    let parsed:{schemaVersion:1;models:(ScientificModelDraft|ScientificModelStructure)[]};
     try{parsed=snapshotBoundedReasoningData(JSON.parse(result.content));
       if(!keys(parsed,["schemaVersion","models"])||parsed.schemaVersion!==1||!Array.isArray(parsed.models)||parsed.models.length<2||parsed.models.length>4)throw Error("shape");}
     catch{record("JSON_OR_DATA_REJECTION");feedback={reason:"STRICT_COMPLETE_MODEL_CONTRACT_REQUIRED"};continue;}
     previous=parsed.models;
-    for(const draft of parsed.models){
+    for(const proposed of parsed.models){
       if(now()>=deadline||input.session.usage().remainingRequests===0)break;
       let admitted:ReturnType<ScientificModelSession["propose"]>;
-      try{admitted=input.session.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:input.session.taskDigest,draft},input.verify);}
+      let draft=proposed as ScientificModelDraft,fitMeta:typeof proposals[number]["fit"];
+      try{
+        if(input.nativeFit){
+          const fitted=input.session.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:input.session.taskDigest,structure:proposed},input.nativeFit.verify);
+          fitMeta={state:fitted.state,linearState:"fit"in fitted?fitted.fit.linear.state:fitted.linearState??null,
+            rank:"fit"in fitted?fitted.fit.linear.rank:fitted.rank??null,resultDigest:fitted.resultDigest};
+          if(fitted.state!=="FITTED_CANDIDATE_NOT_ADMITTED"||input.session.usage().remainingRequests===0){
+            proposals.push({state:fitted.state==="FITTED_CANDIDATE_NOT_ADMITTED"?"INSUFFICIENT_EVIDENCE":fitted.state,
+              reason:"reason"in fitted?fitted.reason:"PROPOSAL_BUDGET_EXHAUSTED",contradictedObservationIds:[],resultDigest:fitted.resultDigest,modelId:null,
+              fit:fitMeta,...("emissionBoundary"in fitted?{emissionBoundary:fitted.emissionBoundary}: {})});continue;
+          }
+          draft=fitted.fit.draft!;
+        }
+        admitted=input.session.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:input.session.taskDigest,draft},input.verify);
+      }
       catch{sessionStopped=true;break;}
       proposals.push({state:admitted.state,reason:"reason"in admitted?admitted.reason:null,
         contradictedObservationIds:"contradictedObservationIds"in admitted?admitted.contradictedObservationIds:[],resultDigest:admitted.resultDigest,
-        modelId:"model"in admitted?admitted.model.modelId:null});
+        modelId:"model"in admitted?admitted.model.modelId:null,...(fitMeta?{fit:fitMeta}: {}),
+        ...("emissionBoundary"in admitted?{emissionBoundary:admitted.emissionBoundary}: {})});
       if(admitted.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")models.push(admitted.model);
     }
     record(sessionStopped?"SESSION_UNAVAILABLE":models.length>=2?"COMPETING_MODEL_DERIVATIONS_ADMITTED":"MODEL_PROPOSALS_NOT_ADMITTED");feedback=proposals;
   }
-  return Object.freeze({version:"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
+  return Object.freeze({version:input.nativeFit?"nyx-scientific-model-generation/native-fit-1":"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
     attempts:immutableTheoryValue(attempts),calls:attempts.length,firstAttemptAdmitted:attempts[0]?.outcome==="COMPETING_MODEL_DERIVATIONS_ADMITTED",
     competingModelsAdmitted:models.length>=2,nativeUsage:input.session.usage(),elapsedMs:Math.max(0,now()-start),
     scientificTruthEstablished:false as const,cognitiveGainDemonstrated:false as const,authorityGranted:false as const,

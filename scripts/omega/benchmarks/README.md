@@ -3757,3 +3757,22 @@ Next isolate model-fit and sanitized parser-diagnostic gaps on development data,
 investigate general exact fitting of model-authored structure without supplying
 these worlds' formulas, then measure fresh transfer. These exposed worlds are
 not a fresh follow-up evaluation corpus.
+
+### Development-only exact scientific coefficient fitting
+
+The new opt-in `nativeFit` path lets NYX author rational basis/structure while
+the existing exact interpreter estimates up to eight coefficients from admitted
+calibration. Independent original-source Python Fraction replay checks rank,
+residuals, coefficients and point-representation fidelity. Underdetermined,
+inconsistent and zero-denominator results do not become accepted models.
+Fitting and ordinary proposal consume separate requests in the same original
+work/time/expiry domain; no authority or production change is introduced.
+
+Offline development checks cover 24 affine variations, rational/multivariable
+structures, dense bounds, planted verifier corruptions and typed test-double
+composition. Generic parser failures now carry an additional safe boundary enum
+without weakening admission. Development exposed and repaired a fractional-
+millisecond budget handoff incompatibility. These changes support a future fresh
+comparison: **zero new live calls, no cognitive or benchmark promotion**. The
+fitting tool does not encode the three exposed pilot equations or access their
+held-out truth. See the [method and limits](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md).

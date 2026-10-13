@@ -209,6 +209,70 @@ global novelty, causal identifiability, calibrated uncertainty, broad scientific
 reasoning or completion of the nine-document program. Physical observation,
 domain review and independent replication remain separate prerequisites.
 
+## Bounded coefficient-fitting intervention
+
+The source now contains a process-local, host-enabled coefficient-fitting
+capability. `ScientificModelStructure` declares basis expressions and partitions
+their output labels into numerator and denominator coefficient identities. NYX
+authors that structure; the tool does not select a template, search hidden
+equations or receive held-out outputs. Its response form is:
+
+`sum(a_i * phi_i(inputs)) / (original_nonzero_constant + sum(b_j * psi_j(inputs)))`
+
+Calibration cross-multiplication yields an exact linear system. Bounded RREF
+uses the **existing** rational interpreter for every scalar operation: at most
+12 observation rows, 8 coefficients, original 4096-bit arithmetic limits and
+charged parsing/GCD/elimination/original-row residual work. UNIQUE,
+UNDERDETERMINED and INCONSISTENT are distinct. Free coefficients are not guessed.
+Original source-parameter, expression, definition and operation limits remain;
+oversized fitted coefficients and unsupported bases are not silently admitted.
+
+The independent Python verifier reparses the original basis and calibration
+with its existing Fraction interpreter, performs elimination/back substitution
+and checks rank, coefficients, residuals and generated candidate point semantics.
+It does not trust native basis values or pivot claims. A cross-multiplied solution
+with zero denominator remains unusable, not a discovered law. Planted coefficient,
+rank, candidate-expression and non-unique-completion corruptions test the detector.
+Verifier wall/CPU cost is separately observable, not folded into model tokens.
+
+`ScientificModelSession.fit` consumes one original request; ordinary `propose`
+consumes another and still independently evaluates the full point population.
+Neither renews expiry or work/time limits. Reentry, foreign task identity,
+revocation, expired success and a critical independent disagreement fail closed.
+High-resolution fitting time is rounded **down** only when transferring the
+remaining allowance to the integer-millisecond existing evaluator. This fixes
+the fractional-time admission defect found during development without increasing
+the budget. Fitting grants no experiment, filesystem, network or production
+authority, and cannot itself create an owned model reference.
+
+`runNyxScientificModelGeneration` has an explicit `nativeFit.verify` opt-in.
+It composes the same NYX/Nemotron completion boundary, fitting capability and
+ordinary proposal verification. Default literal generation and Ultra remain
+unchanged. Attempts retain bounded fit states/rank/digests, parser-boundary codes
+and usage; they do not persist unnecessary coefficient/source/private reasoning.
+The original algebraic diagnostic /1 contract is retained. A separately accessible
+finite boundary enum distinguishes the previous generic OTHER's syntax,
+trailing-token, function and binding failures; it cannot recover old pilot source.
+
+Development tests exercise rational and multivariable structures, 24 fresh affine
+coefficient variations, maximum dense matrices, contradictory/rank-deficient and
+zero-denominator cases, corruption detectors, prospective development inputs and
+test-double cognition composition. These are E3 component/integration evidence,
+**not** new live cognition, broad scientific competence, original discovery or
+comparative improvement. No exposed pilot or official benchmark was rerun.
+Next freeze family-disjoint live tasks with unchanged independent acceptance,
+same-model simpler and same-tool controls/ablations, honest native/verifier/model
+compute and first-versus-repaired outcomes. Promotion remains unavailable until
+fresh outcomes or efficiency improve under a defensible comparison.
+
+Additional just-in-time coverage: AD10 grounded hypotheses, executable predicted
+outcomes and feedback/reframing; D06 scientific models and typed verifier diversity;
+D04 bounded native computation. Deferred: noisy/statistical fitting, nonlinear
+parameter search, causal identifiability, dimensional fidelity, original novelty,
+formal mathematics, learned experimental design and full-program confidence.
+AI Feynman's coefficient-fitting/structure-search separation is methodological
+inspiration, not a NYX replication or inheritance of its published results.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

@@ -36,6 +36,15 @@ export interface AlgebraicEmissionDiagnostic {
   readonly admissionChanged: false;
 }
 const diagnostics = new WeakMap<Error, AlgebraicEmissionDiagnostic>();
+export type AlgebraicBoundaryCode = "SHAPE_OR_BOUND" | "DEFINITION_SHAPE_OR_BOUND" | "OUTPUT_SHAPE_OR_BOUND"
+  | "OPERATION_BOUND" | "IDENTIFIER_BOUND" | "LEXICAL_TOKEN" | "SYNTAX" | "DEPTH_BOUND"
+  | "ZERO_NOT_BOUND" | "FUNCTION_NOT_ALLOWED" | "NAME_NOT_BOUND" | "TRAILING_TOKEN";
+const boundaries = new WeakMap<Error, AlgebraicBoundaryCode>();
+/** Additional bounded enum for callers that need actionable structural feedback.
+ * Preserve the original /1 diagnostic and admission contract unchanged. */
+export function algebraicBoundaryCode(error: unknown): AlgebraicBoundaryCode | null {
+  return error instanceof Error ? boundaries.get(error) ?? null : null;
+}
 export function algebraicEmissionDiagnostic(error: unknown): AlgebraicEmissionDiagnostic | null {
   return error instanceof Error ? diagnostics.get(error) ?? null : null;
 }
@@ -80,8 +89,9 @@ export function compileAlgebraicExpressionGraph(names: readonly string[], zero: 
     || names.some(n => !identifier(n)) || new Set(names).size !== names.length
     || zero !== undefined && !names.includes(zero)) throw Error("algebraic_symbol_bindings_invalid");
   let region: AlgebraicEmissionDiagnostic["region"] = "FORM", index: number | null = null;
-  const fail = (code: string, category: AlgebraicEmissionDiagnostic["category"] = "OTHER"): never => {
+  const fail = (code: AlgebraicBoundaryCode, category: AlgebraicEmissionDiagnostic["category"] = "OTHER"): never => {
     const error = Error(`quantitative_algebraic_invalid:${code}`);
+    boundaries.set(error, code);
     diagnostics.set(error, Object.freeze({ version: "nyx-algebraic-emission-diagnosis/1", category,
       region, index, admissionChanged: false }));
     throw error;
