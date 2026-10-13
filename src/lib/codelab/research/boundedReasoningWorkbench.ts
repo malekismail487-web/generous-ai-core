@@ -158,8 +158,9 @@ function validProblem(value: unknown): value is ReasoningProblem {
   return false;
 }
 
-class SearchBudgetExceeded extends Error {}
-class WorkBudget {
+export class SearchBudgetExceeded extends Error {}
+/** Shared finite native-work budget; exporting it grants no execution authority. */
+export class WorkBudget {
   units = 0;
   readonly started: number;
   readonly maximum: number;

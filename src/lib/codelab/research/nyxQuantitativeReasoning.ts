@@ -8,6 +8,7 @@ import { BoundQuantitativeProcedure } from "./quantitativeProcedureReuse";
 import { quantitativeExpressionSchema, EXPRESSION_COMPILER_POLICY, type QuantitativeExpressionGraph } from "./quantitativeExpressionCompiler";
 import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, ALGEBRAIC_EMISSION_POLICY, algebraicEmissionDiagnostic,
   type AlgebraicEmissionDiagnostic, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
+import { SemanticPolynomialSession, SEMANTIC_POLYNOMIAL_POLICY, type SemanticPolynomialTask } from "./semanticPolynomialProof";
 
 export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
 export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;
@@ -15,6 +16,94 @@ export interface QuantitativeRunLimits { readonly maxCalls: number; readonly max
   readonly maxToolWorkUnits: number; readonly maxToolElapsedMs: number }
 export interface QuantitativeAcceptance { readonly accepted: boolean; readonly findings: readonly string[];
   readonly verificationDigest: string }
+
+/** The same NYX cognition/provider boundary, now operating immutable symbolic
+ * construction goals. Not a new model controller, provider or executor. The
+ * independent evaluator is supplied by the trusted host, never the model.
+ */
+export async function runNyxSemanticProofTask(input: {
+  readonly task: SemanticPolynomialTask;
+  readonly complete: (request: NvidiaNimCompletionRequest) => Promise<NvidiaNimCompletionResult>;
+  readonly verify: (task: SemanticPolynomialTask, candidate: QuantitativeAlgebraicForm) => QuantitativeAcceptance;
+  readonly limits: QuantitativeRunLimits;
+  readonly obligationGuidance: boolean;
+  readonly now?: () => number;
+}) {
+  const now = input.now ?? Date.now, limits = snapshotBoundedReasoningData(input.limits), start = now();
+  if (!keys(limits, ["maxCalls", "maxOutputTokens", "maxTaskMs", "expiresAtEpochMs", "maxToolRequests", "maxToolWorkUnits", "maxToolElapsedMs"])
+    || !Number.isSafeInteger(limits.maxCalls) || limits.maxCalls < 1 || limits.maxCalls > 4
+    || !Number.isSafeInteger(limits.maxOutputTokens) || limits.maxOutputTokens < 128 || limits.maxOutputTokens > 8192
+    || !Number.isSafeInteger(limits.maxTaskMs) || limits.maxTaskMs < 1000 || limits.maxTaskMs > 600000
+    || typeof input.obligationGuidance !== "boolean" || typeof input.complete !== "function" || typeof input.verify !== "function")
+    throw Error("semantic_nyx_configuration_invalid");
+  const deadline = Math.min(limits.expiresAtEpochMs, start + limits.maxTaskMs);
+  const session = SemanticPolynomialSession.create(input.task, { maxRequests: limits.maxToolRequests,
+    maxWorkUnits: limits.maxToolWorkUnits, maxElapsedMs: limits.maxToolElapsedMs, expiresAtEpochMs: deadline }, now);
+  const task = session.task;
+  let previous: QuantitativeAlgebraicForm | null = null, parent: string | null = null, accepted = false;
+  let feedback: unknown = null, acceptedCandidate: QuantitativeAlgebraicForm | null = null;
+  const independentFailures: { candidateDigest: string; findings: readonly string[]; verificationDigest: string }[] = [];
+  const attempts: { call: number; outcome: string; candidateDigest: string | null; resultDigest: string | null;
+    independentVerificationDigest: string | null; modelEvidence: NvidiaNimEvidence }[] = [];
+  try {
+    for (let call = 1; call <= limits.maxCalls && now() < deadline; call++) {
+      const completion = await input.complete({ schemaVersion: 1, requestId: `NYX-SEMANTIC-${session.problemDigest.slice(0,16)}-${call}`,
+        messages: [{ role: "system", content: "You are NYX cognition constructing a mathematical candidate under Omega. "
+          + "Return one strict algebraic-form JSON object using only the original symbols/constants. "
+          + "Every required output is an expression, not a claim of success. No numeric literals, powers, Markdown, executable text or private reasoning. "
+          + "A verifier's exact counterexample refutes a candidate, not the existence of a solution. Revise the mathematical construction; do not change its task." },
+        { role: "user", content: JSON.stringify({ task, policy: SEMANTIC_POLYNOMIAL_POLICY,
+          previousCandidate: previous, feedback, independentFailures, ...(input.obligationGuidance ? { obligations: session.workPacket(),
+            searchInstruction: "Preserve verified independent subgoals whose candidate dependencies are unchanged. "
+              + "Prioritize falsified/eligible obligations; revise the global construction when its model is wrong, not just its formatting." } : {}) }) }],
+        maxTokens: limits.maxOutputTokens, temperature: 0, inferencePolicy: "REASONING_JSON", reasoningEffort: "MEDIUM",
+        responseFormat: { type: "JSON_SCHEMA", name: "nyx_semantic_polynomial_candidate", schema: quantitativeAlgebraicSchema(task.outputLabels, true) },
+        observedAtEpochMs: now(), deadlineEpochMs: deadline });
+      const evidence = snapshotBoundedReasoningData(completion.evidence);
+      const record = (outcome: string, candidateDigest: string | null = null, resultDigest: string | null = null,
+        independentVerificationDigest: string | null = null) => attempts.push({ call, outcome, candidateDigest, resultDigest, independentVerificationDigest, modelEvidence: evidence });
+      if (now() >= deadline) { record("LATE_RESPONSE_NOT_ADMITTED"); break; }
+      if (completion.finishReason === "length") { record("TRUNCATION"); feedback = { reason: "COMPLETE_JSON_REQUIRED" }; continue; }
+      if (completion.decision !== "COMPLETED" || completion.content === null) { record("PROVIDER_FAILURE"); feedback = { reason: "PROVIDER_DELIVERY_FAILURE_NOT_REASONING" }; continue; }
+      if (completion.finishReason !== "stop") { record("NONSTOP_REJECTION"); continue; }
+      let candidate: QuantitativeAlgebraicForm;
+      try { candidate = snapshotBoundedReasoningData(JSON.parse(completion.content)); }
+      catch { record("JSON_OR_DATA_REJECTION"); feedback = { reason: "STRICT_DATA_JSON_REQUIRED" }; continue; }
+      const candidateDigest = theoryDigest(candidate);
+      let result: ReturnType<SemanticPolynomialSession["analyze"]>;
+      try { result = session.analyze({ schemaVersion: 1, operation: "CHECK_POLYNOMIAL_CANDIDATE",
+        problemDigest: session.problemDigest, parentResultDigest: parent, program: candidate }); }
+      catch { record("AUTHORIZATION_OR_IR_REJECTION", candidateDigest); feedback = { reason: "ORIGINAL_SYMBOLS_OUTPUTS_AND_BOUNDED_FORM_REQUIRED" }; continue; }
+      if ("state" in result) { record("NATIVE_INSUFFICIENT_EVIDENCE", candidateDigest); feedback = { reason: result.reason }; continue; }
+      previous = candidate; parent = result.resultDigest; feedback = result.observations;
+      if (result.workPacket.acceptanceState !== "ACCEPTABLE") { record("SEMANTIC_REFUTATION", candidateDigest, parent); continue; }
+      if (now() >= deadline) { record("LATE_VERIFICATION_NOT_ADMITTED", candidateDigest, parent); break; }
+      const independent = snapshotBoundedReasoningData(input.verify(task, candidate));
+      if (!keys(independent, ["accepted", "findings", "verificationDigest"]) || typeof independent.accepted !== "boolean"
+        || !Array.isArray(independent.findings) || independent.findings.length > 32
+        || independent.findings.some(f => typeof f !== "string" || f.length > 1000) || !/^[a-f0-9]{64}$/.test(independent.verificationDigest))
+        throw Error("semantic_independent_verifier_contract_invalid");
+      if (now() >= deadline) { record("LATE_VERIFICATION_NOT_ADMITTED", candidateDigest, parent); break; }
+      // A later positive vote for the identical artifact cannot erase an owned
+      // falsification. Real evaluator corrections require a separately frozen
+      // context/epoch, not a silently successful retry inside this run.
+      const contradicted = independentFailures.some(f => f.candidateDigest === candidateDigest);
+      accepted = independent.accepted && !contradicted;
+      if (!independent.accepted) independentFailures.push({ candidateDigest, findings: independent.findings,
+        verificationDigest: independent.verificationDigest });
+      record(accepted ? "ACCEPTED" : independent.accepted && contradicted ? "INDEPENDENT_VERIFIER_CONFLICT"
+        : "INDEPENDENT_VERIFICATION_REJECTION", candidateDigest, parent, independent.verificationDigest);
+      if (accepted) { acceptedCandidate = candidate; break; }
+      feedback = { native: result.observations, independent: independent.findings };
+    }
+    const usage = session.usage();
+    return immutableTheoryValue({ version: "nyx-semantic-proof-loop/1", taskDigest: session.problemDigest,
+      accepted, firstAttemptAccepted: attempts[0]?.outcome === "ACCEPTED", attempts, independentFailures, calls: attempts.length,
+      acceptedCandidate, nativeUsage: usage, elapsedMs: Math.max(0, now()-start), deadlineEpochMs: deadline,
+      authorityIncrease: false, generalShell: false, generalNetwork: false, productionAuthority: false,
+      cognitivePromotion: "UNVERIFIED_REQUIRES_FRESH_MATCHED_COMPARISON" });
+  } finally { session.revoke(); }
+}
 export interface QuantitativeAttempt { readonly call: number; readonly outcome: string; readonly findings: readonly string[];
   readonly nativeRejectionStructure?: QuantitativeRejectionStructure;
   readonly algebraicEmissionDiagnostic?: AlgebraicEmissionDiagnostic;

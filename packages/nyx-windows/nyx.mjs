@@ -610,6 +610,19 @@ var ALGEBRAIC_EMISSION_POLICY = Object.freeze({
 });
 function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
 }) {
+  const graph = compileAlgebraicExpressionGraph(
+    problem.constants.map((c) => c.id),
+    problem.constants.find((c) => /^-?0(?:\/[1-9][0-9]{0,127})?$/.test(c.value))?.id,
+    value,
+    tick
+  );
+  const program = lowerQuantitativeExpressions(problem, graph);
+  for (let at = 0; at < program.registers.length + graph.expressions.length; at++) tick();
+  return program;
+}
+function compileAlgebraicExpressionGraph(names, zero, value, tick = () => {
+}) {
+  if (!Array.isArray(names) || names.length < 1 || names.length > 96 || names.some((n) => !identifier(n)) || new Set(names).size !== names.length || zero !== void 0 && !names.includes(zero)) throw Error("algebraic_symbol_bindings_invalid");
   let region = "FORM", index = null;
   const fail2 = (code, category = "OTHER") => {
     const error = Error(`quantitative_algebraic_invalid:${code}`);
@@ -626,7 +639,7 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
     return fail2("SHAPE_OR_BOUND");
   let characters = 0;
   const expressionValid = (v) => typeof v === "string" && v.length > 0 && v.length <= ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters && (characters += v.length) <= ALGEBRAIC_COMPILER_POLICY.maxTotalCharacters;
-  const environment = new Map(problem.constants.map((c) => [c.id, c.id]));
+  const environment = new Map(names.map((id3) => [id3, id3]));
   const declared = new Set(environment.keys()), labels = /* @__PURE__ */ new Set();
   for (const [at, d] of value.definitions.entries()) {
     region = "DEFINITION";
@@ -646,7 +659,6 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
     if (!fields(o, ["label", "expression"]) || !identifier(o.label) || labels.has(o.label) || !expressionValid(o.expression)) return fail2("OUTPUT_SHAPE_OR_BOUND");
     labels.add(o.label);
   }
-  const zero = problem.constants.find((c) => /^-?0(?:\/[1-9][0-9]{0,127})?$/.test(c.value))?.id;
   const expressions = [];
   const emit = (op, left, right) => {
     tick();
@@ -756,9 +768,7 @@ function lowerQuantitativeAlgebraicForm(problem, value, tick = () => {
     index = at;
     return { label: o.label, source: parse(o.expression) };
   });
-  const program = lowerQuantitativeExpressions(problem, { schemaVersion: 4, expressions, outputs });
-  for (let at = 0; at < program.registers.length + expressions.length; at++) tick();
-  return program;
+  return { schemaVersion: 4, expressions, outputs };
 }
 
 // src/lib/codelab/research/boundedReasoningWorkbench.ts
@@ -1201,6 +1211,38 @@ var BoundedReasoningSession = class _BoundedReasoningSession {
     return immutableTheoryValue({ ...result, resultDigest: theoryDigest(result) });
   }
 };
+
+// src/lib/codelab/research/reasoningObligationGraph.ts
+var EVIDENCE_RANK = Object.freeze({
+  E1: 1,
+  E2: 2,
+  E3: 3,
+  E4: 4,
+  E5: 5
+});
+var PRIORITY_RANK = Object.freeze({
+  CRITICAL: 0,
+  REQUIRED: 1,
+  SUPPORTING: 2
+});
+
+// src/lib/codelab/research/semanticPolynomialProof.ts
+var SEMANTIC_POLYNOMIAL_POLICY = Object.freeze({
+  version: "nyx-semantic-polynomial/1",
+  variables: 3,
+  degree: 8,
+  terms: 256,
+  coefficientBits: 4096,
+  obligations: 12,
+  candidateOutputs: 8,
+  substitutions: 8,
+  cacheEntries: 64,
+  domain: "UNIVERSALLY_QUANTIFIED_RATIONAL_POLYNOMIAL_IDENTITIES",
+  division: "NONZERO_RATIONAL_CONSTANT_ONLY",
+  grantsAuthority: false,
+  acceptanceRequiresIndependentVerifier: true,
+  cognitiveGainDemonstrated: false
+});
 
 // src/lib/codelab/research/nyxQuantitativeReasoning.ts
 var OBJECTIVE_OUTPUT_POLICY = Object.freeze({

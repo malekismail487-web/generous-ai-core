@@ -62,6 +62,23 @@ export const ALGEBRAIC_EMISSION_POLICY = Object.freeze({
  */
 export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, value: unknown,
   tick: () => void = () => {}): QuantitativeProgram {
+  const graph = compileAlgebraicExpressionGraph(problem.constants.map(c => c.id),
+    problem.constants.find(c => /^-?0(?:\/[1-9][0-9]{0,127})?$/.test(c.value))?.id, value, tick);
+  const program = lowerQuantitativeExpressions(problem, graph);
+  for (let at = 0; at < program.registers.length + graph.expressions.length; at++) tick();
+  return program;
+}
+
+/** Shared syntax frontend for explicitly bound numerical OR formal symbols.
+ * Symbols are names, not invented numerical constants. This function cannot
+ * execute, authorize or establish a mathematical claim. The owning caller
+ * applies the existing plain-data/byte guard before calling it.
+ */
+export function compileAlgebraicExpressionGraph(names: readonly string[], zero: string | undefined,
+  value: unknown, tick: () => void = () => {}): QuantitativeExpressionGraph {
+  if (!Array.isArray(names) || names.length < 1 || names.length > 96
+    || names.some(n => !identifier(n)) || new Set(names).size !== names.length
+    || zero !== undefined && !names.includes(zero)) throw Error("algebraic_symbol_bindings_invalid");
   let region: AlgebraicEmissionDiagnostic["region"] = "FORM", index: number | null = null;
   const fail = (code: string, category: AlgebraicEmissionDiagnostic["category"] = "OTHER"): never => {
     const error = Error(`quantitative_algebraic_invalid:${code}`);
@@ -77,7 +94,7 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
   const expressionValid = (v: unknown) => typeof v === "string" && v.length > 0
     && v.length <= ALGEBRAIC_COMPILER_POLICY.maxExpressionCharacters
     && (characters += v.length) <= ALGEBRAIC_COMPILER_POLICY.maxTotalCharacters;
-  const environment = new Map<string, Source>(problem.constants.map(c => [c.id, c.id]));
+  const environment = new Map<string, Source>(names.map(id => [id, id]));
   const declared = new Set(environment.keys()), labels = new Set<string>();
   for (const [at, d] of value.definitions.entries()) {
     region = "DEFINITION"; index = at;
@@ -96,8 +113,7 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
       || !expressionValid(o.expression)) return fail("OUTPUT_SHAPE_OR_BOUND");
     labels.add(o.label);
   }
-  // A minus sign needs an actual, authorized zero constant. Never inject one.
-  const zero = problem.constants.find(c => /^-?0(?:\/[1-9][0-9]{0,127})?$/.test(c.value))?.id;
+  // Unary minus requires the caller's explicitly bound zero; never inject one.
   const expressions: QuantitativeExpressionGraph["expressions"][number][] = [];
   const emit = (op: Operation, left: Source, right: Source): Source => {
     tick();
@@ -170,9 +186,7 @@ export function lowerQuantitativeAlgebraicForm(problem: QuantitativeProblem, val
   const outputs = (value.outputs as QuantitativeAlgebraicForm["outputs"]).map((o, at) => {
     region = "OUTPUT"; index = at; return { label: o.label, source: parse(o.expression) };
   });
-  const program = lowerQuantitativeExpressions(problem, { schemaVersion: 4, expressions, outputs });
-  for (let at = 0; at < program.registers.length + expressions.length; at++) tick();
-  return program;
+  return { schemaVersion: 4, expressions, outputs };
 }
 
 export function quantitativeAlgebraicSchema(labels: readonly string[], exactOutputs = false, lexicalGuidance = false) {
