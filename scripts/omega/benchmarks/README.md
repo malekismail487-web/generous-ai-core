@@ -3689,3 +3689,29 @@ Next diagnose contract and canonicalization failure classes on separate
 development tasks without weakening acceptance or regrading this negative
 epoch. Default Ultra, authority, original benchmark results and the active
 unachieved goal remain unchanged. The temporary one-shot push hook is removed.
+
+## Live semantic construction pilot (not an official benchmark)
+
+Frozen candidate `c4fb84a1`, run `38426230789`, exercised four new formal
+polynomial-construction families with the same Super configuration, native
+checking, independent original-parse/grid oracle and finite caps. Serial control
+accepted 4/4 first try; obligation-guided treatment accepted 3/4 first try and
+4/4 after one bounded repair. One guided proposal hit the IR/contract gate; no
+executed false mathematics or delivery failures were observed. The exact
+offending source is not retained. All eight stages were independently graded.
+
+Control: four calls / 6279 tokens. Guided: five / 12,706. All nine physical calls
+had known usage (18,985 tokens total); no pair met 5% realized compute matching.
+Equal final acceptance with greater treatment compute yields **NO PROMOTION**,
+not an architectural intelligence gain. Native checking used 6890 work units;
+eight independent checks used 232 exact points. These classic formal tasks are
+not original discoveries, FrontierMath or a comparison against frontier vendors.
+
+The [verified receipt](../../../docs/omega/evidence/nyx-semantic-construction-c4fb84a1.json)
+binds source/configuration/tasks and archive SHA256
+`c66aea796fb4d5b86af7aef358472bfac9398c6dcb86f99710fab4e67d6ea56d`,
+CRC and terminal report. Clean CI passed 110 suites / 15,942 checks, TypeScript
+5.8.3 zero, secret scan, build, package and independent replay. Default Ultra,
+all historical benchmark evidence and authority remain unchanged; one-shot push
+launching is removed. Use the simpler native/independent baseline for the next
+fresh, more discriminating mathematical or prospective scientific mechanism.

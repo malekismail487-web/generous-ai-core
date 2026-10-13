@@ -118,7 +118,32 @@ replication and ablation. Calibration is not collected and is not fabricated.
 The updated component suite has 224 offline checks and zero model calls. It
 validates all four statements, rejects planted false candidates, tests matched
 wire settings/unique request identities, finite malformed retries, expired
-epochs, missing verifier and sanitized custody. Live outcomes are pending.
+epochs, missing verifier and sanitized custody.
+
+The frozen live epoch completed at `c4fb84a1`, run `38426230789`: serial repair
+accepted 4/4 first attempt; guided accepted 3/4 first attempt and 4/4 after one
+repair. All eight candidates reached independent acceptance, covering 30
+original obligations. Nine physical/logical model calls reported 18,985 tokens,
+zero unknown usage and no delivery disruption. One guided inverse proposal was
+rejected before native mathematical grading by the existing IR/contract gate;
+the exact offending syntax is not retained and must not be guessed.
+
+Control used 6279 tokens / four calls; guided used 12,706 / five calls. No pair
+met the frozen realized matching condition, and every guided pair used more
+inference. Thus the added guidance has no supported outcome/efficiency gain and
+is not promoted. The live construction/checking composition is demonstrated in
+this bounded scope; original mathematics, broad proof-search, untooled-model
+superiority and official benchmark progress remain unestablished.
+
+The [custody-verified receipt](../evidence/nyx-semantic-construction-c4fb84a1.json)
+reconciles terminal report, artifact SHA256/CRC, all 20 source bindings,
+configuration and corpus. Clean Linux CI `38426231054` passed 110 suites / 15,942
+checks, TS5.8.3 zero, secret scan, build, package and independent replay. The
+temporary push launcher is removed. Preserve these exposed results; do not
+tune the mechanism to them. Next use the simpler verified native composition
+for prospective science or genuinely strategy-requiring mathematics with
+development-only diagnosis, fresh independent acceptance, stronger controls
+and honest compute—not another attempt to force this guidance positive.
 
 ## Omega plan coverage
 
@@ -127,6 +152,6 @@ canonical subgoal reuse, verifier hierarchy and finite compute; D01 independent
 acceptance and honest controls. Supporting: generator/detector separation,
 critical falsification, dependency freshness, no action without provenance and
 no authority expansion. Deferred: full strategy-diverse search, formalization
-audit, Lean integration, completed live comparison, typed abstraction transfer,
+audit, Lean integration, fresh causal replication/ablations, typed abstraction transfer,
 original discovery, recursion and broad benchmarks. Conflict: a green component
 suite cannot be substituted for the plans' required cognitive gains.
