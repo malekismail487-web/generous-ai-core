@@ -273,6 +273,62 @@ formal mathematics, learned experimental design and full-program confidence.
 AI Feynman's coefficient-fitting/structure-search separation is methodological
 inspiration, not a NYX replication or inheritance of its published results.
 
+## Fresh fitting comparison / preregistration
+
+The next frozen epoch has eight new cases: two parameterizations of each of
+four structures absent from the exposed pilot and fitter development witnesses:
+bilinear response, inverse channels, mixed cubic response and cross ratio.
+These are distinct structures within bounded rational arithmetic, **not four
+independent scientific domains**. Source/coefficients/hidden points remain outside
+NYX input and tool inspection. Public pretraining exposure is not provably zero.
+
+Primary control: existing literal generation. Treatment: the same cognition with
+host-enabled exact fitting of its authored structure. Each has two generation
+calls maximum, the same eight native requests/300000 work units/3000 ms, identical
+Super wire configuration, 8192-token output ceilings and wall deadlines. The
+original requirement for at least two admitted model artifacts is preserved.
+Artifact count is not proven semantic hypothesis diversity or independence.
+
+Each generation prefix performs exactly one fixed, predeclared Probe0 through
+the existing disposable R1/R2A/R3B fixture. This isolates fitting; it does not
+claim adaptive experimental design. The model then has one typed selection call;
+a foreign/refuted/unsupported/malformed/late choice cannot reach grading. There
+is no selection repair or hidden-grade feedback. Generation repair receives
+only original calibration and typed admission diagnostics. First-generation
+admission and later generation repair remain separately visible.
+
+A stronger same-tool ablation selects the first precommitted candidate not
+refuted by that same observation, with **no additional inference**. It shares the
+entire native-generation/measurement prefix: physical cost once, allocated cost
+fully charged, no independent-sample fiction. It can outperform model selection.
+Oracle checks six calibration, three prospective and five hidden points. Every
+point must match; calibration interpolation alone cannot pass. Undefined hidden
+responses and native arithmetic boundaries are now classified separately from
+wrong valid predictions and an unavailable grader, without accepting any of them.
+
+The 30-minute global epoch permits at most 48 logical/model calls and 48 physical
+HTTP attempts. No retry/rerun until a positive result, provider/model switch,
+acceptance relaxation or best-of merging is permitted. Source/configuration/task
+bindings freeze before inference. Original-source Python fitting/point replay,
+grader, actual R3B observation and cleanup costs are visible independently;
+unknown tokens/HTTP counts, internal compute, money, measurement CPU and peak
+memory remain unknown. Equal ceilings do not prove realized matching: the five-
+percent token rule additionally requires graded pairs, equal calls/HTTP attempts
+and known usage. Inference matching is not total-compute matching.
+
+Predeclared reporting distinguishes selected, generation attempted, submitted,
+graded, numerically correct, ungraded and unexecuted. All rows remain in the
+population. Cleanup/source-integrity failures invalidate promotion even if a
+numeric candidate is correct. Offline detector checks include a six-point
+calibration-fitting interpolation competitor, original-source/simulator agreement,
+real fixture execution, empty/truncated generation, unknown transport and seven
+selection boundary classes. Test doubles are not live cognition evidence.
+
+No eight-case pilot earns broad science, original discovery or frontier-vendor
+promotion. Any descriptive fitting/selection signal requires fresh replication,
+larger family-disjoint populations and the full nine-PDF/AD10 confidence gates.
+Coverage remains partial/just-in-time; no extra cognitive architecture is added.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

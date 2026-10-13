@@ -2088,6 +2088,7 @@
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
@@ -2236,6 +2237,7 @@
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
@@ -2685,6 +2687,7 @@
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-r3f-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",
@@ -2772,6 +2775,7 @@
     {
       "name": "OMEGA_POLYNOMIAL_PYTHON",
       "files": [
+        "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omegaScientificModelGeneration.test.ts",
         "scripts/omegaSemanticPolynomialProof.test.ts"
@@ -2839,6 +2843,7 @@
         "scripts/omega/nyx-quality-v4-live-eval.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-research-party-live-eval.ts",
+        "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omega/nyx-semantic-proof-live-eval.ts",
         "scripts/omega/nyx-shared-guarded-repair.ts",

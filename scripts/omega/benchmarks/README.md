@@ -3776,3 +3776,27 @@ millisecond budget handoff incompatibility. These changes support a future fresh
 comparison: **zero new live calls, no cognitive or benchmark promotion**. The
 fitting tool does not encode the three exposed pilot equations or access their
 held-out truth. See the [method and limits](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md).
+
+### Fresh structural fitting epoch (frozen before live inference)
+
+Eight new cases/four rational structures compare literal generation, the same
+NYX cognition with native coefficient fitting, and a same-tool first-non-refuted
+selection ablation. The ablation shares its entire fitted generation/measurement
+prefix and makes no extra model call; it is not an independent sample. Each main
+arm gets identical Super wire settings, generation/selection/output/native limits,
+one fixed prospective R3B observation, and unchanged all-14-point independent
+acceptance. The existing two-model admission precondition is retained.
+
+All proposals remain hypotheses; hidden grading follows stopped inference and is
+never repair feedback. Reached wrong predictions, undefined response, arithmetic
+resource bounds, provider/serialization/selection errors and unreached grading
+remain distinct. Maximum: 48 logical/HTTP calls and 30-minute epoch. Actual tokens,
+unknown attempts, fitting/replay/measurement/grader costs and source/cleanup are
+reported; equal ceilings do not imply realized matching or total cost equality.
+
+Offline detector checks exercise identifiable gold structures versus calibration-
+fitting overfits, independent simulator/oracle agreement, actual bounded fixture
+execution, truncated/empty generation, unknown delivery and seven selection
+boundary classes. These are test doubles, **not** a live score. The live result
+is pending; default Ultra and production authority remain unchanged. No eight-
+case pilot establishes broad science, original discovery or frontier superiority.

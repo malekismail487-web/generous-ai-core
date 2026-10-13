@@ -20,18 +20,22 @@ function oracle(input:unknown){const start=performance.now(),r=spawnSync(python(
   {input:JSON.stringify(input),encoding:"utf8",timeout:5000,maxBuffer:262144,windowsHide:true});
   if(r.error||r.status!==0)throw Error("independent_world_oracle_unavailable");return{value:JSON.parse(r.stdout),wallMs:Math.max(0,performance.now()-start)};}
 function finiteMs(v:unknown):v is number{return typeof v==="number"&&Number.isFinite(v)&&v>=0;}
-export function scienceCalibration(world:ScienceWorld){
+export type ScientificOracleCase=Pick<ScienceWorld,"taskId"|"family"|"calibration"|"probes"|"heldout"> & {readonly hidden:unknown};
+export function scienceCalibration(world:ScientificOracleCase){
   const checked=oracle({operation:"CALIBRATION",world}),v=checked.value;
   if(!Array.isArray(v.calibration)||v.calibration.length!==world.calibration.length||v.calibration.some((n:unknown)=>typeof n!=="string")
     ||!finiteMs(v.elapsedMs)||!finiteMs(v.cpuMs))throw Error("calibration_contract");
   return{values:v.calibration as string[],cost:{elapsedMs:v.elapsedMs,cpuMs:v.cpuMs,wallMs:checked.wallMs}};
 }
-export function calibration(world:ScienceWorld):string[]{return scienceCalibration(world).values;}
-export function independentScienceGrade(world:ScienceWorld,task:ScientificModelTask,draft:ScientificModelDraft){
+export function calibration(world:ScientificOracleCase):string[]{return scienceCalibration(world).values;}
+export function independentScienceGrade(world:ScientificOracleCase,task:ScientificModelTask,draft:ScientificModelDraft){
   const checked=oracle({operation:"GRADE",world,task,draft}),g=checked.value,points=world.calibration.length+world.probes.length+world.heldout.length;
   if(typeof g.accepted!=="boolean"||g.points!==points||!Number.isSafeInteger(g.matched)||g.matched<0||g.matched>points
+    ||!Number.isSafeInteger(g.undefinedPoints)||g.undefinedPoints<0||!Number.isSafeInteger(g.resourceBlockedPoints)||g.resourceBlockedPoints<0
+    ||g.matched+g.undefinedPoints+g.resourceBlockedPoints>points
     ||g.accepted!==(g.matched===points)||g.scope!=="HELDOUT_PREDICTION_NOT_ORIGINAL_DISCOVERY"||!finiteMs(g.elapsedMs)||!finiteMs(g.cpuMs))throw Error("heldout_oracle_contract");
-  return{accepted:g.accepted as boolean,cost:{points,matched:g.matched as number,elapsedMs:g.elapsedMs as number,cpuMs:g.cpuMs as number,wallMs:checked.wallMs}};
+  return{accepted:g.accepted as boolean,cost:{points,matched:g.matched as number,undefinedPoints:g.undefinedPoints as number,resourceBlockedPoints:g.resourceBlockedPoints as number,
+    elapsedMs:g.elapsedMs as number,cpuMs:g.cpuMs as number,wallMs:checked.wallMs}};
 }
 function inferenceCost(attempts:readonly {modelEvidence:NvidiaNimEvidence;outcome:string}[],elapsedMs=0){return usage({calls:attempts.length,attempts,toolRequests:0,toolWorkUnits:0,toolElapsedMs:0,elapsedMs});}
 function generationPublic(g:Generation){return{competingModelsAdmitted:g.competingModelsAdmitted,firstAttemptAdmitted:g.firstAttemptAdmitted,attempts:g.attempts,

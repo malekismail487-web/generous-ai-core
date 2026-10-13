@@ -6,6 +6,8 @@ import { scientificModelReplay, scientificFitReplay, type ScientificReplayCost }
 import { fitExactLinearSystem, exactScalar } from "../src/lib/codelab/research/exactLinearFit";
 import { fitScientificStructure, type ScientificModelStructure } from "../src/lib/codelab/research/scientificModelFit";
 import { algebraicBoundaryCode, compileAlgebraicExpressionGraph } from "../src/lib/codelab/research/quantitativeAlgebraicCompiler";
+import {SCIENTIFIC_FIT_WORLDS,SCIENTIFIC_FIT_EPOCH,SCIENTIFIC_FIT_SIMULATOR_SOURCE,scientificFitTask,type ScientificFitWorld} from "./omega/nyx-scientific-fit-fixtures";
+import {runFreshScientificFitEpoch} from "./omega/nyx-scientific-fit-live-eval";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult } from "../src/lib/codelab/model/nvidiaNimProvider";
 import type { ResearchExperimentObservation } from "../src/lib/codelab/research/researchPartyContracts";
 import {spawnSync} from "node:child_process";
@@ -328,5 +330,91 @@ for(const [expression,code] of [["x+","SYNTAX"],["x y","TRAILING_TOKEN"],["foo(x
 check(algebraicBoundaryCode(Error("quantitative_algebraic_invalid:SYNTAX"))===null,"Exception text alone cannot forge structural compiler provenance");
 check(fitCosts.length>24&&fitCosts.every(c=>c.elapsedMs>=0&&(c.childCpuMs===null||c.childCpuMs>=0))&&fitCosts.some(c=>c.decision==="DISAGREES"),
   "Independent fitting replay costs and planted detector rejections are observable separately from model usage");
+// Author witnesses/detector attacks are offline data, not live prompt hints.
+function freshFitWitness(w:ScientificFitWorld):ScientificModelStructure{
+  const basis=w.hidden.kind==="BILINEAR"?["x*y","x","y","one"]:w.hidden.kind==="INVERSE_CHANNELS"?["one/x","one/y","one/(x*y)"]
+    :w.hidden.kind==="MIXED_CUBIC"?["x*x*x","x*y*y","y","one"]:["x*y","x+y","one","x*y"];
+  const labels=basis.map((_,i)=>["a","b","c","d"][i]);
+  return structure(basis.map((expression,i)=>({label:labels[i],expression})),w.hidden.kind==="CROSS_RATIO"?labels.slice(0,3):labels,w.hidden.kind==="CROSS_RATIO"?["d"]:[]);
+}
+const interpolationStructure:ScientificModelStructure={...structure(["one","u","u2","u3","u4","u5"].map((expression,i)=>({label:`q${i}`,expression})),["q0","q1","q2","q3","q4","q5"]),
+  basis:{schemaVersion:5,definitions:[{id:"u",expression:"x+y+y+y"},{id:"u2",expression:"u*u"},{id:"u3",expression:"u2*u"},{id:"u4",expression:"u3*u"},{id:"u5",expression:"u4*u"}],
+    outputs:["one","u","u2","u3","u4","u5"].map((expression,i)=>({label:`q${i}`,expression}))}};
+const freshWitnesses=new Map<string,{task:ScientificModelTask;structures:ScientificModelStructure[];drafts:ScientificModelDraft[]}>();
+for(const w of SCIENTIFIC_FIT_WORLDS){
+  const t=scientificFitTask(w,candidate,Date.now(),Date.now()+120000,calibration(w)),correctStructure=freshFitWitness(w),base=fitScientificStructure(t,correctStructure,countedTick),alt=fitScientificStructure(t,interpolationStructure,countedTick);
+  check(base.linear.state==="UNIQUE"&&alt.linear.state==="UNIQUE"&&!!base.draft&&!!alt.draft,"Fresh fixture gold structure and distinct interpolation competitor are identifiable from the same six calibration points");
+  if(!base.draft||!alt.draft)throw Error("fresh_fixture_rank_failed");
+  const good=independentScienceGrade(w,t,base.draft),bad=independentScienceGrade(w,t,alt.draft);
+  check(good.accepted&&good.cost.points===14&&good.cost.undefinedPoints===0&&good.cost.resourceBlockedPoints===0,"Fresh fixture gold model is independently accepted on all six calibration, three prospective and five hidden points");
+  check(!bad.accepted&&bad.cost.matched>=6,"The unchanged held-out oracle rejects an exactly calibration-fitting interpolation overfit");
+  const simulator=spawnSync(process.execPath,["--input-type=module","-e",SCIENTIFIC_FIT_SIMULATOR_SOURCE+`\nconsole.log(JSON.stringify(${JSON.stringify(w.calibration)}.map(p=>show(calculate(${JSON.stringify(w.hidden)},p)))));`],{encoding:"utf8",timeout:5000,windowsHide:true});
+  check(simulator.status===0&&JSON.stringify(JSON.parse(simulator.stdout))===JSON.stringify(t.observations.map(o=>o.output)),"Independent Node author simulator and Python Fraction agree before fresh corpus freeze");
+  freshWitnesses.set(w.taskId,{task:t,structures:[correctStructure,interpolationStructure],drafts:[base.draft,alt.draft]});
+}
+let freshCalls=0;const freshEpoch=await runFreshScientificFitEpoch(async(request,stage)=>{
+  freshCalls++;const context=JSON.parse(request.messages[1].content),id=stage.split("/")[0];
+  check(request.reasoningControl===SCIENTIFIC_FIT_EPOCH.reasoningControl&&request.reasoningBudgetTokens===SCIENTIFIC_FIT_EPOCH.reasoningBudgetTokens&&!request.reasoningEffort,
+    "Fresh control and treatment retain identical explicit Super wire reasoning configuration");
+  check(!JSON.stringify(context).includes('"hidden"')&&!JSON.stringify(context).includes('"heldout"')&&!JSON.stringify(context).includes('"family"'),"Fresh model requests do not receive author law identities, coefficients or hidden test points");
+  if(stage.endsWith("GENERATION"))return fake(request,{schemaVersion:1,models:context.nativeFitPolicy?freshWitnesses.get(id)!.structures:freshWitnesses.get(id)!.drafts});
+  const observation=context.prospectiveObservation.measurement,selected=context.models.find((m:any)=>m.forecasts.find((p:any)=>p.pointId===observation.pointId)?.value===observation.value);
+  return fake(request,{schemaVersion:1,operation:selected?"CONCLUDE":"NO_CONCLUSION",modelId:selected?.modelId??null});
+},{candidate,sourceDigests:{offline:theoryDigest("explicit-fresh-fit-test-double")}});
+check(freshEpoch.populationComplete&&freshEpoch.gradedComplete&&freshEpoch.cleanupComplete&&freshEpoch.arms.every(a=>a.correct===8&&a.graded===8)&&freshEpoch.rows.length===24,
+  "Fresh eight-case composition runs the real bounded R3B observation and independently grades all 24 offline control/treatment/ablation stages");
+check(freshCalls===32&&freshEpoch.physicalCalls===32&&freshEpoch.physicalMeasurementCount===16&&freshEpoch.rows.filter(r=>r.sharedPrefixWith!==null).length===8,
+  "Same-tool ablation shares exactly the native generation/observation prefix rather than double-counting physical calls or inventing independent samples");
+check(freshEpoch.pairs.every(p=>p.independentlyGraded&&p.realizedInferenceMatched&&p.sameToolPrefixShared&&!p.sameToolIndependentSample)&&!freshEpoch.scopedFittingSignal&&!freshEpoch.selectionSignal,
+  "Equal offline results do not become cognitive improvement or selection advantage even when the synthetic inference budget matches");
+check(freshEpoch.rows.every(r=>r.grading?.points===14&&r.cleanup?.sourceUnchanged===true&&r.native&&r.native.requests<=8&&r.native.workUnits<=300000),
+  "Fresh fixture execution preserves original source integrity, exact all-point acceptance and shared native limits");
+check(freshEpoch.rows.every(r=>typeof r.simulatorDigest==="string"&&/^[a-f0-9]{64}$/.test(r.simulatorDigest))
+  &&freshEpoch.rows.filter(r=>r.sharedPrefixWith!==null).every(r=>r.simulatorDigest===freshEpoch.rows.find(s=>s.taskId===r.taskId&&s.arm==="NATIVE_FIT")?.simulatorDigest),
+  "Fresh observation evidence retains the pinned simulator identity and makes shared-prefix custody explicit");
+check(freshEpoch.physicalReplayCosts.some(c=>c.kind==="FIT")&&freshEpoch.physicalReplayCosts.some(c=>c.kind==="POINT_DERIVATION")
+  &&freshEpoch.rows.filter(r=>r.arm==="SAME_TOOL_FIRST_NON_REFUTED").every(r=>r.selection.modelEvidence===null&&r.selection.elapsedMs===0),
+  "Fit/replay and model-selection costs remain separately observable with zero fabricated ablation model calls");
+const failedFresh=await runFreshScientificFitEpoch(async(request)=>{const r=fake(request,{schemaVersion:1,models:[]});return{...r,finishReason:"length",evidence:{...r.evidence,finishReason:"length"}};},
+  {candidate,sourceDigests:{offline:theoryDigest("explicit-fresh-truncation-test-double")}});
+check(failedFresh.populationComplete&&!failedFresh.gradedComplete&&failedFresh.arms.every(a=>a.graded===0&&a.ungraded===8)&&failedFresh.pairs.every(p=>!p.independentlyGraded&&!p.realizedInferenceMatched),
+  "Unreached hidden tests and identical empty prefixes cannot masquerade as matched reasoning failures or accepted comparisons");
+check(failedFresh.rows.filter(r=>r.arm!=="SAME_TOOL_FIRST_NON_REFUTED").every(r=>r.generation.every(a=>a.outcome==="TRUNCATION")&&r.outcome==="NO_ADMITTED_COMPETING_MODEL_POPULATION"),
+  "Fresh truncated serialization remains a generation interface failure, not an executed wrong hidden prediction");
+const unknownFresh=await runFreshScientificFitEpoch(async()=>{throw Error("controlled_transport_exception");},{candidate,sourceDigests:{offline:theoryDigest("explicit-unknown-delivery-test-double")}});
+check(unknownFresh.physicalCalls===16&&unknownFresh.physicalUsage.unknownUsageCalls===16&&unknownFresh.unknownHttpAttemptCounts===16&&!unknownFresh.providerStable,
+  "Unexpected transport exceptions preserve actual attempted call counts with unknown tokens/HTTP attempts instead of fictitious zero usage");
+let selectionClock=Date.now();const rejectedSelections=await runFreshScientificFitEpoch(async(request,stage)=>{
+  const context=JSON.parse(request.messages[1].content),id=stage.split("/")[0],index=SCIENTIFIC_FIT_WORLDS.findIndex(w=>w.taskId===id);
+  if(stage.endsWith("GENERATION"))return fake(request,{schemaVersion:1,models:context.nativeFitPolicy?freshWitnesses.get(id)!.structures:freshWitnesses.get(id)!.drafts});
+  const reply=fake(request,{schemaVersion:1,operation:"NO_CONCLUSION",modelId:null});
+  if(index===0)return fake(request,{schemaVersion:1,operation:"SHELL",modelId:null,command:"never_execute_text"});
+  if(index===1)return fake(request,{schemaVersion:1,operation:"CONCLUDE",modelId:"MODEL-foreign"});
+  if(index===2)return{...reply,content:"not-json"};
+  if(index===3)return{...reply,finishReason:"length",evidence:{...reply.evidence,finishReason:"length"}};
+  if(index===4)return{...reply,decision:"PROVIDER_ERROR",content:null,finishReason:null,evidence:{...reply.evidence,networkAttempted:true,statusCode:503,usage:{promptTokens:null,completionTokens:null,totalTokens:null}}};
+  if(index===6){selectionClock=request.deadlineEpochMs+1;return fake(request,{schemaVersion:1,operation:"CONCLUDE",modelId:context.models[0].modelId});}
+  if(index===7)return fake(request,{schemaVersion:1,operation:"CONCLUDE",modelId:true});
+  return reply;
+},{candidate,sourceDigests:{offline:theoryDigest("explicit-selection-boundary-test-double")}},()=>selectionClock);
+check(rejectedSelections.populationComplete&&rejectedSelections.arms[0].graded===0&&rejectedSelections.arms[1].graded===0&&rejectedSelections.arms[2].correct===8,
+  "Same-tool non-refuted control can succeed while model selection fails; the evaluator does not force model-mediated selection superiority");
+const rejectionKinds=new Set(rejectedSelections.rows.filter(r=>r.sharedPrefixWith===null).map(r=>r.selection.outcome));
+for(const outcome of ["SELECTION_UNSUPPORTED_CAPABILITY","SELECTION_AUTHORIZATION_REJECTION","SELECTION_SCHEMA_REJECTION","SELECTION_TRUNCATION","SELECTION_PROVIDER_FAILURE","NO_CONCLUSION","LATE_SELECTION_REJECTED"])
+  check(rejectionKinds.has(outcome),"Fresh selection separates unsupported capability, scope, schema, truncation, delivery, uncertainty and expired success");
+check(rejectedSelections.rows.filter(r=>r.sharedPrefixWith===null).every(r=>!r.selectedCandidateSubmitted&&r.grading===null)&&!rejectedSelections.scopedFittingSignal&&!rejectedSelections.selectionSignal,
+  "Rejected or late model selections never reach hidden grading or create a positive cognitive claim");
+const poleWorld=SCIENTIFIC_FIT_WORLDS[0],poleTask=scientificFitTask(poleWorld,candidate,Date.now(),Date.now()+60000,calibration(poleWorld));
+const pole={...freshWitnesses.get(poleWorld.taskId)!.drafts[0],parameters:[...freshWitnesses.get(poleWorld.taskId)!.drafts[0].parameters,{id:"pole",value:poleWorld.heldout[0][0]}],
+  program:{schemaVersion:5 as const,definitions:[],outputs:[{label:"response",expression:"one/(x-pole)"}]}};
+const poleGrade=independentScienceGrade(poleWorld,poleTask,pole);
+check(!poleGrade.accepted&&poleGrade.cost.undefinedPoints===1,"An undefined hidden-point response is a rejected candidate-domain failure, not a falsely unavailable grader");
+let preflightClock=Date.now(),preflightTicks=0,zeroModelCalls=0;const preflightReports:any[]=[];
+const unexecutedEpoch=await runFreshScientificFitEpoch(async()=>{zeroModelCalls++;throw Error("must_not_call");},{candidate,sourceDigests:{offline:theoryDigest("expired-preflight-test-double")}},
+  ()=>preflightClock+(preflightTicks++?SCIENTIFIC_FIT_EPOCH.maxEpochMs+1:0),async r=>{preflightReports.push(r);});
+check(zeroModelCalls===0&&unexecutedEpoch.physicalCalls===0&&!unexecutedEpoch.providerStable&&unexecutedEpoch.arms.every(a=>a.unexecuted===8&&a.graded===0),
+  "A deadline-expired epoch cannot claim stable provider delivery or reuse expired capacity to start inference");
+check(preflightReports[0]?.freezeDigest&&preflightReports[0].physicalCalls===0&&preflightReports[0].rows.length===0,
+  "The frozen task/source/configuration commitment is persisted before any possible model invocation");
 console.log(`OMEGA_SCIENTIFIC_FIT_DEVELOPMENT nativeWorkUnits=${scalarTicks} independentCalls=${fitCosts.length} independentMs=${fitCosts.reduce((n,c)=>n+c.elapsedMs,0).toFixed(2)} liveModelCalls=0 cognitiveGainDemonstrated=false`);
 console.log(`OMEGA_SCIENTIFIC_MODEL_GENERATION_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);if(failed)process.exitCode=1;

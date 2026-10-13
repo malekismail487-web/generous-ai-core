@@ -18,11 +18,15 @@ const canonical=(v:unknown):string=>Array.isArray(v)?"["+v.map(canonical).join("
  * R1, R2A, reviewed R3A clone and single-use R3B machinery. No candidate program
  * is written as executable code; only the fixed author simulator is executed.
  */
-export async function prepareScientificRig(world:ScienceWorld,candidate:string,identity:string,expires:number){
+export async function prepareScientificRig(world:Pick<ScienceWorld,"taskId"|"probes"> & {readonly hidden:unknown},candidate:string,identity:string,expires:number,
+  simulatorSource=SCIENCE_SIMULATOR_SOURCE){
+  // Developer-owned fixture source, never a model tool argument. The existing
+  // R3B registration still pins the complete fixed entrypoint's content hash.
+  if(typeof simulatorSource!=="string"||simulatorSource.length<1||simulatorSource.length>20000)throw Error("science_simulator_fixture_bound");
   const began=Date.now(),parent=await mkdtemp(join(tmpdir(),"nyx-science-rig-")),sourceRoot=join(parent,"source"),sandboxRoot=join(parent,"sandboxes");
   await mkdir(join(sourceRoot,"src"),{recursive:true});await mkdir(join(sourceRoot,"tools"));await mkdir(sandboxRoot);
   const probes=Object.fromEntries(world.probes.map((p,i)=>[`MEASURE-${world.taskId}-${i}`,{pointId:`Probe${i}`,inputs:scienceInputs(p),point:p}]));
-  const source=SCIENCE_SIMULATOR_SOURCE+`\nconst hidden=${JSON.stringify(world.hidden)},probes=${JSON.stringify(probes)};\nconst p=probes[process.argv[2]];if(!p)throw Error("unknown_probe");console.log(JSON.stringify({schemaVersion:1,pointId:p.pointId,inputs:p.inputs,label:"response",value:show(calculate(hidden,p.point))}));\n`;
+  const source=simulatorSource+`\nconst hidden=${JSON.stringify(world.hidden)},probes=${JSON.stringify(probes)};\nconst p=probes[process.argv[2]];if(!p)throw Error("unknown_probe");console.log(JSON.stringify({schemaVersion:1,pointId:p.pointId,inputs:p.inputs,label:"response",value:show(calculate(hidden,p.point))}));\n`;
   await writeFile(join(sourceRoot,"src","marker.txt"),"baseline");await writeFile(join(sourceRoot,"tools","measure.mjs"),source);
   const root=await realpath(sourceRoot),approved=await realpath(sandboxRoot),issuer="OMEGA-ISOLATED-SCIENCE-EVALUATION";
   const r1=await ReadOnlyRepositoryExecutor.create({executorId:identity+"-R1",tokenId:identity+"-R1-TOKEN",repositoryRoot:root,resourceScopes:["."],

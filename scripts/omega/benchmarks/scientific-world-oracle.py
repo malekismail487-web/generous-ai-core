@@ -18,6 +18,10 @@ def world(h,point):
     if h["kind"]=="TRANSPORT": return a*x/(b+x)+c*y
     if h["kind"]=="POTENTIAL": return a*(x-y)**2+b*(x+y)+c
     if h["kind"]=="TRANSITION": return (a*x+b*y)/(1+c*x*x)
+    if h["kind"]=="BILINEAR": return a*x*y+b*x+c*y+Fraction(h["d"])
+    if h["kind"]=="INVERSE_CHANNELS": return a/x+b/y+c/(x*y)
+    if h["kind"]=="MIXED_CUBIC": return a*x*x*x+b*x*y*y+c*y+Fraction(h["d"])
+    if h["kind"]=="CROSS_RATIO": return (a*x*y+b*(x+y)+c)/(1+Fraction(h["d"])*x*y)
     raise ValueError("unknown_world")
 
 def main():
@@ -39,11 +43,19 @@ def main():
     zero=next((k for k,v in env.items() if v==0),None)
     graph=replay.compile_form(draft["program"],names,zero)
     points=w["calibration"]+w["probes"]+w["heldout"]
-    correct=0
+    correct,undefined,resource_blocked=0,0,0
     for point in points:
-        values=replay.graph(graph,{**env,**dict(zip(task["variables"],map(Fraction,point)))})
-        correct+=values.get("response")==world(w["hidden"],point)
+        expected=world(w["hidden"],point)
+        try:
+            values=replay.graph(graph,{**env,**dict(zip(task["variables"],map(Fraction,point)))})
+        except replay.Boundary as error:
+            if str(error)=="unsupported_or_zero_division": undefined+=1
+            elif str(error)=="coefficient_bound": resource_blocked+=1
+            else: raise
+            continue
+        correct+=values.get("response")==expected
     print(json.dumps({"accepted":correct==len(points),"points":len(points),"matched":correct,
+        "undefinedPoints":undefined,"resourceBlockedPoints":resource_blocked,
         "elapsedMs":(time.perf_counter()-start)*1000,"cpuMs":(time.process_time()-cpu)*1000,"scope":"HELDOUT_PREDICTION_NOT_ORIGINAL_DISCOVERY"}))
 
 if __name__=="__main__":
