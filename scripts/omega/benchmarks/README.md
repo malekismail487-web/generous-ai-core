@@ -3715,3 +3715,45 @@ CRC and terminal report. Clean CI passed 110 suites / 15,942 checks, TypeScript
 all historical benchmark evidence and authority remain unchanged; one-shot push
 launching is removed. Use the simpler native/independent baseline for the next
 fresh, more discriminating mathematical or prospective scientific mechanism.
+
+## Generated-model prospective science pilot (partial coverage, no promotion)
+
+Frozen `caaf7601`, [run 38447399837](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38447399837),
+used three new deterministic scalar-response worlds and three post-generation
+workflows. One shared live generation prefix was fully charged to every arm;
+the direct arm was not untooled Nemotron. Only the transition world admitted
+models, after a numeric-literal repair. All three arms then executed authorized
+measurements and independently accepted their first submitted conclusions on
+13 points each. **3/9 stages attempted/graded/accepted; six unexecuted.** This is
+not a 100% full-corpus result, broad science competence or an official score.
+
+Transport's four proposals contradicted calibration despite correct independently
+replayed arithmetic. Potential's four proposals hit the generic algebraic gate
+before execution; their precise source defect is not retained. Transition had
+two numeric-literal rejections before two admitted artifacts. All 15 physical
+logical/HTTP calls delivered with known usage: **60,672 tokens**, zero provider,
+capacity, truncation or unknown-usage failures. No live scientific regeneration
+occurred; all final graphs remained INSUFFICIENT_EVIDENCE, so distinct artifact
+identities must not be presented as uniquely distinguished scientific theories.
+
+On the only graded world, native forecasts used two action calls / 5850 tokens,
+direct review four / 12,897 and guidance three / 10,179. With its generation
+prefix: four / 16,317; six / 23,364; five / 20,646. Equal acceptance with greater
+guided inference yields **NO PROMOTION**. Two report cost matches belonged only
+to unexecuted equal-prefix charges; **zero graded pairs** met realized matching.
+The immutable version-1 report is preserved. Version 2 now requires executed,
+independently graded stages before reporting a matched comparison; it does not
+retroactively regrade the epoch or start another model run.
+
+The [verified receipt](../../../docs/omega/evidence/nyx-prospective-science-caaf7601.json)
+reconciles 26 selected source bindings, frozen tasks/configuration, terminal
+log, CRC and artifact SHA256
+`e6b523ff040e68ef174a50ea77bf68495bef05431d33adcbfe6c73e046315754`.
+Five actual R3B measurements and all three disposable fixture cleanups preserved
+source integrity. Clean CI passed 111 suites / 16,128 checks, TS5.8.3 zero,
+secret scan, independent replay, build, package and inventory. The one-shot push
+launcher is removed; default Ultra, previous results and authority are unchanged.
+Next isolate model-fit and sanitized parser-diagnostic gaps on development data,
+investigate general exact fitting of model-authored structure without supplying
+these worlds' formulas, then measure fresh transfer. These exposed worlds are
+not a fresh follow-up evaluation corpus.

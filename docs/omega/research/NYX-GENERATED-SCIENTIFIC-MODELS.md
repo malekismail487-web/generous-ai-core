@@ -2,7 +2,8 @@
 
 Status: experimental component, implemented and locally exercised. Cognitive
 advantage, original discovery, physical experimentation and production authority
-are not established. Live comparison remains pending. Default Ultra is unchanged.
+are not established. The first live comparison has partial coverage and no
+comparative promotion; its result is recorded below. Default Ultra is unchanged.
 
 ## Actual gap and new capability
 
@@ -151,6 +152,46 @@ All outcomes, including no-conclusion and unknown evidence, are preserved.
 No three-case result earns cognitive promotion, broad scientific competence,
 original discovery or official benchmark success. Fresh family-disjoint transfer,
 replication, stronger controls and the full nine-PDF requirements remain pending.
+
+### First live result / evidence-driven correction
+
+Candidate `caaf7601`, run `38447399837`, is terminal. The
+[sanitized custody receipt](../evidence/nyx-prospective-science-caaf7601.json)
+preserves the complete version-1 report without regrading. All 15 Super calls
+delivered stably with 60672 reported tokens. Only one of three worlds admitted
+models; its three arms executed actual prospective measurements and independently
+passed 13 numerical prediction checks each. Six other stages were unexecuted:
+four transport proposals contradicted calibration; four potential proposals
+were rejected at the generic algebraic boundary before execution. The retained
+source diagnostic is too coarse to identify that exact failure. Transition's
+first two proposals used forbidden numeric literals; its second call repaired
+that interface issue. No hidden-grade feedback was given to cognition.
+
+Native forecasts used fewer action calls/tokens than direct review or guidance
+on the only graded world, with equal prediction acceptance. Guidance earns no
+promotion. Every final graph still reports INSUFFICIENT_EVIDENCE; source-distinct
+models were not uniquely distinguished by these measurements. There was no live
+counterexample-dependent model regeneration. Correct held-out point predictions
+are not original science, causal truth, global model equivalence or completion
+of the scientific-reasoning program.
+
+The report exposed a matching-applicability defect: unexecuted arms with equal
+allocated generation-prefix costs were marked cost matched. The receipt preserves
+those raw flags but correctly reports zero independently graded matched pairs.
+Report policy `/2` now requires actual execution and independent grading before
+realized matching. Planted-invalid-generation and fully graded equal-compute
+fixtures test the corrected rule, without altering acceptance or past evidence.
+No new live run is launched by this correction; these three worlds are exposed.
+
+The next capability intervention should address model fit rather than expand
+guardian populations: reproduce fit/specification failure on development data,
+then investigate bounded exact coefficient fitting for model-authored bases or
+structure. Preserve rank/ambiguity, residuals, original calibration, independent
+replay and accounted compute. Such a tool must not encode these observed world
+formulas or pretend to solve unrestricted symbolic regression. Separately improve
+sanitized parser diagnostics on planted development violations; do not invent
+the unretained past offending source. A fresh frozen control/transfer comparison
+is required before calling either supporting change a cognitive gain.
 
 Freeze new scientific model families before inference, separate from these
 development calibrations. Require prediction-before-observation and independent

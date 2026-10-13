@@ -1,7 +1,7 @@
 import { immutableTheoryValue, theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
 import type { ScientificModelTask } from "../../src/lib/codelab/research/scientificModelGeneration";
 
-export const SCIENCE_EPOCH=immutableTheoryValue({version:"nyx-prospective-generated-models/1",model:"nvidia/nemotron-3-super-120b-a12b",
+export const SCIENCE_EPOCH=immutableTheoryValue({version:"nyx-prospective-generated-models/2",model:"nvidia/nemotron-3-super-120b-a12b",
   arms:["DIRECT_REVIEW","NATIVE_FORECASTS","NATIVE_EVIDENCE_GUIDANCE"],maxSeedCalls:2,maxActionCalls:4,maxRegenerationCalls:1,
   maxExperimentsPerArm:2,maxArmMs:240000,maxSeedMs:180000,maxEpochMs:1800000,maxOutputTokens:8192,reasoningControl:"SUPER_HOSTED_NATIVE",reasoningBudgetTokens:2048,
   maxModelRequests:8,maxNativeWorkUnitsPerArm:150000,maxNativeElapsedMsPerArm:2500,maxPhysicalCalls:51,maxHttpAttempts:51,

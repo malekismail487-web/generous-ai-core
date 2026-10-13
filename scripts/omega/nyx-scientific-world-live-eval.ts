@@ -88,8 +88,9 @@ export async function runScientificWorldEpoch(complete:Complete,binding:{candida
         outcomes:Object.fromEntries([...new Set(selected.map(r=>r.outcome))].sort().map(k=>[k,selected.filter(r=>r.outcome===k).length]))};});
     const physical=costForStage(),unknownHttpAttemptCounts=ledger.filter(e=>!e.evidence).length;
     const pairs=WORLDS.map(w=>{const a=rows.find(r=>r.taskId===w.taskId&&r.arm==="NATIVE_FORECASTS"),b=rows.find(r=>r.taskId===w.taskId&&r.arm==="NATIVE_EVIDENCE_GUIDANCE");
-      const known=!!a&&!!b&&[a,b].every(r=>r.allocatedUsage.unknownUsageCalls===0&&r.allocatedUsage.unknownUsageHttpAttempts===0);
-      return{taskId:w.taskId,nativeAccepted:a?.accepted??null,guidedAccepted:b?.accepted??null,
+      const executed=!!a&&!!b&&[a,b].every(r=>r.attempted),graded=executed&&[a!,b!].every(r=>r.accepted!==null);
+      const known=graded&&[a!,b!].every(r=>r.allocatedUsage.unknownUsageCalls===0&&r.allocatedUsage.unknownUsageHttpAttempts===0);
+      return{taskId:w.taskId,postGenerationExecuted:executed,independentlyGraded:graded,nativeAccepted:a?.accepted??null,guidedAccepted:b?.accepted??null,
         realizedInferenceMatched:known&&a!.allocatedUsage.calls===b!.allocatedUsage.calls&&a!.allocatedUsage.httpAttempts===b!.allocatedUsage.httpAttempts
           &&Math.abs(a!.allocatedUsage.reportedTokens-b!.allocatedUsage.reportedTokens)<=EPOCH.realizedTokenMatchTolerance*Math.max(1,a!.allocatedUsage.reportedTokens,b!.allocatedUsage.reportedTokens),
         guidedNoMoreInference:known&&b!.allocatedUsage.calls<=a!.allocatedUsage.calls&&b!.allocatedUsage.httpAttempts<=a!.allocatedUsage.httpAttempts&&b!.allocatedUsage.reportedTokens<=a!.allocatedUsage.reportedTokens};});
