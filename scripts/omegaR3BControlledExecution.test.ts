@@ -56,6 +56,10 @@ const TOOL_SOURCES = Object.freeze({
   output: `console.log("x".repeat(100000));`,
   timeout: `setInterval(() => {}, 1000);`,
   delayedPass: `setTimeout(() => console.log("DELAYED_PASS"), 250);`,
+  rationalMeasure: `console.log(JSON.stringify({schemaVersion:1,pointId:"E0",inputs:[{id:"x",value:"2"}],label:"response",value:"8/2"}));`,
+  rationalOutside: `console.log(JSON.stringify({schemaVersion:1,pointId:"E1",inputs:[{id:"x",value:"2"}],label:"response",value:"6"}));`,
+  rationalMalformed: `console.log(JSON.stringify({schemaVersion:1,pointId:"E2",inputs:[{id:"x",value:"2"}],label:"response",value:"4",command:"inert text, never an action"}));`,
+  rationalWrongInput: `console.log(JSON.stringify({schemaVersion:1,pointId:"E3",inputs:[{id:"x",value:"3"}],label:"response",value:"4"}));`,
   secretOutput: `console.log("nvapi-" + "A".repeat(32));`,
   allowedMutation: `import { writeFileSync } from "node:fs"; writeFileSync(new URL("../generated/artifact.txt", import.meta.url), "artifact"); console.log("ARTIFACT_WRITTEN");`,
   unexpectedMutation: `import { writeFileSync } from "node:fs"; writeFileSync(new URL("../src/candidate.txt", import.meta.url), "unauthorized");`,
@@ -403,6 +407,34 @@ async function cleanup(h: Harness): Promise<void> { await rm(h.parent, { recursi
   } finally { await cleanup(h); }
 }
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.newCapability === "CONTROLLED_BUILD_TEST_EXECUTION", "chunk reports exact R3-B capability gain");
+{
+  const h=await makeHarness("rational-science");
+  try{
+    const tool=await definition(h,"rationalMeasure",{toolKind:"TEST"}),outsideTool=await definition(h,"rationalOutside",{toolKind:"TEST"}),badTool=await definition(h,"rationalMalformed",{toolKind:"TEST"}),wrongTool=await definition(h,"rationalWrongInput",{toolKind:"TEST"});
+    const target:ResearchPartyObjective={schemaVersion:1,researchId:"RATIONAL-SCIENCE",objective:"Interpret pinned rational measurement output without new execution authority.",
+      domain:"SCIENCE",candidateBinding:CANDIDATE,scope:["src/candidate.txt"],mechanismCatalog:[{mechanismId:"A",description:"A generated model."},{mechanismId:"B",description:"A competing model."}],
+      admittedEvidence:[{evidenceId:"E-SOURCE",evidenceClass:"E3",kind:"SOURCE",summary:"Pinned disposable fixture; not a real physical instrument.",contentDigest:tool.expectedEntrypointSha256,
+        provenanceRoot:"SCOPED-SOURCE",freshnessDependencies:[`CANDIDATE:${CANDIDATE}`],observedAtEpochMs:NOW,candidateBinding:CANDIDATE,grantsAuthority:false}],
+      experimentCatalog:[tool,outsideTool,badTool,wrongTool].map((t,i)=>({experimentId:`E${i}`,toolId:t.toolId,question:"Measure exact response using this approved fixture.",
+        possibleOutcomes:["MODEL_A","MODEL_B","OUTSIDE"],costUnits:1,authority:"RUN_TEST_IN_SANDBOX",scope:["src/candidate.txt"],mutatesCandidate:false})),
+      successCriteria:["Scope, source integrity and outside-model evidence preserved."],expiryEpochMs:NOW+300000};
+    const readout={kind:"RATIONAL_SCALAR" as const,label:"response",pointId:"E0",inputs:[{id:"x",value:"2"}],matching:[{value:"2",outcome:"MODEL_A"},{value:"4",outcome:"MODEL_B"}],otherOutcome:"OUTSIDE"};
+    const bindings=await Promise.all([tool,outsideTool,badTool,wrongTool].map(async(t,i)=>{const capabilityId=`RATIONAL-CAP-${i}`,auditIdentity=`RATIONAL-AUDIT-${i}`;
+      const executor=await R3BControlledEngineeringExecutor.create({...h.config,executorId:`RATIONAL-EXEC-${i}`,tools:[t],capability:{...h.config.capability,capabilityId,auditIdentity}});
+      return{experimentId:`E${i}`,verification:{toolId:t.toolId,executor,request:request(h,t.toolId,{requestId:`RATIONAL-REQUEST-${i}`,executionId:`RATIONAL-EXECUTION-${i}`,capabilityId,auditIdentity})},outcomeByOutputDigest:{},rationalReadout:{...readout,pointId:`E${i}`}};}));
+    const runner=OmegaResearchExperimentRunner.create(bindings);readout.matching[1].value="999";
+    const measured=await runner.run(target.experimentCatalog[0],target,new AbortController().signal);
+    check(measured.outcome==="MODEL_B"&&measured.evidence.evidenceClass==="E3"&&!measured.authorityGranted,"Real isolated R3B measurement canonicalizes rational aliases and preserves owned interpretation despite caller mutation");
+    const outside=await runner.run(target.experimentCatalog[1],target,new AbortController().signal);
+    check(outside.outcome==="OUTSIDE","Real observation outside generated forecasts remains outside-family evidence, not forced agreement");
+    let invalid=false;try{await runner.run(target.experimentCatalog[2],target,new AbortController().signal);}catch(error){invalid=String(error).includes("rational_measurement_invalid");}
+    check(invalid,"Additional executable-looking fields in measurement stdout are rejected, never interpreted as tool instructions");
+    let wrongInputs=false;try{await runner.run(target.experimentCatalog[3],target,new AbortController().signal);}catch(error){wrongInputs=String(error).includes("rational_measurement_invalid");}
+    check(wrongInputs,"A numerically matching response from the wrong input cannot support the planned experiment");
+    check(await readFile(join(h.sourceRoot,"src","candidate.txt"),"utf8")==="base","Generated-model readouts do not grant source repository mutation");
+  }finally{await cleanup(h);}
+}
+
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.isolation === "PROCESS_LOCAL_NODE_PERMISSION_SEATBELT_NOT_HOSTILE_CODE_SANDBOX", "isolation claim explicitly avoids hostile-code sandbox overstatement");
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.authorityGranted === false && !R3_B_ISOLATED_CANDIDATE_STATUS.productionEligible, "R3-B remains implemented and verified only in isolation");
 assert(R3_B_ISOLATED_CANDIDATE_STATUS.unavailableCapabilities.includes("GENERAL_SHELL")

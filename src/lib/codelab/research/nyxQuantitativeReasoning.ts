@@ -9,6 +9,67 @@ import { quantitativeExpressionSchema, EXPRESSION_COMPILER_POLICY, type Quantita
 import { quantitativeAlgebraicSchema, ALGEBRAIC_COMPILER_POLICY, ALGEBRAIC_EMISSION_POLICY, algebraicEmissionDiagnostic,
   type AlgebraicEmissionDiagnostic, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { SemanticPolynomialSession, SEMANTIC_POLYNOMIAL_POLICY, type SemanticPolynomialTask } from "./semanticPolynomialProof";
+import { ScientificModelSession, SCIENTIFIC_MODEL_POLICY, type ScientificModelDraft, type ScientificModelRef, type ScientificDerivationVerifier } from "./scientificModelGeneration";
+
+/** Existing NYX cognition proposes models, not choices from a host answer list.
+ * Independently checked point derivations remain hypotheses until prospective
+ * evidence, and actual experiments still require their own Omega capability.
+ */
+export async function runNyxScientificModelGeneration(input:{readonly session:ScientificModelSession;
+  readonly complete:(request:NvidiaNimCompletionRequest)=>Promise<NvidiaNimCompletionResult>;
+  readonly verify:ScientificDerivationVerifier;readonly maxCalls:number;readonly maxOutputTokens:number;
+  readonly deadlineEpochMs:number;readonly now?:()=>number}){
+  const now=input.now??Date.now,start=now(),task=input.session.task,deadline=Math.min(input.deadlineEpochMs,task.objective.expiryEpochMs,input.session.expiresAtEpochMs);
+  if(!Number.isSafeInteger(input.maxCalls)||input.maxCalls<1||input.maxCalls>4||!Number.isSafeInteger(input.maxOutputTokens)
+    ||input.maxOutputTokens<128||input.maxOutputTokens>8192||!Number.isSafeInteger(deadline)||deadline<=start||deadline>start+600000
+    ||typeof input.complete!=="function"||typeof input.verify!=="function")throw Error("scientific_generation_configuration_invalid");
+  const object=(properties:Record<string,unknown>)=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
+  const statements={type:"array",minItems:1,maxItems:5,items:{type:"string",minLength:1,maxLength:160}};
+  const draftSchema=object({schemaVersion:{type:"integer",enum:[1]},parameters:{type:"array",minItems:0,maxItems:16,
+    items:object({id:{type:"string",pattern:"^[A-Za-z][A-Za-z0-9_]{0,47}$"},value:{type:"string",maxLength:260,pattern:"^-?(0|[1-9][0-9]*)(/[1-9][0-9]*)?$"}})},
+    program:quantitativeAlgebraicSchema(["response"],true),assumptions:statements,uncertainties:statements});
+  const schema=object({schemaVersion:{type:"integer",enum:[1]},models:{type:"array",minItems:2,maxItems:4,items:draftSchema}});
+  const models:ScientificModelRef[]=[],attempts:{call:number;outcome:string;modelEvidence:NvidiaNimEvidence;
+    proposals:{state:string;reason:string|null;contradictedObservationIds:readonly string[];resultDigest:string;modelId:string|null}[]}[]=[];
+  let previous:readonly ScientificModelDraft[]|null=null,feedback:unknown=null,sessionStopped=false;
+  for(let call=1;call<=input.maxCalls&&now()<deadline&&models.length<2&&!sessionStopped&&input.session.usage().remainingRequests>0;call++){
+    const result=await input.complete({schemaVersion:1,requestId:`NYX-SCIENCE-MODELS-${input.session.taskDigest.slice(0,16)}-${call}`,
+      messages:[{role:"system",content:"You are NYX cognition investigating a scientific objective under Omega. Propose two genuinely competing mathematical models consistent with the admitted measurements. "
+        +"Return the strict model JSON contract, not an executable script or a success claim. Models are deterministic rational response functions over the declared inputs. "
+        +"Use only named variables/constants/your explicit rational parameters; use + - * / and parentheses, no numeric literals in expressions, powers, host code or private reasoning. "
+        +"Every model must include genuine assumptions and unresolved uncertainty. Training fit and correct arithmetic do not prove scientific truth. If candidate models cannot be discriminated, preserve that uncertainty."},
+      {role:"user",content:JSON.stringify({task,policy:SCIENTIFIC_MODEL_POLICY,previousCandidates:previous,feedback})}],
+      maxTokens:input.maxOutputTokens,temperature:0,inferencePolicy:"REASONING_JSON",reasoningEffort:"MEDIUM",
+      responseFormat:{type:"JSON_SCHEMA",name:"nyx_scientific_model_proposals",schema},observedAtEpochMs:now(),deadlineEpochMs:deadline});
+    const evidence=snapshotBoundedReasoningData(result.evidence),proposals:typeof attempts[number]["proposals"]=[];
+    const record=(outcome:string)=>attempts.push({call,outcome,modelEvidence:evidence,proposals});
+    if(now()>=deadline){record("LATE_RESPONSE_NOT_ADMITTED");break;}
+    if(result.finishReason==="length"){record("TRUNCATION");feedback={reason:"COMPLETE_JSON_REQUIRED"};continue;}
+    if(result.decision!=="COMPLETED"||result.content===null){record("PROVIDER_FAILURE");feedback={reason:"DELIVERY_NOT_REASONING_FAILURE"};continue;}
+    if(result.finishReason!=="stop"){record("NONSTOP_REJECTION");continue;}
+    let parsed:{schemaVersion:1;models:ScientificModelDraft[]};
+    try{parsed=snapshotBoundedReasoningData(JSON.parse(result.content));
+      if(!keys(parsed,["schemaVersion","models"])||parsed.schemaVersion!==1||!Array.isArray(parsed.models)||parsed.models.length<2||parsed.models.length>4)throw Error("shape");}
+    catch{record("JSON_OR_DATA_REJECTION");feedback={reason:"STRICT_COMPLETE_MODEL_CONTRACT_REQUIRED"};continue;}
+    previous=parsed.models;
+    for(const draft of parsed.models){
+      if(now()>=deadline||input.session.usage().remainingRequests===0)break;
+      let admitted:ReturnType<ScientificModelSession["propose"]>;
+      try{admitted=input.session.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:input.session.taskDigest,draft},input.verify);}
+      catch{sessionStopped=true;break;}
+      proposals.push({state:admitted.state,reason:"reason"in admitted?admitted.reason:null,
+        contradictedObservationIds:"contradictedObservationIds"in admitted?admitted.contradictedObservationIds:[],resultDigest:admitted.resultDigest,
+        modelId:"model"in admitted?admitted.model.modelId:null});
+      if(admitted.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")models.push(admitted.model);
+    }
+    record(sessionStopped?"SESSION_UNAVAILABLE":models.length>=2?"COMPETING_MODEL_DERIVATIONS_ADMITTED":"MODEL_PROPOSALS_NOT_ADMITTED");feedback=proposals;
+  }
+  return Object.freeze({version:"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
+    attempts:immutableTheoryValue(attempts),calls:attempts.length,firstAttemptAdmitted:attempts[0]?.outcome==="COMPETING_MODEL_DERIVATIONS_ADMITTED",
+    competingModelsAdmitted:models.length>=2,nativeUsage:input.session.usage(),elapsedMs:Math.max(0,now()-start),
+    scientificTruthEstablished:false as const,cognitiveGainDemonstrated:false as const,authorityGranted:false as const,
+    generalShell:false as const,generalNetwork:false as const,productionAuthority:false as const});
+}
 
 export type QuantitativeArm = "CURRENT_DIRECT" | "REASONING_MEDIUM" | "REASONING_WITH_WORKBENCH";
 export interface QuantitativeRunLimits { readonly maxCalls: number; readonly maxOutputTokens: number;

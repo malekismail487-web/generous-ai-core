@@ -47,6 +47,8 @@ jobs:
           scripts/omegaLuminaLiveBoundary.test.ts
           scripts/omegaBoundedReasoningWorkbench.test.ts
           scripts/omegaSemanticPolynomialProof.test.ts
+          scripts/omegaScientificModelGeneration.test.ts
+          scripts/omega/benchmarks/scientific-model-replay.ts
           scripts/omega/benchmarks/semantic-polynomial-crosscheck.ts
           scripts/omega/nyx-semantic-proof-live-eval.ts
           scripts/omega/nyx-semantic-proof-fixtures.ts

@@ -72,6 +72,20 @@ export function validQuantitativeProgram(problem: QuantitativeProblem, value: un
 }
 
 class ArithmeticBoundary extends Error {}
+/** Bounded canonicalization reuses the SAME exact interpreter. This establishes
+ * rational representation equality, never scientific truth or tool authority.
+ */
+export function canonicalRationalLiteral(value: string, tick:()=>void=()=>{}):string {
+  // Derived/native measurement scalars may be wider than source constants.
+  // Preserve the source validator's 128-digit limit; the interpreter itself
+  // enforces its original 4096-bit arithmetic ceiling on this bounded string.
+  if(typeof value!=="string"||!/^-(?:0|[1-9][0-9]{0,1233})(?:\/[1-9][0-9]{0,1233})?$/.test(value)
+    &&!/^(?:0|[1-9][0-9]{0,1233})(?:\/[1-9][0-9]{0,1233})?$/.test(value))throw Error("rational_literal_invalid");
+  const result=deriveQuantities({kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"scalar",value}]},
+    {schemaVersion:1,registers:[],blocks:[],outputs:[{label:"value",source:"scalar"}]},{tick});
+  if(result.status!=="CONSTRUCTED"||!result.payload.outputs)throw Error("rational_literal_insufficient");
+  return result.payload.outputs[0].value;
+}
 interface Rational { n: bigint; d: bigint }
 /** Every primitive and Euclidean iteration consumes the SAME session's finite work budget. */
 export function deriveQuantities(problem: QuantitativeProblem, program: QuantitativeProgram, budget: { tick(): void }) {

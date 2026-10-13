@@ -2769,6 +2769,7 @@
     {
       "name": "OMEGA_POLYNOMIAL_PYTHON",
       "files": [
+        "scripts/omegaScientificModelGeneration.test.ts",
         "scripts/omegaSemanticPolynomialProof.test.ts"
       ]
     },

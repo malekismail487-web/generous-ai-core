@@ -56,3 +56,20 @@ except replay.Boundary:
 else:
     raise AssertionError("unbound Python boolean became an invented constant")
 print(f"POLYNOMIAL_REPLAY_DETECTOR_VALIDATION passed={rejected + 2} failed=0")
+model_capsule={"task":{"schemaVersion":1,"objective":{},"variables":["x"],"constants":[{"id":"zero","value":"0"}],
+    "observations":[{"pointId":"P","inputs":[{"id":"x","value":"2"}]}],"experiments":[]},
+    "draft":{"schemaVersion":1,"parameters":[],"program":{"schemaVersion":5,"definitions":[],"outputs":[{"label":"response","expression":"x*x"}]},"assumptions":[],"uncertainties":[]},
+    "predictions":[{"pointId":"P","inputs":[{"id":"x","value":"2"}],"value":"4"}]}
+assert replay.check_model(model_capsule)==(True,1)
+wrong=deepcopy(model_capsule);wrong["predictions"][0]["value"]="5"
+assert replay.check_model(wrong)==(False,1)
+for corrupt in ["input", "source", "duplicate", "executable"]:
+    wrong=deepcopy(model_capsule)
+    if corrupt=="input": wrong["predictions"][0]["inputs"][0]["value"]="99"
+    if corrupt=="source": wrong["draft"]["program"]["outputs"][0]["expression"]="True"
+    if corrupt=="duplicate": wrong["draft"]["parameters"]=[{"id":"x","value":"1"}]
+    if corrupt=="executable": wrong["draft"]["program"]["outputs"][0]["expression"]="__import__('os')"
+    try: replay.check_model(wrong)
+    except (replay.Boundary,SyntaxError,ValueError,TypeError): pass
+    else: raise AssertionError("planted corrupt scientific prediction accepted")
+print("SCIENTIFIC_MODEL_REPLAY_DETECTOR_VALIDATION passed=6 failed=0")

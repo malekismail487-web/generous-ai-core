@@ -233,11 +233,64 @@ def check(capsule):
     return observations, evaluated_points
 
 
+def check_model(capsule):
+    """Independent point predictions, NEVER a universal or causal proof."""
+    if set(capsule) != {"task", "draft", "predictions"}:
+        raise Boundary("scientific_capsule_contract")
+    task, draft, predictions = capsule["task"], capsule["draft"], capsule["predictions"]
+    if set(task) != {"schemaVersion", "objective", "variables", "constants", "observations", "experiments"} or task["schemaVersion"] != 1:
+        raise Boundary("scientific_task_contract")
+    if set(draft) != {"schemaVersion", "parameters", "program", "assumptions", "uncertainties"} or draft["schemaVersion"] != 1:
+        raise Boundary("scientific_draft_contract")
+    variables, constants = task["variables"], task["constants"] + draft["parameters"]
+    if not 1 <= len(variables) <= 3 or len(constants) + len(variables) > 32 or any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,47}", v) for v in variables):
+        raise Boundary("scientific_namespace_bound")
+    def literal(value):
+        if not isinstance(value, str) or not re.fullmatch(r"-?(?:0|[1-9][0-9]{0,127})(?:/[1-9][0-9]{0,127})?", value):
+            raise Boundary("scientific_literal_bound")
+        return Fraction(value)
+    if any(set(c) != {"id", "value"} or not isinstance(c["id"], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,47}", c["id"]) for c in constants):
+        raise Boundary("scientific_constant_contract")
+    original_names = variables + [c["id"] for c in constants]
+    if len(set(original_names)) != len(original_names):
+        raise Boundary("scientific_namespace_collision")
+    env = {c["id"]: literal(c["value"]) for c in constants}
+    zero = next((k for k, value in env.items() if value == 0), None)
+    program = compile_form(draft["program"], original_names, zero)
+    if [o["label"] for o in program["outputs"]] != ["response"]:
+        raise Boundary("scientific_output_contract")
+    points = [(o["pointId"], o["inputs"]) for o in task["observations"]] + [(e["experimentId"], e["inputs"]) for e in task["experiments"]]
+    if not 1 <= len(points) <= 28 or len(predictions) != len(points):
+        raise Boundary("scientific_point_coverage")
+    agrees = True
+    for prediction, (point_id, inputs) in zip(predictions, points):
+        if set(prediction) != {"pointId", "inputs", "value"} or prediction["pointId"] != point_id or prediction["inputs"] != inputs:
+            raise Boundary("scientific_point_identity")
+        if len(inputs) != len(variables) or any(set(i) != {"id", "value"} for i in inputs) or {i["id"] for i in inputs} != set(variables):
+            raise Boundary("scientific_input_bindings")
+        measured = graph(program, {**env, **{i["id"]: literal(i["value"]) for i in inputs}})["response"]
+        value = prediction["value"]
+        if not isinstance(value, str) or len(value) > 2500 or not re.fullmatch(r"-?[0-9]+(?:/[1-9][0-9]*)?", value):
+            raise Boundary("scientific_claim_bound")
+        claim = Fraction(value)
+        if claim.numerator.bit_length() > 4096 or claim.denominator.bit_length() > 4096:
+            raise Boundary("scientific_claim_bits")
+        agrees = agrees and measured == claim
+    return agrees, len(points)
+
+
 def main():
     data = sys.stdin.buffer.read(2_000_001)
     if len(data) > 2_000_000:
         raise Boundary("input_bytes")
     capsules = json.loads(data)
+    if sys.argv[1:] == ["--verify-model"]:
+        start, cpu = time.perf_counter(), time.process_time()
+        agrees, points = check_model(capsules)
+        print(json.dumps({"schemaVersion": 1, "decision": "AGREES" if agrees else "DISAGREES", "checkedPoints": points,
+            "elapsedMs": (time.perf_counter() - start) * 1000, "cpuMs": (time.process_time() - cpu) * 1000,
+            "scope": "POINT_DERIVATIONS_NOT_CAUSAL_TRUTH"}))
+        return
     if sys.argv[1:] == ["--verify-one"]:
         if not isinstance(capsules, dict):
             raise Boundary("single_candidate_contract")
