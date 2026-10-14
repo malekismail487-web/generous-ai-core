@@ -2778,6 +2778,7 @@
         "scripts/omega/nyx-scientific-fit-live-eval.ts",
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omegaScientificModelGeneration.test.ts",
+        "scripts/omegaScientificStructureSearch.test.ts",
         "scripts/omegaSemanticPolynomialProof.test.ts"
       ]
     },

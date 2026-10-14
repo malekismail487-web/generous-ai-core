@@ -365,6 +365,72 @@ the manifest. Existing test bodies, functional acceptance and frozen manifests
 are not reinterpreted. This is reporting/genealogy correctness, not cognition;
 label identities are not proof of assertion logic, which remains source-bound.
 
+## Bounded structure search development — 2026-10-14
+
+The new opt-in `SEARCH_SCIENTIFIC_MODELS` capability searches a finite grammar
+over admitted variables and one explicit nonzero constant. It enumerates
+monomials through degree three, optional reciprocal atoms and optional
+denominator terms: at most 58 coefficient-role atoms, eight coefficients,
+256 evaluated supports and three returned hypotheses. There are no task IDs,
+exposed world equations or answer-specific templates in the mechanism.
+
+Two strategies share the grammar and existing exact arithmetic/fitting tools.
+`FORWARD_RESIDUAL` uses exact normal equations to rank forward support additions,
+caches Gram products and restarts with an excluded support atom for diversity.
+`LEXICOGRAPHIC` enumerates supports by size as a simpler control. An exact zero
+ranking residual is rechecked against original calibration and known input
+domains. Prediction diversity at registered inputs is observational, not proof
+of global functional difference. Noise, transcendental laws, arbitrary symbolic
+regression and causal identification are outside this grammar.
+
+The existing ScientificModelSession owns the optional capability, original
+lease and all work/time/request limits. Candidate evaluations are counted even
+if a later budget boundary aborts the request. Search returns unadmitted data;
+independent original-source Fraction fitting replay and ordinary point proposal
+remain separate charged steps before a model obtains an owned reference.
+Critical verifier refutations remain quarantined. No environment, shell,
+network, production or physical authority is added. Nemotron can request a
+typed search through the existing NYX completion interface; its identity and
+default configuration are unchanged.
+
+Development evidence from `omegaScientificStructureSearch.test.ts`: both
+strategies discover independently checked candidates for four separate laws,
+and both predict the registered development extrapolation point correctly.
+The test uses identical resource ceilings and independent acceptance, but
+realized work is unequal. Search-only work units (forward / lexicographic):
+affine 18215 / 17576; single cubic 11729 / 11323; saturation 269953 / 56452;
+reciprocal square 17730 / 16793. Each arm then pays for the same independent
+fit and point admission. The more elaborate strategy has no acceptance gain
+and uses more work on this set; it earns no efficiency or cognitive promotion.
+These are developer examples, not a fresh blind comparison or official score.
+
+Additional checks cover six signed/coefficient/namespace/constant variations,
+rank deficiency, ambiguity, the maximal grammar, unknown operations/fields,
+forged references, disabled capabilities, getter rejection, original expiry,
+revocation, verifier reentry, critical refutation and original work budgets.
+A test assumption was corrected: repeated equal observations can identify a
+one-coefficient model; testing rank deficiency requires actually reaching a
+multi-coefficient support. No production rule or acceptance threshold changed.
+An original-name shadowing defect is reproduced on separate development data;
+generated fresh coefficient names avoid it while the original parser continues
+rejecting collisions. This does not identify the discarded historical sources.
+
+Adversarial review identified an additional route requiring protection: search
+exposes an unadmitted draft before independent fitting. A critical fit refutation
+now also quarantines that exact draft's parameter/program identity, so a later
+direct point-proposal call cannot bypass the recorded disagreement. A planted
+detector conflict verifies both routes fail closed without changing ordinary
+fit or point acceptance.
+
+The two-model research bridge is unchanged. One fitted law cannot manufacture
+a competing model or a complete scientific loop. Test-double cognition proves
+protocol composition only; this milestone makes zero live model calls. Next:
+freeze fresh tasks and compare live model-authored structure, model-selected
+search and a fixed same-tool search control with all native, verifier and model
+compute accounted. Exposed live worlds remain untouched. Native algorithm
+availability is a component capability; broad cognitive improvement, original
+discovery and full plan fulfillment remain unverified.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

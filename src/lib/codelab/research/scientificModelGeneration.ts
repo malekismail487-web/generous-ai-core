@@ -2,6 +2,7 @@ import { BoundedReasoningSession, snapshotBoundedReasoningData } from "./bounded
 import { canonicalRationalLiteral, validQuantitativeProblem } from "./exactQuantitativeDerivation";
 import { compileAlgebraicExpressionGraph, algebraicEmissionDiagnostic, algebraicBoundaryCode, type AlgebraicBoundaryCode, type QuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { fitScientificStructure, type ScientificModelStructure, type ScientificFitVerifier, type ScientificStructureFit } from "./scientificModelFit";
+import { searchScientificStructures, type ScientificSearchResult } from "./scientificModelSearch";
 import { ResearchEvidenceGraph } from "./researchEvidenceGraph";
 import { validResearchObjective, researchObjectiveDigest, type ResearchPartyObjective, type TheoryContribution } from "./researchPartyContracts";
 import { immutableTheoryValue, theoryDigest } from "./theoryContracts";
@@ -35,6 +36,8 @@ export type ScientificModelProposalResult={readonly state:"ADMITTED_PREDICTIONS_
 export type ScientificFitResult = {readonly state:"FITTED_CANDIDATE_NOT_ADMITTED";readonly fit:ScientificStructureFit;readonly resultDigest:string}
   | {readonly state:"REJECTED"|"INSUFFICIENT_EVIDENCE";readonly reason:string;readonly linearState?:ScientificStructureFit["linear"]["state"];
     readonly rank?:number;readonly resultDigest:string;readonly emissionBoundary?:AlgebraicBoundaryCode};
+export type ScientificSearchRequestResult = (ScientificSearchResult & {readonly resultDigest:string;readonly quarantinedCandidates:number})
+  | {readonly state:"REJECTED"|"INSUFFICIENT_EVIDENCE";readonly reason:string;readonly resultDigest:string};
 const keys=(v:unknown,n:readonly string[]):boolean=>!!v&&typeof v==="object"&&!Array.isArray(v)&&Object.keys(v).sort().join("|")===[...n].sort().join("|");
 const id=(v:unknown):v is string=>typeof v==="string"&&/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(v);
 const texts=(v:unknown):v is string[]=>Array.isArray(v)&&v.length>=1&&v.length<=5&&new Set(v).size===v.length
@@ -50,12 +53,15 @@ export class ScientificModelSession {
   readonly #limits:ScientificModelLimits;readonly #now:()=>number;
   readonly #owned=new Map<ScientificModelRef,Artifact>();readonly #programs=new Set<string>();readonly #refutedDerivations=new Set<string>();
   readonly #refutedFits=new Set<string>();
-  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#fitRequests=0;#lastTime:number;#unavailable=false;#busy=false;
-  private constructor(task:ScientificModelTask,limits:ScientificModelLimits,now:()=>number,createdAt:number){
-    this.task=task;this.taskDigest=theoryDigest(task);this.#limits=limits;this.#now=now;this.#lastTime=createdAt;this.#available();
+  readonly #structureSearch:boolean;
+  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#fitRequests=0;#searchRequests=0;#searchSupports=0;#lastTime:number;#unavailable=false;#busy=false;
+  private constructor(task:ScientificModelTask,limits:ScientificModelLimits,now:()=>number,createdAt:number,structureSearch:boolean){
+    this.task=task;this.taskDigest=theoryDigest(task);this.#limits=limits;this.#now=now;this.#lastTime=createdAt;this.#structureSearch=structureSearch;this.#available();
   }
-  static create(task:ScientificModelTask,limits:ScientificModelLimits,now=Date.now):ScientificModelSession{
+  static create(task:ScientificModelTask,limits:ScientificModelLimits,now=Date.now,features={structureSearch:false}):ScientificModelSession{
     const t=snapshotBoundedReasoningData(task),l=snapshotBoundedReasoningData(limits),at=now();
+    const f=snapshotBoundedReasoningData(features);
+    if(!keys(f,["structureSearch"])||typeof f.structureSearch!=="boolean")throw Error("scientific_model_features_invalid");
     if(!keys(l,["maxRequests","maxWorkUnits","maxNativeElapsedMs","expiresAtEpochMs"])
       ||!Number.isSafeInteger(l.maxRequests)||l.maxRequests<1||l.maxRequests>8
       ||!Number.isSafeInteger(l.maxWorkUnits)||l.maxWorkUnits<1||l.maxWorkUnits>1000000
@@ -87,7 +93,7 @@ export class ScientificModelSession {
     const template={...t.objective,mechanismCatalog:[{mechanismId:"VALIDATION_ONLY_A",description:"Not a model supplied to NYX"},{mechanismId:"VALIDATION_ONLY_B",description:"Not a model supplied to NYX"}],
       experimentCatalog:t.experiments.map(({inputs:_inputs,...e})=>({...e,possibleOutcomes:["VALIDATION_A","VALIDATION_B"]}))};
     if(!validResearchObjective(template,at))throw Error("scientific_objective_contract_invalid");
-    const s=new ScientificModelSession(t,l,now,at);
+    const s=new ScientificModelSession(t,l,now,at,f.structureSearch);
     // Setup and representation normalization are charged, not free hidden work.
     for(const c of [...t.constants,...t.observations.flatMap(o=>o.inputs),...t.experiments.flatMap(e=>e.inputs)])s.#canonical(c.value);
     for(const o of t.observations)s.#canonical(o.output);
@@ -99,8 +105,39 @@ export class ScientificModelSession {
   #canonical(s:string){return canonicalRationalLiteral(s,()=>this.#tick());}
   revoke(){this.#unavailable=true;}
   get expiresAtEpochMs(){return this.#limits.expiresAtEpochMs;}
-  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,fitRequests:this.#fitRequests,models:this.#owned.size});}
+  capabilities(){this.#available();return Object.freeze({structureSearch:this.#structureSearch,grantsAuthority:false});}
+  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,fitRequests:this.#fitRequests,searchRequests:this.#searchRequests,searchSupports:this.#searchSupports,models:this.#owned.size});}
   inspect(model:ScientificModelRef){this.#available();const a=this.#owned.get(model);if(!a)throw Error("scientific_model_foreign_reference");return a;}
+  /** Host-enabled compound search; every evaluated support is bounded/charged.
+   * Its results are NOT owned model references. Existing independent fit and
+   * ordinary proposal must still be requested before any model is admitted. */
+  search(request:unknown):ScientificSearchRequestResult{
+    this.#available();if(this.#busy)throw Error("scientific_model_reentrant_request");
+    if(this.#requests>=this.#limits.maxRequests)throw Error("scientific_model_request_budget");
+    this.#requests++;this.#searchRequests++;this.#busy=true;
+    const start=performance.now();
+    const tick=()=>{this.#tick();if(this.#nativeElapsedMs+performance.now()-start>=this.#limits.maxNativeElapsedMs)throw Error("scientific_search_time_budget");};
+    const reject=(reason:string,state:"REJECTED"|"INSUFFICIENT_EVIDENCE"="REJECTED"):ScientificSearchRequestResult=>{
+      const r={state,reason};return immutableTheoryValue({...r,resultDigest:theoryDigest({task:this.taskDigest,request:this.#requests,...r})});};
+    try{
+      tick();if(!this.#structureSearch)return reject("SEARCH_NOT_ENABLED");
+      const r=snapshotBoundedReasoningData(request) as Record<string,unknown>;
+      if(!keys(r,["schemaVersion","operation","taskDigest","spec"])||r.schemaVersion!==1||r.operation!=="SEARCH_SCIENTIFIC_MODELS"
+        ||r.taskDigest!==this.taskDigest)return reject("SEARCH_CONTRACT");
+      const found=searchScientificStructures(this.task,r.spec,tick,()=>{this.#searchSupports++;});
+      // Critical detector disagreement remains quarantined across all paths.
+      const candidates=found.candidates.filter(c=>!this.#refutedFits.has(theoryDigest(c.structure)));
+      const result={...found,candidates,quarantinedCandidates:found.candidates.length-candidates.length,
+        state:candidates.length?"CANDIDATES_NOT_ADMITTED" as const:"NO_CANDIDATE_IN_SEARCHED_GRAMMAR" as const};
+      return immutableTheoryValue({...result,resultDigest:theoryDigest({task:this.taskDigest,spec:r.spec,result})});
+    }catch(error){
+      if(String(error).includes("session_unavailable"))throw error;
+      const resource=String(error).includes("budget"),arithmetic=String(error).includes("arithmetic_boundary");
+      const invalid=error instanceof Error&&["scientific_search_spec_contract","scientific_search_nonzero_constant_required"].includes(error.message);
+      return reject(resource?"SEARCH_RESOURCE_BUDGET":arithmetic?"SEARCH_ARITHMETIC_BOUNDARY":invalid?"SEARCH_SPEC_REJECTION":"SEARCH_INPUT_OR_COMPUTATION_UNAVAILABLE",
+        invalid?"REJECTED":"INSUFFICIENT_EVIDENCE");
+    }finally{this.#nativeElapsedMs+=Math.max(0,performance.now()-start);this.#busy=false;}
+  }
   /** Opt-in native capability: fit is one charged request; ordinary proposal is
    * another. Neither renews the shared lease/budget or admits a model on its own. */
   fit(request:unknown,verify:ScientificFitVerifier):ScientificFitResult{
@@ -125,7 +162,13 @@ export class ScientificModelSession {
       this.#available();
       if(!keys(independent,["decision","verificationDigest"])||!["AGREES","DISAGREES","INSUFFICIENT_EVIDENCE"].includes(independent.decision)||!digest(independent.verificationDigest))
         return reject("INDEPENDENT_FIT_VERIFIER_CONTRACT","INSUFFICIENT_EVIDENCE");
-      if(independent.decision==="DISAGREES"){this.#refutedFits.add(key);return reject("INDEPENDENT_FIT_DISAGREEMENT");}
+      if(independent.decision==="DISAGREES"){
+        this.#refutedFits.add(key);
+        // Search exposes an unadmitted draft. A later point-proposal path must
+        // not launder that same artifact after its independent fit was refuted.
+        if(fit.draft)this.#refutedDerivations.add(theoryDigest({parameters:fit.draft.parameters,program:fit.draft.program}));
+        return reject("INDEPENDENT_FIT_DISAGREEMENT");
+      }
       if(independent.decision!=="AGREES")return reject("INDEPENDENT_FIT_INSUFFICIENT","INSUFFICIENT_EVIDENCE");
       if(!fit.draft)return reject("CALIBRATION_"+fit.linear.state,fit.linear.state==="INCONSISTENT"?"REJECTED":"INSUFFICIENT_EVIDENCE",{linearState:fit.linear.state,rank:fit.linear.rank});
       return immutableTheoryValue({state:"FITTED_CANDIDATE_NOT_ADMITTED",fit,resultDigest:theoryDigest({task:this.taskDigest,structure:key,fit,independent:independent.verificationDigest})});

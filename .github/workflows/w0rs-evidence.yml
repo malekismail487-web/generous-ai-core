@@ -48,6 +48,7 @@ jobs:
           scripts/omegaBoundedReasoningWorkbench.test.ts
           scripts/omegaSemanticPolynomialProof.test.ts
           scripts/omegaScientificModelGeneration.test.ts
+          scripts/omegaScientificStructureSearch.test.ts
           scripts/omega/benchmarks/scientific-model-replay.ts
           scripts/omega/nyx-scientific-fit-live-eval.ts
           scripts/omega/nyx-scientific-fit-fixtures.ts

@@ -1,5 +1,16 @@
 # NYX benchmark capability program
 
+### Bounded scientific structure search component (2026-10-14)
+
+`NYX-SCIENTIFIC-STRUCTURE-SEARCH-001` adds an opt-in finite rational grammar
+search to the existing NYX scientific-model protocol. Development finds and
+independently verifies four laws with both forward-residual and simpler
+lexicographic search; six additional signed/namespace/offset variations pass.
+The simpler control consumes less native work on all four comparison examples.
+No live calls, blind transfer, cognitive promotion or benchmark score follows.
+See [method, limits, costs and plan coverage](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md#bounded-structure-search-development--2026-10-14).
+Previous live failures and all frozen benchmark results are preserved.
+
 ### Algebraic emission diagnosis: control 4/4 repaired, comparison inconclusive (2026-10-13)
 
 Frozen `add56478`, [run 38355398775](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38355398775),
