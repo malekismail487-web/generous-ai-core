@@ -634,6 +634,47 @@ hypotheses and prospective evidence; D01/D08 strong simpler controls and fresh
 transfer. Their full proof, discovery, replication and benchmark thresholds are
 deferred, not replaced by this pilot. Coverage remains PARTIAL / JUST-IN-TIME.
 
+## Fresh diagonal-search transfer outcome — 2026-10-14
+
+The exact frozen pilot completed at f05c50f0, run 38590375090, job 115943337281.
+All eighteen stages attempted; model-authored structure submitted/graded none.
+NYX-requested search and fixed diagonal search each submitted two models, both
+accepted at every original calibration/prospective/withheld point. They solved
+the same two cases in the asymmetric-interaction family; their other four cases
+remain ungraded. No complete numerical score or broad generalization follows.
+The fixed control tied the live search arm using zero model calls. Live NYX did
+demonstrate typed search, independent admission, real prospective R3B observation,
+selection and independent acceptance on two cases, but not a cognitive advantage.
+
+NYX's two successes required second-generation repairs of undersized support
+limits. Three other search populations reached observation then failed strict
+selection schema; one model-authored population did likewise. Exact invalid
+fields/types were not retained, so the coarse interface failure remains coarse.
+Thirteen of fifteen admitted NYX-search fits had rank four against four calibration
+rows; the two successful cases also contained rank-three fits. Each fixed search
+filled three candidate slots after 28 supports, and four populations were wholly
+refuted by the prospective measurement. This supports investigating early
+data-saturated hypothesis retention, not memorizing the exposed family formulas.
+
+Stable delivery: 27 logical/HTTP calls, 103897 known tokens, zero unknown/provider/
+truncation/capacity failures. Model-authored formulation: 13 calls / 57308 tokens;
+NYX-requested search: 14 / 46589; fixed control: zero inference. Native work
+1938751 units over 110 requests / 57 fits / 15 searches / 342 completed supports;
+82 independent replays agree, measured 3308.298 ms wall and 102.711 ms known CPU.
+Twelve real observations, source integrity and complete fixture cleanup verified.
+The full sanitized report, artifact hashes and evidence scope are preserved in
+[the terminal receipt](../evidence/nyx-fresh-scientific-diagonal-f05c50f0.json).
+All original caps, two-model admission, acceptance and authority remain.
+
+Next: on separate development laws, test whether bounded evidence-aware candidate
+retention/exploration avoids filling slots with saturated interpolation before
+informative hypotheses are reached. Include cases that genuinely require the
+higher parameter count; a preference is not a truth theorem. Separately add only
+the minimal sanitized contract-boundary diagnostics needed to locate future
+selection failures. No new cognitive layer, source relaxation, hidden-grade
+feedback or automatic promotion. All six exposed cases and prior epochs remain
+untouched; fresh confirmation is still mandatory.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

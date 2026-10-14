@@ -1,6 +1,28 @@
 # NYX benchmark capability program
 
-### Fresh diagonal-search transfer — preregistered 2026-10-14
+### Fresh diagonal-search transfer — terminal evidence 2026-10-14
+
+Frozen `f05c50f0`, run `38590375090`, completed with stable delivery. NYX-requested
+search and fixed diagonal control each submitted and independently accepted the
+same two asymmetric-interaction cases; four cases per arm remain ungraded.
+Model-authored structure submitted none. The fixed control used zero model calls.
+Therefore this demonstrates the live search/measurement/acceptance integration
+on two cases, not a cognitive win or a complete benchmark score. Both NYX successes
+required a second generation call; four selection-schema rejections and early
+data-saturated hypothesis populations remain. The exact schema defect is not
+recoverable from discarded responses. No promotion or hidden-score repair.
+
+27 calls / 103897 known tokens, zero provider/truncation/unknown-usage failures;
+12 actual registered observations, complete source/fixture cleanup; 82 independent
+replays all agree. Archive SHA256
+`50ec33afb60ac8fe613b10472a3d8b903c629a92dcb48dab2523f7c6bf4e793e`,
+report SHA256 `172537f663071df4d41b818629d981d75bf88a00d331b90d8634f01707236e52`.
+Artifact/log/source/config/task custody verified; [immutable receipt](../../../docs/omega/evidence/nyx-fresh-scientific-diagonal-f05c50f0.json).
+One-shot push launcher removed. Next investigate general evidence-aware candidate
+retention/exploration and sanitized selection-contract diagnostics on separate
+development data. Never tune or rerun this exposed corpus as fresh evaluation.
+
+Preregistered conditions:
 
 `nyx-fresh-scientific-diagonal-transfer/1` freezes six new compositions in three
 finite-rational families, four calibration / three prospective / five withheld
