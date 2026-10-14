@@ -431,6 +431,60 @@ compute accounted. Exposed live worlds remain untouched. Native algorithm
 availability is a component capability; broad cognitive improvement, original
 discovery and full plan fulfillment remain unverified.
 
+## Fresh structure-search comparison — preregistered 2026-10-14
+
+The next epoch freezes six cases in three new two-input structural families.
+No prior exposed world is rerun. These share rational arithmetic and some basis
+primitives with development; they are new combinations, not six unrelated
+scientific domains or original discoveries. Four exact calibration points,
+three prospective inputs and five withheld inputs are fixed for every case.
+The mixed reciprocal family contains terms outside the current atom grammar
+and provides an explicit grammar-boundary control. Incomplete identification
+or extrapolation is allowed to fail. Every selected hypothesis must still match
+all twelve points under the existing independent Fraction oracle.
+
+Arms are MODEL_AUTHORED_STRUCTURE, NYX_REQUESTED_SEARCH and
+FIXED_LEXICOGRAPHIC_SEARCH. The first two use the same NYX completion boundary
+and Nemotron Super wire policy; the fixed control performs its own native search,
+fit replay, model proposal, fixture and measurement, and selects the first
+non-refuted model without inference. It shares tools and acceptance criteria,
+but consumes less model compute. Its execution is independent; the paired
+tasks and structural clusters are not statistically independent samples.
+No model-only or realized-compute-matched claim follows automatically.
+
+The native search and cognitive implementation remain unchanged from 95533b0.
+Only the existing evaluator is parameterized. Its original two-model admission,
+source confinement, point compiler, lease, 300000 native work units, 3000 ms,
+eight tool requests, two generation calls, one selection call and 8192-token
+output limit remain. The six-case epoch permits at most 36 logical/HTTP calls
+and thirty minutes. All ceilings are equal across arms; unused fixed-control
+inference is not fabricated or burned. Every support, replay, fixture, call,
+unknown token quantity and capacity wait must be accounted. Global deadlines
+can leave cases unexecuted, which cannot become a complete score.
+
+All configuration, source hashes, simulator identity, task bindings and fixed
+control settings are committed before inference. Invocation intent is saved
+before awaiting delivery. Generation feedback contains calibration and typed
+admission only. Final withheld grades never feed repair or candidate selection;
+first-generation and repaired population admission remain separate. Reports
+retain fixed-search rejection details, search support counts and whether cleanup
+was actually exercised. Historical frozen reports and defaults remain intact.
+
+Offline detector witnesses validate all new author laws against both the Node
+simulator and Python Fraction oracle. A wrong-offset witness must fail every
+point. A calibration-fitting alternative is rejected by a real prospective
+observation through the existing R1/R2A/R3A/R3B fixture, followed by verified
+cleanup. Provider test doubles validate truncation, checkpoint custody, budget
+limits and all eighteen terminal/unexecuted rows. Their E4-shaped evidence is
+marked TEST_DOUBLE_NOT_LIVE; these tests perform zero NVIDIA calls.
+
+This small pilot has no automatic cognitive promotion. Report the complete
+population, correct/submitted/graded/ungraded/unexecuted counts, paired first and
+repaired outcomes, grammar/source/fit/reasoning/delivery failure classes and
+actual compute. A component gain requires fresh replication and the full goal's
+independent assurance gates. Broader original mathematics/science, formal proofs,
+novelty review and official benchmarks remain outstanding.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

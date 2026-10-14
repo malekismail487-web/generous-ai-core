@@ -31,7 +31,7 @@ export const SCIENTIFIC_FIT_WORLDS=immutableTheoryValue(kinds.flatMap((kind,fami
   heldout:kind==='INVERSE_CHANNELS'?hold.map(p=>p.map(s=>s.startsWith('-')?s.slice(1):s) as [string,string]):hold,
 }))) satisfies ScientificFitWorld[]);
 export const SCIENTIFIC_FIT_CORPUS_DIGEST=theoryDigest(SCIENTIFIC_FIT_WORLDS);
-export function scientificFitTask(w:ScientificFitWorld,candidate:string,at:number,expires:number,values:readonly string[]):ScientificModelTask{
+export function scientificFitTask(w:ScientificOracleCase,candidate:string,at:number,expires:number,values:readonly string[]):ScientificModelTask{
   if(values.length!==w.calibration.length)throw Error("fit_calibration_population");
   const observations=w.calibration.map((p,i)=>({pointId:`Cal${i}`,inputs:[{id:'x',value:p[0]},{id:'y',value:p[1]}],output:values[i],evidenceRef:`CAL-${w.taskId}-${i}`}));
   return{schemaVersion:1,variables:['x','y'],constants:[{id:'zero',value:'0'},{id:'one',value:'1'}],observations,

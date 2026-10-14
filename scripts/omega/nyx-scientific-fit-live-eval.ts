@@ -6,21 +6,31 @@ import {join,resolve} from "node:path";
 import {pathToFileURL} from "node:url";
 import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment,type NvidiaNimCompletionRequest,type NvidiaNimCompletionResult,type NvidiaNimEvidence} from "../../src/lib/codelab/model/nvidiaNimProvider";
 import {runNyxScientificModelGeneration} from "../../src/lib/codelab/research/nyxQuantitativeReasoning";
-import {ScientificModelSession,type ScientificModelRef} from "../../src/lib/codelab/research/scientificModelGeneration";
+import {ScientificModelSession,type ScientificModelRef,type ScientificModelTask} from "../../src/lib/codelab/research/scientificModelGeneration";
+import type {ScientificSearchSpec} from "../../src/lib/codelab/research/scientificModelSearch";
 import {snapshotBoundedReasoningData} from "../../src/lib/codelab/research/boundedReasoningWorkbench";
 import {immutableTheoryValue,theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
 import {scientificModelReplay,scientificFitReplay,type ScientificReplayCost} from "./benchmarks/scientific-model-replay";
-import {scienceCalibration,independentScienceGrade} from "./nyx-scientific-world-live-eval";
+import {scienceCalibration,independentScienceGrade,type ScientificOracleCase} from "./nyx-scientific-world-live-eval";
 import {prepareScientificRig} from "./scientific-world-rig";
 import {procedureInferenceRequest,usage,sumUsage} from "./nyx-procedure-reuse-live-eval";
-import {SCIENTIFIC_FIT_EPOCH as EPOCH,SCIENTIFIC_FIT_WORLDS as WORLDS,SCIENTIFIC_FIT_CORPUS_DIGEST,SCIENTIFIC_FIT_SIMULATOR_SOURCE,scientificFitTask} from "./nyx-scientific-fit-fixtures";
+import {SCIENTIFIC_FIT_EPOCH as DEFAULT_EPOCH,SCIENTIFIC_FIT_WORLDS,SCIENTIFIC_FIT_CORPUS_DIGEST,SCIENTIFIC_FIT_SIMULATOR_SOURCE,scientificFitTask} from "./nyx-scientific-fit-fixtures";
+import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPUS_DIGEST,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,SCIENTIFIC_FIXED_SEARCH,scientificSearchTask} from "./nyx-scientific-search-fixtures";
 type Generation=Awaited<ReturnType<typeof runNyxScientificModelGeneration>>;
 type Complete=(r:NvidiaNimCompletionRequest,stage:string)=>Promise<NvidiaNimCompletionResult>;
 type Cost=ReturnType<typeof usage>;
-type Arm=typeof EPOCH.arms[number];
+type Arm=typeof DEFAULT_EPOCH.arms[number];
+type GenerationMode="MODEL_STRUCTURE"|"NYX_SEARCH"|"FIXED_SEARCH";
+export interface ScientificFitEpochOptions{
+  readonly epoch:typeof DEFAULT_EPOCH;readonly worlds:readonly ScientificOracleCase[];
+  readonly corpusDigest:string;readonly simulatorSource:string;
+  readonly generationModes:readonly GenerationMode[];readonly fixedSearchSpec:ScientificSearchSpec;
+  readonly taskFactory:(world:ScientificOracleCase,candidate:string,at:number,expires:number,values:readonly string[])=>ScientificModelTask;
+}
 type Replay=ScientificReplayCost & {kind:"FIT"|"POINT_DERIVATION"};
 type Selection={outcome:string;modelId:string|null;modelEvidence:NvidiaNimEvidence|null;elapsedMs:number};
 type Row={taskId:string;family:string;arm:Arm;generationAttempted:boolean;generationFirstAdmitted:boolean|null;generation:Generation["attempts"];
+  fixedSearch?:{state:string;reason:string|null;evaluatedSupports:number;candidateCount:number;resultDigest:string;proposals:{state:string;reason:string|null;resultDigest:string}[]};
   candidateCount:number;competingArtifactsAdmitted:boolean;generationFailure:string|null;generationStage:string;
   measurement:{experimentId:string;evidenceId:string;executionIdentity:string;provenanceRoot:string;candidateBinding:string;observedAtEpochMs:number;elapsedMs:number}|null;
   measurementFailure:string|null;selection:Selection;selectedCandidateSubmitted:boolean;accepted:boolean|null;outcome:string;
@@ -44,12 +54,23 @@ const validSelection=(raw:unknown,models:readonly ScientificModelRef[]):{operati
 /** Only new evaluation composition: existing cognition, fit/proposal custody,
  * original-source verifier and R1/R2A/R3B fixture. No new inference/executor stack. */
 export async function runFreshScientificFitEpoch(complete:Complete,binding:{candidate:string;sourceDigests:Record<string,string>},now=Date.now,
-  checkpoint:(report:unknown)=>Promise<void>=async()=>{}){
+  checkpoint:(report:unknown)=>Promise<void>=async()=>{},options?:ScientificFitEpochOptions){
   binding=snapshotBoundedReasoningData(binding);
+  const EPOCH=snapshotBoundedReasoningData(options?.epoch??DEFAULT_EPOCH),WORLDS=snapshotBoundedReasoningData(options?.worlds??SCIENTIFIC_FIT_WORLDS);
+  const modes=options?snapshotBoundedReasoningData(options.generationModes):null,fixedSpec=options?snapshotBoundedReasoningData(options.fixedSearchSpec):null;
+  const makeTask=options?.taskFactory??scientificFitTask,simulatorSource=options?.simulatorSource??SCIENTIFIC_FIT_SIMULATOR_SOURCE;
+  if(options&&(EPOCH.arms.length!==3||new Set(EPOCH.arms).size!==3||modes!.length!==3
+    ||new Set(modes).size!==3||!modes!.every(m=>["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"].includes(m))
+    ||options.corpusDigest!==theoryDigest(WORLDS)||typeof makeTask!=="function"
+    ||["maxGenerationCalls","maxSelectionCalls","maxOutputTokens","maxModelRequests","maxNativeWorkUnits","maxNativeElapsedMs","maxGenerationMs","maxSelectionMs","maxEpochMs","replayTimeoutMs","realizedTokenMatchTolerance"].some(k=>EPOCH[k]!==DEFAULT_EPOCH[k])
+    ||!Number.isSafeInteger(EPOCH.maxPhysicalCalls)||EPOCH.maxPhysicalCalls<1||EPOCH.maxPhysicalCalls>DEFAULT_EPOCH.maxPhysicalCalls
+    ||!Number.isSafeInteger(EPOCH.maxHttpAttempts)||EPOCH.maxHttpAttempts<1||EPOCH.maxHttpAttempts>DEFAULT_EPOCH.maxHttpAttempts))throw Error("scientific_epoch_definition_invalid");
   const began=now(),expires=began+EPOCH.maxEpochMs,rows:Row[]=[],ledger:{stage:string;evidence:NvidiaNimEvidence|null;outcome:string}[]=[];
   const calibration=WORLDS.map(w=>({world:w,...scienceCalibration(w)}));
-  const freeze={...binding,configuration:EPOCH,corpusDigest:SCIENTIFIC_FIT_CORPUS_DIGEST,issuedAtEpochMs:began,expiresAtEpochMs:expires,
-    taskBindings:calibration.map(d=>({taskId:d.world.taskId,family:d.world.family,taskDigest:theoryDigest(scientificFitTask(d.world,binding.candidate,began,expires,d.values))}))};
+  const tasks=calibration.map(d=>snapshotBoundedReasoningData(makeTask(d.world,binding.candidate,began,expires,d.values)));
+  const freeze={...binding,configuration:EPOCH,corpusDigest:options?.corpusDigest??SCIENTIFIC_FIT_CORPUS_DIGEST,issuedAtEpochMs:began,expiresAtEpochMs:expires,
+    ...(options?{generationModes:modes,fixedSearchSpec:fixedSpec,simulatorSourceDigest:theoryDigest(simulatorSource)}:{}),
+    taskBindings:calibration.map((d,i)=>({taskId:d.world.taskId,family:d.world.family,taskDigest:theoryDigest(tasks[i])}))};
   const invoke=async(r:NvidiaNimCompletionRequest,stage:string)=>{
     if(now()>=expires||ledger.length>=EPOCH.maxPhysicalCalls)throw Error("fit_epoch_budget");
     const item={stage,evidence:null as NvidiaNimEvidence|null,outcome:"LOGICAL_CALL_IN_FLIGHT"};ledger.push(item);await checkpoint(report());
@@ -66,38 +87,48 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
       unexecuted:WORLDS.length-r.filter(x=>x.generationAttempted).length,firstGenerationAdmitted:r.filter(x=>x.generationFirstAdmitted===true).length,
       generationRepaired:r.filter(x=>x.generationFirstAdmitted===false&&x.candidateCount>=2).length,allocatedUsage:sumUsage(r.map(x=>({usage:x.usage}))),
       outcomes:Object.fromEntries([...new Set(r.map(x=>x.outcome))].sort().map(k=>[k,r.filter(x=>x.outcome===k).length]))};});
-    const pairs=WORLDS.map(w=>{const a=rows.find(r=>r.taskId===w.taskId&&r.arm==="LITERAL_GENERATION"),b=rows.find(r=>r.taskId===w.taskId&&r.arm==="NATIVE_FIT"),c=rows.find(r=>r.taskId===w.taskId&&r.arm==="SAME_TOOL_FIRST_NON_REFUTED");
+    const pairs=WORLDS.map(w=>{const a=rows.find(r=>r.taskId===w.taskId&&r.arm===EPOCH.arms[0]),b=rows.find(r=>r.taskId===w.taskId&&r.arm===EPOCH.arms[1]),c=rows.find(r=>r.taskId===w.taskId&&r.arm===EPOCH.arms[2]);
       const graded=!!a&&!!b&&a.accepted!==null&&b.accepted!==null,known=graded&&[a!,b!].every(r=>r.usage.unknownUsageCalls===0&&r.usage.unknownUsageHttpAttempts===0);
       return{taskId:w.taskId,literalAccepted:a?.accepted??null,fitAccepted:b?.accepted??null,sameToolControlAccepted:c?.accepted??null,independentlyGraded:graded,
         realizedInferenceMatched:known&&a!.usage.calls===b!.usage.calls&&a!.usage.httpAttempts===b!.usage.httpAttempts
           &&Math.abs(a!.usage.reportedTokens-b!.usage.reportedTokens)<=EPOCH.realizedTokenMatchTolerance*Math.max(1,a!.usage.reportedTokens,b!.usage.reportedTokens),
         fitNoMoreInference:known&&b!.usage.calls<=a!.usage.calls&&b!.usage.httpAttempts<=a!.usage.httpAttempts&&b!.usage.reportedTokens<=a!.usage.reportedTokens,
-        sameToolPrefixShared:!!b&&!!c&&b.generationStage===c.generationStage,sameToolIndependentSample:false};});
+        sameToolPrefixShared:!!b&&!!c&&b.generationStage===c.generationStage,sameToolIndependentSample:false,
+        ...(options?{referenceArm:EPOCH.arms[0],searchArm:EPOCH.arms[1],controlArm:EPOCH.arms[2],
+          sameToolIndependentExecution:true,
+          inferenceCostScope:"EQUAL_CEILINGS_UNEQUAL_REALIZED_COMPUTE_FIXED_CONTROL_USES_NO_MODEL_CALLS"}:{})};});
     const physical=cost(ledger),generationPhysical=rows.filter(r=>r.sharedPrefixWith===null),unknownHttpAttemptCounts=ledger.filter(e=>!e.evidence).length;
     const cleanupComplete=generationPhysical.filter(r=>r.fixtureAttempted).every(r=>r.cleanup?.sourceUnchanged===true&&r.cleanup.sandboxCleanupVerified&&r.cleanup.temporaryFixtureRemoved);
     const populationComplete=rows.length===WORLDS.length*EPOCH.arms.length&&rows.every(r=>r.completed),gradedComplete=populationComplete&&rows.every(r=>r.accepted!==null);
     const providerStable=physical.calls>0&&physical.providerFailures===0&&physical.localDeliveryBlocks===0&&physical.recoveredDisruptions===0&&physical.unknownUsageCalls===0&&physical.unknownUsageHttpAttempts===0;
     return immutableTheoryValue({schemaVersion:1,candidate:binding.candidate,freeze,freezeDigest:theoryDigest(freeze),rows,arms,pairs,invocations:ledger,populationComplete,gradedComplete,cleanupComplete,
+      ...(options?{evaluationVersion:EPOCH.version,cleanupExercised:generationPhysical.some(r=>r.fixtureAttempted)}:{}),
       providerStable,physicalCalls:ledger.length,physicalUsage:physical,unknownHttpAttemptCounts,
       physicalNativeCost:{requests:generationPhysical.reduce((n,r)=>n+(r.native?.requests??0),0),fitRequests:generationPhysical.reduce((n,r)=>n+(r.native?.fitRequests??0),0),
+        searchRequests:generationPhysical.reduce((n,r)=>n+(r.native?.searchRequests??0),0),searchSupports:generationPhysical.reduce((n,r)=>n+(r.native?.searchSupports??0),0),
         workUnits:generationPhysical.reduce((n,r)=>n+(r.native?.workUnits??0),0),elapsedMs:generationPhysical.reduce((n,r)=>n+(r.native?.nativeElapsedMs??0),0)},
       physicalReplayCosts:generationPhysical.flatMap(r=>r.replay),physicalMeasurementCount:generationPhysical.filter(r=>r.measurement!==null).length,
       calibrationCosts:calibration.map(d=>({taskId:d.world.taskId,...d.cost})),
       resourceUnknowns:{modelInternalCompute:true,costUsd:true,measurementCpu:true,peakMemory:true},elapsedMs:Math.max(0,now()-began),
       stopReason:now()>=expires?"GLOBAL_BUDGET":populationComplete?"PREDECLARED_POPULATION_TERMINAL":"INCOMPLETE",
-      scopedFittingSignal:gradedComplete&&cleanupComplete&&providerStable&&arms[1].correct>arms[0].correct&&pairs.every(p=>Number(p.fitAccepted)>=Number(p.literalAccepted)&&p.fitNoMoreInference),
-      selectionSignal:gradedComplete&&cleanupComplete&&providerStable&&arms[1].correct>arms[2].correct,
+      scopedFittingSignal:!options&&gradedComplete&&cleanupComplete&&providerStable&&arms[1].correct>arms[0].correct&&pairs.every(p=>Number(p.fitAccepted)>=Number(p.literalAccepted)&&p.fitNoMoreInference),
+      selectionSignal:!options&&gradedComplete&&cleanupComplete&&providerStable&&arms[1].correct>arms[2].correct,
+      ...(options?{comparisonKind:"INDEPENDENT_SEARCH_CONTROL_WITH_REALIZED_COMPUTE_ACCOUNTING",cognitiveGainDemonstrated:false,armsShareGeneration:false}:{}),
       promotion:EPOCH.promotion,safety:{defaultUltraChanged:false,authorityIncrease:false,generalShell:false,generalNetwork:false,productionAuthority:false,
         rawReasoningPersisted:false,modelProgramsPersisted:false,measurementValuesPersisted:false,hiddenGradesToCognition:false},
-      limitations:[EPOCH.scope,"MODEL_STRUCTURE_AND_COEFFICIENT_INTERFACE_BUNDLE_NOT_FIT_ONLY_CAUSAL_ISOLATION","EIGHT_CASES_FOUR_FAMILY_CLUSTERS_UNDERPOWERED",
-        "SAME_TOOL_CONTROL_SHARES_GENERATION_AND_MEASUREMENT_NOT_INDEPENDENT_SAMPLES","CANDIDATE_ARTIFACT_COUNT_NOT_PROVEN_SEMANTIC_MODEL_DIVERSITY",
+      limitations:[EPOCH.scope,options?"MODEL_REQUESTED_SEARCH_VERSUS_FIXED_SEARCH_NOT_SAME_REALIZED_INFERENCE":"MODEL_STRUCTURE_AND_COEFFICIENT_INTERFACE_BUNDLE_NOT_FIT_ONLY_CAUSAL_ISOLATION",
+        options?"SIX_CASES_THREE_FAMILY_CLUSTERS_UNDERPOWERED":"EIGHT_CASES_FOUR_FAMILY_CLUSTERS_UNDERPOWERED",
+        options?"FIXED_CONTROL_HAS_INDEPENDENT_NATIVE_SEARCH_AND_MEASUREMENT_NO_INFERENCE":"SAME_TOOL_CONTROL_SHARES_GENERATION_AND_MEASUREMENT_NOT_INDEPENDENT_SAMPLES","CANDIDATE_ARTIFACT_COUNT_NOT_PROVEN_SEMANTIC_MODEL_DIVERSITY",
         "ORIGINAL_TWO_MODEL_ADMISSION_PRESERVED_NOT_SEMANTIC_INDEPENDENCE","FIXED_MEASUREMENT_NOT_ADAPTIVE_EXPERIMENT_DESIGN","INFERENCE_MATCH_NOT_TOTAL_COMPUTE_MATCH"]});
   }
   await checkpoint(report()); // Task/config/source commitment precedes inference.
   for(const[i,d]of calibration.entries()){
-    const w=d.world,task=scientificFitTask(w,binding.candidate,began,expires,d.values);
+    const w=d.world,task=tasks[i];
     // Balance ordering; the frozen cases and acceptance are the same in each arm.
-    for(const arm of (i%2?["NATIVE_FIT","LITERAL_GENERATION"]:["LITERAL_GENERATION","NATIVE_FIT"]) as ("NATIVE_FIT"|"LITERAL_GENERATION")[]){
+    const activeArms=options?[...EPOCH.arms]:["LITERAL_GENERATION","NATIVE_FIT"];
+    const order=activeArms.slice(i%activeArms.length).concat(activeArms.slice(0,i%activeArms.length));
+    for(const arm of order){
+      const mode=modes?.[EPOCH.arms.indexOf(arm)]??(arm==="NATIVE_FIT"?"MODEL_STRUCTURE":null);
       const stage=w.taskId+"/"+arm+"/GENERATION",selectionStage=w.taskId+"/"+arm+"/SELECTION",replay:Replay[]=[];
       const rowStart=now(),row:Row={taskId:w.taskId,family:w.family,arm,generationAttempted:false,generationFirstAdmitted:null,generation:[],candidateCount:0,competingArtifactsAdmitted:false,
         generationFailure:null,generationStage:stage,measurement:null,measurementFailure:null,selection:{outcome:"UNEXECUTED",modelId:null,modelEvidence:null,elapsedMs:0},selectedCandidateSubmitted:false,
@@ -106,20 +137,37 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
       let control:Row|null=null,models:readonly ScientificModelRef[]=[],selected:ScientificModelRef|null=null,baselineSelected:ScientificModelRef|null=null;
       try{
         if(now()>=expires){row.outcome="GLOBAL_BUDGET_UNEXECUTED";continue;}
-        const genStart=now();session=ScientificModelSession.create(task,{maxRequests:EPOCH.maxModelRequests,maxWorkUnits:EPOCH.maxNativeWorkUnits,maxNativeElapsedMs:EPOCH.maxNativeElapsedMs,expiresAtEpochMs:expires},now);
+        const genStart=now();session=ScientificModelSession.create(task,{maxRequests:EPOCH.maxModelRequests,maxWorkUnits:EPOCH.maxNativeWorkUnits,maxNativeElapsedMs:EPOCH.maxNativeElapsedMs,expiresAtEpochMs:expires},now,{structureSearch:mode==="NYX_SEARCH"||mode==="FIXED_SEARCH"});
         row.generationAttempted=true;
         let generated:Generation|null=null;
-        try{generated=await runNyxScientificModelGeneration({session,maxCalls:EPOCH.maxGenerationCalls,maxOutputTokens:EPOCH.maxOutputTokens,deadlineEpochMs:Math.min(expires,genStart+EPOCH.maxGenerationMs),now,
+        try{
+          if(mode==="FIXED_SEARCH"){
+            const found=session.search({schemaVersion:1,operation:"SEARCH_SCIENTIFIC_MODELS",taskDigest:session.taskDigest,spec:fixedSpec}),owned:ScientificModelRef[]=[];
+            row.fixedSearch={state:found.state,reason:"reason"in found?found.reason:"stopReason"in found?found.stopReason:null,evaluatedSupports:session.usage().searchSupports,
+              candidateCount:"candidates"in found?found.candidates.length:0,resultDigest:found.resultDigest,proposals:[]};
+            if("candidates"in found)for(const c of found.candidates){
+              if(now()>=expires||session.usage().remainingRequests<2)break;
+              const fitted=session.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:session.taskDigest,structure:c.structure},scientificFitReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"FIT"})));
+              row.fixedSearch.proposals.push({state:fitted.state,reason:"reason"in fitted?fitted.reason:null,resultDigest:fitted.resultDigest});
+              if(fitted.state!=="FITTED_CANDIDATE_NOT_ADMITTED")continue;
+              const admitted=session.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:session.taskDigest,draft:fitted.fit.draft},scientificModelReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"POINT_DERIVATION"})));
+              row.fixedSearch.proposals.push({state:admitted.state,reason:"reason"in admitted?admitted.reason:null,resultDigest:admitted.resultDigest});
+              if(admitted.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")owned.push(admitted.model);
+            }
+            models=owned;row.candidateCount=owned.length;row.competingArtifactsAdmitted=owned.length>=2;row.generationFirstAdmitted=owned.length>=2;
+            row.generationFailure=found.state==="REJECTED"||found.state==="INSUFFICIENT_EVIDENCE"?found.reason:null;
+          }else generated=await runNyxScientificModelGeneration({session,maxCalls:EPOCH.maxGenerationCalls,maxOutputTokens:EPOCH.maxOutputTokens,deadlineEpochMs:Math.min(expires,genStart+EPOCH.maxGenerationMs),now,
           verify:scientificModelReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"POINT_DERIVATION"})),
-          ...(arm==="NATIVE_FIT"?{nativeFit:{verify:scientificFitReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"FIT"}))}}:{}),complete:r=>invoke(r,stage)});}
+          ...(mode==="MODEL_STRUCTURE"?{nativeFit:{verify:scientificFitReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"FIT"}))}}:{}),
+          ...(mode==="NYX_SEARCH"?{nativeSearch:{verify:scientificFitReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"FIT"}))}}:{}),complete:r=>invoke(r,stage)});}
         catch{row.generationFailure="GENERATION_INTEGRATION_OR_SESSION_FAILURE";}
         row.generationMs=Math.max(0,now()-genStart);row.native=session.usage();row.usage=stageCost(stage);
         if(generated){models=generated.models;row.generation=generated.attempts;row.candidateCount=models.length;row.competingArtifactsAdmitted=generated.competingModelsAdmitted;
           row.generationFirstAdmitted=generated.firstAttemptAdmitted;}
-        if(arm==="NATIVE_FIT")control={...row,arm:"SAME_TOOL_FIRST_NON_REFUTED",sharedPrefixWith:"NATIVE_FIT",selection:{outcome:"UNEXECUTED",modelId:null,modelEvidence:null,elapsedMs:0},replay:[...replay]};
+        if(!options&&arm==="NATIVE_FIT")control={...row,arm:"SAME_TOOL_FIRST_NON_REFUTED",sharedPrefixWith:"NATIVE_FIT",selection:{outcome:"UNEXECUTED",modelId:null,modelEvidence:null,elapsedMs:0},replay:[...replay]};
         if(models.length<2){row.outcome=row.generationFailure??"NO_ADMITTED_COMPETING_MODEL_POPULATION";continue;}
         if(now()>=expires){row.outcome="GLOBAL_BUDGET_BEFORE_MEASUREMENT";continue;}
-        const startRig=now();row.fixtureAttempted=true;rig=await prepareScientificRig(w,binding.candidate,`${w.taskId}-${arm}`,expires,SCIENTIFIC_FIT_SIMULATOR_SOURCE);row.setupMs=Math.max(0,now()-startRig);
+        const startRig=now();row.fixtureAttempted=true;rig=await prepareScientificRig(w,binding.candidate,w.taskId+"-"+arm,expires,simulatorSource);row.setupMs=Math.max(0,now()-startRig);
         row.simulatorDigest=rig.simulatorSourceDigest;
         const bridge=session.bridge(models,{evidenceIdentity:stage,provenanceRoot:"NYX-SHARED-NEMOTRON"}),runner=rig.runner(bridge.objective,bridge.readouts);
         const observedStart=performance.now();const observation=await runner.run(bridge.objective.experimentCatalog[0],bridge.objective,new AbortController().signal);
@@ -129,6 +177,10 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
         const consistent=models.filter(m=>session!.inspect(m).predictions.find(p=>p.pointId===measured.measurement.pointId)?.value===measured.measurement.value);
         baselineSelected=consistent[0]??null;
         if(control){control.measurement=row.measurement;control.setupMs=row.setupMs;control.selection={outcome:baselineSelected?"FIRST_NON_REFUTED_PRECOMMITTED_CANDIDATE":"ALL_CANDIDATES_REFUTED",modelId:baselineSelected?.modelId??null,modelEvidence:null,elapsedMs:0};}
+        if(mode==="FIXED_SEARCH"){
+          selected=baselineSelected;row.selection={outcome:selected?"FIRST_NON_REFUTED_PRECOMMITTED_CANDIDATE":"ALL_CANDIDATES_REFUTED",modelId:selected?.modelId??null,modelEvidence:null,elapsedMs:0};
+          row.outcome=row.selection.outcome;continue;
+        }
         const deadline=Math.min(expires,now()+EPOCH.maxSelectionMs);
         if(now()>=deadline){row.selection.outcome="LATE_SELECTION_UNEXECUTED";row.outcome="GLOBAL_BUDGET_BEFORE_SELECTION";continue;}
         const selectionStart=now();try{
@@ -168,7 +220,7 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
           catch{control.outcome="INDEPENDENT_GRADING_INFRASTRUCTURE_FAILURE";}}
         if(rig){try{row.cleanup=await rig.cleanup();}catch{row.outcome="CLEANUP_FAILURE";}}
         row.usage=cost(ledger.filter(e=>e.stage===stage||e.stage===selectionStage),Math.max(0,now()-rowStart));row.native=session?.usage()??null;session?.revoke();row.completed=true;rows.push(row);
-        if(arm==="NATIVE_FIT"){
+        if(!options&&arm==="NATIVE_FIT"){
           control??={...row,arm:"SAME_TOOL_FIRST_NON_REFUTED",sharedPrefixWith:"NATIVE_FIT",selection:{outcome:"UNEXECUTED",modelId:null,modelEvidence:null,elapsedMs:0}};
           control.usage={...stageCost(stage),elapsedMs:row.generationMs+row.setupMs+(row.measurement?.elapsedMs??0)+(control.grading?.wallMs??0)};
           control.native=row.native;control.replay=[...row.replay];control.generation=row.generation;control.measurement=row.measurement;control.measurementFailure=row.measurementFailure;control.fixtureAttempted=row.fixtureAttempted;
@@ -184,9 +236,14 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
 
 async function main(){
   if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim())throw Error("explicit_network_and_injected_secret_required");
+  if(process.env.OMEGA_SCIENTIFIC_EXPERIMENT!==undefined&&process.env.OMEGA_SCIENTIFIC_EXPERIMENT!=="STRUCTURE_SEARCH")throw Error("unknown_scientific_experiment");
+  const searchEpoch=process.env.OMEGA_SCIENTIFIC_EXPERIMENT==="STRUCTURE_SEARCH",EPOCH=searchEpoch?SCIENTIFIC_SEARCH_EPOCH:DEFAULT_EPOCH;
+  const options:ScientificFitEpochOptions|undefined=searchEpoch?{epoch:EPOCH,worlds:SCIENTIFIC_SEARCH_WORLDS,corpusDigest:SCIENTIFIC_SEARCH_CORPUS_DIGEST,
+    simulatorSource:SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,generationModes:["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"],fixedSearchSpec:SCIENTIFIC_FIXED_SEARCH,taskFactory:scientificSearchTask}:undefined;
   const git=(...a:string[])=>execFileSync("git",a,{encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim(),candidate=process.env.GITHUB_SHA??git("rev-parse","HEAD");
   if(!/^[a-f0-9]{40}$/.test(candidate)||git("rev-parse","HEAD")!==candidate||git("status","--porcelain"))throw Error("clean_frozen_candidate_required");
   const before=theoryDigest(git("ls-files","-s")),paths=["scripts/omega/nyx-scientific-fit-live-eval.ts","scripts/omega/nyx-scientific-fit-fixtures.ts","scripts/omega/scientific-world-rig.ts",
+    "scripts/omega/nyx-scientific-search-fixtures.ts","src/lib/codelab/research/scientificModelSearch.ts",
     "scripts/omega/nyx-scientific-world-live-eval.ts","scripts/omega/nyx-scientific-world-fixtures.ts","scripts/omega/benchmarks/scientific-world-oracle.py",
     "scripts/omega/benchmarks/scientific-model-replay.ts","scripts/omega/benchmarks/replay-polynomial-identities.py","scripts/omega/nyx-procedure-reuse-live-eval.ts",
     "scripts/omega/nyx-procedure-reuse-fixtures.ts","src/lib/codelab/research/nyxQuantitativeReasoning.ts","src/lib/codelab/research/scientificModelGeneration.ts",
@@ -197,11 +254,11 @@ async function main(){
     "src/lib/codelab/executor/r2ProvisioningBlueprint.ts","src/lib/codelab/executor/r3DisposablePatchApplication.ts","src/lib/codelab/executor/r3ControlledEngineeringExecution.ts",
     ".github/workflows/omega-nyx-procedure-reuse-one-shot.yml"];
   const sourceDigests=Object.fromEntries(paths.map(p=>[p,theoryDigest(readFileSync(p,"utf8"))]));
-  const provider=NvidiaNimProvider.create({providerId:"NYX-FRESH-SCIENTIFIC-FIT",model:EPOCH.model,authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",credentialSource:nvidiaNimCredentialFromEnvironment(process.env),
+  const provider=NvidiaNimProvider.create({providerId:searchEpoch?"NYX-FRESH-SCIENTIFIC-SEARCH":"NYX-FRESH-SCIENTIFIC-FIT",model:EPOCH.model,authorityMode:"EXPLICIT_LIVE_NVIDIA_NIM",credentialSource:nvidiaNimCredentialFromEnvironment(process.env),
     maxPromptBytes:64000,maxOutputTokens:EPOCH.maxOutputTokens,timeoutMs:120000}).withHttpAttemptBudget(EPOCH.maxHttpAttempts,"WITHIN_SHARED_BUDGET");
   const stages=new Map<string,NvidiaNimProvider>(),path=join(process.env.RUNNER_TEMP??tmpdir(),`nyx-scientific-fit-${candidate}.json`),persist=(r:unknown)=>writeFile(path,JSON.stringify(r,null,2)+"\n");
   const report=await runFreshScientificFitEpoch((r,stage)=>{if(!stages.has(stage))stages.set(stage,provider.withHttpAttemptBudget(stage.endsWith("GENERATION")?3:1,"WITHIN_SHARED_BUDGET"));return stages.get(stage)!.complete(r);},
-    {candidate,sourceDigests},Date.now,persist);
+    {candidate,sourceDigests},Date.now,persist,options);
   const sourceUnchanged=before===theoryDigest(git("ls-files","-s"))&&git("rev-parse","HEAD")===candidate&&!git("status","--porcelain");
   const final={...report,sourceUnchanged};await persist(final);console.log(`NYX_SCIENTIFIC_FIT_REPORT ${JSON.stringify(final)}`);if(!sourceUnchanged)throw Error("authoritative_source_changed");
 }

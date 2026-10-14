@@ -22,6 +22,9 @@ def world(h,point):
     if h["kind"]=="INVERSE_CHANNELS": return a/x+b/y+c/(x*y)
     if h["kind"]=="MIXED_CUBIC": return a*x*x*x+b*x*y*y+c*y+Fraction(h["d"])
     if h["kind"]=="CROSS_RATIO": return (a*x*y+b*(x+y)+c)/(1+Fraction(h["d"])*x*y)
+    if h["kind"]=="INTERACTION_CUBIC": return a*x*x*y+b*y*y+c*x
+    if h["kind"]=="CONIC_CHANNEL": return (a*x+b*y*y+c)/(1+Fraction(h["d"])*y)
+    if h["kind"]=="MIXED_RECIPROCAL": return a*x/y+b*y/x+c/(x+y)
     raise ValueError("unknown_world")
 
 def main():

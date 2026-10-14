@@ -6830,6 +6830,7 @@
           "scripts/omegaR3EBoundedRepairLoop.test.ts",
           "scripts/omegaResearchParty.test.ts",
           "scripts/omegaScientificModelGeneration.test.ts",
+          "scripts/omegaScientificStructureSearch.test.ts",
           "scripts/omegaSemanticPolynomialProof.test.ts",
           "src/components/ChatMessage.tsx",
           "src/components/FlashcardsSection.tsx",

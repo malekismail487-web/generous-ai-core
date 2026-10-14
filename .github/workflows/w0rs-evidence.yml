@@ -52,6 +52,7 @@ jobs:
           scripts/omega/benchmarks/scientific-model-replay.ts
           scripts/omega/nyx-scientific-fit-live-eval.ts
           scripts/omega/nyx-scientific-fit-fixtures.ts
+          scripts/omega/nyx-scientific-search-fixtures.ts
           scripts/omega/benchmarks/semantic-polynomial-crosscheck.ts
           scripts/omega/nyx-semantic-proof-live-eval.ts
           scripts/omega/nyx-semantic-proof-fixtures.ts

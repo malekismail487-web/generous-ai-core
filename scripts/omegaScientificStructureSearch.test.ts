@@ -5,6 +5,11 @@ import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { scientificFitReplay, scientificModelReplay } from "./omega/benchmarks/scientific-model-replay";
 import { runNyxScientificModelGeneration } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult } from "../src/lib/codelab/model/nvidiaNimProvider";
+import {spawnSync} from "node:child_process";
+import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPUS_DIGEST,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,SCIENTIFIC_FIXED_SEARCH,scientificSearchTask} from "./omega/nyx-scientific-search-fixtures";
+import {scienceCalibration,independentScienceGrade} from "./omega/nyx-scientific-world-live-eval";
+import {runFreshScientificFitEpoch,type ScientificFitEpochOptions} from "./omega/nyx-scientific-fit-live-eval";
+import {prepareScientificRig} from "./omega/scientific-world-rig";
 
 let passed=0,failed=0;
 function check(value:unknown,label:string){if(value)passed++;else{failed++;console.error("FAIL "+label);}}
@@ -158,5 +163,74 @@ const triplet=task(x=>x),t3={...triplet,variables:["x","y","z"],observations:tri
 t3.objective={...triplet.objective,admittedEvidence:t3.observations.map((o,i)=>({...triplet.objective.admittedEvidence[i],contentDigest:theoryDigest({pointId:o.pointId,inputs:o.inputs,output:o.output})}))};
 const largest=session(t3),largestResult=search(largest,{...spec,maxCandidates:1});
 check("atoms"in largestResult&&largestResult.atoms===58&&largestResult.evaluatedSupports===1&&largest.usage().workUnits<limits.maxWorkUnits,"Maximum three-variable grammar remains finite and respects a one-support cap");
+// Detector witnesses only. These author-owned sources never enter live prompts.
+for(const w of SCIENTIFIC_SEARCH_WORLDS){
+  const calibration=scienceCalibration(w),t=scientificSearchTask(w,candidate,Date.now(),Date.now()+120000,calibration.values);
+  const h=w.hidden as {kind:string;a:string;b:string;c:string;d:string},parameters=["a","b","c","d"].map(id=>({id,value:h[id as "a"]}));
+  const expression=h.kind==="INTERACTION_CUBIC"?"a*x*x*y+b*y*y+c*x":h.kind==="CONIC_CHANNEL"?"(a*x+b*y*y+c)/(one+d*y)":"a*x/y+b*y/x+c/(x+y)";
+  const model={schemaVersion:1 as const,parameters,program:{schemaVersion:5 as const,definitions:[],outputs:[{label:"response",expression}]},
+    assumptions:["Developer detector witness, not live discovery."],uncertainties:["Physical validity and novelty not established."]};
+  const good=independentScienceGrade(w,t,model),bad=independentScienceGrade(w,t,{...model,program:{...model.program,outputs:[{label:"response",expression:"("+expression+")+one"}]}});
+  check(good.accepted&&good.cost.points===12&&good.cost.matched===12,"Every fresh author witness passes the same all-point independent criterion");
+  check(!bad.accepted&&bad.cost.matched===0,"The same oracle rejects a planted constant offset at every point");
+  const simulator=spawnSync(process.execPath,["--input-type=module","-e",SCIENTIFIC_SEARCH_SIMULATOR_SOURCE+"\nconsole.log(JSON.stringify("+JSON.stringify(w.calibration)+".map(p=>show(calculate("+JSON.stringify(w.hidden)+",p)))));"],
+    {encoding:"utf8",timeout:5000,windowsHide:true});
+  check(simulator.status===0&&JSON.stringify(JSON.parse(simulator.stdout))===JSON.stringify(calibration.values),"Separate Node simulator and Python Fraction author calibration agree");
+  check(!JSON.stringify(t).includes('"hidden"')&&t.constants.length===2&&t.constants.every(c=>c.id==="zero"||c.id==="one"),"The task constructor supplies only original public constants, not author parameter bindings");
+}
+const options:ScientificFitEpochOptions={epoch:SCIENTIFIC_SEARCH_EPOCH,worlds:SCIENTIFIC_SEARCH_WORLDS,corpusDigest:SCIENTIFIC_SEARCH_CORPUS_DIGEST,
+  simulatorSource:SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,generationModes:["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"],fixedSearchSpec:SCIENTIFIC_FIXED_SEARCH,taskFactory:scientificSearchTask};
+let boundaryClock=Date.now(),boundaryReads=0,unexpectedModelCalls=0;const commitments:any[]=[];
+const notExecuted=await runFreshScientificFitEpoch(async()=>{unexpectedModelCalls++;throw Error("expired_run_must_not_call");},{candidate,sourceDigests:{offline:theoryDigest("test-double-only")}},
+  ()=>boundaryClock+(boundaryReads++?SCIENTIFIC_SEARCH_EPOCH.maxEpochMs+1:0),async r=>{commitments.push(r);},options);
+check(unexpectedModelCalls===0&&notExecuted.arms.every(a=>a.selected===6&&a.unexecuted===6&&a.graded===0),"Expired fresh search epochs keep all eighteen stages unexecuted without a model call");
+check(commitments[0].rows.length===0&&commitments[0].invocations.length===0&&commitments[0].freeze.generationModes.length===3&&commitments[0].freeze.taskBindings.length===6,
+  "Corpus, configuration, fixed search and task bindings are committed before any inference");
+check(notExecuted.physicalNativeCost.searchRequests===0&&!notExecuted.cognitiveGainDemonstrated&&!notExecuted.scopedFittingSignal&&!notExecuted.selectionSignal,
+  "An empty experiment cannot claim cognition, fitting or selection gain");
+let invalidDefinition=false;
+try{await runFreshScientificFitEpoch(async()=>{throw Error("no");},{candidate,sourceDigests:{}},Date.now,async()=>{},
+  {...options,epoch:{...SCIENTIFIC_SEARCH_EPOCH,maxNativeWorkUnits:300001}});}catch{invalidDefinition=true;}
+check(invalidDefinition,"Fresh transfer cannot silently expand the original native work budget");
+check(SCIENTIFIC_SEARCH_WORLDS.length===6&&new Set(SCIENTIFIC_SEARCH_WORLDS.map(w=>w.family)).size===3&&Object.isFrozen(SCIENTIFIC_SEARCH_WORLDS),
+  "Fresh population and structural clusters are fixed before results");
+let doubleCalls=0;const fakeReports:any[]=[];
+const serializationOnly=await runFreshScientificFitEpoch(async(request,stage)=>{
+  doubleCalls++;const context=JSON.parse(request.messages[1].content);
+  check(!("hidden"in context.task)&&!("heldout"in context.task),"A live-shaped generation request excludes private evaluator inputs");
+  const r=fake(request,{});return {...r,finishReason:"length",evidence:{...r.evidence,finishReason:"length"}};
+},{candidate,sourceDigests:{offline:theoryDigest("truncation-test-double")}},Date.now,async r=>{fakeReports.push(r);},options);
+check(serializationOnly.populationComplete&&serializationOnly.rows.length===18&&doubleCalls===24,"A bounded failed-emission epoch preserves all three independent arms and all six cases");
+check(serializationOnly.arms[0].graded===0&&serializationOnly.arms[1].graded===0&&serializationOnly.arms[2].allocatedUsage.calls===0,
+  "Unreached mathematical grading is explicit and the fixed control spends no hidden model calls");
+check(serializationOnly.rows.every(r=>r.sharedPrefixWith===null)&&serializationOnly.physicalNativeCost.searchRequests===6&&serializationOnly.physicalNativeCost.searchSupports>0,
+  "Independent fixed searches are charged exactly once and never described as shared inference prefixes");
+check(fakeReports[0].physicalCalls===0&&fakeReports.some(r=>r.invocations.some(i=>i.outcome==="LOGICAL_CALL_IN_FLIGHT")),
+  "Invocation intent is checkpointed before awaiting every model result");
+// A real existing R3B fixture validates the new simulator and readout route.
+const witnessWorld=SCIENTIFIC_SEARCH_WORLDS[0],values=scienceCalibration(witnessWorld).values,witnessTask=scientificSearchTask(witnessWorld,candidate,Date.now(),Date.now()+120000,values);
+const wh=witnessWorld.hidden as {a:string;b:string;c:string;d:string};
+const witnessSession=ScientificModelSession.create(witnessTask,limits);
+const witnessDraft={schemaVersion:1 as const,parameters:[...["a","b","c"].map(id=>({id,value:wh[id as "a"]}))],
+  program:{schemaVersion:5 as const,definitions:[],outputs:[{label:"response",expression:"a*x*x*y+b*y*y+c*x"}]},
+  assumptions:["Developer fixture witness."],uncertainties:["No live cognition or original discovery claim."]};
+// x values at calibration are 1,2,3; this alternative fits calibration but
+// disagrees elsewhere, exercising evidence without relaxing the public bridge.
+const alternative={...witnessDraft,program:{...witnessDraft.program,outputs:[{label:"response",expression:"a*x*x*y+b*y*y+c*x+(x-one)*(x-one-one)*(x-one-one-one)"}]}};
+const wp=(d:typeof witnessDraft)=>witnessSession.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:witnessSession.taskDigest,draft:d},verifyModel);
+const wa=wp(witnessDraft),wb=wp(alternative);
+check(wa.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&wb.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH","A planted extrapolation error passes calibration admission and remains a hypothesis");
+if(wa.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&wb.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"){
+  const rig=await prepareScientificRig(witnessWorld,candidate,"SEARCH-DETECTOR-WITNESS",Date.now()+120000,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE);
+  try{
+    const bridge=witnessSession.bridge([wa.model,wb.model],{evidenceIdentity:"OFFLINE-SCIENCE",provenanceRoot:"DEVELOPER-WITNESS"}),runner=rig.runner(bridge.objective,bridge.readouts);
+    const observation=await runner.run(bridge.objective.experimentCatalog[0],bridge.objective,new AbortController().signal),measurement=runner.readMeasurement(observation.experimentId);
+    check(!!measurement&&observation.evidence.evidenceClass==="E3","The fresh simulator produces an admitted observation through existing R3B execution");
+    check(measurement?.measurement.value===witnessSession.inspect(wa.model).predictions.find(p=>p.pointId===observation.experimentId)?.value
+      &&measurement?.measurement.value!==witnessSession.inspect(wb.model).predictions.find(p=>p.pointId===observation.experimentId)?.value,
+      "A real prospective fixture observation discriminates precommitted competing predictions");
+  }finally{const cleanup=await rig.cleanup();check(cleanup.sourceUnchanged&&cleanup.sandboxCleanupVerified&&cleanup.temporaryFixtureRemoved,"The author fixture and disposable lifecycle clean up without source mutation");}
+}
+witnessSession.revoke();
 console.log("OMEGA_SCIENTIFIC_SEARCH_DEVELOPMENT "+JSON.stringify({metrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
 console.log(`OMEGA_SCIENTIFIC_STRUCTURE_SEARCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);if(failed)process.exitCode=1;

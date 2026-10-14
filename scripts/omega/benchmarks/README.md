@@ -1,5 +1,18 @@
 # NYX benchmark capability program
 
+### Fresh scientific search epoch prepared (2026-10-14)
+
+Six cases / three new structural families compare model-authored structure,
+NYX-requested native search and a separately executed fixed lexicographic
+control. The current mathematical search/cognition implementation is unchanged.
+The existing evaluator, independent Fraction oracle and R3B measurement fixture
+are reused. Equal original ceilings and actual model/native/verifier costs are
+recorded; the fixed control uses no model calls and is not inference-matched.
+One family explicitly tests a grammar boundary. All twelve numerical points
+must match, hidden grades never drive repair, and the two-model precondition
+remains. Offline detector checks pass; live results are pending.
+See [preregistration and limits](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md#fresh-structure-search-comparison--preregistered-2026-10-14).
+
 ### Bounded scientific structure search component (2026-10-14)
 
 `NYX-SCIENTIFIC-STRUCTURE-SEARCH-001` adds an opt-in finite rational grammar

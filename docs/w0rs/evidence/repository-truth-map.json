@@ -2796,6 +2796,12 @@
       ]
     },
     {
+      "name": "OMEGA_SCIENTIFIC_EXPERIMENT",
+      "files": [
+        "scripts/omega/nyx-scientific-fit-live-eval.ts"
+      ]
+    },
+    {
       "name": "OMEGA_TEST_GENEALOGY_CLASSIFICATIONS_PATH",
       "files": [
         "scripts/omega/run-tests.mjs"
