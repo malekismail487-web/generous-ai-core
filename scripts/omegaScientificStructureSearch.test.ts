@@ -9,6 +9,8 @@ import {spawnSync} from "node:child_process";
 import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPUS_DIGEST,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,SCIENTIFIC_FIXED_SEARCH,scientificSearchTask} from "./omega/nyx-scientific-search-fixtures";
 import {SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH,SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
   SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_DIAGONAL_FIXED_SEARCH} from "./omega/nyx-scientific-search-fixtures";
+import {SCIENTIFIC_RETENTION_TRANSFER_EPOCH,SCIENTIFIC_RETENTION_TRANSFER_WORLDS,SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST,
+  SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_RETENTION_FIXED_SEARCHES} from "./omega/nyx-scientific-search-fixtures";
 import {scienceCalibration,independentScienceGrade} from "./omega/nyx-scientific-world-live-eval";
 import {runFreshScientificFitEpoch,inspectScientificSelection,type ScientificFitEpochOptions} from "./omega/nyx-scientific-fit-live-eval";
 import {prepareScientificRig} from "./omega/scientific-world-rig";
@@ -263,6 +265,65 @@ const expiredTransfer=await runFreshScientificFitEpoch(async()=>{transferUnexpec
 check(transferUnexpectedCalls===0&&expiredTransfer.rows.length===18&&expiredTransfer.arms.every(a=>a.graded===0&&a.unexecuted===6),"Expired transfer preserves complete coverage accounting with zero live model calls");
 check(expiredTransfer.freeze.fixedSearchSpec.strategy==="DIAGONAL_EXACT"&&expiredTransfer.freeze.taskBindings.length===6&&!expiredTransfer.cognitiveGainDemonstrated,
   "Transfer binds its fixed strategy and tasks without converting unexecuted evidence into a cognitive gain");
+// Frozen retention transfer detector validation only. No search, live-shaped
+// completion or policy tuning is run on these six outcomes before the freeze.
+for(const w of SCIENTIFIC_RETENTION_TRANSFER_WORLDS){
+  const calibrated=scienceCalibration(w),t=scientificSearchTask(w,candidate,Date.now(),Date.now()+120000,calibrated.values);
+  const h=w.hidden as {kind:string;a:string;b:string;c:string;d:string};
+  const expression=h.kind==="SKEW_CUBIC_PAIR"?"a*x*x*y+b*x*y*y+c*x*y":h.kind==="RECIPROCAL_CROSS_CHANNEL"?"a/(x*y)+b/(y*y)+c*x":"(a*x*y+b*x*x+c*y)/(one+d*y)";
+  const ids=h.kind==="QUADRATIC_MIXED_DENOMINATOR"?["a","b","c","d"]:["a","b","c"];
+  const witness={schemaVersion:1 as const,parameters:ids.map(id=>({id,value:h[id as "a"]})),
+    program:{schemaVersion:5 as const,definitions:[],outputs:[{label:"response",expression}]},
+    assumptions:["Author detector validation only."],uncertainties:["Not a live cognition or original-discovery result."]};
+  const good=independentScienceGrade(w,t,witness),bad=independentScienceGrade(w,t,{...witness,program:{...witness.program,outputs:[{label:"response",expression:"("+expression+")+one"}]}});
+  check(good.accepted&&good.cost.points===12&&good.cost.matched===12,"Retention oracle accepts the author witness at all unchanged calibration/prospective/held-out points");
+  check(!bad.accepted&&bad.cost.matched===0,"Retention oracle rejects a planted error at every point without relaxing acceptance");
+  const points=[...w.calibration,...w.probes,...w.heldout];
+  const simulated=spawnSync(process.execPath,["--input-type=module","-e",SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE+"\nconsole.log(JSON.stringify("+JSON.stringify(points)+".map(p=>show(calculate("+JSON.stringify(w.hidden)+",p)))));"],{encoding:"utf8",timeout:5000,windowsHide:true});
+  const independentlyExpanded=scienceCalibration({...w,calibration:points});
+  check(simulated.status===0&&JSON.stringify(JSON.parse(simulated.stdout))===JSON.stringify(independentlyExpanded.values),"Independent Fraction oracle and bounded simulator agree on every new retention point");
+  check(!JSON.stringify(t).includes('"hidden"')&&!JSON.stringify(t).includes('"heldout"')&&t.constants.every(c=>c.id==="zero"||c.id==="one"),"New retention tasks expose admitted calibration only, not author structure, parameters or reserved inputs");
+}
+check(SCIENTIFIC_RETENTION_TRANSFER_WORLDS.length===6&&new Set(SCIENTIFIC_RETENTION_TRANSFER_WORLDS.map(w=>w.family)).size===3
+  &&SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST===theoryDigest(SCIENTIFIC_RETENTION_TRANSFER_WORLDS)
+  &&SCIENTIFIC_RETENTION_TRANSFER_WORLDS.every(w=>!new Set<string>([...SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,...SCIENTIFIC_SEARCH_WORLDS].map(old=>old.family)).has(w.family)),
+  "Retention freezes structurally new compositions and an explicit four-parameter fallback family, not an exposed rerun");
+const retentionOptions:ScientificFitEpochOptions={epoch:SCIENTIFIC_RETENTION_TRANSFER_EPOCH,worlds:SCIENTIFIC_RETENTION_TRANSFER_WORLDS,
+  corpusDigest:SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST,simulatorSource:SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE,
+  generationModes:["FIXED_SEARCH","FIXED_SEARCH","NYX_SEARCH"],fixedSearchSpec:SCIENTIFIC_DIAGONAL_FIXED_SEARCH,
+  fixedSearchSpecs:SCIENTIFIC_RETENTION_FIXED_SEARCHES,taskFactory:scientificSearchTask};
+let retentionReads=0,retentionUnexpectedCalls=0;
+const expiredRetention=await runFreshScientificFitEpoch(async()=>{retentionUnexpectedCalls++;throw Error("unexecuted");},{candidate,sourceDigests:{offline:theoryDigest("retention-detector-only")}},
+  ()=>at+(retentionReads++?SCIENTIFIC_RETENTION_TRANSFER_EPOCH.maxEpochMs+1:0),async()=>{},retentionOptions);
+check(retentionUnexpectedCalls===0&&expiredRetention.rows.length===18&&expiredRetention.arms.every(a=>a.graded===0&&a.unexecuted===6),"Expired retention preserves all three arms/six cases without exercising new search outcomes");
+check(expiredRetention.freeze.fixedSearchSpecs?.[0]?.strategy==="DIAGONAL_EXACT"&&expiredRetention.freeze.fixedSearchSpecs[1]?.strategy==="EVIDENCE_EXACT"
+  &&expiredRetention.freeze.fixedSearchSpecs[2]===null&&expiredRetention.pairedArmOutcomes?.length===18&&!expiredRetention.cognitiveGainDemonstrated,
+  "Frozen per-arm search binding and all paired outcomes remain explicit and cannot self-promote");
+for(const fixedSearchSpecs of [
+  [SCIENTIFIC_DIAGONAL_FIXED_SEARCH,{...SCIENTIFIC_DIAGONAL_FIXED_SEARCH,strategy:"EVIDENCE_EXACT",maxCandidates:129},null],
+  [SCIENTIFIC_DIAGONAL_FIXED_SEARCH,{...SCIENTIFIC_DIAGONAL_FIXED_SEARCH,strategy:"EVIDENCE_EXACT"},SCIENTIFIC_DIAGONAL_FIXED_SEARCH],
+  [{...SCIENTIFIC_DIAGONAL_FIXED_SEARCH,strategy:"EVIDENCE_EXACT"},{...SCIENTIFIC_DIAGONAL_FIXED_SEARCH,strategy:"EVIDENCE_EXACT"},null],
+]){let rejected=false,calls=0;try{await runFreshScientificFitEpoch(async()=>{calls++;throw Error("unexecuted");},{candidate,sourceDigests:{}},()=>at,async()=>{},
+  {...retentionOptions,fixedSearchSpecs:fixedSearchSpecs as any});}catch{rejected=true;}check(rejected&&calls===0,"Mismatched grammar/budgets, strategy identities or live-arm control binding fail before any inference");}
+for(const changed of [{model:"unapproved-model"},{reasoningControl:"CHANGED"},{reasoningBudgetTokens:4096},{authorityIncrease:true},{defaultUltraChanged:true}]){
+  let rejected=false,calls=0;try{await runFreshScientificFitEpoch(async()=>{calls++;throw Error("unexecuted");},{candidate,sourceDigests:{}},()=>at,async()=>{},
+    {...retentionOptions,epoch:{...retentionOptions.epoch,...changed}});}catch{rejected=true;}
+  check(rejected&&calls===0,"A comparison cannot silently switch model/reasoning compute/default or authority before inference");
+}
+// Separate exposed development fixture verifies composition/accounting. The
+// fresh transfer population above is never searched by this test double.
+const devRetentionWorld=SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS[2];let devRetentionCalls=0;
+const devRetentionReport=await runFreshScientificFitEpoch(async request=>{devRetentionCalls++;const result=fake(request,{});return {...result,finishReason:"length",evidence:{...result.evidence,finishReason:"length"}};},
+  {candidate,sourceDigests:{offline:theoryDigest("retention-composition-development")}},Date.now,async()=>{},
+  {...retentionOptions,worlds:[devRetentionWorld],corpusDigest:theoryDigest([devRetentionWorld]),simulatorSource:SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE});
+check(devRetentionReport.populationComplete&&devRetentionReport.rows.length===3&&devRetentionCalls===2,"Three independent retention arms terminate under the original two-call generation ceiling on separate development data");
+check(devRetentionReport.arms.slice(0,2).every(a=>a.allocatedUsage.calls===0)&&devRetentionReport.rows.every(r=>r.sharedPrefixWith===null)
+  &&devRetentionReport.physicalNativeCost.searchRequests===2,"Both fixed controls spend zero model calls and native costs are independently charged once");
+check(devRetentionReport.pairedArmOutcomes?.length===3&&devRetentionReport.pairedArmOutcomes[0].realizedInferenceMatched
+  &&devRetentionReport.pairedArmOutcomes.slice(1).every(p=>!p.realizedInferenceMatched),"Paired costs distinguish zero-inference controls from unequal live-shaped inference rather than fabricate total matching");
+check(devRetentionReport.rows[0].fixedSearch?.spec.strategy!==devRetentionReport.rows[1].fixedSearch?.spec.strategy
+  &&devRetentionReport.rows.every(r=>r.native!.requests<=8&&r.native!.workUnits<=300000)
+  &&devRetentionReport.safety.authorityIncrease===false,"Per-arm strategies are independently bound without resetting resource or authority boundaries");
 // New development objectives: no exposed transfer fixtures or task-specific
 // equations enter the search implementation. Same original live ceilings.
 function planeTask(fn:(u:string,v:string)=>string,points=[["1","1"],["2","1"],["1","3"],["3","2"],["2","4"],["4","3"],["5","2"]]):ScientificModelTask{

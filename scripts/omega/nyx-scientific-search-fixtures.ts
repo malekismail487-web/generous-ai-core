@@ -66,3 +66,40 @@ export const SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE=[
   "throw Error('world_not_supported');}",
   "const show=v=>v[1]===1n?String(v[0]):String(v[0])+'/'+String(v[1]);",
 ].join("\n");
+
+/** Frozen transfer for policy /3. New compositions, never used to develop the
+ * retention mechanism. Two zero-inference controls isolate native scheduling;
+ * live NYX may choose any existing typed search and must select after observation.
+ * Same resource ceilings, prospective protocol and twelve-point acceptance. */
+export const SCIENTIFIC_RETENTION_TRANSFER_EPOCH=immutableTheoryValue({...SCIENTIFIC_SEARCH_EPOCH,
+  version:"nyx-fresh-scientific-evidence-retention/1",
+  arms:["FIXED_DIAGONAL_EXACT_SEARCH","FIXED_EVIDENCE_EXACT_SEARCH","NYX_REQUESTED_SEARCH"],
+  maxPhysicalCalls:18,maxHttpAttempts:24,
+  scope:"SIX_FRESH_COMPOSITIONS_THREE_RATIONAL_FAMILIES_WITH_FOUR_PARAMETER_FALLBACK_NOT_ORIGINAL_DISCOVERY",
+  changedVariable:"OLD_VERSUS_EVIDENCE_PRIORITIZED_FIXED_SEARCH_AND_NYX_SEARCH_SELECTION_ABLATION",
+  selectionAblation:"INDEPENDENT_FIXED_FIRST_NON_REFUTED_CONTROLS_HAVE_ZERO_MODEL_CALLS",
+  priorCorpusPolicy:"NO_EXPOSED_CASE_RERUN_OR_OUTCOME_DEPENDENT_TUNING"});
+export const SCIENTIFIC_RETENTION_FIXED_SEARCHES=immutableTheoryValue([
+  SCIENTIFIC_DIAGONAL_FIXED_SEARCH,{...SCIENTIFIC_DIAGONAL_FIXED_SEARCH,strategy:"EVIDENCE_EXACT"},null,
+]) satisfies readonly (ScientificSearchSpec|null)[];
+const retentionCalibration=[["2","1"],["1","4"],["3","2"],["5","3"]] as const;
+const retentionProbes=[["7/4","5/3"],["9/5","11/4"],["13/3","7/6"]] as const;
+const retentionHeldout=[["3/7","8/5"],["11/6","13/8"],["17/5","2/9"],["19/8","23/6"],["5/11","29/7"]] as const;
+const retentionKinds=["SKEW_CUBIC_PAIR","RECIPROCAL_CROSS_CHANNEL","QUADRATIC_MIXED_DENOMINATOR"] as const;
+const retentionCoefficients=[["47/79","-53/83","59/89","7/101"],["-61/97","67/103","-71/107","11/109"]] as const;
+export const SCIENTIFIC_RETENTION_TRANSFER_WORLDS=immutableTheoryValue(retentionKinds.flatMap((kind,f)=>retentionCoefficients.map((v,i)=>({
+  taskId:"RETENTION-TRANSFER-"+String(f+1)+"-"+String(i+1),family:kind,hidden:{kind,a:v[0],b:v[1],c:v[2],d:v[3]},
+  calibration:retentionCalibration,probes:retentionProbes,heldout:retentionHeldout,
+})))) satisfies readonly ScientificOracleCase[];
+export const SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST=theoryDigest(SCIENTIFIC_RETENTION_TRANSFER_WORLDS);
+export const SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE=[
+  "function q(n,d=1n){if(d===0n)throw Error('zero_divisor');if(d<0n){n=-n;d=-d;}let a=n<0n?-n:n,b=d;while(b){const r=a%b;a=b;b=r;}return[n/a,d/a];}",
+  "const parse=s=>{const[n,d='1']=s.split('/');return q(BigInt(n),BigInt(d));};",
+  "const add=(a,b)=>q(a[0]*b[1]+b[0]*a[1],a[1]*b[1]),mul=(a,b)=>q(a[0]*b[0],a[1]*b[1]),div=(a,b)=>q(a[0]*b[1],a[1]*b[0]);",
+  "function calculate(h,p){const[x,y]=p.map(parse),a=parse(h.a),b=parse(h.b),c=parse(h.c),d=parse(h.d),one=parse('1'),xy=mul(x,y);",
+  "if(h.kind==='SKEW_CUBIC_PAIR')return add(add(mul(a,mul(x,xy)),mul(b,mul(y,xy))),mul(c,xy));",
+  "if(h.kind==='RECIPROCAL_CROSS_CHANNEL')return add(add(div(a,xy),div(b,mul(y,y))),mul(c,x));",
+  "if(h.kind==='QUADRATIC_MIXED_DENOMINATOR')return div(add(add(mul(a,xy),mul(b,mul(x,x))),mul(c,y)),add(one,mul(d,y)));",
+  "throw Error('world_not_supported');}",
+  "const show=v=>v[1]===1n?String(v[0]):String(v[0])+'/'+String(v[1]);",
+].join("\n");

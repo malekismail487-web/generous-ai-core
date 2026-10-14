@@ -7,7 +7,7 @@ import {pathToFileURL} from "node:url";
 import {NvidiaNimProvider,nvidiaNimCredentialFromEnvironment,type NvidiaNimCompletionRequest,type NvidiaNimCompletionResult,type NvidiaNimEvidence} from "../../src/lib/codelab/model/nvidiaNimProvider";
 import {runNyxScientificModelGeneration} from "../../src/lib/codelab/research/nyxQuantitativeReasoning";
 import {ScientificModelSession,type ScientificModelRef,type ScientificModelTask} from "../../src/lib/codelab/research/scientificModelGeneration";
-import type {ScientificSearchSpec} from "../../src/lib/codelab/research/scientificModelSearch";
+import {snapshotScientificSearchSpec,type ScientificSearchSpec} from "../../src/lib/codelab/research/scientificModelSearch";
 import {snapshotBoundedReasoningData} from "../../src/lib/codelab/research/boundedReasoningWorkbench";
 import {immutableTheoryValue,theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
 import {scientificModelReplay,scientificFitReplay,type ScientificReplayCost} from "./benchmarks/scientific-model-replay";
@@ -18,6 +18,8 @@ import {SCIENTIFIC_FIT_EPOCH as DEFAULT_EPOCH,SCIENTIFIC_FIT_WORLDS,SCIENTIFIC_F
 import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPUS_DIGEST,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,SCIENTIFIC_FIXED_SEARCH,scientificSearchTask} from "./nyx-scientific-search-fixtures";
 import {SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH,SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
   SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_DIAGONAL_FIXED_SEARCH} from "./nyx-scientific-search-fixtures";
+import {SCIENTIFIC_RETENTION_TRANSFER_EPOCH,SCIENTIFIC_RETENTION_TRANSFER_WORLDS,SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST,
+  SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_RETENTION_FIXED_SEARCHES} from "./nyx-scientific-search-fixtures";
 type Generation=Awaited<ReturnType<typeof runNyxScientificModelGeneration>>;
 type Complete=(r:NvidiaNimCompletionRequest,stage:string)=>Promise<NvidiaNimCompletionResult>;
 type Cost=ReturnType<typeof usage>;
@@ -27,12 +29,15 @@ export interface ScientificFitEpochOptions{
   readonly epoch:typeof DEFAULT_EPOCH;readonly worlds:readonly ScientificOracleCase[];
   readonly corpusDigest:string;readonly simulatorSource:string;
   readonly generationModes:readonly GenerationMode[];readonly fixedSearchSpec:ScientificSearchSpec;
+  readonly fixedSearchSpecs?:readonly (ScientificSearchSpec|null)[];
   readonly taskFactory:(world:ScientificOracleCase,candidate:string,at:number,expires:number,values:readonly string[])=>ScientificModelTask;
 }
 type Replay=ScientificReplayCost & {kind:"FIT"|"POINT_DERIVATION"};
 type Selection={outcome:string;modelId:string|null;modelEvidence:NvidiaNimEvidence|null;elapsedMs:number;diagnostic?:ScientificSelectionDiagnostic};
 type Row={taskId:string;family:string;arm:Arm;generationAttempted:boolean;generationFirstAdmitted:boolean|null;generation:Generation["attempts"];
-  fixedSearch?:{state:string;reason:string|null;evaluatedSupports:number;candidateCount:number;resultDigest:string;proposals:{state:string;reason:string|null;resultDigest:string}[]};
+  fixedSearch?:{state:string;reason:string|null;evaluatedSupports:number;candidateCount:number;resultDigest:string;spec:ScientificSearchSpec;
+    candidateSupport:readonly {supportSize:number;rank:number;distinctInputs:number|null;margin:number|null;state:string|null}[];
+    proposals:{state:string;reason:string|null;resultDigest:string}[]};
   candidateCount:number;competingArtifactsAdmitted:boolean;generationFailure:string|null;generationBudgetStopReason:string|null;generationStage:string;
   measurement:{experimentId:string;evidenceId:string;executionIdentity:string;provenanceRoot:string;candidateBinding:string;observedAtEpochMs:number;elapsedMs:number}|null;
   measurementFailure:string|null;selection:Selection;selectedCandidateSubmitted:boolean;accepted:boolean|null;outcome:string;
@@ -102,18 +107,26 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
   binding=snapshotBoundedReasoningData(binding);
   const EPOCH=snapshotBoundedReasoningData(options?.epoch??DEFAULT_EPOCH),WORLDS=snapshotBoundedReasoningData(options?.worlds??SCIENTIFIC_FIT_WORLDS);
   const modes=options?snapshotBoundedReasoningData(options.generationModes):null,fixedSpec=options?snapshotBoundedReasoningData(options.fixedSearchSpec):null;
+  const perArmFixed=options?.fixedSearchSpecs?snapshotBoundedReasoningData(options.fixedSearchSpecs):null;
   const makeTask=options?.taskFactory??scientificFitTask,simulatorSource=options?.simulatorSource??SCIENTIFIC_FIT_SIMULATOR_SOURCE;
   if(options&&(EPOCH.arms.length!==3||new Set(EPOCH.arms).size!==3||modes!.length!==3
-    ||new Set(modes).size!==3||!modes!.every(m=>["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"].includes(m))
+    ||(!perArmFixed&&new Set(modes).size!==3)||!modes!.every(m=>["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"].includes(m))
     ||options.corpusDigest!==theoryDigest(WORLDS)||typeof makeTask!=="function"
-    ||["maxGenerationCalls","maxSelectionCalls","maxOutputTokens","maxModelRequests","maxNativeWorkUnits","maxNativeElapsedMs","maxGenerationMs","maxSelectionMs","maxEpochMs","replayTimeoutMs","realizedTokenMatchTolerance"].some(k=>EPOCH[k]!==DEFAULT_EPOCH[k])
+    ||["model","reasoningControl","reasoningBudgetTokens","authorityIncrease","defaultUltraChanged","maxGenerationCalls","maxSelectionCalls","maxOutputTokens","maxModelRequests","maxNativeWorkUnits","maxNativeElapsedMs","maxGenerationMs","maxSelectionMs","maxEpochMs","replayTimeoutMs","realizedTokenMatchTolerance"].some(k=>EPOCH[k]!==DEFAULT_EPOCH[k])
     ||!Number.isSafeInteger(EPOCH.maxPhysicalCalls)||EPOCH.maxPhysicalCalls<1||EPOCH.maxPhysicalCalls>DEFAULT_EPOCH.maxPhysicalCalls
     ||!Number.isSafeInteger(EPOCH.maxHttpAttempts)||EPOCH.maxHttpAttempts<1||EPOCH.maxHttpAttempts>DEFAULT_EPOCH.maxHttpAttempts))throw Error("scientific_epoch_definition_invalid");
+  if(perArmFixed){
+    if(perArmFixed.length!==3||modes?.join("|")!=="FIXED_SEARCH|FIXED_SEARCH|NYX_SEARCH"||perArmFixed[2]!==null)throw Error("scientific_fixed_comparison_invalid");
+    const a=snapshotScientificSearchSpec(perArmFixed[0]),b=snapshotScientificSearchSpec(perArmFixed[1]);
+    if(a.strategy!=="DIAGONAL_EXACT"||b.strategy!=="EVIDENCE_EXACT"
+      ||theoryDigest({...a,strategy:null})!==theoryDigest({...b,strategy:null})
+      ||a.maxCandidates>128||a.maxCoefficients>4||a.maxModels>3)throw Error("scientific_fixed_comparison_invalid");
+  }
   const began=now(),expires=began+EPOCH.maxEpochMs,rows:Row[]=[],ledger:{stage:string;evidence:NvidiaNimEvidence|null;outcome:string}[]=[];
   const calibration=WORLDS.map(w=>({world:w,...scienceCalibration(w)}));
   const tasks=calibration.map(d=>snapshotBoundedReasoningData(makeTask(d.world,binding.candidate,began,expires,d.values)));
   const freeze={...binding,configuration:EPOCH,corpusDigest:options?.corpusDigest??SCIENTIFIC_FIT_CORPUS_DIGEST,issuedAtEpochMs:began,expiresAtEpochMs:expires,
-    ...(options?{generationModes:modes,fixedSearchSpec:fixedSpec,simulatorSourceDigest:theoryDigest(simulatorSource)}:{}),
+    ...(options?{generationModes:modes,fixedSearchSpec:fixedSpec,...(perArmFixed?{fixedSearchSpecs:perArmFixed}:{}),simulatorSourceDigest:theoryDigest(simulatorSource)}:{}),
     taskBindings:calibration.map((d,i)=>({taskId:d.world.taskId,family:d.world.family,taskDigest:theoryDigest(tasks[i])}))};
   const invoke=async(r:NvidiaNimCompletionRequest,stage:string)=>{
     if(now()>=expires||ledger.length>=EPOCH.maxPhysicalCalls)throw Error("fit_epoch_budget");
@@ -141,11 +154,26 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
         ...(options?{referenceArm:EPOCH.arms[0],searchArm:EPOCH.arms[1],controlArm:EPOCH.arms[2],
           sameToolIndependentExecution:true,
           inferenceCostScope:"EQUAL_CEILINGS_UNEQUAL_REALIZED_COMPUTE_FIXED_CONTROL_USES_NO_MODEL_CALLS"}:{})};});
+    const pairedArmOutcomes=perArmFixed?WORLDS.flatMap(w=>EPOCH.arms.flatMap((arm,i)=>EPOCH.arms.slice(i+1).map(other=>{
+      const a=rows.find(r=>r.taskId===w.taskId&&r.arm===arm),b=rows.find(r=>r.taskId===w.taskId&&r.arm===other);
+      const known=!!a&&!!b&&[a,b].every(r=>r.usage.unknownUsageCalls===0&&r.usage.unknownUsageHttpAttempts===0);
+      return{taskId:w.taskId,referenceArm:arm,treatmentArm:other,referenceAccepted:a?.accepted??null,treatmentAccepted:b?.accepted??null,
+        bothSubmitted:!!a?.selectedCandidateSubmitted&&!!b?.selectedCandidateSubmitted,bothGraded:a?.accepted!=null&&b?.accepted!=null,
+        referenceOutcome:a?.outcome??"UNEXECUTED",treatmentOutcome:b?.outcome??"UNEXECUTED",
+        knownInference:known,realizedInferenceMatched:known&&a!.usage.calls===b!.usage.calls&&a!.usage.httpAttempts===b!.usage.httpAttempts
+          &&Math.abs(a!.usage.reportedTokens-b!.usage.reportedTokens)<=EPOCH.realizedTokenMatchTolerance*Math.max(1,a!.usage.reportedTokens,b!.usage.reportedTokens),
+        referenceNativeWork:a?.native?.workUnits??null,treatmentNativeWork:b?.native?.workUnits??null,
+        referenceInference:a?.usage??null,treatmentInference:b?.usage??null,
+        referenceReplayCalls:a?.replay.length??null,treatmentReplayCalls:b?.replay.length??null,
+        referenceGenerationMs:a?.generationMs??null,treatmentGenerationMs:b?.generationMs??null,
+        treatmentNoMoreNativeWork:!!a?.native&&!!b?.native&&b.native.workUnits<=a.native.workUnits};
+    }))):null;
     const physical=cost(ledger),generationPhysical=rows.filter(r=>r.sharedPrefixWith===null),unknownHttpAttemptCounts=ledger.filter(e=>!e.evidence).length;
     const cleanupComplete=generationPhysical.filter(r=>r.fixtureAttempted).every(r=>r.cleanup?.sourceUnchanged===true&&r.cleanup.sandboxCleanupVerified&&r.cleanup.temporaryFixtureRemoved);
     const populationComplete=rows.length===WORLDS.length*EPOCH.arms.length&&rows.every(r=>r.completed),gradedComplete=populationComplete&&rows.every(r=>r.accepted!==null);
     const providerStable=physical.calls>0&&physical.providerFailures===0&&physical.localDeliveryBlocks===0&&physical.recoveredDisruptions===0&&physical.unknownUsageCalls===0&&physical.unknownUsageHttpAttempts===0;
     return immutableTheoryValue({schemaVersion:1,candidate:binding.candidate,freeze,freezeDigest:theoryDigest(freeze),rows,arms,pairs,invocations:ledger,populationComplete,gradedComplete,cleanupComplete,
+      ...(pairedArmOutcomes?{pairedArmOutcomes}:{}),
       ...(options?{evaluationVersion:EPOCH.version,cleanupExercised:generationPhysical.some(r=>r.fixtureAttempted)}:{}),
       providerStable,physicalCalls:ledger.length,physicalUsage:physical,unknownHttpAttemptCounts,
       physicalNativeCost:{requests:generationPhysical.reduce((n,r)=>n+(r.native?.requests??0),0),fitRequests:generationPhysical.reduce((n,r)=>n+(r.native?.fitRequests??0),0),
@@ -187,9 +215,12 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
         let generated:Generation|null=null;
         try{
           if(mode==="FIXED_SEARCH"){
-            const found=session.search({schemaVersion:1,operation:"SEARCH_SCIENTIFIC_MODELS",taskDigest:session.taskDigest,spec:fixedSpec}),owned:ScientificModelRef[]=[];
+            const armSpec=perArmFixed?.[EPOCH.arms.indexOf(arm)]??fixedSpec;
+            const found=session.search({schemaVersion:1,operation:"SEARCH_SCIENTIFIC_MODELS",taskDigest:session.taskDigest,spec:armSpec}),owned:ScientificModelRef[]=[];
             row.fixedSearch={state:found.state,reason:"reason"in found?found.reason:"stopReason"in found?found.stopReason:null,evaluatedSupports:session.usage().searchSupports,
-              candidateCount:"candidates"in found?found.candidates.length:0,resultDigest:found.resultDigest,proposals:[]};
+              candidateCount:"candidates"in found?found.candidates.length:0,resultDigest:found.resultDigest,spec:snapshotScientificSearchSpec(armSpec),
+              candidateSupport:"candidates"in found?found.candidates.map(c=>({supportSize:c.supportSize,rank:c.fit.linear.rank,
+                distinctInputs:c.calibrationSupport?.distinctInputs??null,margin:c.calibrationSupport?.margin??null,state:c.calibrationSupport?.state??null})):[],proposals:[]};
             if("candidates"in found)for(const c of found.candidates){
               if(now()>=expires||session.usage().remainingRequests<2)break;
               const fitted=session.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:session.taskDigest,structure:c.structure},scientificFitReplay(python(),EPOCH.replayTimeoutMs,c=>replay.push({...c,kind:"FIT"})));
@@ -280,10 +311,13 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
 
 async function main(){
   if(process.env.OMEGA_ALLOW_NVIDIA_NETWORK!=="1"||!process.env.NVIDIA_API_KEY?.trim())throw Error("explicit_network_and_injected_secret_required");
-  if(process.env.OMEGA_SCIENTIFIC_EXPERIMENT!==undefined&&!["STRUCTURE_SEARCH","STRUCTURE_SEARCH_DIAGONAL_TRANSFER"].includes(process.env.OMEGA_SCIENTIFIC_EXPERIMENT))throw Error("unknown_scientific_experiment");
+  if(process.env.OMEGA_SCIENTIFIC_EXPERIMENT!==undefined&&!["STRUCTURE_SEARCH","STRUCTURE_SEARCH_DIAGONAL_TRANSFER","EVIDENCE_RETENTION_TRANSFER"].includes(process.env.OMEGA_SCIENTIFIC_EXPERIMENT))throw Error("unknown_scientific_experiment");
+  const retentionTransfer=process.env.OMEGA_SCIENTIFIC_EXPERIMENT==="EVIDENCE_RETENTION_TRANSFER";
   const diagonalTransfer=process.env.OMEGA_SCIENTIFIC_EXPERIMENT==="STRUCTURE_SEARCH_DIAGONAL_TRANSFER";
-  const searchEpoch=process.env.OMEGA_SCIENTIFIC_EXPERIMENT==="STRUCTURE_SEARCH"||diagonalTransfer,EPOCH=diagonalTransfer?SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH:searchEpoch?SCIENTIFIC_SEARCH_EPOCH:DEFAULT_EPOCH;
-  const options:ScientificFitEpochOptions|undefined=diagonalTransfer?{epoch:EPOCH,worlds:SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,corpusDigest:SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
+  const searchEpoch=process.env.OMEGA_SCIENTIFIC_EXPERIMENT==="STRUCTURE_SEARCH"||diagonalTransfer||retentionTransfer,EPOCH=retentionTransfer?SCIENTIFIC_RETENTION_TRANSFER_EPOCH:diagonalTransfer?SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH:searchEpoch?SCIENTIFIC_SEARCH_EPOCH:DEFAULT_EPOCH;
+  const options:ScientificFitEpochOptions|undefined=retentionTransfer?{epoch:EPOCH,worlds:SCIENTIFIC_RETENTION_TRANSFER_WORLDS,corpusDigest:SCIENTIFIC_RETENTION_TRANSFER_CORPUS_DIGEST,
+    simulatorSource:SCIENTIFIC_RETENTION_TRANSFER_SIMULATOR_SOURCE,generationModes:["FIXED_SEARCH","FIXED_SEARCH","NYX_SEARCH"],fixedSearchSpec:SCIENTIFIC_DIAGONAL_FIXED_SEARCH,
+    fixedSearchSpecs:SCIENTIFIC_RETENTION_FIXED_SEARCHES,taskFactory:scientificSearchTask}:diagonalTransfer?{epoch:EPOCH,worlds:SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,corpusDigest:SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
     simulatorSource:SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,generationModes:["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"],fixedSearchSpec:SCIENTIFIC_DIAGONAL_FIXED_SEARCH,taskFactory:scientificSearchTask}:searchEpoch?{epoch:EPOCH,worlds:SCIENTIFIC_SEARCH_WORLDS,corpusDigest:SCIENTIFIC_SEARCH_CORPUS_DIGEST,
     simulatorSource:SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,generationModes:["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"],fixedSearchSpec:SCIENTIFIC_FIXED_SEARCH,taskFactory:scientificSearchTask}:undefined;
   const git=(...a:string[])=>execFileSync("git",a,{encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim(),candidate=process.env.GITHUB_SHA??git("rev-parse","HEAD");

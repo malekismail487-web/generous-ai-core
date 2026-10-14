@@ -1,5 +1,19 @@
 # NYX benchmark capability program
 
+### Fresh evidence-retention transfer (prospective freeze, 2026-10-14)
+
+Reuses the scientific runner for six new compositions / three families. Compare
+fixed DIAGONAL_EXACT, fixed EVIDENCE_EXACT and live NYX-requested search/selection.
+The zero-inference controls differ only by strategy; native actual work may differ.
+All original resource, expiry, independent replay, two-model admission, prospective
+measurement and twelve-point exact acceptance checks remain. Eighteen logical /
+twenty-four HTTP / thirty-minute global ceilings; unchanged hosted Super controls.
+All paired outcomes and actual compute are recorded; no cognitive promotion from
+one run or a fixed-control tie. Exposed earlier cohorts remain untouched. Only
+detector/composition development tests precede the freeze, not new solver outcomes.
+One unique scoped push marker launches the frozen epoch; remove it after capture.
+Results PENDING. See [the prospective method](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md).
+
 ### Evidence-aware candidate retention — development only (2026-10-14)
 
 Policy /3 adds opt-in EVIDENCE_EXACT, prioritizing extra distinct calibration

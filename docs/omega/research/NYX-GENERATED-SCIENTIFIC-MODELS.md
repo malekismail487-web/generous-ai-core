@@ -739,6 +739,76 @@ loop, D04's bounded exact checks and cost-aware search, and inherited evidence
 over confidence. Formal proof search, original discovery, skill promotion,
 benchmark improvements and recursion are not certified by these examples.
 
+## Fresh evidence-retention comparison — prospective freeze, 2026-10-14
+
+The next epoch reuses the same scientific runner, NYX cognition, exact solver,
+independent Fraction/source replay and actual R1/R2A/R3B disposable fixture.
+No new cognition layer or model-specific execution stack. Three independently
+executed arms use the same six cases and twelve-point all-exact oracle:
+
+| Arm | Generation | Selection | Inference |
+| --- | --- | --- | --- |
+| FIXED_DIAGONAL_EXACT_SEARCH | Original fixed diagonal policy | First non-refuted precommitted hypothesis | Zero |
+| FIXED_EVIDENCE_EXACT_SEARCH | Reviewed evidence-prioritized policy | Same rule | Zero |
+| NYX_REQUESTED_SEARCH | Live NYX chooses existing typed search settings | Live typed selection after authorized observation | At most two generation calls and one selection call |
+
+The two fixed specifications differ only in strategy. They preserve the same
+degree-three rational grammar, optional reciprocal/denominator terms, four
+coefficient dimensions, 128 tested supports and three candidate slots. All
+arms retain eight native requests / 300000 work / 3000 native ms and the same
+expiry, revocation, independent replay, two-model bridge, one fixed probe and
+full withheld acceptance. NYX chooses its own request; it is not silently
+rewritten to the new strategy, given an author equation or required to win.
+
+The six fresh cases form three new composition clusters: mixed cross-cubic,
+cross reciprocal and a four-parameter quadratic rational response. The last
+is a predeclared fallback stress case, not an invitation to tune the policy.
+Four calibration, three prospective and five withheld inputs are fixed before
+inference. No earlier fit/search/diagonal or development law is rerun. Detector
+tests check author witness correctness, planted-error rejection, independent
+simulator/oracle agreement and context exclusion; they do not search the six
+new cases or tune against their solver outcomes before the freeze.
+
+The original Super configuration remains 8192 output / 2048 configured reasoning
+tokens, identical wire normalization and temperature zero. Global ceilings are
+eighteen logical calls / twenty-four physical HTTP attempts / thirty minutes,
+below the previous experiment's ceilings. Per-stage generation remains four
+minutes / two logical calls; selection two minutes / one call; recovery shares
+the original global HTTP budget. No token, request or lease reset is introduced.
+
+Report all three unordered arm pairs per case, including null/unsubmitted/
+unexecuted outcomes, first/repaired generation, strict selection diagnostics,
+known/unknown inference, native work/time, independent replay and latency.
+The fixed controls are inference-matched at zero, NOT necessarily native-compute
+matched: stopping earlier is precisely the original suspected mechanism. The
+live arm has unequal inference and may choose a different grammar/configuration.
+No padding calls, hidden cost, best-of accumulation or broad causal cognition
+claim. Legacy pair field names remain explicitly bound to actual arm identities;
+new pairedArmOutcomes provides unambiguous names and actual cost vectors.
+
+One six-case run cannot satisfy independent replication, cross-domain mathematics,
+original science, benchmark or recursion gates. A fixed-policy improvement is
+native capability evidence; a fixed-control tie is not a NYX cognition gain.
+If live NYX underperforms a working fixed tool, inspect typed search selection,
+resource allocation and evidence interpretation separately from native delivery.
+If neither policy finds the law, preserve finite-search and identifiability
+limits. Do not retry these final cases until favorable or relax any acceptance.
+
+One scoped push launcher with the unique NYX-RETENTION-ONE-SHOT-1 commit marker
+starts only this epoch from the frozen candidate. Remove its push hook after
+terminal custody capture; ordinary commits must not repeat the campaign. The
+secret is injected only in the existing model step and never enters cognition,
+reports or source. Default Ultra, production and general machine/network
+authority remain unchanged. Fresh results are PENDING, not assumed positive.
+
+Plan coverage remains PARTIAL / JUST-IN-TIME: directly applies D06 executable
+hypotheses, precommitted predictions, independent falsification and no one-shot
+promotion; supports D01/D04 matched comparisons, exact checks and honest cost.
+Deferred: adaptive experiment selection, formal ProofSearch/semantic fidelity,
+learned controllers, original discovery, institutional replication and recursion.
+Conflict: a fixed probe is not D06's mature information-gain selector; this epoch
+tests retention only, not certification of that deferred selector or full program.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,
