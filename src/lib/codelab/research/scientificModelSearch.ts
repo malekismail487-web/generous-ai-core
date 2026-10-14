@@ -10,22 +10,25 @@ import { immutableTheoryValue } from "./theoryContracts";
  * worlds. All scalar work uses the existing exact interpreter and caller tick.
  * Search ranking is not admission, a scientific claim, or execution authority. */
 export const SCIENTIFIC_SEARCH_POLICY = /* @__PURE__ */ Object.freeze({
-  version: "nyx-scientific-structure-search/2", maxDegree: 3, maxCoefficients: 8,
+  version: "nyx-scientific-structure-search/3", maxDegree: 3, maxCoefficients: 8,
   maxCandidates: 256, maxModels: 3, maxAtoms: 58, grantsAuthority: false,
   scope: "FINITE_RATIONAL_GRAMMAR_CALIBRATION_HYPOTHESES_NOT_SCIENTIFIC_TRUTH",
   method: "BOUNDED_DIAGONAL_SUPPORTS_WITH_ORIGINAL_ROW_CONSISTENCY",
   legacyStrategiesPreserved: true,
+  evidencePriority: "DISTINCT_INPUT_OVERDETERMINATION_WITH_SATURATED_FALLBACK_NOT_TRUTH",
 });
 export interface ScientificSearchSpec {
   readonly schemaVersion: 1; readonly nonzeroConstantId: string;
   readonly maxDegree: number; readonly includeReciprocals: boolean;
   readonly allowDenominatorTerms: boolean; readonly maxCoefficients: number;
   readonly maxCandidates: number; readonly maxModels: number;
-  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL";
+  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT";
 }
 export interface ScientificSearchCandidate {
   readonly structure: ScientificModelStructure; readonly fit: ScientificStructureFit;
   readonly supportSize: number; readonly calibrationResidual: "0";
+  readonly calibrationSupport?: { readonly distinctInputs: number; readonly rank: number; readonly margin: number;
+    readonly state: "OVERDETERMINED_DISTINCT_INPUT_FIT" | "SATURATED_CALIBRATION_INTERPOLATION" };
 }
 export interface ScientificSearchResult {
   readonly version: typeof SCIENTIFIC_SEARCH_POLICY.version;
@@ -37,6 +40,8 @@ export interface ScientificSearchResult {
   readonly arithmeticBlockedSupports: number; readonly invalidFits: number;
   readonly duplicatePredictions: number; readonly domainBlockedAtoms: number;
   readonly atoms: number; readonly gramsComputed: number;
+  readonly evidencePriority?: { readonly distinctCalibrationInputs: number; readonly exploratorySupportLimit: number;
+    readonly reservedFallbackSupports: number; readonly fallbackExercised: boolean };
   readonly scientificTruthEstablished: false; readonly grantsAuthority: false;
 }
 const keys = (v: unknown, names: readonly string[]) => !!v && typeof v === "object" && !Array.isArray(v)
@@ -47,14 +52,14 @@ export function scientificSearchSchema() {
     properties: { schemaVersion: { type: "integer", enum: [1] }, nonzeroConstantId: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" },
       maxDegree: { type: "integer", minimum: 1, maximum: 3 }, includeReciprocals: { type: "boolean" }, allowDenominatorTerms: { type: "boolean" },
       maxCoefficients: { type: "integer", minimum: 1, maximum: 8 }, maxCandidates: { type: "integer", minimum: 1, maximum: 256 },
-      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL"] } } };
+      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT"] } } };
 }
 export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearchSpec {
   const s = snapshotBoundedReasoningData(proposed) as ScientificSearchSpec;
   if (!keys(s, scientificSearchSchema().required) || s.schemaVersion !== 1
     || typeof s.nonzeroConstantId !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s.nonzeroConstantId)
     || typeof s.includeReciprocals !== "boolean" || typeof s.allowDenominatorTerms !== "boolean"
-    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL"].includes(s.strategy)
+    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT"].includes(s.strategy)
     || !Number.isSafeInteger(s.maxDegree) || s.maxDegree < 1 || s.maxDegree > 3
     || !Number.isSafeInteger(s.maxCoefficients) || s.maxCoefficients < 1 || s.maxCoefficients > 8
     || !Number.isSafeInteger(s.maxCandidates) || s.maxCandidates < 1 || s.maxCandidates > 256
@@ -69,6 +74,23 @@ const isArithmeticBoundary = (e: unknown) => e instanceof Error && e.message ===
  * No other task data, hidden response, IO, model call or execution exists here. */
 export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}, onCompleted: () => void = () => {}): ScientificSearchResult {
   tick(); const spec = snapshotScientificSearchSpec(proposed);
+  const evidencePriority = spec.strategy === "EVIDENCE_EXACT";
+  // Repeated/reordered/equivalent rational input rows must not manufacture
+  // extra calibration constraints. Unique design points are NOT independent
+  // physical observations or a statistical confidence estimate.
+  let distinctInputs = task.observations.length;
+  if (evidencePriority) {
+    const points = new Set<string>();
+    for (const observation of task.observations) {
+      const values = task.variables.map(id => {
+        tick(); const input = observation.inputs.find(v => { tick(); return v.id === id; });
+        if (!input) throw Error("scientific_search_input_binding");
+        return canonicalRationalLiteral(input.value, tick);
+      });
+      tick(); points.add(JSON.stringify(values));
+    }
+    distinctInputs = points.size;
+  }
   const offset = task.constants.find(c => c.id === spec.nonzeroConstantId);
   if (!offset || canonicalRationalLiteral(offset.value, tick) === "0") throw Error("scientific_search_nonzero_constant_required");
   const expressions: string[] = [offset.id], monomials: string[] = [];
@@ -101,7 +123,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
   // denominator role. Cheap reciprocals must not wait behind every cubic.
   // Legacy strategies retain their exact prior order. No task ID, response
   // truth or coefficient value ranks atoms; all scanning/sorting is charged.
-  if (spec.strategy.startsWith("DIAGONAL")) {
+  if (spec.strategy.startsWith("DIAGONAL") || evidencePriority) {
     const costs=new Map<Atom,number>();
     for(const atom of atoms){let cost=Number(atom.denominator);for(const c of atom.expression){tick();if(c==="*"||c==="/")cost++;}costs.set(atom,cost);}
     atoms.sort((a,b)=>{tick();return costs.get(a)!-costs.get(b)!||Number(a.denominator)-Number(b.denominator);});
@@ -112,7 +134,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     for (let i = 0; i < a.length; i++) { tick(); sum = exactScalar("ADD", sum, exactScalar("MUL", a[i], b[i], tick), tick); }
     return sum;
   };
-  const direct = spec.strategy === "DIAGONAL_EXACT";
+  const direct = spec.strategy === "DIAGONAL_EXACT" || evidencePriority;
   const norm = direct ? "0" : dot(rhs, rhs), targets = direct ? [] : atoms.map(a => dot(a.values, rhs)), gram = new Map<string, string>();
   const inner = (a: number, b: number) => {
     tick(); const key = `${Math.min(a, b)}:${Math.max(a, b)}`;
@@ -155,7 +177,9 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     }
     const key = JSON.stringify(values);
     if (predictions.has(key)) { duplicatePredictions++; return; }
-    predictions.add(key); candidates.push({ structure, fit, supportSize: support.length, calibrationResidual: "0" });
+    predictions.add(key); candidates.push({ structure, fit, supportSize: support.length, calibrationResidual: "0",
+      ...(evidencePriority ? { calibrationSupport: { distinctInputs, rank: fit.linear.rank, margin: distinctInputs - fit.linear.rank,
+        state: distinctInputs > fit.linear.rank ? "OVERDETERMINED_DISTINCT_INPUT_FIT" as const : "SATURATED_CALIBRATION_INTERPOLATION" as const } } : {}) });
   };
   const evaluate = (input: readonly number[]): string | null => {
     tick(); const support = [...input].sort((a, b) => a - b), key = support.join(":");
@@ -199,17 +223,29 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
   };
   const done = () => evaluatedSupports >= spec.maxCandidates || candidates.length >= spec.maxModels;
   const maxSize = Math.min(spec.maxCoefficients, atoms.length, task.observations.length);
-  if (spec.strategy.startsWith("DIAGONAL")) {
+  const reservedFallbackSupports = evidencePriority && maxSize >= distinctInputs
+    ? Math.min(spec.maxCandidates, spec.maxModels * maxSize) : 0;
+  const exploratorySupportLimit = spec.maxCandidates - reservedFallbackSupports;
+  let fallbackExercised = false;
+  if (spec.strategy.startsWith("DIAGONAL") || evidencePriority) {
     // Enumerate by largest feature index, then support size. All cardinalities
     // are reached without first exhausting every pair from the whole grammar.
     // A support is generated once, lazily, under the SAME owning tick/limits.
-    const visit = (prefix: readonly number[], start: number, remaining: number, maximum: number) => {
-      tick(); if (done()) return;
+    const visit = (prefix: readonly number[], start: number, remaining: number, maximum: number, limit: number) => {
+      tick(); if (done() || evaluatedSupports >= limit) return;
       if (!remaining) { evaluate([...prefix,maximum]); return; }
-      for (let i=start;i<=maximum-remaining&&!done();i++) { tick(); visit([...prefix,i],i+1,remaining-1,maximum); }
+      for (let i=start;i<=maximum-remaining&&!done()&&evaluatedSupports<limit;i++) { tick(); visit([...prefix,i],i+1,remaining-1,maximum,limit); }
     };
-    for (let maximum=0;maximum<atoms.length&&!done();maximum++)
-      for (let size=1;size<=Math.min(maxSize,maximum+1)&&!done();size++) visit([],0,size-1,maximum);
+    const explore = (minimumSize: number, maximumSize: number, limit: number) => {
+      for (let maximum=0;maximum<atoms.length&&!done()&&evaluatedSupports<limit;maximum++)
+        for (let size=minimumSize;size<=Math.min(maximumSize,maximum+1)&&!done()&&evaluatedSupports<limit;size++) visit([],0,size-1,maximum,limit);
+    };
+    if (evidencePriority) {
+      explore(1, Math.min(maxSize, distinctInputs - 1), exploratorySupportLimit);
+      // Saturated fits are hypotheses too, not forbidden. A bounded fallback
+      // preserves tasks that genuinely need as many parameters as design points.
+      if (!done() && maxSize >= distinctInputs) { fallbackExercised = true; explore(distinctInputs, maxSize, spec.maxCandidates); }
+    } else explore(1, maxSize, spec.maxCandidates);
   } else if (spec.strategy === "LEXICOGRAPHIC") {
     const visit = (prefix: readonly number[], start: number, remaining: number) => {
       tick(); if (done()) return;
@@ -239,5 +275,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     state: candidates.length ? "CANDIDATES_NOT_ADMITTED" : "NO_CANDIDATE_IN_SEARCHED_GRAMMAR",
     stopReason: candidates.length >= spec.maxModels ? "MODEL_LIMIT" : evaluatedSupports >= spec.maxCandidates ? "CANDIDATE_LIMIT" : "SEARCH_EXHAUSTED",
     candidates, evaluatedSupports, completedSupports, rankDeficientSupports, inconsistentSupports, supportsBySize, arithmeticBlockedSupports, invalidFits, duplicatePredictions,
+    ...(evidencePriority ? { evidencePriority: { distinctCalibrationInputs: distinctInputs, exploratorySupportLimit,
+      reservedFallbackSupports, fallbackExercised } } : {}),
     domainBlockedAtoms, atoms: atoms.length, gramsComputed: gram.size, scientificTruthEstablished: false, grantsAuthority: false });
 }

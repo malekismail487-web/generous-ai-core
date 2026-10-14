@@ -1,5 +1,19 @@
 # NYX benchmark capability program
 
+### Evidence-aware candidate retention — development only (2026-10-14)
+
+Policy /3 adds opt-in EVIDENCE_EXACT, prioritizing extra distinct calibration
+constraints while retaining bounded saturated-fit fallback. On three separate
+development laws, the first independently replayed hypothesis predicts unfitted
+points in 3/3 cases versus 0/3 current diagonal stopping. A simpler parameter cap
+also predicts 3/3 but supplies only one hypothesis and excludes a necessary
+higher-parameter negative case. The preference preserves competing populations.
+It spends more actual native work; no compute-matched cognitive gain is claimed.
+A planted observational ambiguity also shows that positive margin is not truth.
+Selection-contract diagnostics preserve strict acceptance without raw responses.
+Zero live calls; all exposed epochs remain unchanged. [Method, costs and negative
+controls](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md#evidence-aware-retention-correction--development-2026-10-14).
+
 ### Fresh diagonal-search transfer — terminal evidence 2026-10-14
 
 Frozen `f05c50f0`, run `38590375090`, completed with stable delivery. NYX-requested

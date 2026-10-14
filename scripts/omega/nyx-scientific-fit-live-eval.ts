@@ -30,7 +30,7 @@ export interface ScientificFitEpochOptions{
   readonly taskFactory:(world:ScientificOracleCase,candidate:string,at:number,expires:number,values:readonly string[])=>ScientificModelTask;
 }
 type Replay=ScientificReplayCost & {kind:"FIT"|"POINT_DERIVATION"};
-type Selection={outcome:string;modelId:string|null;modelEvidence:NvidiaNimEvidence|null;elapsedMs:number};
+type Selection={outcome:string;modelId:string|null;modelEvidence:NvidiaNimEvidence|null;elapsedMs:number;diagnostic?:ScientificSelectionDiagnostic};
 type Row={taskId:string;family:string;arm:Arm;generationAttempted:boolean;generationFirstAdmitted:boolean|null;generation:Generation["attempts"];
   fixedSearch?:{state:string;reason:string|null;evaluatedSupports:number;candidateCount:number;resultDigest:string;proposals:{state:string;reason:string|null;resultDigest:string}[]};
   candidateCount:number;competingArtifactsAdmitted:boolean;generationFailure:string|null;generationBudgetStopReason:string|null;generationStage:string;
@@ -52,6 +52,48 @@ const validSelection=(raw:unknown,models:readonly ScientificModelRef[]):{operati
   return r.operation==="CONCLUDE"&&typeof r.modelId==="string"&&models.some(m=>m.modelId===r.modelId)?{operation:"CONCLUDE",modelId:r.modelId}
     :r.operation==="NO_CONCLUSION"&&r.modelId===null?{operation:"NO_CONCLUSION",modelId:null}:null;
 };
+
+export interface ScientificSelectionDiagnostic {
+  readonly version:"nyx-scientific-selection-contract/1";
+  readonly boundary:"VALID"|"JSON_PARSE"|"DATA_SNAPSHOT"|"ROOT_SHAPE"|"FIELD_SET"|"SCHEMA_VERSION"|"OPERATION_TYPE"
+    |"UNSUPPORTED_OPERATION"|"MODEL_ID_TYPE"|"UNKNOWN_MODEL_REFERENCE"|"NO_CONCLUSION_REQUIRES_NULL";
+  readonly missingFields:readonly string[];readonly unexpectedFieldCount:number;readonly wrongTypeFields:readonly string[];
+}
+/** Describe the existing strict boundary, never repair/coerce its content.
+ * Only fixed contract field names and counts survive; no unknown keys, model
+ * IDs, raw source/response, private reasoning or low-entropy answer hash. */
+export function inspectScientificSelection(content:string,models:readonly ScientificModelRef[]){
+  const required=["schemaVersion","operation","modelId"];
+  let parsed:unknown,raw:Record<string,unknown>|null=null;
+  let boundary:ScientificSelectionDiagnostic["boundary"]="VALID";
+  try{parsed=JSON.parse(content);}catch{boundary="JSON_PARSE";}
+  if(boundary==="VALID")try{parsed=snapshotBoundedReasoningData(parsed);}catch{boundary="DATA_SNAPSHOT";}
+  if(boundary==="VALID"){
+    if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))boundary="ROOT_SHAPE";
+    else raw=parsed as Record<string,unknown>;
+  }
+  const actual=raw?Object.keys(raw):[],missingFields=raw?required.filter(k=>!Object.prototype.hasOwnProperty.call(raw,k)):[];
+  const unexpectedFieldCount=actual.filter(k=>!required.includes(k)).length,wrongTypeFields:string[]=[];
+  if(raw){
+    if(typeof raw.schemaVersion!=="number")wrongTypeFields.push("schemaVersion");
+    if(typeof raw.operation!=="string")wrongTypeFields.push("operation");
+    if(raw.modelId!==null&&typeof raw.modelId!=="string")wrongTypeFields.push("modelId");
+    if(missingFields.length||unexpectedFieldCount)boundary="FIELD_SET";
+    else if(raw.schemaVersion!==1)boundary="SCHEMA_VERSION";
+    else if(typeof raw.operation!=="string")boundary="OPERATION_TYPE";
+    else if(!["CONCLUDE","NO_CONCLUSION"].includes(raw.operation))boundary="UNSUPPORTED_OPERATION";
+    else if(raw.operation==="NO_CONCLUSION"&&raw.modelId!==null)boundary="NO_CONCLUSION_REQUIRES_NULL";
+    else if(raw.operation==="CONCLUDE"&&typeof raw.modelId!=="string")boundary="MODEL_ID_TYPE";
+    else if(raw.operation==="CONCLUDE"&&!models.some(m=>m.modelId===raw!.modelId))boundary="UNKNOWN_MODEL_REFERENCE";
+  }
+  const choice=validSelection(raw,models);
+  if((boundary==="VALID")!==(choice!==null))throw Error("selection_diagnostic_acceptance_disagreement");
+  // Preserve the original outcome precedence, even if a malformed object has
+  // more than one problem. The additional boundary is diagnostic, not admission.
+  const rejectedOutcome=choice?null:raw&&typeof raw.operation==="string"&&!["CONCLUDE","NO_CONCLUSION"].includes(raw.operation)?"SELECTION_UNSUPPORTED_CAPABILITY"
+    :raw?.operation==="CONCLUDE"&&typeof raw.modelId==="string"&&!models.some(m=>m.modelId===raw!.modelId)?"SELECTION_AUTHORIZATION_REJECTION":"SELECTION_SCHEMA_REJECTION";
+  return immutableTheoryValue({choice,rejectedOutcome,diagnostic:{version:"nyx-scientific-selection-contract/1" as const,boundary,missingFields,unexpectedFieldCount,wrongTypeFields}});
+}
 
 /** Only new evaluation composition: existing cognition, fit/proposal custody,
  * original-source verifier and R1/R2A/R3B fixture. No new inference/executor stack. */
@@ -202,13 +244,12 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
           else if(result.decision!=="COMPLETED"||result.content===null)row.selection.outcome="SELECTION_PROVIDER_FAILURE";
           else if(result.finishReason!=="stop")row.selection.outcome="SELECTION_NONSTOP_REJECTION";
           else{
-            let choice:ReturnType<typeof validSelection>=null,raw:Record<string,unknown>|null=null;
-            try{const parsed=snapshotBoundedReasoningData(JSON.parse(result.content));if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))raw=parsed;choice=validSelection(parsed,models);}catch{}
-            if(!choice)row.selection.outcome=raw&&typeof raw.operation==="string"&&!["CONCLUDE","NO_CONCLUSION"].includes(raw.operation)?"SELECTION_UNSUPPORTED_CAPABILITY"
-              :raw?.operation==="CONCLUDE"&&typeof raw.modelId==="string"&&!models.some(m=>m.modelId===raw!.modelId)?"SELECTION_AUTHORIZATION_REJECTION":"SELECTION_SCHEMA_REJECTION";
+            const inspected=inspectScientificSelection(result.content,models),choice=inspected.choice;
+            row.selection.diagnostic=inspected.diagnostic;
+            if(!choice)row.selection.outcome=inspected.rejectedOutcome??"SELECTION_SCHEMA_REJECTION";
             else if(choice.operation==="NO_CONCLUSION")row.selection.outcome="NO_CONCLUSION";
             else if(!consistent.some(m=>m.modelId===choice!.modelId))row.selection.outcome="SELECTION_REFUTED_BY_OBSERVATION";
-            else{selected=models.find(m=>m.modelId===choice!.modelId)!;row.selection={outcome:"PRECOMMITTED_CANDIDATE_SELECTED",modelId:selected.modelId,modelEvidence:row.selection.modelEvidence,elapsedMs:0};}
+            else{selected=models.find(m=>m.modelId===choice!.modelId)!;row.selection={outcome:"PRECOMMITTED_CANDIDATE_SELECTED",modelId:selected.modelId,modelEvidence:row.selection.modelEvidence,elapsedMs:0,diagnostic:row.selection.diagnostic};}
           }
         }catch{row.selection.outcome="SELECTION_INTEGRATION_FAILURE";}
         row.selection.elapsedMs=Math.max(0,now()-selectionStart);

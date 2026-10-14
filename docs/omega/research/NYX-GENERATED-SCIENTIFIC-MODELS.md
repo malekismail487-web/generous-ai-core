@@ -675,6 +675,70 @@ selection failures. No new cognitive layer, source relaxation, hidden-grade
 feedback or automatic promotion. All six exposed cases and prior epochs remain
 untouched; fresh confirmation is still mandatory.
 
+## Evidence-aware retention correction — development, 2026-10-14
+
+Search policy /3 adds opt-in EVIDENCE_EXACT. It first explores supports with
+more distinct calibration input points than coefficient dimensions, using the
+existing diagonal traversal and exact original-row fitter. It reserves at most
+maxModels * maxSize of the existing support allowance for saturated fallback.
+The phases share the same request, support, work, time and lifetime ceilings;
+they do not reset budgets or admit partial work after an exception. The four
+previous strategies retain their traversal/arithmetic behavior. This is a generic
+preference, not a list of known equations, task IDs or oracle-dependent rules.
+
+Distinct inputs are canonicalized in declared-variable order under the owning
+tick. Duplicate, reordered and equivalent rational coordinates cannot inflate
+the margin. A candidate records distinct input count, rank, margin and whether
+it is overdetermined or saturated. Neither state certifies truth, statistical
+independence, confidence, causation or extrapolation. Original fit/point replay,
+rank, domain and critical-refutation checks still govern admission.
+
+Three separate development laws compare current diagonal stopping, a simpler
+three-parameter cap, and the two-phase preference. All use 128 supports,
+300000 work units, 3000 native ms, at most eight requests and the unchanged
+independent replay. The first returned hypothesis predicts the unfitted points
+in zero of three current-policy cases and all three in each alternative. Only
+the preference also retains a competing population in these three cases:
+
+| Development law | Current total work | Parameter cap total | Evidence priority total |
+| --- | ---: | ---: | ---: |
+| Inverse powers and a linear term | 116183 | 281565 | 296638 |
+| Cubic, inverse and offset | 87429 | 246810 | 248357 |
+| Three quadratic channels | 84619 | 192611 | 204725 |
+
+Current stopping evaluates 28 supports and returns three saturated fits. The
+cap evaluates 128 supports and returns one correct hypothesis, insufficient for
+the existing two-model research bridge. Evidence priority evaluates 118 supports,
+returns one correct overdetermined hypothesis plus two uncertain alternatives,
+and pays six independent replay calls versus two for the cap. Actual native work,
+host CPU, child replay CPU/time and complete elapsed time are reported separately.
+Windows child CPU sometimes measures zero at its timing resolution; that is not
+proof of zero computation. There is no cost-matched cognition or latency win.
+
+A necessary four-coefficient cubic survives the saturated fallback and independent
+source replay; the parameter cap loses it. Conversely, a distinct four-parameter
+rational law is deliberately constructed to equal a one-coefficient quadratic
+at four calibration points and differ at the prospective point. The preferred
+quadratic has positive margin but is false there. Its status remains a hypothesis,
+demonstrating why prospective falsification must remain mandatory. No preference
+can resolve that ambiguity from calibration alone.
+
+The selection path now preserves only fixed contract-field names, missing/extra
+counts, wrong-type fields and a boundary code: JSON parse, bounded-data snapshot,
+root shape, field set, version, operation, reference type/ownership or nullness.
+It reuses the original strict validator and rejection precedence. No trimming,
+coercion, invented null, unknown-field removal, extra model call or raw response
+retention occurs. Valid choices have no fabricated rejection result. This closes
+the diagnostic gap; it does not claim the four discarded live responses were
+recovered or their model-generated defects fixed.
+
+These are E3 development mechanism/detector results with zero live calls.
+Fresh, frozen transfer and independent full-program gates remain outstanding.
+Plan mapping is partial/just-in-time: D06's executable-hypothesis/falsification
+loop, D04's bounded exact checks and cost-aware search, and inherited evidence
+over confidence. Formal proof search, original discovery, skill promotion,
+benchmark improvements and recursion are not certified by these examples.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

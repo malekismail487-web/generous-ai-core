@@ -38,7 +38,8 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
   const schema=input.nativeSearch?object({schemaVersion:{type:"integer",enum:[1]},search:scientificSearchSchema()})
     :object({schemaVersion:{type:"integer",enum:[1]},models:{type:"array",minItems:2,maxItems:4,items:input.nativeFit?scientificStructureSchema():draftSchema}});
   const models:ScientificModelRef[]=[],attempts:{call:number;outcome:string;modelEvidence:NvidiaNimEvidence;
-    search?:{state:string;reason:string|null;evaluatedSupports:number;completedSupports:number;candidateCount:number;resultDigest:string;spec?:ScientificSearchSpec};
+    search?:{state:string;reason:string|null;evaluatedSupports:number;completedSupports:number;candidateCount:number;resultDigest:string;spec?:ScientificSearchSpec;
+      candidateSupport?:readonly {supportSize:number;rank:number;distinctInputs:number|null;margin:number|null;state:string|null}[]};
     proposals:{state:string;reason:string|null;contradictedObservationIds:readonly string[];resultDigest:string;modelId:string|null;
       emissionBoundary?:string;fit?:{state:string;linearState:string|null;rank:number|null;resultDigest:string}}[]}[]=[];
   let previous:readonly (ScientificModelDraft|ScientificModelStructure)[]|ScientificSearchSpec|null=null,feedback:unknown=null,sessionStopped=false;
@@ -51,6 +52,7 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
         +"The tool searches monomials and optional rational terms, fits coefficients using admitted calibration, and returns candidate hypotheses. "
         +"FORWARD_RESIDUAL is an exact greedy heuristic; LEXICOGRAPHIC is a simpler same-grammar alternative. Neither is guaranteed to find the correct structure. "
         +"DIAGONAL_EXACT reaches larger supports early and checks original-row consistency; DIAGONAL_NORMAL isolates scheduling with the prior residual solver. "
+        +"EVIDENCE_EXACT explores supports with extra distinct calibration constraints first, reserving saturated-fit fallback. This is a finite search preference, not proof or confidence. "
         +"maxCandidates counts tested supports, not returned models; maxModels counts returned hypotheses. A cap of a few supports explores only a tiny prefix. "
         +"All computation consumes the existing session budget. Search candidates still require independent fit replay and ordinary model admission. "
         +"Aim to find competing hypotheses where data permit. Do not invent constants, observations, authority, executable text or private reasoning. "
@@ -93,7 +95,9 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
         const found=input.session.search({schemaVersion:1,operation:"SEARCH_SCIENTIFIC_MODELS",taskDigest:input.session.taskDigest,spec:parsed.search});
         searchMeta={state:found.state,reason:"reason"in found?found.reason:"stopReason"in found?found.stopReason:null,
           evaluatedSupports:input.session.usage().searchSupports-supportsBefore,completedSupports:input.session.usage().completedSearchSupports-completedBefore,
-          candidateCount:"candidates"in found?found.candidates.length:0,resultDigest:found.resultDigest,...(ownedSpec?{spec:ownedSpec}:{})};
+          candidateCount:"candidates"in found?found.candidates.length:0,resultDigest:found.resultDigest,...(ownedSpec?{spec:ownedSpec}:{}),
+          ...("candidates"in found?{candidateSupport:found.candidates.map(c=>({supportSize:c.supportSize,rank:c.fit.linear.rank,
+            distinctInputs:c.calibrationSupport?.distinctInputs??null,margin:c.calibrationSupport?.margin??null,state:c.calibrationSupport?.state??null}))}: {})};
         proposedModels="candidates"in found?found.candidates.map(c=>c.structure):[];
       }catch{sessionStopped=true;record("SESSION_UNAVAILABLE");break;}
     }else previous=proposedModels;
@@ -125,7 +129,7 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
     record(sessionStopped?"SESSION_UNAVAILABLE":models.length>=2?"COMPETING_MODEL_DERIVATIONS_ADMITTED":"MODEL_PROPOSALS_NOT_ADMITTED");feedback=searchMeta?{search:searchMeta,proposals}:proposals;
   }
   const remaining=input.session.usage();
-  return Object.freeze({version:input.nativeSearch?"nyx-scientific-model-generation/native-search-2":input.nativeFit?"nyx-scientific-model-generation/native-fit-1":"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
+  return Object.freeze({version:input.nativeSearch?"nyx-scientific-model-generation/native-search-3":input.nativeFit?"nyx-scientific-model-generation/native-fit-1":"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
     attempts:immutableTheoryValue(attempts),calls:attempts.length,firstAttemptAdmitted:attempts[0]?.outcome==="COMPETING_MODEL_DERIVATIONS_ADMITTED",
     competingModelsAdmitted:models.length>=2,nativeUsage:input.session.usage(),elapsedMs:Math.max(0,now()-start),
     budgetStopReason:remaining.remainingWorkUnits===0?"WORK_BUDGET_EXHAUSTED":remaining.remainingNativeElapsedMs===0?"NATIVE_TIME_BUDGET_EXHAUSTED":null,

@@ -10,7 +10,7 @@ import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPU
 import {SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH,SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
   SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_DIAGONAL_FIXED_SEARCH} from "./omega/nyx-scientific-search-fixtures";
 import {scienceCalibration,independentScienceGrade} from "./omega/nyx-scientific-world-live-eval";
-import {runFreshScientificFitEpoch,type ScientificFitEpochOptions} from "./omega/nyx-scientific-fit-live-eval";
+import {runFreshScientificFitEpoch,inspectScientificSelection,type ScientificFitEpochOptions} from "./omega/nyx-scientific-fit-live-eval";
 import {prepareScientificRig} from "./omega/scientific-world-rig";
 
 let passed=0,failed=0;
@@ -342,6 +342,131 @@ for(const [strategy,budget]of [["DIAGONAL_EXACT",3],["DIAGONAL_NORMAL",3]]as con
   throws(()=>searchScientificStructures(planeTask(plane),{...spec,strategy,maxCandidates:budget},()=>{if(interrupt)throw Error("owning_work_budget");},()=>{begun++;interrupt=true;},()=>{finished++;}),
     "Owning resource exceptions propagate through both diagonal algorithms");
   check(finished<=begun,"A resource-interrupted support is not reported as completed");
+}
+// Separate development-only retention experiment. No frozen live world is
+// queried; additional exploration is charged, not called matched actual work.
+const retentionMetrics:any[]=[];
+const retentionTasks=[
+  {name:"inverse_powers_and_linear",t:task(u=>q("ADD",q("ADD",q("DIV","3",q("MUL",u,u)),q("DIV","5",q("MUL",q("MUL",u,u),u))),q("MUL","7",u)),["2","3","5","7"]),
+    truth:(u:string,_v:string)=>q("ADD",q("ADD",q("DIV","3",q("MUL",u,u)),q("DIV","5",q("MUL",q("MUL",u,u),u))),q("MUL","7",u))},
+  {name:"cubic_inverse_offset",t:task(u=>q("ADD",q("ADD",q("MUL","4",q("MUL",q("MUL",u,u),u)),q("DIV","9",u)),"17"),["2","3","5","7"]),
+    truth:(u:string,_v:string)=>q("ADD",q("ADD",q("MUL","4",q("MUL",q("MUL",u,u),u)),q("DIV","9",u)),"17")},
+  {name:"three_quadratic_channels",t:planeTask((u,v)=>q("ADD",q("ADD",q("MUL","2",q("MUL",u,u)),q("MUL","5",q("MUL",u,v))),q("MUL","7",q("MUL",v,v))),[["1","2"],["2","5"],["4","3"],["5","7"]]),
+    truth:(u:string,v:string)=>q("ADD",q("ADD",q("MUL","2",q("MUL",u,u)),q("MUL","5",q("MUL",u,v))),q("MUL","7",q("MUL",v,v)))},
+];
+for(const objective of retentionTasks)for(const arm of ["DIAGONAL_EXACT","PARAMETER_CAP_3","EVIDENCE_EXACT"]as const){
+  const strategy=arm==="PARAMETER_CAP_3"?"DIAGONAL_EXACT":arm;
+  const replayCosts:any[]=[],start=performance.now(),cpuStart=process.cpuUsage();
+  const fitReplay=scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c));
+  const pointReplay=scientificModelReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c));
+  const s=session(objective.t,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000}),found=search(s,{...spec,strategy,maxModels:3,maxCoefficients:arm==="PARAMETER_CAP_3"?3:4});
+  const before=s.usage(),admissions:any[]=[];let accepted=false,firstRank:number|null=null;
+  if(found.state==="CANDIDATES_NOT_ADMITTED")for(const c of found.candidates){
+    const f=s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:c.structure},fitReplay);
+    if(f.state!=="FITTED_CANDIDATE_NOT_ADMITTED")continue;
+    const a=s.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,draft:f.fit.draft},pointReplay);
+    if(a.state!=="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")continue;
+    const correct=s.inspect(a.model).predictions.filter(p=>p.pointId==="NextPoint"||p.pointId.startsWith("Unfitted")).every(p=>{
+      const u=p.inputs.find(i=>i.id===objective.t.variables[0])!.value,v=p.inputs.find(i=>i.id===objective.t.variables[1])?.value??"0";return p.value===objective.truth(u,v);});
+    if(firstRank===null){firstRank=f.fit.linear.rank;accepted=correct;}
+    admissions.push({rank:f.fit.linear.rank,correct,classification:c.calibrationSupport?.state??null});
+  }
+  const cpu=process.cpuUsage(cpuStart);
+  retentionMetrics.push({name:objective.name,strategy:arm,state:found.state,reason:"reason"in found?found.reason:null,accepted,firstRank,admissions,populationSufficient:admissions.length>=2,
+    searchWork:before.workUnits,totalWork:s.usage().workUnits,supports:before.searchSupports,completed:before.completedSearchSupports,
+    nativeRequests:s.usage().requests,nativeElapsedMs:s.usage().nativeElapsedMs,hostCpuMs:(cpu.user+cpu.system)/1000,elapsedMs:performance.now()-start,
+    independentCalls:replayCosts.length,independentElapsedMs:replayCosts.reduce((n,c)=>n+c.elapsedMs,0),
+    independentCpuMs:replayCosts.reduce((n,c)=>n+(c.childCpuMs??0),0),unknownIndependentCpuCalls:replayCosts.filter(c=>c.childCpuMs===null).length,
+    priority:"evidencePriority"in found?found.evidencePriority:null});
+  check(s.usage().workUnits<=300000&&s.usage().requests<=8,"Retention comparison preserves original per-task work and request caps");s.revoke();
+}
+check(retentionMetrics.filter(m=>m.strategy==="EVIDENCE_EXACT").every(m=>m.accepted&&m.firstRank===3&&m.populationSufficient),
+  "Evidence priority retains correct overdetermined hypotheses and a real competing population on all three development laws");
+check(retentionMetrics.filter(m=>m.strategy==="DIAGONAL_EXACT").every(m=>!m.accepted&&m.firstRank===4),
+  "The original policy reproduces early saturated-population stopping on separate development laws");
+console.log("OMEGA_EVIDENCE_RETENTION_DEVELOPMENT "+JSON.stringify({metrics:retentionMetrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
+// A necessary four-parameter law cannot be excluded by the new preference.
+const dense=task(u=>q("ADD",q("ADD",q("ADD",q("MUL","3",q("MUL",q("MUL",u,u),u)),q("MUL","5",q("MUL",u,u))),q("MUL","7",u)),"11"),["1","2","4","7"]);
+const denseSession=session(dense,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+const denseSearch=search(denseSession,{...spec,strategy:"EVIDENCE_EXACT",includeReciprocals:false,allowDenominatorTerms:false,maxModels:3,maxCoefficients:4});
+check(denseSearch.state==="CANDIDATES_NOT_ADMITTED"&&denseSearch.candidates[0].supportSize===4&&denseSearch.evidencePriority?.fallbackExercised,
+  "Evidence priority preserves a saturated fallback for a genuine four-parameter law");
+if(denseSearch.state==="CANDIDATES_NOT_ADMITTED"){
+  check(denseSearch.candidates[0].calibrationSupport?.margin===0&&denseSearch.candidates[0].calibrationSupport?.state==="SATURATED_CALIBRATION_INTERPOLATION",
+    "A necessary saturated hypothesis stays explicitly uncertain, not overdetermined or forbidden");
+  check(verifyFit(denseSession.task,denseSearch.candidates[0].structure,denseSearch.candidates[0].fit).decision==="AGREES","Saturated fallback still requires original-source independent replay");
+}
+const cappedDense=session(dense,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+const cappedDenseResult=search(cappedDense,{...spec,strategy:"DIAGONAL_EXACT",includeReciprocals:false,allowDenominatorTerms:false,maxModels:3,maxCoefficients:3});
+check(cappedDenseResult.state==="NO_CANDIDATE_IN_SEARCHED_GRAMMAR","Simply excluding saturated support sizes loses a necessary higher-parameter development law");
+const duplicateInputs=task(u=>q("MUL","3",u),["1","1/1","2/2","3/3"]),duplicateSession=session(duplicateInputs);
+const duplicateSearch=search(duplicateSession,{...spec,strategy:"EVIDENCE_EXACT",maxCandidates:8,maxModels:1,includeReciprocals:false,allowDenominatorTerms:false});
+check(duplicateSearch.state==="CANDIDATES_NOT_ADMITTED"&&duplicateSearch.evidencePriority?.distinctCalibrationInputs===1
+  &&duplicateSearch.candidates[0].calibrationSupport?.margin===0,"Equivalent rational duplicate design points cannot manufacture overdetermined evidence");
+// Overdetermination is not truth: this distinct four-parameter rational law
+// equals u^2 at four calibration points, then differs at the prospective point.
+const deceptiveTruth=(u:string)=>q("DIV",q("SUB",q("ADD",q("MUL","10",q("MUL",q("MUL",u,u),u)),q("MUL","50",u)),"24"),q("ADD","35",q("MUL",u,u)));
+const deceptiveTask=task(deceptiveTruth,["1","2","3","4"]),deceptiveSession=session(deceptiveTask,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+const deceptiveSearch=search(deceptiveSession,{...spec,strategy:"EVIDENCE_EXACT",maxModels:1});
+check(deceptiveSearch.state==="CANDIDATES_NOT_ADMITTED"&&deceptiveSearch.candidates[0].calibrationSupport?.margin===3
+  &&!deceptiveSearch.scientificTruthEstablished,"Extra calibration constraints are explicitly not a scientific truth certificate");
+if(deceptiveSearch.state==="CANDIDATES_NOT_ADMITTED"){
+  const c=deceptiveSearch.candidates[0],f=deceptiveSession.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:deceptiveSession.taskDigest,structure:c.structure},verifyFit);
+  if(f.state==="FITTED_CANDIDATE_NOT_ADMITTED"){
+    const a=deceptiveSession.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:deceptiveSession.taskDigest,draft:f.fit.draft},verifyModel);
+    check(a.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&deceptiveSession.inspect(a.model).predictions.find(p=>p.pointId==="NextPoint")?.value!==deceptiveTruth("9"),
+      "A calibration-supported hypothesis can be prospectively falsified and cannot self-certify success");
+  }else check(false,"The deceptive development hypothesis still requires independent fitting");
+}
+const tooSmall=session(simple,{...limits,maxWorkUnits:500});
+check(search(tooSmall,{...spec,strategy:"EVIDENCE_EXACT"}).state==="INSUFFICIENT_EVIDENCE","Evidence priority cannot bypass original work exhaustion");
+const revokedEvidence=session(simple);revokedEvidence.revoke();throws(()=>search(revokedEvidence,{...spec,strategy:"EVIDENCE_EXACT"}),"Evidence priority preserves revocation");
+let evidenceClock=at;
+const expiredEvidence=ScientificModelSession.create(simple,{...limits,expiresAtEpochMs:at+1},()=>evidenceClock,{structureSearch:true});evidenceClock=at+1;
+throws(()=>search(expiredEvidence,{...spec,strategy:"EVIDENCE_EXACT"}),"Evidence priority cannot revive an expired owner");
+const requestLimitedEvidence=session(simple,{...limits,maxRequests:1});search(requestLimitedEvidence,{...spec,strategy:"EVIDENCE_EXACT",maxCandidates:1});
+throws(()=>search(requestLimitedEvidence,{...spec,strategy:"EVIDENCE_EXACT"}),"Exploration and fallback do not renew the owning request allowance");
+const disputedEvidence=session(simple),disputedCandidate=search(disputedEvidence,{...spec,strategy:"EVIDENCE_EXACT",maxModels:1});
+if(disputedCandidate.state==="CANDIDATES_NOT_ADMITTED"){
+  const c=disputedCandidate.candidates[0],f=disputedEvidence.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:disputedEvidence.taskDigest,structure:c.structure},
+    ()=>({decision:"DISAGREES",verificationDigest:theoryDigest("evidence-priority-disagreement")}));
+  const retry=disputedEvidence.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:disputedEvidence.taskDigest,draft:c.fit.draft},verifyModel);
+  check(f.state==="REJECTED"&&retry.state==="REJECTED"&&disputedEvidence.usage().models===0,"Calibration support cannot override critical independent refutation or cross-path quarantine");
+}else check(false,"The disagreement fixture must actually produce a native candidate");
+const finiteEvidence=searchScientificStructures(simple,{...spec,strategy:"EVIDENCE_EXACT",maxCandidates:1,maxModels:1},()=>{});
+check(finiteEvidence.evaluatedSupports<=1&&finiteEvidence.completedSupports<=1,"Exploration and fallback share one original support cap");
+// Strict selection behavior is unchanged. Diagnostic data never contains raw
+// response values or attacker-chosen field names.
+const ownedForContract=[{modelId:"MODEL-DEV"}] as any;
+for(const [value,boundary]of [
+  ["{","JSON_PARSE"],["null","ROOT_SHAPE"],["[]","ROOT_SHAPE"],
+  ['{"schemaVersion":1,"operation":"NO_CONCLUSION","modelId":1e999}',"DATA_SNAPSHOT"],
+  ['{"schemaVersion":1,"operation":"CONCLUDE","modelId":"MODEL-DEV","__proto__":{"operation":"SHELL"}}',"FIELD_SET"],
+  [JSON.stringify({operation:"CONCLUDE",modelId:"MODEL-DEV"}),"FIELD_SET"],
+  [JSON.stringify({schemaVersion:1,operation:"CONCLUDE",modelId:"MODEL-DEV",private_reasoning:"do-not-retain"}),"FIELD_SET"],
+  [JSON.stringify({schemaVersion:"1",operation:"CONCLUDE",modelId:"MODEL-DEV"}),"SCHEMA_VERSION"],
+  [JSON.stringify({schemaVersion:1,operation:0,modelId:null}),"OPERATION_TYPE"],
+  [JSON.stringify({schemaVersion:1,operation:"SHELL",modelId:null}),"UNSUPPORTED_OPERATION"],
+  [JSON.stringify({schemaVersion:1,operation:"CONCLUDE",modelId:0}),"MODEL_ID_TYPE"],
+  [JSON.stringify({schemaVersion:1,operation:"CONCLUDE",modelId:"FOREIGN"}),"UNKNOWN_MODEL_REFERENCE"],
+  [JSON.stringify({schemaVersion:1,operation:"NO_CONCLUSION",modelId:"MODEL-DEV"}),"NO_CONCLUSION_REQUIRES_NULL"],
+  [JSON.stringify({schemaVersion:1,operation:"CONCLUDE",modelId:"MODEL-DEV"}),"VALID"],
+  [JSON.stringify({schemaVersion:1,operation:"NO_CONCLUSION",modelId:null}),"VALID"],
+]as const){
+  const inspected=inspectScientificSelection(value,ownedForContract);
+  check(inspected.diagnostic.boundary===boundary&&(inspected.choice!==null)===(boundary==="VALID"),"Selection diagnostics distinguish the exact boundary without changing acceptance");
+  check((inspected.rejectedOutcome===null)===(boundary==="VALID"),"Valid selection has no fabricated rejection outcome");
+  check(!JSON.stringify(inspected.diagnostic).includes("MODEL-DEV")&&!JSON.stringify(inspected.diagnostic).includes("private_reasoning")
+    &&!JSON.stringify(inspected.diagnostic).includes("do-not-retain"),"Selection diagnostics retain fixed field names/counts, never raw content or IDs");
+}
+const malformedVersion=inspectScientificSelection(JSON.stringify({schemaVersion:2,operation:"CONCLUDE",modelId:"FOREIGN"}),ownedForContract);
+check(malformedVersion.rejectedOutcome==="SELECTION_AUTHORIZATION_REJECTION"&&malformedVersion.diagnostic.boundary==="SCHEMA_VERSION",
+  "Original rejection precedence is preserved while the primary contract boundary is reported separately");
+for(const version of [1,"1",2])for(const operation of ["CONCLUDE","NO_CONCLUSION","SHELL",null])for(const modelId of ["MODEL-DEV","FOREIGN",null,0])for(const extra of [false,true]){
+  const content=JSON.stringify({schemaVersion:version,operation,modelId,...(extra?{untrusted_extra:"do-not-retain"}:{})});
+  const expected=!extra&&version===1&&((operation==="CONCLUDE"&&modelId==="MODEL-DEV")||(operation==="NO_CONCLUSION"&&modelId===null));
+  const result=inspectScientificSelection(content,ownedForContract);
+  check((result.choice!==null)===expected,"Combinatorial contract validation preserves strict original acceptance and zero planted false acceptances");
 }
 console.log("OMEGA_DIAGONAL_SEARCH_DEVELOPMENT "+JSON.stringify({metrics:diagonalMetrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
 console.log("OMEGA_SCIENTIFIC_SEARCH_DEVELOPMENT "+JSON.stringify({metrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
