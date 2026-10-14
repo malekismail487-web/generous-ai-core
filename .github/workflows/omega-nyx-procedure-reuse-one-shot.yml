@@ -7,9 +7,6 @@ on:
         options: [native-generation, procedure-reuse, expression-graph, repair-context, direct-native, direct-model-repair, quantitative-diagnosis, formulation-bounds, algebraic-form, algebraic-emission, semantic-proof, scientific-world, scientific-fit, scientific-search]
         default: native-generation
         required: true
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-procedure-reuse-one-shot.yml]
 permissions:
   contents: read
 concurrency:
@@ -17,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-scientific-search-once]')
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -45,7 +42,7 @@ jobs:
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-native-generation-live-eval.ts scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omega/nyx-semantic-proof-live-eval.ts scripts/omega/nyx-semantic-proof-fixtures.ts scripts/omega/nyx-scientific-world-live-eval.ts scripts/omega/nyx-scientific-fit-live-eval.ts scripts/omega/nyx-scientific-fit-fixtures.ts scripts/omega/nyx-scientific-search-fixtures.ts scripts/omega/scientific-world-rig.ts scripts/omegaScientificModelGeneration.test.ts scripts/omegaScientificStructureSearch.test.ts scripts/omegaR3BControlledExecution.test.ts scripts/omegaBoundedReasoningWorkbench.test.ts scripts/omegaSemanticPolynomialProof.test.ts
       - name: Compare model-authored structure, NYX-requested search and independent fixed search on fresh scientific tasks
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[nyx-scientific-search-once]') || github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-search'
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-search'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           OMEGA_SCIENTIFIC_EXPERIMENT: STRUCTURE_SEARCH

@@ -1,6 +1,6 @@
 # NYX benchmark capability program
 
-### Fresh scientific search epoch prepared (2026-10-14)
+### Fresh scientific search epoch: stable delivery, no hidden grades (2026-10-14)
 
 Six cases / three new structural families compare model-authored structure,
 NYX-requested native search and a separately executed fixed lexicographic
@@ -10,7 +10,14 @@ are reused. Equal original ceilings and actual model/native/verifier costs are
 recorded; the fixed control uses no model calls and is not inference-matched.
 One family explicitly tests a grammar boundary. All twelve numerical points
 must match, hidden grades never drive repair, and the two-model precondition
-remains. Offline detector checks pass; live results are pending.
+remains. [Frozen receipt](../../../docs/omega/evidence/nyx-fresh-scientific-search-e632acc0.json):
+25 logical/HTTP calls, 94626 known tokens, zero delivery failures. All eighteen
+stages attempted generation; none submitted a final candidate or reached hidden
+grading. Fixed search exhausted its original work budget in all six cases.
+NYX-requested search hit eight candidate limits and four resource limits.
+One model-authored prefix formed a pair after repair and executed one real
+prospective measurement, then failed strict selection schema. Cleanup and source
+integrity were verified. This is not a complete score or a search/cognition win.
 See [preregistration and limits](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md#fresh-structure-search-comparison--preregistered-2026-10-14).
 
 ### Bounded scientific structure search component (2026-10-14)

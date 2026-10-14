@@ -485,6 +485,49 @@ actual compute. A component gain requires fresh replication and the full goal's
 independent assurance gates. Broader original mathematics/science, formal proofs,
 novelty review and official benchmarks remain outstanding.
 
+### Fresh search terminal result — no promotion
+
+The [e632acc0 receipt](../evidence/nyx-fresh-scientific-search-e632acc0.json)
+preserves the immutable full report, verified archive CRC/SHA256 and artifact/log
+agreement, 31 source bindings, six task bindings and model/configuration identity.
+All eighteen stages were generation-attempted; zero final candidates or hidden
+grades. Twenty-five logical/HTTP calls delivered stably, with 94626 known tokens
+and zero delivery, unknown-usage or capacity disruption. These results do not
+establish zero-percent reasoning accuracy or any matched graded comparison.
+
+Fixed search spent exactly 300000 work units in each case and stopped after
+71-95 supports. The fixed grammar contains 28 coefficient-role atoms. Under
+the current size-first lexicographic schedule, 28 singles plus 378 pairs precede
+any three-term support: even its 128-candidate ceiling cannot reach size three.
+This is a general combinatorial scheduling limitation, independent of the
+withheld equations. Reproduce it on separate development data before changing
+the schedule. Exact-only enumeration also unnecessarily pays for normal-equation
+residual ranking; direct original-row consistency is a falsifiable efficiency
+alternative, using the same interpreter and independent detector.
+
+NYX-requested search returned eight candidate-limit outcomes at 3-16 supports
+and four resource-limit outcomes. Two second attempts had zero remaining native
+work. The exact requested grammar settings were not retained by the first
+metadata version; do not reconstruct them from discarded response content.
+Future evidence should retain the bounded typed configuration and safe structural
+failure enums, and the cognition interface should expose actual remaining work
+and time. Such supporting corrections do not establish an outcome gain.
+
+Model-authored structure had fifteen coarse structure rejections, one algebraic
+rejection, four independently inconsistent fits, one underdetermined fit and
+three admitted calibration artifacts. One case formed its pair after repair,
+ran an existing registered R3B measurement and verified complete fixture cleanup,
+then failed selection schema. No discarded source is recovered or assigned an
+invented precise cause. Eleven independent original-source replays agreed.
+
+Clean frozen-candidate CI passed 112 suites / 16524 checks, TypeScript 5.8.3 zero,
+secret scan, independent replay, build and package smoke. The full CI manifest
+was reconstructed from 112 committed source bindings / 5373 semantic definitions.
+Neither source, budgets nor acceptance were weakened. The next capability work
+is a bounded general search scheduling/efficiency correction tested on separate
+development and later fresh transfer; these six cases must not become tuning
+data. The full mathematics/science program remains unfulfilled.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,
