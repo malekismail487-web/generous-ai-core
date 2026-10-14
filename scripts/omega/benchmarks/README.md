@@ -1,5 +1,18 @@
 # NYX benchmark capability program
 
+### Fresh diagonal-search transfer — preregistered 2026-10-14
+
+`nyx-fresh-scientific-diagonal-transfer/1` freezes six new compositions in three
+finite-rational families, four calibration / three prospective / five withheld
+points each. The original all-point Fraction oracle, two-model admission and
+300000-work / 3000-native-ms / eight-request ceilings remain. Model-authored
+formulation, NYX-requested search and independently executed fixed diagonal search
+reuse the existing rig; the fixed arm uses zero model calls. Realized compute and
+first/repaired results remain separate. This is an underpowered compositional
+pilot, not an official benchmark, original discovery or cognitive promotion.
+Historical exposed fit/search populations are not rerun. Runtime cognition and
+search implementation remain unchanged from reviewed `1636b429`.
+
 ### Native scheduling correction: development 3/3 vs old 0/3 (2026-10-14)
 
 Search policy /2 adds lazy diagonal support enumeration, generic operation-cost

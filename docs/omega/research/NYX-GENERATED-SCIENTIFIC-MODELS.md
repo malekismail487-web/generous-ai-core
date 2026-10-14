@@ -585,6 +585,55 @@ just-in-time: D06 bounded mathematical search/competing hypotheses, D04 exact
 artifacts and cost control, D01 independent controls/evidence. Original scientific
 discovery, proof-statement fidelity, broad benchmarks and recursion remain open.
 
+## Fresh diagonal-search transfer preregistration — 2026-10-14
+
+The frozen next pilot uses six new cases / three new rational-response
+compositions: reciprocal channels plus offset, asymmetric interaction, and a
+shared linear quotient. Historical four/eight/six-case epochs remain unchanged
+and are not rerun. This is new compositional transfer within the finite rational
+grammar, not unrelated science, physical discovery or an official benchmark.
+Four calibration measurements, three prospective inputs and five withheld inputs
+per case preserve the all-twelve-point independent Fraction acceptance criterion.
+The model receives only original constants, calibration and prospective inputs;
+author laws, coefficients, simulator source and withheld inputs never enter
+its prompt. Node and Python author witnesses validate the detector, not cognition.
+
+Three independent generation arms reuse the existing session and research rig:
+MODEL_AUTHORED_STRUCTURE, NYX_REQUESTED_SEARCH, FIXED_DIAGONAL_EXACT_SEARCH.
+The first generates a basis with exact fitting; the second chooses its typed
+grammar/search settings using policy /2; the fixed control uses the prior full
+grammar and 128-support configuration with DIAGONAL_EXACT. It consumes zero
+inference and selects the first precommitted model not refuted by the fixed
+prospective observation. Two owned model artifacts are still required in every
+arm before observation; search availability is not authority or certification.
+
+Same original ceilings: two generation calls, one selection call, eight native
+requests, 300000 work units, 3000 native ms, 8192 output tokens and 2048 configured
+reasoning tokens per call; 36 logical/HTTP calls and thirty minutes globally.
+No calls, deadline or acceptance increase is allowed after outcomes. Report
+first/repaired admission, final independent acceptance, ungraded/unexecuted,
+provider/truncation/schema/authorization/native/measurement/cleanup failures,
+safe search specs and completed versus started supports. All model tokens,
+physical attempts, native work, independent replay and measurement costs count.
+Equal ceilings do not mean matched realized compute or matched tool availability:
+model-authored formulation lacks automatic structure search, and the fixed
+control has no model calls. Those asymmetries are explicit, not hidden advantages.
+
+The hypothesis is that the bounded correction enables real predictive search
+transfer, and that live NYX policy/selection may add value over a fixed same-tool
+search. Neither is assumed. Preserve every original result; no best-of pooling,
+score-driven repair or automatic promotion. Six cases / three family clusters
+are an underpowered pilot. Confirmation, broader transfer and the full nine-PDF
+gates remain necessary even if all cases pass. Native/cognition code stays frozen
+at the reviewed 1636b429 implementation; only author fixtures, source bindings
+and experiment selection change. The one-shot push trigger is removed after
+terminal evidence capture. No production or general execution authority changes.
+
+Plan mapping: D04 original semantics/cost/admission; D06 competing executable
+hypotheses and prospective evidence; D01/D08 strong simpler controls and fresh
+transfer. Their full proof, discovery, replication and benchmark thresholds are
+deferred, not replaced by this pilot. Coverage remains PARTIAL / JUST-IN-TIME.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

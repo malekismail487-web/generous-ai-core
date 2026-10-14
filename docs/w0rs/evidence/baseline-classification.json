@@ -8364,6 +8364,7 @@
           "scripts/omega/nyx-research-party-live-eval.ts",
           "scripts/omega/nyx-research-transfer-fixtures.ts",
           "scripts/omega/nyx-scientific-fit-live-eval.ts",
+          "scripts/omega/nyx-scientific-search-fixtures.ts",
           "scripts/omega/nyx-scientific-world-fixtures.ts",
           "scripts/omega/nyx-scientific-world-live-eval.ts",
           "scripts/omega/nyx-transfer-epoch-fixtures.ts",

@@ -25,6 +25,9 @@ def world(h,point):
     if h["kind"]=="INTERACTION_CUBIC": return a*x*x*y+b*y*y+c*x
     if h["kind"]=="CONIC_CHANNEL": return (a*x+b*y*y+c)/(1+Fraction(h["d"])*y)
     if h["kind"]=="MIXED_RECIPROCAL": return a*x/y+b*y/x+c/(x+y)
+    if h["kind"]=="RECIPROCAL_OFFSET": return a/x+b/y+c
+    if h["kind"]=="ASYMMETRIC_INTERACTION": return a*x*y+b*y+c
+    if h["kind"]=="SHARED_LINEAR_QUOTIENT": return (a*x+b*y)/(1+c*x)
     raise ValueError("unknown_world")
 
 def main():

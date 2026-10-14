@@ -7,6 +7,8 @@ import { runNyxScientificModelGeneration } from "../src/lib/codelab/research/nyx
 import type { NvidiaNimCompletionRequest, NvidiaNimCompletionResult } from "../src/lib/codelab/model/nvidiaNimProvider";
 import {spawnSync} from "node:child_process";
 import {SCIENTIFIC_SEARCH_EPOCH,SCIENTIFIC_SEARCH_WORLDS,SCIENTIFIC_SEARCH_CORPUS_DIGEST,SCIENTIFIC_SEARCH_SIMULATOR_SOURCE,SCIENTIFIC_FIXED_SEARCH,scientificSearchTask} from "./omega/nyx-scientific-search-fixtures";
+import {SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH,SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,
+  SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,SCIENTIFIC_DIAGONAL_FIXED_SEARCH} from "./omega/nyx-scientific-search-fixtures";
 import {scienceCalibration,independentScienceGrade} from "./omega/nyx-scientific-world-live-eval";
 import {runFreshScientificFitEpoch,type ScientificFitEpochOptions} from "./omega/nyx-scientific-fit-live-eval";
 import {prepareScientificRig} from "./omega/scientific-world-rig";
@@ -232,6 +234,35 @@ if(wa.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&wb.state==="ADMITTED_
   }finally{const cleanup=await rig.cleanup();check(cleanup.sourceUnchanged&&cleanup.sandboxCleanupVerified&&cleanup.temporaryFixtureRemoved,"The author fixture and disposable lifecycle clean up without source mutation");}
 }
 witnessSession.revoke();
+// Author detector validation, not live cognition or search tuning. These new
+// held-out outcomes never feed a completion test double or the search algorithm.
+for(const w of SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS){
+  const calibrated=scienceCalibration(w),t=scientificSearchTask(w,candidate,Date.now(),Date.now()+120000,calibrated.values);
+  const h=w.hidden as {kind:string;a:string;b:string;c:string},parameters=["a","b","c"].map(id=>({id,value:h[id as "a"]}));
+  const expression=h.kind==="RECIPROCAL_OFFSET"?"a/x+b/y+c":h.kind==="ASYMMETRIC_INTERACTION"?"a*x*y+b*y+c":"(a*x+b*y)/(one+c*x)";
+  const witness={schemaVersion:1 as const,parameters,program:{schemaVersion:5 as const,definitions:[],outputs:[{label:"response",expression}]},
+    assumptions:["Author detector validation only."],uncertainties:["Not a discovery or live NYX result."]};
+  const good=independentScienceGrade(w,t,witness),bad=independentScienceGrade(w,t,{...witness,program:{...witness.program,outputs:[{label:"response",expression:"("+expression+")+one"}]}});
+  check(good.accepted&&good.cost.points===12&&good.cost.matched===12,"New transfer detector accepts the author's exact law at all original population points");
+  check(!bad.accepted&&bad.cost.matched===0,"New transfer detector rejects a planted one-unit shift without weakening acceptance");
+  const points=[...w.calibration,...w.probes,...w.heldout];
+  const simulated=spawnSync(process.execPath,["--input-type=module","-e",SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE+"\nconsole.log(JSON.stringify("+JSON.stringify(points)+".map(p=>show(calculate("+JSON.stringify(w.hidden)+",p)))));"],{encoding:"utf8",timeout:5000,windowsHide:true});
+  const expanded={...w,calibration:points},independent=scienceCalibration(expanded);
+  check(simulated.status===0&&JSON.stringify(JSON.parse(simulated.stdout))===JSON.stringify(independent.values),"Independent Node and Fraction sources agree at calibration, prospective and held-out points");
+  check(!JSON.stringify(t).includes('"hidden"')&&!JSON.stringify(t).includes('"heldout"')&&t.constants.every(c=>c.id==="zero"||c.id==="one"),"Transfer cognition receives no author law, coefficient binding or held-out input");
+}
+check(SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS.length===6&&new Set(SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS.map(w=>w.family)).size===3
+  &&SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST===theoryDigest(SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS)
+  &&SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS.every(w=>!new Set<string>(SCIENTIFIC_SEARCH_WORLDS.map(old=>old.family)).has(w.family)),"Transfer freezes six cases in three new compositions, not a rerun of the exposed corpus");
+const transferOptions:ScientificFitEpochOptions={epoch:SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH,worlds:SCIENTIFIC_DIAGONAL_TRANSFER_WORLDS,
+  corpusDigest:SCIENTIFIC_DIAGONAL_TRANSFER_CORPUS_DIGEST,simulatorSource:SCIENTIFIC_DIAGONAL_TRANSFER_SIMULATOR_SOURCE,
+  generationModes:["MODEL_STRUCTURE","NYX_SEARCH","FIXED_SEARCH"],fixedSearchSpec:SCIENTIFIC_DIAGONAL_FIXED_SEARCH,taskFactory:scientificSearchTask};
+let transferReads=0,transferUnexpectedCalls=0;
+const expiredTransfer=await runFreshScientificFitEpoch(async()=>{transferUnexpectedCalls++;throw Error("unexecuted");},{candidate,sourceDigests:{offline:theoryDigest("transfer-detector-only")}},
+  ()=>at+(transferReads++?SCIENTIFIC_DIAGONAL_TRANSFER_EPOCH.maxEpochMs+1:0),async()=>{},transferOptions);
+check(transferUnexpectedCalls===0&&expiredTransfer.rows.length===18&&expiredTransfer.arms.every(a=>a.graded===0&&a.unexecuted===6),"Expired transfer preserves complete coverage accounting with zero live model calls");
+check(expiredTransfer.freeze.fixedSearchSpec.strategy==="DIAGONAL_EXACT"&&expiredTransfer.freeze.taskBindings.length===6&&!expiredTransfer.cognitiveGainDemonstrated,
+  "Transfer binds its fixed strategy and tasks without converting unexecuted evidence into a cognitive gain");
 // New development objectives: no exposed transfer fixtures or task-specific
 // equations enter the search implementation. Same original live ceilings.
 function planeTask(fn:(u:string,v:string)=>string,points=[["1","1"],["2","1"],["1","3"],["3","2"],["2","4"],["4","3"],["5","2"]]):ScientificModelTask{
