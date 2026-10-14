@@ -11,8 +11,16 @@ twenty-four HTTP / thirty-minute global ceilings; unchanged hosted Super control
 All paired outcomes and actual compute are recorded; no cognitive promotion from
 one run or a fixed-control tie. Exposed earlier cohorts remain untouched. Only
 detector/composition development tests precede the freeze, not new solver outcomes.
-One unique scoped push marker launches the frozen epoch; remove it after capture.
-Results PENDING. See [the prospective method](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md).
+Frozen `e4720c66`, run `38611743217`, is terminal: all eighteen stages attempted,
+zero final submissions/grades. Old fixed search is prospectively refuted in 6/6;
+corrected fixed search exhausts native work in 6/6. Live NYX has two no-population,
+two valid NO_CONCLUSION and two strict selection-ID contract rejections. Stable
+delivery: 15 calls / 51651 reported tokens / no provider or truncation failures.
+Ten measurements and cleanup verified. No complete score or cognition promotion.
+The push launcher is removed. Next: disjoint development profiling of exact-work
+cost and faithful discriminated selection schema, without widening caps or tuning
+this exposed cohort. [Immutable receipt](../../../docs/omega/evidence/nyx-fresh-scientific-retention-e4720c66.json),
+[method and limits](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md).
 
 ### Evidence-aware candidate retention — development only (2026-10-14)
 

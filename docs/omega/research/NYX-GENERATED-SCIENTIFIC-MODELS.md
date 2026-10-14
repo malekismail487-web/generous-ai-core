@@ -799,7 +799,8 @@ starts only this epoch from the frozen candidate. Remove its push hook after
 terminal custody capture; ordinary commits must not repeat the campaign. The
 secret is injected only in the existing model step and never enters cognition,
 reports or source. Default Ultra, production and general machine/network
-authority remain unchanged. Fresh results are PENDING, not assumed positive.
+authority remain unchanged. The terminal outcome below supersedes the pending
+snapshot without changing the frozen design or any earlier result.
 
 Plan coverage remains PARTIAL / JUST-IN-TIME: directly applies D06 executable
 hypotheses, precommitted predictions, independent falsification and no one-shot
@@ -808,6 +809,61 @@ Deferred: adaptive experiment selection, formal ProofSearch/semantic fidelity,
 learned controllers, original discovery, institutional replication and recursion.
 Conflict: a fixed probe is not D06's mature information-gain selector; this epoch
 tests retention only, not certification of that deferred selector or full program.
+
+## Retention transfer — terminal evidence, 2026-10-14
+
+Frozen e4720c66, run 38611743217 / job 116016556332, completed with exact
+artifact/log/candidate/model/configuration/corpus agreement: 31 source and six
+task bindings verified. All eighteen stages attempted, zero final submissions
+or grades. This is neither a complete score nor eighteen executed reasoning
+failures. The development lift did not transfer; do not promote the preference.
+
+Old fixed diagonal returns three rank-four fits after 28 supports in every
+case; all six populations are prospectively refuted. Evidence-prioritized fixed
+search hits exactly 300000 owning work units on every case. Started/completed
+supports are 117/116, 117/116, 116/115, 112/111, 103/102 and 100/99. It fails
+closed with no partial candidate admission. All its native times are below
+100ms, not near the 3000ms wall ceiling: exact-work cost is the bottleneck.
+
+Live NYX produces one first-generation competing population and three repaired
+populations. Two cases have none; two selections validly return NO_CONCLUSION;
+two are strictly rejected at MODEL_ID_TYPE with no missing/extra/basic wrong
+types. The conditional CONCLUDE/non-null-ID requirement is therefore violated,
+while the advertised schema permits nullable IDs for either operation. This
+diagnoses an interface contract discrepancy without reconstructing raw replies,
+loosening validation or asserting two wrong held-out predictions. Search-budget
+decisions also remain a separate issue: repeated six-support requests, a one-
+support/one-coefficient request and undersized coefficient/support repairs are
+recorded, not relabeled provider failures.
+
+Fifteen logical/HTTP calls, 51651 known tokens, zero unknown usage, provider,
+truncation or capacity/recovered disruptions. Native work 3838532 over 83
+requests / 30 fits / 23 searches / 1029 started and 1023 completed supports;
+1128.137ms native elapsed. Fifty-nine independent replays agree, 2211.301ms
+wall / 65.596ms known child CPU / zero unknown CPU. Ten actual measurements,
+source integrity and all invoked fixture cleanup verified. Epoch 155892ms;
+the aggregate usage elapsed-zero field is not a latency measurement.
+
+Clean CI 38611743068 / job 116016555354 passed 112 suites / 16783 checks,
+TypeScript 5.8.3 zero, secret scan 1403/zero, independent replay, build 13.12s,
+package smoke and inventory. Full manifest from all 112 committed sources /
+5427 semantic definitions exactly matches
+ab88cd3a3ac7a3d5a0412aff9517128f37ff53e9f6551b863c71c3ed94a61f1b.
+Genealogy accepts thirteen added identities, none removed. The one-shot push
+hook is removed; this evidence capture cannot restart model calls.
+
+Next general correction: reproduce arithmetic-work exhaustion on disjoint
+rational-coordinate development problems; test prepared-basis reuse, exact
+normalization or fraction-free elimination while charging every build/lookup/
+operation and preserving original budgets and independent source replay.
+Separately express the existing discriminated selection contract faithfully in
+the advertised schema on development values. Neither efficiency nor valid JSON
+alone establishes cognition; fresh unchanged-oracle transfer remains mandatory.
+No retry of these exposed six cases, favorable-outcome filtering, budget/lease
+reset, hidden-score feedback, new brain layer or full-program completion.
+
+The full sanitized report and immutable custody are in
+[the terminal receipt](../evidence/nyx-fresh-scientific-retention-e4720c66.json).
 
 ## Method and Omega plan coverage
 

@@ -1,8 +1,5 @@
 name: Omega NYX bounded quantitative capability experiments
 on:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [scripts/omega/nyx-scientific-search-fixtures.ts]
   workflow_dispatch:
     inputs:
       experiment:
@@ -17,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   procedure-transfer:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[NYX-RETENTION-ONE-SHOT-1]'))
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -45,7 +42,7 @@ jobs:
           npm run typecheck:ratchet
           node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-native-generation-live-eval.ts scripts/omega/nyx-procedure-reuse-live-eval.ts scripts/omega/nyx-semantic-proof-live-eval.ts scripts/omega/nyx-semantic-proof-fixtures.ts scripts/omega/nyx-scientific-world-live-eval.ts scripts/omega/nyx-scientific-fit-live-eval.ts scripts/omega/nyx-scientific-fit-fixtures.ts scripts/omega/nyx-scientific-search-fixtures.ts scripts/omega/scientific-world-rig.ts scripts/omegaScientificModelGeneration.test.ts scripts/omegaScientificStructureSearch.test.ts scripts/omegaR3BControlledExecution.test.ts scripts/omegaBoundedReasoningWorkbench.test.ts scripts/omegaSemanticPolynomialProof.test.ts
       - name: Compare old fixed search, evidence-prioritized fixed search and live NYX on frozen fresh compositions
-        if: (github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-evidence-retention') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[NYX-RETENTION-ONE-SHOT-1]'))
+        if: github.event_name == 'workflow_dispatch' && inputs.experiment == 'scientific-evidence-retention'
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           OMEGA_SCIENTIFIC_EXPERIMENT: EVIDENCE_RETENTION_TRANSFER
