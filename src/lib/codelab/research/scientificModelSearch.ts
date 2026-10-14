@@ -10,17 +10,18 @@ import { immutableTheoryValue } from "./theoryContracts";
  * worlds. All scalar work uses the existing exact interpreter and caller tick.
  * Search ranking is not admission, a scientific claim, or execution authority. */
 export const SCIENTIFIC_SEARCH_POLICY = /* @__PURE__ */ Object.freeze({
-  version: "nyx-scientific-structure-search/1", maxDegree: 3, maxCoefficients: 8,
+  version: "nyx-scientific-structure-search/2", maxDegree: 3, maxCoefficients: 8,
   maxCandidates: 256, maxModels: 3, maxAtoms: 58, grantsAuthority: false,
   scope: "FINITE_RATIONAL_GRAMMAR_CALIBRATION_HYPOTHESES_NOT_SCIENTIFIC_TRUTH",
-  method: "EXACT_FORWARD_RESIDUAL_WITH_DIVERSITY_RESTARTS",
+  method: "BOUNDED_DIAGONAL_SUPPORTS_WITH_ORIGINAL_ROW_CONSISTENCY",
+  legacyStrategiesPreserved: true,
 });
 export interface ScientificSearchSpec {
   readonly schemaVersion: 1; readonly nonzeroConstantId: string;
   readonly maxDegree: number; readonly includeReciprocals: boolean;
   readonly allowDenominatorTerms: boolean; readonly maxCoefficients: number;
   readonly maxCandidates: number; readonly maxModels: number;
-  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC";
+  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL";
 }
 export interface ScientificSearchCandidate {
   readonly structure: ScientificModelStructure; readonly fit: ScientificStructureFit;
@@ -31,7 +32,8 @@ export interface ScientificSearchResult {
   readonly state: "CANDIDATES_NOT_ADMITTED" | "NO_CANDIDATE_IN_SEARCHED_GRAMMAR";
   readonly stopReason: "MODEL_LIMIT" | "CANDIDATE_LIMIT" | "SEARCH_EXHAUSTED";
   readonly candidates: readonly ScientificSearchCandidate[];
-  readonly evaluatedSupports: number; readonly rankDeficientSupports: number;
+  readonly evaluatedSupports: number; readonly completedSupports: number; readonly rankDeficientSupports: number;
+  readonly inconsistentSupports: number; readonly supportsBySize: readonly number[];
   readonly arithmeticBlockedSupports: number; readonly invalidFits: number;
   readonly duplicatePredictions: number; readonly domainBlockedAtoms: number;
   readonly atoms: number; readonly gramsComputed: number;
@@ -45,14 +47,14 @@ export function scientificSearchSchema() {
     properties: { schemaVersion: { type: "integer", enum: [1] }, nonzeroConstantId: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" },
       maxDegree: { type: "integer", minimum: 1, maximum: 3 }, includeReciprocals: { type: "boolean" }, allowDenominatorTerms: { type: "boolean" },
       maxCoefficients: { type: "integer", minimum: 1, maximum: 8 }, maxCandidates: { type: "integer", minimum: 1, maximum: 256 },
-      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC"] } } };
+      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL"] } } };
 }
 export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearchSpec {
   const s = snapshotBoundedReasoningData(proposed) as ScientificSearchSpec;
   if (!keys(s, scientificSearchSchema().required) || s.schemaVersion !== 1
     || typeof s.nonzeroConstantId !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s.nonzeroConstantId)
     || typeof s.includeReciprocals !== "boolean" || typeof s.allowDenominatorTerms !== "boolean"
-    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC"].includes(s.strategy)
+    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL"].includes(s.strategy)
     || !Number.isSafeInteger(s.maxDegree) || s.maxDegree < 1 || s.maxDegree > 3
     || !Number.isSafeInteger(s.maxCoefficients) || s.maxCoefficients < 1 || s.maxCoefficients > 8
     || !Number.isSafeInteger(s.maxCandidates) || s.maxCandidates < 1 || s.maxCandidates > 256
@@ -65,7 +67,7 @@ const isArithmeticBoundary = (e: unknown) => e instanceof Error && e.message ===
 /** task originates from an owned ScientificModelSession. Grammar construction,
  * cache access, parser, exact matrix fitting and residuals all consume its tick.
  * No other task data, hidden response, IO, model call or execution exists here. */
-export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}): ScientificSearchResult {
+export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}, onCompleted: () => void = () => {}): ScientificSearchResult {
   tick(); const spec = snapshotScientificSearchSpec(proposed);
   const offset = task.constants.find(c => c.id === spec.nonzeroConstantId);
   if (!offset || canonicalRationalLiteral(offset.value, tick) === "0") throw Error("scientific_search_nonzero_constant_required");
@@ -95,20 +97,31 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       atoms.push({ expression, denominator: true, values: den });
     }
   }
+  // Rank generic features by operation cost, including the cross-multiplied
+  // denominator role. Cheap reciprocals must not wait behind every cubic.
+  // Legacy strategies retain their exact prior order. No task ID, response
+  // truth or coefficient value ranks atoms; all scanning/sorting is charged.
+  if (spec.strategy.startsWith("DIAGONAL")) {
+    const costs=new Map<Atom,number>();
+    for(const atom of atoms){let cost=Number(atom.denominator);for(const c of atom.expression){tick();if(c==="*"||c==="/")cost++;}costs.set(atom,cost);}
+    atoms.sort((a,b)=>{tick();return costs.get(a)!-costs.get(b)!||Number(a.denominator)-Number(b.denominator);});
+  }
   const rhs = task.observations.map(o => exactScalar("MUL", o.output, offset.value, tick));
   const dot = (a: readonly string[], b: readonly string[]) => {
     let sum = "0";
     for (let i = 0; i < a.length; i++) { tick(); sum = exactScalar("ADD", sum, exactScalar("MUL", a[i], b[i], tick), tick); }
     return sum;
   };
-  const norm = dot(rhs, rhs), targets = atoms.map(a => dot(a.values, rhs)), gram = new Map<string, string>();
+  const direct = spec.strategy === "DIAGONAL_EXACT";
+  const norm = direct ? "0" : dot(rhs, rhs), targets = direct ? [] : atoms.map(a => dot(a.values, rhs)), gram = new Map<string, string>();
   const inner = (a: number, b: number) => {
     tick(); const key = `${Math.min(a, b)}:${Math.max(a, b)}`;
     if (!gram.has(key)) gram.set(key, dot(atoms[a].values, atoms[b].values));
     return gram.get(key)!;
   };
   const candidates: ScientificSearchCandidate[] = [], seenSupports = new Map<string, string | null>(), predictions = new Set<string>();
-  let evaluatedSupports = 0, rankDeficientSupports = 0, arithmeticBlockedSupports = 0, invalidFits = 0, duplicatePredictions = 0;
+  let evaluatedSupports = 0, completedSupports = 0, rankDeficientSupports = 0, inconsistentSupports = 0, arithmeticBlockedSupports = 0, invalidFits = 0, duplicatePredictions = 0;
+  const supportsBySize = Array<number>(9).fill(0);
   const occupied = new Set([...task.variables, ...task.constants.map(c => c.id), "response", "MIN", "MAX", "BINOMIAL"]);
   const parameterNames = Array.from({ length: 8 }, (_, i) => {
     let name = `SearchCoefficient${i}`;
@@ -148,26 +161,56 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     tick(); const support = [...input].sort((a, b) => a - b), key = support.join(":");
     if (seenSupports.has(key)) return seenSupports.get(key)!;
     if (evaluatedSupports >= spec.maxCandidates) return null;
-    evaluatedSupports++; onCandidate();
+    evaluatedSupports++; supportsBySize[support.length]++; onCandidate();
+    const complete=(value:string|null)=>{completedSupports++;onCompleted();return value;};
     try {
+      if (direct) {
+        const matrix = task.observations.map((_,row)=>support.map(i=>atoms[i].values[row]));
+        // A prefix contradiction is a necessary-condition rejection, never
+        // a fitted model. A rank-deficient prefix cannot reject a support that
+        // later rows may identify. Unique prefix coefficients must satisfy
+        // EVERY original row before the ordinary full-source fit is attempted.
+        const prefixRows = Math.min(matrix.length,support.length+1);
+        let fit = fitExactLinearSystem(matrix.slice(0,prefixRows),rhs.slice(0,prefixRows),tick);
+        if (fit.state === "UNDERDETERMINED" && prefixRows < matrix.length) fit = fitExactLinearSystem(matrix,rhs,tick);
+        if (fit.state === "INCONSISTENT") { inconsistentSupports++; seenSupports.set(key,null); return complete(null); }
+        if (fit.state !== "UNIQUE") { rankDeficientSupports++; seenSupports.set(key,null); return complete(null); }
+        for (let row = 0; row < matrix.length; row++) {
+          tick(); if (dot(matrix[row],fit.values) !== rhs[row]) { inconsistentSupports++; seenSupports.set(key,null); return complete(null); }
+        }
+        seenSupports.set(key,"0");
+        if (candidates.length < spec.maxModels) recordExact(support);
+        return complete("0");
+      }
       const g = support.map(a => support.map(b => inner(a, b))), y = support.map(i => targets[i]);
       const fit = fitExactLinearSystem(g, y, tick);
-      if (fit.state !== "UNIQUE") { rankDeficientSupports++; seenSupports.set(key, null); return null; }
+      if (fit.state !== "UNIQUE") { rankDeficientSupports++; seenSupports.set(key, null); return complete(null); }
       // For exact normal-equation coefficients SSE = b'b - c'A'b. This is only
       // a search heuristic; zero is rechecked against original rows and domain.
       const score = exactScalar("SUB", norm, dot(fit.values, y), tick);
       if (score.startsWith("-")) throw Error("scientific_search_negative_residual");
       seenSupports.set(key, score);
       if (score === "0" && candidates.length < spec.maxModels) recordExact(support);
-      return score;
+      return complete(score);
     } catch (error) {
       if (!isArithmeticBoundary(error)) throw error;
-      arithmeticBlockedSupports++; seenSupports.set(key, null); return null;
+      arithmeticBlockedSupports++; seenSupports.set(key, null); return complete(null);
     }
   };
   const done = () => evaluatedSupports >= spec.maxCandidates || candidates.length >= spec.maxModels;
   const maxSize = Math.min(spec.maxCoefficients, atoms.length, task.observations.length);
-  if (spec.strategy === "LEXICOGRAPHIC") {
+  if (spec.strategy.startsWith("DIAGONAL")) {
+    // Enumerate by largest feature index, then support size. All cardinalities
+    // are reached without first exhausting every pair from the whole grammar.
+    // A support is generated once, lazily, under the SAME owning tick/limits.
+    const visit = (prefix: readonly number[], start: number, remaining: number, maximum: number) => {
+      tick(); if (done()) return;
+      if (!remaining) { evaluate([...prefix,maximum]); return; }
+      for (let i=start;i<=maximum-remaining&&!done();i++) { tick(); visit([...prefix,i],i+1,remaining-1,maximum); }
+    };
+    for (let maximum=0;maximum<atoms.length&&!done();maximum++)
+      for (let size=1;size<=Math.min(maxSize,maximum+1)&&!done();size++) visit([],0,size-1,maximum);
+  } else if (spec.strategy === "LEXICOGRAPHIC") {
     const visit = (prefix: readonly number[], start: number, remaining: number) => {
       tick(); if (done()) return;
       if (!remaining) { evaluate(prefix); return; }
@@ -195,6 +238,6 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
   tick(); return immutableTheoryValue({ version: SCIENTIFIC_SEARCH_POLICY.version,
     state: candidates.length ? "CANDIDATES_NOT_ADMITTED" : "NO_CANDIDATE_IN_SEARCHED_GRAMMAR",
     stopReason: candidates.length >= spec.maxModels ? "MODEL_LIMIT" : evaluatedSupports >= spec.maxCandidates ? "CANDIDATE_LIMIT" : "SEARCH_EXHAUSTED",
-    candidates, evaluatedSupports, rankDeficientSupports, arithmeticBlockedSupports, invalidFits, duplicatePredictions,
+    candidates, evaluatedSupports, completedSupports, rankDeficientSupports, inconsistentSupports, supportsBySize, arithmeticBlockedSupports, invalidFits, duplicatePredictions,
     domainBlockedAtoms, atoms: atoms.length, gramsComputed: gram.size, scientificTruthEstablished: false, grantsAuthority: false });
 }

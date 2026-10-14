@@ -54,7 +54,7 @@ export class ScientificModelSession {
   readonly #owned=new Map<ScientificModelRef,Artifact>();readonly #programs=new Set<string>();readonly #refutedDerivations=new Set<string>();
   readonly #refutedFits=new Set<string>();
   readonly #structureSearch:boolean;
-  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#fitRequests=0;#searchRequests=0;#searchSupports=0;#lastTime:number;#unavailable=false;#busy=false;
+  #requests=0;#units=0;#nativeElapsedMs=0;#nativeRequests=0;#fitRequests=0;#searchRequests=0;#searchSupports=0;#completedSearchSupports=0;#lastTime:number;#unavailable=false;#busy=false;
   private constructor(task:ScientificModelTask,limits:ScientificModelLimits,now:()=>number,createdAt:number,structureSearch:boolean){
     this.task=task;this.taskDigest=theoryDigest(task);this.#limits=limits;this.#now=now;this.#lastTime=createdAt;this.#structureSearch=structureSearch;this.#available();
   }
@@ -106,7 +106,10 @@ export class ScientificModelSession {
   revoke(){this.#unavailable=true;}
   get expiresAtEpochMs(){return this.#limits.expiresAtEpochMs;}
   capabilities(){this.#available();return Object.freeze({structureSearch:this.#structureSearch,grantsAuthority:false});}
-  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,fitRequests:this.#fitRequests,searchRequests:this.#searchRequests,searchSupports:this.#searchSupports,models:this.#owned.size});}
+  usage(){return Object.freeze({requests:this.#requests,remainingRequests:Math.max(0,this.#limits.maxRequests-this.#requests),workUnits:this.#units,
+    remainingWorkUnits:Math.max(0,this.#limits.maxWorkUnits-this.#units),nativeRequests:this.#nativeRequests,nativeElapsedMs:this.#nativeElapsedMs,
+    remainingNativeElapsedMs:Math.max(0,Math.floor(this.#limits.maxNativeElapsedMs-this.#nativeElapsedMs)),fitRequests:this.#fitRequests,
+    searchRequests:this.#searchRequests,searchSupports:this.#searchSupports,completedSearchSupports:this.#completedSearchSupports,models:this.#owned.size});}
   inspect(model:ScientificModelRef){this.#available();const a=this.#owned.get(model);if(!a)throw Error("scientific_model_foreign_reference");return a;}
   /** Host-enabled compound search; every evaluated support is bounded/charged.
    * Its results are NOT owned model references. Existing independent fit and
@@ -124,7 +127,7 @@ export class ScientificModelSession {
       const r=snapshotBoundedReasoningData(request) as Record<string,unknown>;
       if(!keys(r,["schemaVersion","operation","taskDigest","spec"])||r.schemaVersion!==1||r.operation!=="SEARCH_SCIENTIFIC_MODELS"
         ||r.taskDigest!==this.taskDigest)return reject("SEARCH_CONTRACT");
-      const found=searchScientificStructures(this.task,r.spec,tick,()=>{this.#searchSupports++;});
+      const found=searchScientificStructures(this.task,r.spec,tick,()=>{this.#searchSupports++;},()=>{this.#completedSearchSupports++;});
       // Critical detector disagreement remains quarantined across all paths.
       const candidates=found.candidates.filter(c=>!this.#refutedFits.has(theoryDigest(c.structure)));
       const result={...found,candidates,quarantinedCandidates:found.candidates.length-candidates.length,

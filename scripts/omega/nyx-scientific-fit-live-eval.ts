@@ -106,6 +106,7 @@ export async function runFreshScientificFitEpoch(complete:Complete,binding:{cand
       providerStable,physicalCalls:ledger.length,physicalUsage:physical,unknownHttpAttemptCounts,
       physicalNativeCost:{requests:generationPhysical.reduce((n,r)=>n+(r.native?.requests??0),0),fitRequests:generationPhysical.reduce((n,r)=>n+(r.native?.fitRequests??0),0),
         searchRequests:generationPhysical.reduce((n,r)=>n+(r.native?.searchRequests??0),0),searchSupports:generationPhysical.reduce((n,r)=>n+(r.native?.searchSupports??0),0),
+        completedSearchSupports:generationPhysical.reduce((n,r)=>n+(r.native?.completedSearchSupports??0),0),
         workUnits:generationPhysical.reduce((n,r)=>n+(r.native?.workUnits??0),0),elapsedMs:generationPhysical.reduce((n,r)=>n+(r.native?.nativeElapsedMs??0),0)},
       physicalReplayCosts:generationPhysical.flatMap(r=>r.replay),physicalMeasurementCount:generationPhysical.filter(r=>r.measurement!==null).length,
       calibrationCosts:calibration.map(d=>({taskId:d.world.taskId,...d.cost})),

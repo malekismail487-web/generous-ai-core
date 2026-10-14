@@ -232,5 +232,86 @@ if(wa.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&wb.state==="ADMITTED_
   }finally{const cleanup=await rig.cleanup();check(cleanup.sourceUnchanged&&cleanup.sandboxCleanupVerified&&cleanup.temporaryFixtureRemoved,"The author fixture and disposable lifecycle clean up without source mutation");}
 }
 witnessSession.revoke();
+// New development objectives: no exposed transfer fixtures or task-specific
+// equations enter the search implementation. Same original live ceilings.
+function planeTask(fn:(u:string,v:string)=>string,points=[["1","1"],["2","1"],["1","3"],["3","2"],["2","4"],["4","3"],["5","2"]]):ScientificModelTask{
+  const base=task(x=>x);
+  const observations=points.map(([u,v],i)=>({pointId:"D"+i,inputs:[{id:"u",value:u},{id:"v",value:v}],output:fn(u,v),evidenceRef:"E"+i}));
+  return {...base,variables:["u","v"],observations,objective:{...base.objective,admittedEvidence:observations.map(o=>({...base.objective.admittedEvidence[0],evidenceId:o.evidenceRef,
+    contentDigest:theoryDigest({pointId:o.pointId,inputs:o.inputs,output:o.output}),provenanceRoot:o.evidenceRef}))},
+    experiments:[["9","7"],["6","5"],["7","11"]].map(([u,v],i)=>({...base.experiments[0],experimentId:"Unfitted"+i,toolId:"MEASURE-dev"+i,inputs:[{id:"u",value:u},{id:"v",value:v}]}))};
+}
+const diagonalMetrics:any[]=[];
+for(const [name,fn]of [
+  ["three_parameter_plane",(u:string,v:string)=>q("ADD",q("ADD",q("MUL","2",u),q("MUL","3",v)),"5")],
+  ["two_squared_channels",(u:string,v:string)=>q("ADD",q("ADD",q("MUL","2",q("MUL",u,u)),q("MUL","3",q("MUL",v,v))),"5")],
+  ["inverse_and_linear_channel",(u:string,v:string)=>q("ADD",q("ADD",q("DIV","2",u),q("MUL","3",v)),"5")],
+]as const){
+  for(const strategy of ["LEXICOGRAPHIC","DIAGONAL_NORMAL","DIAGONAL_EXACT"]as const){
+    const t=planeTask(fn),s=session(t,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000}),start=performance.now();
+    const found=search(s,{...spec,strategy,maxCoefficients:3});
+    const used=s.usage();let accepted=false,independentCalls=0;const replays:any[]=[];
+    const fitReplay=scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replays.push(c)),pointReplay=scientificModelReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replays.push(c));
+    if(found.state==="CANDIDATES_NOT_ADMITTED"){
+      const f=s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:found.candidates[0].structure},fitReplay);independentCalls++;
+      if(f.state==="FITTED_CANDIDATE_NOT_ADMITTED"){
+        const a=s.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,draft:f.fit.draft},pointReplay);independentCalls++;
+        accepted=a.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH"&&s.inspect(a.model).predictions.filter(p=>p.pointId.startsWith("Unfitted")).every(p=>{
+          const u=p.inputs.find(i=>i.id==="u")!.value,v=p.inputs.find(i=>i.id==="v")!.value;return p.value===fn(u,v);});
+      }
+    }
+    diagonalMetrics.push({name,strategy,state:found.state,reason:"reason"in found?found.reason:null,accepted,searchWork:used.workUnits,
+      supports:used.searchSupports,bySize:"supportsBySize"in found?found.supportsBySize:null,grams:"gramsComputed"in found?found.gramsComputed:null,
+      searchNativeMs:used.nativeElapsedMs,totalWork:s.usage().workUnits,independentCalls,independentMs:replays.reduce((n,c)=>n+c.elapsedMs,0),
+      independentCpuMs:replays.reduce((n,c)=>n+(c.childCpuMs??0),0),unknownIndependentCpu:replays.filter(c=>c.childCpuMs===null).length,elapsedMs:performance.now()-start});
+    if(strategy==="DIAGONAL_EXACT")check(accepted,"Diagonal exact search discovers and independently validates a new three-term development law");
+    if(strategy==="LEXICOGRAPHIC")check(!accepted,"The original broad size-first search reproduces bounded starvation on separate development data");
+    s.revoke();
+  }
+}
+check(diagonalMetrics.filter(m=>m.strategy==="DIAGONAL_EXACT").every(m=>m.totalWork<300000),"Discovery and required admission together retain the original work ceiling");
+for(const name of ["three_parameter_plane","two_squared_channels","inverse_and_linear_channel"]){
+  const direct=diagonalMetrics.find(m=>m.name===name&&m.strategy==="DIAGONAL_EXACT"),normal=diagonalMetrics.find(m=>m.name===name&&m.strategy==="DIAGONAL_NORMAL");
+  check(direct.accepted&&normal.accepted&&direct.supports===normal.supports&&direct.totalWork<normal.totalWork,"The matched-schedule ablation attributes lower actual arithmetic work to direct consistency");
+}
+const plane=(u:string,v:string)=>q("ADD",q("ADD",q("MUL","2",u),q("MUL","3",v)),"5");
+const delayedRank=planeTask(plane,[["1","1"],["1","1"],["1","1"],["1","1"],["2","1"],["1","3"],["3","2"]]);
+const rankSession=session(delayedRank,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000}),rankSearch=search(rankSession,{...spec,strategy:"DIAGONAL_EXACT",maxCoefficients:3});
+check(rankSearch.state==="CANDIDATES_NOT_ADMITTED"&&rankSearch.candidates[0].supportSize===3,"A rank-deficient prefix cannot discard a structure identified by later original rows");
+if(rankSearch.state==="CANDIDATES_NOT_ADMITTED")check(verifyFit(rankSession.task,rankSearch.candidates[0].structure,rankSearch.candidates[0].fit).decision==="AGREES","Full original-source replay verifies delayed-rank identification");
+const diagonalTiny=session(planeTask(plane),{...limits,maxWorkUnits:500});
+check(search(diagonalTiny,{...spec,strategy:"DIAGONAL_EXACT"}).state==="INSUFFICIENT_EVIDENCE"&&diagonalTiny.usage().remainingWorkUnits===0,"Diagonal computation fails closed at the original owning work boundary");
+let nativeCalls=0;const exhausted=session(planeTask(plane),{...limits,maxWorkUnits:500});
+const stopped=await runNyxScientificModelGeneration({session:exhausted,maxCalls:2,maxOutputTokens:1024,deadlineEpochMs:at+60000,now:()=>at,verify:verifyModel,nativeSearch:{verify:verifyFit},
+  complete:async request=>{
+    nativeCalls++;const context=JSON.parse(request.messages[1].content);
+    check(context.remainingResources.remainingWorkUnits>0&&context.remainingResources.remainingNativeElapsedMs>0,"NYX receives actual remaining work and native time before requesting search");
+    return fake(request,{schemaVersion:1,search:{...spec,strategy:"DIAGONAL_EXACT"}});
+  }});
+check(nativeCalls===1&&stopped.budgetStopReason==="WORK_BUDGET_EXHAUSTED"&&!stopped.competingModelsAdmitted,"Exhausted native work cannot trigger a pointless second model invocation or renew the lease");
+check(stopped.attempts[0].search?.spec?.strategy==="DIAGONAL_EXACT"&&Object.isFrozen(stopped.attempts[0].search!.spec),"Future evidence retains the exact typed search configuration without raw reasoning");
+check(exhausted.usage().completedSearchSupports<=exhausted.usage().searchSupports,"Started and completed supports remain distinct when work aborts");
+for(const strategy of ["DIAGONAL_EXACT","DIAGONAL_NORMAL"]as const){
+  const revoked=session(simple);revoked.revoke();throws(()=>search(revoked,{...spec,strategy}),"Both diagonal paths preserve original revocation");
+  const budget=session(simple,{...limits,maxRequests:1});search(budget,{...spec,strategy,maxCandidates:1});throws(()=>search(budget,{...spec,strategy}),"Both diagonal paths retain original request exhaustion");
+}
+let fairUnits=0;const fair=searchScientificStructures(planeTask(()=> "37"),{...spec,strategy:"DIAGONAL_EXACT",maxModels:3,maxCandidates:6,maxCoefficients:3},()=>{fairUnits++;});
+check(fair.evaluatedSupports<=6&&fair.completedSupports===fair.evaluatedSupports&&fair.supportsBySize.reduce((a,b)=>a+b,0)===fair.evaluatedSupports&&fairUnits>0,
+  "Lazy diagonal enumeration never materializes or executes more supports than the declared cap");
+const directConflict=session(planeTask(plane),{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+const directCandidate=search(directConflict,{...spec,strategy:"DIAGONAL_EXACT",maxCoefficients:3});
+if(directCandidate.state==="CANDIDATES_NOT_ADMITTED"){
+  const c=directCandidate.candidates[0],disputed=directConflict.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:directConflict.taskDigest,structure:c.structure},
+    ()=>({decision:"DISAGREES",verificationDigest:theoryDigest("independent-diagonal-conflict")}));
+  const bypass=directConflict.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:directConflict.taskDigest,draft:c.fit.draft},verifyModel);
+  check(disputed.state==="REJECTED"&&bypass.state==="REJECTED"&&directConflict.usage().models===0,"A diagonal candidate retains independent rejection and exact-artifact quarantine");
+}
+for(const [strategy,budget]of [["DIAGONAL_EXACT",3],["DIAGONAL_NORMAL",3]]as const){
+  let begun=0,finished=0,interrupt=false;
+  throws(()=>searchScientificStructures(planeTask(plane),{...spec,strategy,maxCandidates:budget},()=>{if(interrupt)throw Error("owning_work_budget");},()=>{begun++;interrupt=true;},()=>{finished++;}),
+    "Owning resource exceptions propagate through both diagonal algorithms");
+  check(finished<=begun,"A resource-interrupted support is not reported as completed");
+}
+console.log("OMEGA_DIAGONAL_SEARCH_DEVELOPMENT "+JSON.stringify({metrics:diagonalMetrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
 console.log("OMEGA_SCIENTIFIC_SEARCH_DEVELOPMENT "+JSON.stringify({metrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
 console.log(`OMEGA_SCIENTIFIC_STRUCTURE_SEARCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);if(failed)process.exitCode=1;

@@ -528,6 +528,63 @@ is a bounded general search scheduling/efficiency correction tested on separate
 development and later fresh transfer; these six cases must not become tuning
 data. The full mathematics/science program remains unfulfilled.
 
+## General search scheduling correction — development, 2026-10-14
+
+Policy /2 adds DIAGONAL_EXACT and the DIAGONAL_NORMAL ablation, preserving
+the original FORWARD_RESIDUAL and LEXICOGRAPHIC behavior. It orders generic
+features by operation cost (including the cross-multiplied denominator role)
+and enumerates support sizes by largest feature index. Three-term hypotheses
+are reached before exhausting every pair of the entire grammar. Enumeration
+is lazy and every scan, sort comparison and support consumes the owning tick.
+No task IDs, observed answers or exposed equations choose the order.
+
+Exact enumeration uses the existing original-matrix RREF tool. A contradictory
+prefix can reject a support. A rank-deficient prefix must fall back to the full
+matrix; unique prefix coefficients must satisfy every original row. The ordinary
+full-source fit, independent Python replay and model proposal are still required.
+Rank, residual, namespace, literal, pole, work/time/expiry and authority checks
+remain. No normal-equation score is used as a scientific acceptance verdict.
+
+Three separate development objectives compare old size-first search, diagonal
+normal-equation search, and diagonal original-row consistency. Same grammar,
+128-support ceiling, 300000 work units, 3000 ms, admitted data and independent
+acceptance. Old search accepted 0/3; both diagonal paths accepted 3/3, including
+three unfitted development points per objective. Scheduling changes which
+supports become reachable. The matched-schedule ablation isolates the lower
+arithmetic cost of direct consistency:
+
+| Objective | Old total native work | Diagonal normal total | Diagonal exact total |
+| --- | ---: | ---: | ---: |
+| Three-parameter plane | 242985 (no candidate) | 41213 | 28633 |
+| Squared channels plus offset | 247875 (no candidate) | 93942 | 54092 |
+| Reciprocal and linear channel | 275335 (no candidate) | 156063 | 71437 |
+
+Successful arms additionally pay two independently observed replay calls.
+Their full elapsed time includes those verifier processes; it is not compared
+as lower end-to-end latency against an old arm that never reached verification.
+Equal ceilings are not realized compute matching. These are developer examples
+used for correction, not blind transfer or evidence that live cognition improved.
+
+The first diagonal attempt solved two objectives but starved cheap reciprocal
+features behind all polynomial terms. Generic operation-cost ordering corrected
+that limitation; its initial failure remains research evidence. A test initially
+assumed a fixed tick count would be reached before termination. It now injects
+the resource exception at support start, verifying propagation directly rather
+than confusing early termination with a swallowed exception.
+
+Future requests retain their bounded typed search spec and started/completed
+support counts. Remaining work and native time are exposed as accounting, not
+authority; exhausted native work stops further model calls without extending
+the original lease. Test-double integration checks this condition. Critical
+independent refutation still quarantines the same draft across proposal paths.
+
+This is an implemented native computational correction with E3 development
+evidence. Live search/cognition promotion remains pending fresh frozen transfer;
+the six exposed search cases are not rerun or tuned. Omega coverage is partial/
+just-in-time: D06 bounded mathematical search/competing hypotheses, D04 exact
+artifacts and cost control, D01 independent controls/evidence. Original scientific
+discovery, proof-statement fidelity, broad benchmarks and recursion remain open.
+
 ## Method and Omega plan coverage
 
 Partial/just-in-time. Direct: D06 executable hypotheses, derived predictions,

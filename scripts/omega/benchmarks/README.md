@@ -1,5 +1,17 @@
 # NYX benchmark capability program
 
+### Native scheduling correction: development 3/3 vs old 0/3 (2026-10-14)
+
+Search policy /2 adds lazy diagonal support enumeration, generic operation-cost
+ordering and exact original-row consistency. Under the same 128-support /
+300000-work / 3000-ms ceilings, both scheduling and direct-consistency arms
+independently accept three separate development laws; old size-first search
+accepts none. Direct consistency reduces actual arithmetic work against the
+matched scheduling ablation. Independent replay cost is measured separately.
+This is a native component correction; live cognition/generalization is pending.
+No exposed six-case rerun, acceptance relaxation or authority change.
+See [method, cost table, failures and scope](../../../docs/omega/research/NYX-GENERATED-SCIENTIFIC-MODELS.md#general-search-scheduling-correction--development-2026-10-14).
+
 ### Fresh scientific search epoch: stable delivery, no hidden grades (2026-10-14)
 
 Six cases / three new structural families compare model-authored structure,
