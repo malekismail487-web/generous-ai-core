@@ -2055,6 +2055,7 @@
     {
       "name": "GITHUB_RUN_ID",
       "files": [
+        "scripts/omega/ci/quota-host-guard.mjs",
         "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
@@ -2858,6 +2859,7 @@
     {
       "name": "RUNNER_TEMP",
       "files": [
+        "scripts/omega/ci/quota-host-guard.mjs",
         "scripts/omega/nvidia-nim-live-smoke.ts",
         "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",

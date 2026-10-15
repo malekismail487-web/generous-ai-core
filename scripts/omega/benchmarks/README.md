@@ -1,5 +1,35 @@
 # NYX benchmark capability program
 
+### Quota-backed disposable CI worker experiment (pending empirical result)
+
+The existing storage preflight is reused without modifying its 64 MiB writable-
+layer quota, offline/non-root profile, inspection, over-quota rejection or owned
+container cleanup. Docker documents that overlay2 size quotas require XFS with
+project quotas ([daemon options](https://docs.docker.com/reference/cli/dockerd/#overlay2-options)).
+The experiment prepares a private 2 GiB file-backed XFS data root on a disposable
+GitHub-hosted Ubuntu worker, not the Windows laptop or production infrastructure.
+
+Trusted CI bootstrap—not NYX—temporarily stops that worker's default daemon and
+starts an owned daemon with private data/exec roots, no bridge and no firewall
+changes. Original Docker data is untouched. Before formatting or detaching, the
+exact loop/backing-file association is checked; formatting has no force flag.
+Mount, PID/argv ownership and cleanup are separately checked. Temp image/log files
+remain owned by the ephemeral worker until VM teardown; the host receipt scopes
+cleanup to daemon, mount and loop resources, not deletion of every temporary byte.
+
+The fixture rejects non-GitHub-hosted/non-authorized invocations before mutation.
+Twenty-five ownership/negative-path tests and the unchanged 25-check storage
+contract precede the real probe. Shell syntax/lint checks precede root setup.
+Only a PASS from the ORIGINAL empirical quota probe can pass preparation. The
+kernel quota proof is still pending; unit checks are not a substitute for it.
+
+No model credentials, model calls or benchmark tasks are involved. No NYX
+capability, unrestricted host authority, benchmark profile or cognitive improvement
+is certified. This supporting environment work addresses an observed execution
+prerequisite, not another reasoning layer. The running AIME epoch is unchanged.
+Plan coverage: scoped execution, resource confinement, provenance and fail-closed
+authority separation; PARTIAL / JUST-IN-TIME.
+
 ### Interleaved finite-support science-tool transfer (2026-10-15)
 
 The opt-in EVIDENCE_LAURENT_INTERLEAVED mode changes only exploratory support

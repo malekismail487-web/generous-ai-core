@@ -1,14 +1,22 @@
 name: Omega NYX official-task storage prerequisite
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml]
 permissions:
   contents: read
 jobs:
   storage-prerequisite:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'infra(nyx): exercise quota-backed CI storage'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -17,15 +25,25 @@ jobs:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile --ignore-scripts
       - name: Verify fixed diagnostic and preserved candidate-authority boundary
-        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaStoragePrerequisite.test.ts
-      - name: Test bounded writable-layer support without NYX or credentials
+        run: |
+          node scripts/omegaQuotaCiHostGuard.test.mjs
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaStoragePrerequisite.test.ts
+      - name: Install filesystem tooling only inside the disposable Linux worker
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get install -y --no-install-recommends xfsprogs shellcheck
+          bash -n scripts/omega/ci/run-quota-backed-preflight.sh
+          shellcheck scripts/omega/ci/run-quota-backed-preflight.sh
+      - name: Test the unchanged quota contract on a private quota-backed data root
         env:
-          OMEGA_ALLOW_STORAGE_QUOTA_PREFLIGHT: '1'
-        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-docker-storage-preflight.ts
+          OMEGA_ALLOW_QUOTA_HOST_SETUP: '1'
+        run: bash scripts/omega/ci/run-quota-backed-preflight.sh
       - name: Preserve environment evidence regardless of availability
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nyx-storage-prerequisite-${{ github.sha }}
-          path: ${{ runner.temp }}/nyx-storage-preflight-*.json
+          path: |
+            ${{ runner.temp }}/nyx-storage-preflight-*.json
+            ${{ runner.temp }}/nyx-quota-host-*.json
           if-no-files-found: error

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/107",
+  "suiteVersion": "omega-institutional-suite/108",
   "criticalSuites": [
+    "OMEGA-QUOTA-CI-HOST-GUARD",
     "OMEGA-BOUNDED-SUPPORT-INTERLEAVER",
     "OMEGA-SCIENTIFIC-LAURENT-SEARCH",
     "OMEGA-EXACT-MODULAR-REFUTATION",
@@ -203,6 +204,7 @@
     { "suiteId": "OMEGA-BENCHMARK-ACQUISITION", "file": "scripts/omegaBenchmarkAcquisition.test.mjs" },
     { "suiteId": "OMEGA-EXACT-MODULAR-REFUTATION", "file": "scripts/omegaExactModularRefutation.test.ts" },
     { "suiteId": "OMEGA-SCIENTIFIC-LAURENT-SEARCH", "file": "scripts/omegaScientificLaurentSearch.test.ts" },
-    { "suiteId": "OMEGA-BOUNDED-SUPPORT-INTERLEAVER", "file": "scripts/omegaBoundedSupportInterleaver.test.ts" }
+    { "suiteId": "OMEGA-BOUNDED-SUPPORT-INTERLEAVER", "file": "scripts/omegaBoundedSupportInterleaver.test.ts" },
+    { "suiteId": "OMEGA-QUOTA-CI-HOST-GUARD", "file": "scripts/omegaQuotaCiHostGuard.test.mjs" }
   ]
 }

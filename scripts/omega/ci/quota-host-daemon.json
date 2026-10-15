@@ -1,0 +1,3 @@
+{
+  "features": {"containerd-snapshotter": false}
+}
