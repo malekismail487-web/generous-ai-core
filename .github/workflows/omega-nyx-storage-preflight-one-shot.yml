@@ -1,19 +1,11 @@
 name: Omega NYX official-task storage prerequisite
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml, scripts/omega/ci/**]
 permissions:
   contents: read
 jobs:
   storage-prerequisite:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'infra(nyx): exercise quota-backed CI storage' ||
-      github.event.head_commit.message == 'fix(nyx): scope quota-daemon logging to runner' ||
-      github.event.head_commit.message == 'fix(nyx): correct private quota mount and owned cleanup' ||
-      github.event.head_commit.message == 'fix(nyx): honor Docker optional empty-map encoding'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

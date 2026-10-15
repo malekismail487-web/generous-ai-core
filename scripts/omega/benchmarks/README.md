@@ -1,6 +1,42 @@
 # NYX benchmark capability program
 
-### Quota-backed disposable CI worker experiment (pending empirical result)
+### AIME 2026 Ultra delivery recovery: full attempts, incomplete grading
+
+Frozen `b07e807`, [run 38694102125](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38694102125),
+attempted all 30 author questions under unchanged strict integer grading.
+**20 graded, 20 correct, zero graded wrong; 10 ungraded, zero unexecuted.** Nine
+answer requests timed out and one ended in HTTP 503/shared-attempt exhaustion.
+No observed schema, answer-format or terminal truncation failures occurred.
+Unknown terminal output is not a wrong answer, a successful answer or proof that
+no truncation occurred. This is NOT a complete score or 100% benchmark result.
+
+The original ten exposed inputs produced eight correct/two ungraded; the twenty
+previously unexecuted inputs produced twelve correct/eight ungraded. All input
+identities and dataset/configuration bindings were checked. Scores use only this
+epoch; no historical successes are merged. Public pretraining exposure is unknown.
+The adapter is NYX's closed-book exact-integer protocol, not MathArena's author
+inference harness. The earlier 7/7 graded, 10-attempted result stays immutable.
+
+Benchmark inference used **60 logical / 68 HTTP calls, 100446 reported tokens,
+18 unknown-usage attempts**, eight retries, nine observed 503s and nine timeouts.
+Two separate development preflights passed: four calls / 2022 tokens. Total:
+64 logical / 72 HTTP calls, 102468 known tokens, 18 unknown-usage attempts.
+Epoch elapsed 5858056 ms; summed task wall 5317373 ms includes in-request waits,
+not pure inference latency. Pre-task capacity waits totaled 540234 ms. Every
+request retained the original 300-second lifetime and 360-second task boundary.
+
+The [verified custody receipt](../../../docs/omega/evidence/aime2026-ultra-recovery-b07e807.json)
+binds all ten frozen sources, the full population, report/log agreement and ZIP
+SHA256 `d6c97e1cc0fa3198f88e7ac982f96f90fac65f9ecd742a5dabf544e65ebcf131`.
+Coverage/delivery recovery is not matched cognitive improvement or Astra
+superiority. Nonstreaming timeout evidence cannot distinguish slow reasoning
+from a stalled service. Next investigate bounded streaming delivery on separate
+development tasks; do not loosen graders, extend expired authority or repair
+against hidden reference answers. No new benchmark starts here. The push launch
+hook is removed. Plan coverage: general corrections, frozen evidence and honest
+resource accounting; PARTIAL / JUST-IN-TIME.
+
+### Quota-backed disposable CI worker experiment (empirical PASS)
 
 The existing storage preflight is reused without modifying its 64 MiB writable-
 layer quota, offline/non-root profile, inspection, over-quota rejection or owned
@@ -21,7 +57,7 @@ The fixture rejects non-GitHub-hosted/non-authorized invocations before mutation
 Twenty-eight ownership/negative-path tests and the 32-check storage
 contract precede the real probe. Shell syntax/lint checks precede root setup.
 Only a PASS from the ORIGINAL empirical quota probe can pass preparation. The
-kernel quota proof is still pending; unit checks are not a substitute for it.
+kernel quota proof below is empirical; unit checks alone are not a substitute.
 
 The first setup attempt stopped at ShellCheck before mutation. The next reached
 XFS but the unchanged probe rejected quota support; the receipt also correctly
@@ -34,7 +70,7 @@ runner-inaccessible-to-tasks daemon metadata mount. Docker's root-owned
 `nodev` there prevents that lookup. `nosuid` and private ownership remain. No
 container device, mount, capability, network or writable quota is relaxed.
 The daemon now requires its 64 MiB default quota at startup rather than silently
-continuing without project-quota support. A fresh empirical run is still required.
+continuing without project-quota support. Earlier failed attempts remain recorded.
 
 The corrected daemon then created the quota-constrained container successfully
 and verified full daemon/mount/loop cleanup, but the diagnostic inspection still
@@ -43,12 +79,22 @@ absence is the same empty policy, while malformed values and ANY actual mount
 remain rejected. The diagnostic now honors that documented wire representation
 and emits only fixed failure codes for future inspection mismatches. This does
 not change the NYX executor's readonly-root/tmpfs profile or admit the writable
-diagnostic as a NYX capability. Empirical write enforcement is not yet proved.
+diagnostic as a NYX capability.
+
+Frozen `a764768`, [run 38704581550](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38704581550),
+then PASSED the actual write probe: an ordinary 1 MiB write succeeded and the
+attempt to exceed 64 MiB was rejected at **67043328 bytes**. Container cleanup,
+owned daemon/mount/loop release and source integrity were verified. Both receipt
+members exactly match terminal logs and frozen source bindings. ZIP SHA256:
+`c922c24c03d0c0ac9ffcb5d00b8a8a97fcef4825964085fb29cc863817622d27`.
+Clean CI: 118 suites / 17680 checks, TS5.8.3 zero, secret scan, build and package.
+See [all attempts and custody](../../../docs/omega/evidence/nyx-quota-backed-storage-a764768.json).
+The one-shot push hook is removed; manual use remains explicitly scoped.
 
 No model credentials, model calls or benchmark tasks are involved. No NYX
 capability, unrestricted host authority, benchmark profile or cognitive improvement
 is certified. This supporting environment work addresses an observed execution
-prerequisite, not another reasoning layer. The running AIME epoch is unchanged.
+prerequisite, not another reasoning layer. The frozen AIME epoch was unchanged.
 Plan coverage: scoped execution, resource confinement, provenance and fail-closed
 authority separation; PARTIAL / JUST-IN-TIME.
 
