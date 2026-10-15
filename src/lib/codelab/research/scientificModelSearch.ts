@@ -11,8 +11,8 @@ import { immutableTheoryValue } from "./theoryContracts";
  * worlds. All scalar work uses the existing exact interpreter and caller tick.
  * Search ranking is not admission, a scientific claim, or execution authority. */
 export const SCIENTIFIC_SEARCH_POLICY = /* @__PURE__ */ Object.freeze({
-  version: "nyx-scientific-structure-search/5", maxDegree: 3, maxCoefficients: 8,
-  maxCandidates: 256, maxModels: 3, maxAtoms: 58, grantsAuthority: false,
+  version: "nyx-scientific-structure-search/6", maxDegree: 3, maxCoefficients: 8,
+  maxCandidates: 256, maxModels: 3, maxAtoms: 58, maxLaurentDescriptors: 82, grantsAuthority: false,
   scope: "FINITE_RATIONAL_GRAMMAR_CALIBRATION_HYPOTHESES_NOT_SCIENTIFIC_TRUTH",
   method: "BOUNDED_DIAGONAL_SUPPORTS_WITH_ORIGINAL_ROW_CONSISTENCY",
   legacyStrategiesPreserved: true,
@@ -23,7 +23,7 @@ export interface ScientificSearchSpec {
   readonly maxDegree: number; readonly includeReciprocals: boolean;
   readonly allowDenominatorTerms: boolean; readonly maxCoefficients: number;
   readonly maxCandidates: number; readonly maxModels: number;
-  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT" | "EVIDENCE_MEMOIZED" | "EVIDENCE_MODULAR";
+  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT" | "EVIDENCE_MEMOIZED" | "EVIDENCE_MODULAR" | "EVIDENCE_LAURENT_MODULAR";
 }
 export interface ScientificSearchCandidate {
   readonly structure: ScientificModelStructure; readonly fit: ScientificStructureFit;
@@ -45,6 +45,9 @@ export interface ScientificSearchResult {
     readonly reservedFallbackSupports: number; readonly fallbackExercised: boolean };
   readonly operandMemo?:{readonly hits:number;readonly misses:number;readonly evictions:number;readonly entries:number;readonly retainedUnits:number};
   readonly modularRefutation?: ReturnType<ReturnType<typeof createExactModularRefuter>["statistics"]>;
+  readonly grammar?: { readonly kind: "BOUNDED_MIXED_LAURENT"; readonly proposedAtoms: number;
+    readonly retainedAtoms: number; readonly prunedAtoms: number; readonly maxAtoms: number;
+    readonly maxTotalDegree: number; readonly reciprocalOptionHonored: true; readonly duplicateExactWitnesses: number };
   readonly scientificTruthEstablished: false; readonly grantsAuthority: false;
 }
 const keys = (v: unknown, names: readonly string[]) => !!v && typeof v === "object" && !Array.isArray(v)
@@ -55,14 +58,14 @@ export function scientificSearchSchema() {
     properties: { schemaVersion: { type: "integer", enum: [1] }, nonzeroConstantId: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" },
       maxDegree: { type: "integer", minimum: 1, maximum: 3 }, includeReciprocals: { type: "boolean" }, allowDenominatorTerms: { type: "boolean" },
       maxCoefficients: { type: "integer", minimum: 1, maximum: 8 }, maxCandidates: { type: "integer", minimum: 1, maximum: 256 },
-      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"] } } };
+      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"] } } };
 }
 export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearchSpec {
   const s = snapshotBoundedReasoningData(proposed) as ScientificSearchSpec;
   if (!keys(s, scientificSearchSchema().required) || s.schemaVersion !== 1
     || typeof s.nonzeroConstantId !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s.nonzeroConstantId)
     || typeof s.includeReciprocals !== "boolean" || typeof s.allowDenominatorTerms !== "boolean"
-    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(s.strategy)
+    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(s.strategy)
     || !Number.isSafeInteger(s.maxDegree) || s.maxDegree < 1 || s.maxDegree > 3
     || !Number.isSafeInteger(s.maxCoefficients) || s.maxCoefficients < 1 || s.maxCoefficients > 8
     || !Number.isSafeInteger(s.maxCandidates) || s.maxCandidates < 1 || s.maxCandidates > 256
@@ -72,14 +75,38 @@ export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearc
 interface Atom { expression: string; denominator: boolean; values: readonly string[] }
 const isArithmeticBoundary = (e: unknown) => e instanceof Error && e.message === "exact_fit_arithmetic_boundary";
 
+/** Signed exponent vectors with bounded L1 degree. Opposite signs are required:
+ * pure monomials and their reciprocals already belong to the original grammar.
+ * Enumeration depends ONLY on variable bindings/degree, never outputs or task IDs. */
+function mixedLaurentExpressions(variables: readonly string[], degree: number, tick: () => void): string[] {
+  const result: string[] = [];
+  const visit = (powers: readonly number[], remaining: number) => {
+    tick();
+    if (powers.length === variables.length) {
+      if (remaining || !powers.some(p => p > 0) || !powers.some(p => p < 0)) return;
+      const numerator: string[] = [], denominator: string[] = [];
+      for (let i = 0; i < powers.length; i++) for (let j = 0; j < Math.abs(powers[i]); j++) {
+        tick(); (powers[i] > 0 ? numerator : denominator).push(variables[i]);
+      }
+      result.push(`(${numerator.join("*")})/(${denominator.join("*")})`); return;
+    }
+    for (let power = -remaining; power <= remaining; power++) {
+      tick(); visit([...powers, power], remaining - Math.abs(power));
+    }
+  };
+  for (let total = 2; total <= degree; total++) visit([], total);
+  return result;
+}
+
 /** task originates from an owned ScientificModelSession. Grammar construction,
  * cache access, parser, exact matrix fitting and residuals all consume its tick.
  * No other task data, hidden response, IO, model call or execution exists here. */
 export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}, onCompleted: () => void = () => {}): ScientificSearchResult {
   tick(); const spec = snapshotScientificSearchSpec(proposed);
-  const evidencePriority = ["EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy);
-  const memo=["EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy)?createExactOperandMemo(tick):undefined;
-  const modular = spec.strategy === "EVIDENCE_MODULAR" ? createExactModularRefuter(tick, memo) : undefined;
+  const laurent = spec.strategy === "EVIDENCE_LAURENT_MODULAR";
+  const evidencePriority = ["EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(spec.strategy);
+  const memo=["EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(spec.strategy)?createExactOperandMemo(tick):undefined;
+  const modular = spec.strategy === "EVIDENCE_MODULAR" || laurent ? createExactModularRefuter(tick, memo) : undefined;
   const canonicalRationalLiteral=(value:string,owner:()=>void)=>interpreterCanonical(value,owner,memo);
   const exactScalar=(op:"ADD"|"SUB"|"MUL"|"DIV",left:string,right:string,owner:()=>void)=>interpreterScalar(op,left,right,owner,memo);
   // Repeated/reordered/equivalent rational input rows must not manufacture
@@ -109,8 +136,9 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
   expressions.push(...monomials);
   if (spec.includeReciprocals) expressions.push(...monomials.map(e => `${offset.id}/(${e})`));
   const atoms: Atom[] = []; let domainBlockedAtoms = 0;
+  let grammar: ScientificSearchResult["grammar"];
   // Evaluate atoms separately: one pole cannot erase all other legal atoms.
-  for (const [i, expression] of expressions.entries()) {
+  if (!laurent) for (const [i, expression] of expressions.entries()) {
     tick(); const values: string[] = []; let blocked = false;
     for (const observation of task.observations) {
       tick(); const problem = { kind: "EXACT_QUANTITATIVE_DERIVATION" as const, constants: [...task.constants, ...observation.inputs] };
@@ -124,6 +152,49 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     if (spec.allowDenominatorTerms && i > 0 && i <= monomials.length) {
       const den = values.map((v, row) => exactScalar("SUB", "0", exactScalar("MUL", task.observations[row].output, v, tick), tick));
       atoms.push({ expression, denominator: true, values: den });
+    }
+  }
+  else {
+    // This opt-in rational-family prior puts mixed ratios first at EQUAL
+    // operator cost. It is explicit, not a hidden change to legacy strategies.
+    // Bound descriptors BEFORE evaluating them. The transient grammar pool is
+    // separately capped at 82; at most the original 58 atoms retain values.
+    const descriptors = (spec.includeReciprocals ? mixedLaurentExpressions(task.variables, spec.maxDegree, tick) : [])
+      .map(expression => {tick(); return {expression, denominator: false};});
+    for (const [i, expression] of expressions.entries()) {
+      tick(); descriptors.push({expression, denominator: false});
+      if (spec.allowDenominatorTerms && i > 0 && i <= monomials.length) descriptors.push({expression, denominator: true});
+    }
+    if (descriptors.length > SCIENTIFIC_SEARCH_POLICY.maxLaurentDescriptors) throw Error("scientific_search_grammar_boundary");
+    const cost = (a: {expression: string; denominator: boolean}) => {
+      let value = Number(a.denominator);
+      for (const c of a.expression) {tick(); if (c === "*" || c === "/") value++;}
+      return value;
+    };
+    const costs = new Map(descriptors.map(d => [d, cost(d)]));
+    descriptors.sort((a, b) => {tick(); return costs.get(a)! - costs.get(b)! || Number(a.denominator) - Number(b.denominator);});
+    const retained = descriptors.slice(0, SCIENTIFIC_SEARCH_POLICY.maxAtoms);
+    grammar = {kind: "BOUNDED_MIXED_LAURENT", proposedAtoms: descriptors.length,
+      retainedAtoms: retained.length, prunedAtoms: descriptors.length - retained.length,
+      maxAtoms: SCIENTIFIC_SEARCH_POLICY.maxAtoms, maxTotalDegree: spec.maxDegree, reciprocalOptionHonored: true, duplicateExactWitnesses: 0};
+    const valueMemo = new Map<string, readonly string[] | null>();
+    for (const descriptor of retained) {
+      tick(); const {expression, denominator} = descriptor;
+      if (!valueMemo.has(expression)) {
+        const values: string[] = []; let blocked = false;
+        for (const observation of task.observations) {
+          tick(); const problem = {kind: "EXACT_QUANTITATIVE_DERIVATION" as const, constants: [...task.constants, ...observation.inputs]};
+          const program = lowerQuantitativeAlgebraicForm(problem, {schemaVersion: 5, definitions: [], outputs: [{label: "LaurentAtom", expression}]}, tick);
+          const result = deriveQuantities(problem, program, {tick});
+          if (result.status !== "CONSTRUCTED" || !result.payload.outputs) {blocked = true; break;}
+          values.push(result.payload.outputs[0].value);
+        }
+        tick(); valueMemo.set(expression, blocked ? null : values);
+      }
+      tick(); const values = valueMemo.get(expression);
+      if (!values) {domainBlockedAtoms++; continue;}
+      atoms.push({expression, denominator, values: denominator
+        ? values.map((v, row) => exactScalar("SUB", "0", exactScalar("MUL", task.observations[row].output, v, tick), tick)) : values});
     }
   }
   // Rank generic features by operation cost, including the cross-multiplied
@@ -149,6 +220,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     return gram.get(key)!;
   };
   const candidates: ScientificSearchCandidate[] = [], seenSupports = new Map<string, string | null>(), predictions = new Set<string>();
+  const exactWitnesses = new Set<string>(); let duplicateExactWitnesses = 0;
   let evaluatedSupports = 0, completedSupports = 0, rankDeficientSupports = 0, inconsistentSupports = 0, arithmeticBlockedSupports = 0, invalidFits = 0, duplicatePredictions = 0;
   const supportsBySize = Array<number>(9).fill(0);
   const occupied = new Set([...task.variables, ...task.constants.map(c => c.id), "response", "MIN", "MAX", "BINOMIAL"]);
@@ -167,8 +239,24 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       assumptions: ["Response lies in the requested finite rational grammar on the admitted domain."],
       uncertainties: ["Calibration fit does not establish extrapolation, causation, novelty or scientific truth."] };
   };
-  const recordExact = (support: readonly number[]) => {
+  const recordExact = (support: readonly number[], coefficients: readonly string[]) => {
     if (!support.some(i => !atoms[i].denominator)) { invalidFits++; return; }
+    // Opt-in only: adding a zero coefficient does not create a new rational
+    // function. Do not repeatedly reconstruct that same exact witness. A key
+    // is retained ONLY after the first representative passed original-row AND
+    // all prospective-input domain checks below. This skips work, not checks
+    // for any retained candidate; ordinary independent admission is unchanged.
+    let witness: string | null = null;
+    if (laurent) {
+      const active: string[] = [];
+      for (let i = 0; i < support.length; i++) {
+        tick(); const coefficient = coefficients[i];
+        for (let at = 64; at < coefficient.length; at += 64) tick();
+        if (coefficient !== "0") active.push(`${support[i]}:${coefficient}`);
+      }
+      tick(); witness = active.join("|");
+      if (exactWitnesses.has(witness)) {duplicateExactWitnesses++; duplicatePredictions++; return;}
+    }
     const structure = structureFor(support), fit = fitScientificStructure(task, structure, tick);
     if (!fit.draft || fit.linear.state !== "UNIQUE") { invalidFits++; return; }
     const values: string[] = [];
@@ -182,6 +270,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       if ("output" in point && v !== canonicalRationalLiteral(point.output, tick)) { invalidFits++; return; }
       values.push(v);
     }
+    if (witness !== null) {tick(); exactWitnesses.add(witness);}
     const key = JSON.stringify(values);
     if (predictions.has(key)) { duplicatePredictions++; return; }
     predictions.add(key); candidates.push({ structure, fit, supportSize: support.length, calibrationResidual: "0",
@@ -216,7 +305,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
           tick(); if (dot(matrix[row],fit.values) !== rhs[row]) { inconsistentSupports++; seenSupports.set(key,null); return complete(null); }
         }
         seenSupports.set(key,"0");
-        if (candidates.length < spec.maxModels) recordExact(support);
+        if (candidates.length < spec.maxModels) recordExact(support, fit.values);
         return complete("0");
       }
       const g = support.map(a => support.map(b => inner(a, b))), y = support.map(i => targets[i]);
@@ -227,7 +316,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       const score = exactScalar("SUB", norm, dot(fit.values, y), tick);
       if (score.startsWith("-")) throw Error("scientific_search_negative_residual");
       seenSupports.set(key, score);
-      if (score === "0" && candidates.length < spec.maxModels) recordExact(support);
+      if (score === "0" && candidates.length < spec.maxModels) recordExact(support, fit.values);
       return complete(score);
     } catch (error) {
       if (!isArithmeticBoundary(error)) throw error;
@@ -292,5 +381,6 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       reservedFallbackSupports, fallbackExercised } } : {}),
     ...(memo?{operandMemo:memo.statistics()}:{}),
     ...(modular?{modularRefutation:modular.statistics()}:{}),
+    ...(grammar?{grammar: {...grammar, duplicateExactWitnesses}}:{}),
     domainBlockedAtoms, atoms: atoms.length, gramsComputed: gram.size, scientificTruthEstablished: false, grantsAuthority: false });
 }

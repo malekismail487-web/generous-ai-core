@@ -1,0 +1,893 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-BOUNDED-LAURENT-SEARCH-TRANSFER-001",
+  "evidenceClass": "E3",
+  "state": "BOUNDED_NATIVE_RATIONAL_TOOL_COVERAGE_GAIN",
+  "baselineCandidate": "b07e807b6141307710e5286d6c61fd12ce177350",
+  "sourceBindings": {
+    "src/lib/codelab/research/scientificModelSearch.ts": "7910c94b85d4c618fcb3de4e1c5b1803194daf63cdf6bcf398a8b0fe05184c7c",
+    "scripts/omegaScientificLaurentSearch.test.ts": "7164742ca27dc82bc5c15c28a5ddf76bc2aac61360247130bc74a1174c766e72",
+    "src/lib/codelab/research/exactModularRefutation.ts": "a09dfb18eccaaea1c21fdbcadcf0053f2ccdd58bbc585c1ca2a58a0029a9df22",
+    "src/lib/codelab/research/exactLinearFit.ts": "a333ad9072ef9c52b055b03946a914404f12f1d5c4c8189dccc7b9ae98391d28",
+    "src/lib/codelab/research/scientificModelGeneration.ts": "234d3ccc5d8858ee519cbff2815dd602e5758d403a64bacc9230a7d1e4a64842",
+    "src/lib/codelab/research/scientificModelFit.ts": "a6a10cf829d14bbfcd863f7880c45f64c7ba599a7e7e91a7ea8f022c5a4dc8de",
+    "scripts/omega/benchmarks/scientific-model-replay.ts": "72ba926d3c8a6a0359a8a3428145a9fbd633ee5228dd014649644aea64601807"
+  },
+  "implementation": {
+    "mode": "EVIDENCE_LAURENT_MODULAR_OPT_IN",
+    "policy": "nyx-scientific-structure-search/6",
+    "mechanisms": [
+      "BOUNDED_SIGNED_EXPONENT_GRAMMAR",
+      "MIXED_RATIO_PRIORITY_AT_EQUAL_OPERATOR_COST",
+      "EXACT_NONZERO_COEFFICIENT_WITNESS_DEDUPLICATION_AFTER_DOMAIN_CHECKS"
+    ],
+    "oldStrategiesChanged": false,
+    "maxRetainedAtoms": 58,
+    "maxTransientDescriptors": 82,
+    "sharedOriginalWorkLimit": 300000,
+    "independentAdmissionUnchanged": true,
+    "authorityGranted": false,
+    "defaultsChanged": false
+  },
+  "scope": {
+    "newlyComposedSyntheticTasks": true,
+    "privateOrIndependentTaskDesign": false,
+    "modelCalls": 0,
+    "liveNyxCognitiveGainClaim": false,
+    "publicBenchmarkScoreClaim": false,
+    "astraComparisonClaim": false,
+    "scientificTruthClaim": false,
+    "cohortNowExposedRegressionData": true,
+    "physicalDeviceOrProductionAuthority": false
+  },
+  "diagnosis": {
+    "initialGrammarOnlySourceSha256": "78e1bb83c907d2eeee8d8b9eb37fb9afadc50ec3e89fd7fd6684087255d2623f",
+    "initialTestSourceSha256": "51397da9921a7a711f08f4059df0ef4f5b53e507ebfcccfc8acd777a2eef4a0c",
+    "developmentBefore": {
+      "scope": "DEVELOPMENT_ONLY",
+      "liveModelCalls": 0,
+      "rows": [
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "eff1057bca4daf8622a68ffe98203bd0a4c1676b8b58b20c4e5d812120a32dd2",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 183664,
+          "totalWork": 228392,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 40.784400000000005,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": null,
+          "independentCalls": 6,
+          "independentMs": 373.75730000000004,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 426.6155
+        },
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "eff1057bca4daf8622a68ffe98203bd0a4c1676b8b58b20c4e5d812120a32dd2",
+          "state": "INSUFFICIENT_EVIDENCE",
+          "reason": "SEARCH_RESOURCE_BUDGET",
+          "searchWork": 300000,
+          "totalWork": 300000,
+          "supports": 249,
+          "requests": 1,
+          "nativeMs": 44.690900000000056,
+          "admissions": [],
+          "grammar": null,
+          "independentCalls": 0,
+          "independentMs": 0,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 44.72220000000004
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "45bd4c751650028508d3828548b2cfdcb5536eeb5ed478a70591bd586e16e772",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 187523,
+          "totalWork": 234997,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 31.263800000000174,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": null,
+          "independentCalls": 6,
+          "independentMs": 342.64880000000005,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 382.0293999999999
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "45bd4c751650028508d3828548b2cfdcb5536eeb5ed478a70591bd586e16e772",
+          "state": "INSUFFICIENT_EVIDENCE",
+          "reason": "SEARCH_RESOURCE_BUDGET",
+          "searchWork": 300000,
+          "totalWork": 300000,
+          "supports": 249,
+          "requests": 1,
+          "nativeMs": 42.54980000000012,
+          "admissions": [],
+          "grammar": null,
+          "independentCalls": 0,
+          "independentMs": 0,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 42.57809999999995
+        },
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 1,
+          "taskDigest": "eff1057bca4daf8622a68ffe98203bd0a4c1676b8b58b20c4e5d812120a32dd2",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 26573,
+          "totalWork": 31629,
+          "supports": 16,
+          "requests": 3,
+          "nativeMs": 5.331699999999955,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true
+          },
+          "independentCalls": 2,
+          "independentMs": 119.21340000000009,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 126.9656
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 1,
+          "taskDigest": "45bd4c751650028508d3828548b2cfdcb5536eeb5ed478a70591bd586e16e772",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 23443,
+          "totalWork": 28675,
+          "supports": 9,
+          "requests": 3,
+          "nativeMs": 5.002100000000155,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true
+          },
+          "independentCalls": 2,
+          "independentMs": 113.3406,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 120.35140000000001
+        }
+      ]
+    },
+    "developmentAfter": {
+      "scope": "DEVELOPMENT_ONLY",
+      "liveModelCalls": 0,
+      "rows": [
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "2e123c2aba10b3029991037a412623f260591383ebce9af1ea19a1ba1e7ac053",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 183664,
+          "totalWork": 228392,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 41.15809999999993,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": null,
+          "independentCalls": 6,
+          "independentMs": 365.3698999999999,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 418.53749999999997
+        },
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "2e123c2aba10b3029991037a412623f260591383ebce9af1ea19a1ba1e7ac053",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 218074,
+          "totalWork": 256714,
+          "supports": 249,
+          "requests": 7,
+          "nativeMs": 33.81219999999996,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 12
+          },
+          "independentCalls": 6,
+          "independentMs": 346.7908000000001,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 388.43600000000004
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "c402e38dae543307f431799b8ad02d1f4b9cf704e5df61f64eb21f468556cdff",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 187523,
+          "totalWork": 234997,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 29.287299999999846,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": null,
+          "independentCalls": 6,
+          "independentMs": 346.5674999999999,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 384.88
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "c402e38dae543307f431799b8ad02d1f4b9cf704e5df61f64eb21f468556cdff",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 221647,
+          "totalWork": 261218,
+          "supports": 249,
+          "requests": 7,
+          "nativeMs": 31.983999999999924,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 12
+          },
+          "independentCalls": 6,
+          "independentMs": 344.18250000000035,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 382.5935999999999
+        },
+        {
+          "name": "forward_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 1,
+          "taskDigest": "2e123c2aba10b3029991037a412623f260591383ebce9af1ea19a1ba1e7ac053",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 26577,
+          "totalWork": 31633,
+          "supports": 16,
+          "requests": 3,
+          "nativeMs": 4.982100000000173,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 2,
+          "independentMs": 109.9670000000001,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 117.13619999999992
+        },
+        {
+          "name": "reverse_ratio_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 1,
+          "taskDigest": "c402e38dae543307f431799b8ad02d1f4b9cf704e5df61f64eb21f468556cdff",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 23447,
+          "totalWork": 28679,
+          "supports": 9,
+          "requests": 3,
+          "nativeMs": 4.885700000000043,
+          "admissions": [
+            {
+              "rank": 2,
+              "prospectiveCorrect": true
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 2,
+          "independentMs": 114.05369999999994,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 120.5911000000001
+        }
+      ]
+    },
+    "finding": "Both ratio laws were found with maxModels=1, but the unchanged maxModels=3 search exhausted 300000 work while repeatedly reconstructing equivalent exact functions with zero extra coefficients. Deduplication restored three-model completion and ordinary independent admissions without lowering the target or increasing the cap.",
+    "fixtureCorrections": [
+      "Synthetic evidence digest corrected to hash only the existing required point/input/output projection; production provenance validation was not changed.",
+      "Work-exhaustion fixture set above construction cost so it reaches the search boundary, without changing production limits."
+    ]
+  },
+  "firstTransfer": {
+    "freeze": {
+      "calibration": [
+        [
+          "5/7",
+          "11/8"
+        ],
+        [
+          "13/9",
+          "17/10"
+        ],
+        [
+          "19/12",
+          "23/14"
+        ],
+        [
+          "29/15",
+          "31/16"
+        ]
+      ],
+      "prospective": [
+        [
+          "37/18",
+          "41/19"
+        ],
+        [
+          "43/20",
+          "47/21"
+        ],
+        [
+          "53/22",
+          "59/23"
+        ]
+      ],
+      "cases": [
+        {
+          "name": "scaled_relative_load",
+          "variables": [
+            "flow",
+            "area"
+          ]
+        },
+        {
+          "name": "reciprocal_balance",
+          "variables": [
+            "u",
+            "v"
+          ]
+        },
+        {
+          "name": "bidirectional_ratio",
+          "variables": [
+            "x",
+            "y"
+          ]
+        },
+        {
+          "name": "quadratic_relative_response",
+          "variables": [
+            "u",
+            "v"
+          ]
+        }
+      ],
+      "maxWorkUnits": 300000,
+      "maxNativeElapsedMs": 3000,
+      "maxRequests": 8,
+      "maxCandidates": 256,
+      "maxModels": 3,
+      "maxCoefficients": 4,
+      "privateOrIndependentDesign": false,
+      "liveModelCalls": 0,
+      "equalRealizedTotalComputeClaim": false
+    },
+    "rows": [
+      {
+        "name": "scaled_relative_load",
+        "strategy": "EVIDENCE_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "46d33685ed2a9c66b9a7896bcbd94fce8c2c9409586dd852726f27520051b3d7",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 210947,
+        "totalWork": 272810,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 30.608900000000176,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": null,
+        "independentCalls": 6,
+        "independentMs": 353.1153999999997,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 391.24120000000016,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "scaled_relative_load",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "46d33685ed2a9c66b9a7896bcbd94fce8c2c9409586dd852726f27520051b3d7",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 209684,
+        "totalWork": 265235,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 29.462599999999384,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 1
+        },
+        "independentCalls": 6,
+        "independentMs": 335.46820000000025,
+        "independentCpuMs": 15.625,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 372.4630000000002,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "reciprocal_balance",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "b9a991a46d109670f353b5d5fcd71fd7b48f62bf0de1983ccf68d297d84e6110",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 197340,
+        "totalWork": 249638,
+        "supports": 246,
+        "requests": 7,
+        "nativeMs": 28.800199999998767,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 352.48030000000017,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 388.3535999999999,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "reciprocal_balance",
+        "strategy": "EVIDENCE_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "b9a991a46d109670f353b5d5fcd71fd7b48f62bf0de1983ccf68d297d84e6110",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 215893,
+        "totalWork": 281589,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 44.82220000000052,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": null,
+        "independentCalls": 6,
+        "independentMs": 338.9410000000007,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 391.9870000000001,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "bidirectional_ratio",
+        "strategy": "EVIDENCE_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "990f764011fbeb0bfde95147eb04f3b17cf2f5f3edf9e3846ffbe761a04ea5ec",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 233580,
+        "totalWork": 300000,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 35.617000000000644,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": null,
+        "independentCalls": 5,
+        "independentMs": 295.156199999999,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 337.5924,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "bidirectional_ratio",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "990f764011fbeb0bfde95147eb04f3b17cf2f5f3edf9e3846ffbe761a04ea5ec",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 209827,
+        "totalWork": 269673,
+        "supports": 246,
+        "requests": 7,
+        "nativeMs": 32.727499999999964,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 362.8029000000006,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 402.8944999999994,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "quadratic_relative_response",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "64a1e61cb6774870fbd9583417eb2ec8e790e2ba0dc816795b70879f6a53e76d",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 230412,
+        "totalWork": 300000,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 35.1863000000003,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 5,
+        "independentMs": 291.439800000001,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 334.6192000000001,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "quadratic_relative_response",
+        "strategy": "EVIDENCE_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "64a1e61cb6774870fbd9583417eb2ec8e790e2ba0dc816795b70879f6a53e76d",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 222758,
+        "totalWork": 289935,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 35.76459999999861,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": null,
+        "independentCalls": 6,
+        "independentMs": 344.39360000000124,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 388.5135,
+        "acceptedLeadingPrediction": false
+      }
+    ]
+  },
+  "summary": {
+    "selectedTasks": 4,
+    "pairedArmsPerTask": 2,
+    "baselineAcceptedLeadingPredictions": 0,
+    "correctedAcceptedLeadingPredictions": 3,
+    "harderCaseSolved": false,
+    "missingBudgetCoverageIsNotProviderFailure": true
+  },
+  "cost": {
+    "sameUpperCeilings": true,
+    "sameCalibrationAndProspectiveInputs": true,
+    "sameIndependentGrader": true,
+    "sameRealizedTotalCompute": false,
+    "additionalInferenceCalls": 0,
+    "reason": "Realized native work and independent verification calls vary; they are retained per row. One baseline and one corrected row exhausted work during ordinary admission after five independent calls, not six. No aggregate cost equality or efficiency-superiority claim."
+  },
+  "limitations": [
+    "The grammar is finite and opt-in; this is not an independently learned general reasoning engine.",
+    "Three-variable retention prunes higher-cost descriptors at 58 evaluated atoms.",
+    "The quadratic relative-response case remains unsolved under the frozen traversal/support/work limits; its false saturated hypotheses remain uncertain, not scientific facts.",
+    "Prospective checks cover three synthetic points, not universal causal truth or novelty.",
+    "No live model selected the new strategy; typed NYX composition is tested with an explicitly labeled test double only.",
+    "The evaluation bundles grammar expansion, family priority and witness deduplication; it does not isolate each component on fresh tasks."
+  ],
+  "sourceReproduction": {
+    "path": "scripts/omegaScientificLaurentSearch.test.ts",
+    "firstExecutionSourceSha256": "7164742ca27dc82bc5c15c28a5ddf76bc2aac61360247130bc74a1174c766e72",
+    "currentRegressionSourceSha256": "1fa55c9fbcbb3bfe1294ba4be9c787ab2a5488be98b04f4946bc1a90d774f933",
+    "removeImportsToReproduceFirst": [
+      "runNyxScientificModelGeneration",
+      "NvidiaNimCompletionResult"
+    ],
+    "removeBlockMarkers": [
+      "POST_TRANSFER_REGRESSION_BEGIN",
+      "POST_TRANSFER_REGRESSION_END"
+    ],
+    "firstSourceReproducedAndHashed": true,
+    "transferCasesAndSolverUnchangedAfterFirstOutcomes": true,
+    "focusedRegressionPassed": 30,
+    "focusedRegressionFailed": 0
+  },
+  "planCoverage": {
+    "direct": [
+      "GENERAL_MATHEMATICAL_TOOL_CAPABILITY",
+      "NO_SELF_CERTIFICATION",
+      "GENERATOR_REQUIRES_VALIDATED_DETECTOR",
+      "BOUNDED_EXPERIMENTS"
+    ],
+    "supporting": [
+      "EXACT_RATIONAL_FITTING",
+      "CAPABILITY_NOT_AUTHORITY",
+      "FROZEN_FIRST_OUTCOMES_AND_FRESH_TRANSFER"
+    ],
+    "deferred": [
+      "LIVE_MODEL_SELECTION",
+      "BROADER_SCIENTIFIC_TRANSFER",
+      "ORIGINAL_DISCOVERY",
+      "ASTRA_SUPERIORITY"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

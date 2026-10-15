@@ -1,5 +1,44 @@
 # NYX benchmark capability program
 
+### Bounded mixed-ratio science-tool transfer (2026-10-15)
+
+The opt-in EVIDENCE_LAURENT_MODULAR strategy adds mixed-sign monomials such as
+`u/v`, which were outside the prior grammar. Its finite signed-exponent pool is
+capped at 82 descriptors and 58 retained/evaluated atoms. At equal operator cost,
+mixed ratios have an explicit family prior. Legacy strategies and defaults are
+unchanged; no model, tool, environment or production authority is granted.
+
+Development exposed a second issue: one correct two-parameter hypothesis was
+found early, but repeatedly rebuilding the same function with zero additional
+coefficients exhausted the original 300000-work limit before a three-model
+search returned. Deduplicating exact nonzero coefficient witnesses fixed both
+development cases without reducing the target or increasing limits. A witness
+is cached only after original-row and prospective-input domain checks; every
+retained hypothesis still requires independent original-source fit and point
+replay plus ordinary admission. This does not make fitted hypotheses true.
+
+Four new synthetic cases were frozen before first execution. The previous
+EVIDENCE_MODULAR control had **0/4 correct leading prospective predictions**;
+the new strategy had **3/4**, each with at least two ordinarily admitted
+competing hypotheses. The higher-degree relative-response case remains unsolved;
+its saturated fits do not establish scientific truth. Original first outcomes
+are preserved, not replaced by subsequent regression runs.
+
+Upper work/time/request/support limits and independent acceptance are identical.
+Realized native work and verifier calls vary and are reported per row; equal
+inference (zero model calls) is not equal total compute. This bundles grammar,
+family ordering and exact-witness deduplication rather than independently
+attributing fresh-task gains to each component. The cases are developer-composed,
+not private or independently designed, and are now exposed regression data.
+
+Typed NYX integration passes with an explicitly labeled test double. No live
+model selected this strategy; no public benchmark, general cognition, novelty,
+physical science or Astra-superiority claim is made. The running AIME epoch at
+`b07e807` is unchanged and does not exercise this new science-tool strategy.
+See [first outcomes and limits](../../../docs/omega/evidence/exact-laurent-search-transfer-2026-10-15.json).
+Plan coverage: bounded mathematical capability, validated detectors, independent
+admission and fresh transfer; PARTIAL / JUST-IN-TIME.
+
 ### AIME 2026 partial result and bounded allocation recovery (2026-10-15)
 
 Frozen `a840700`, run `38677741472`, ended after ten attempted questions: seven
