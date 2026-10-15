@@ -23,8 +23,16 @@ export const ULTRA_RESEARCH_PAIR_POLICY = Object.freeze({
   productionDefaultsChanged: false, grantsAuthority: false,
 });
 export type UltraResearchArm = typeof ULTRA_RESEARCH_PAIR_POLICY.arms[number];
+export type UltraNativeEffort = "HIGH" | "MEDIUM";
 export interface UltraResearchModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
+}
+
+/** Host-owned experimental factor only. The default retains the frozen HIGH
+ * wire profile; this does not change production or supply a thinking budget. */
+export function ultraNativeEffortRequest(request: NvidiaNimCompletionRequest, effort: UltraNativeEffort) {
+  if (effort !== "HIGH" && effort !== "MEDIUM") throw Error("ultra_research_effort_not_authorized");
+  return {...ultraMathematicsRequest(request, true), reasoningEffort: effort === "MEDIUM" ? "MEDIUM" as const : undefined};
 }
 
 /** New campaign only: historical explicit Super experiments stay reproducible. */
@@ -79,14 +87,16 @@ export function standaloneUltraResult(response: NvidiaNimCompletionResult, befor
 
 export async function runUltraResearchArm(task: PrivateTextTask, arm: UltraResearchArm,
   model: UltraResearchModel, candidate: string, epochDeadline: number,
-  evidence: NvidiaNimEvidence[] = []) {
+  evidence: NvidiaNimEvidence[] = [], nativeEffort: UltraNativeEffort = "HIGH") {
   const policy = ULTRA_RESEARCH_PAIR_POLICY;
   if (!policy.arms.includes(arm) || !/^[a-f0-9]{40}$/.test(candidate)
     || !["AIME_2026", "GPQA_DIAMOND", "DEVELOPMENT_DIAGNOSTIC"].includes(task.family)
     || typeof task.question !== "string" || !task.question.trim()
     || textTaskPrompt(task.question).length > 8000 || nyxContainsSecretLike(task.question)
     || !Number.isSafeInteger(epochDeadline) || epochDeadline <= Date.now()) throw Error("ultra_research_input_scope_rejected");
+  if (nativeEffort !== "HIGH" && nativeEffort !== "MEDIUM") throw Error("ultra_research_effort_not_authorized");
   const started = Date.now(), deadline = Math.min(epochDeadline, started + policy.maxTaskMs);
+  const identitySuffix = nativeEffort === "HIGH" ? "" : "-MEDIUM";
   const repository = await R3BenchmarkRepositorySession.create(
     {"src/question.mjs": `export const question = ${JSON.stringify(task.question)};\n`}, candidate, deadline, 1);
   let reader: ReadOnlyRepositoryExecutor | null = null, result: NyxChatTurnResult | null = null;
@@ -100,7 +110,7 @@ export async function runUltraResearchArm(task: PrivateTextTask, arm: UltraResea
       invocationFailure = "ultra_research_wire_profile_mismatch"; throw Error(invocationFailure);
     }
     let response: NvidiaNimCompletionResult;
-    try {response = await model.complete(textBoundedTaskRequest(ultraMathematicsRequest(request, true), deadline));}
+    try {response = await model.complete(textBoundedTaskRequest(ultraNativeEffortRequest(request, nativeEffort), deadline));}
     catch {invocationFailure = "ultra_research_model_invocation_failed"; throw Error(invocationFailure);}
     evidence.push(response.evidence);
     if (response.evidence.model !== policy.model) {
@@ -109,18 +119,18 @@ export async function runUltraResearchArm(task: PrivateTextTask, arm: UltraResea
     return response;
   }};
   try {
-    reader = await ReadOnlyRepositoryExecutor.create({executorId: `ULTRA-PAIR-${arm}-${task.taskId}`,
-      tokenId: `ULTRA-PAIR-TOKEN-${arm}-${task.taskId}`, repositoryRoot: repository.sourceRoot,
+    reader = await ReadOnlyRepositoryExecutor.create({executorId: `ULTRA-PAIR-${arm}-${task.taskId}${identitySuffix}`,
+      tokenId: `ULTRA-PAIR-TOKEN-${arm}-${task.taskId}${identitySuffix}`, repositoryRoot: repository.sourceRoot,
       resourceScopes: ["src/question.mjs"], issuedAtEpochMs: started, expiresAtEpochMs: deadline,
       constraints: {maxFileBytes: 64000, maxDirectoryEntries: 1, allowedExtensions: [".mjs"]},
-      issuer: "NYX-ULTRA-RESEARCH-PAIR", auditIdentity: `ULTRA-PAIR-AUDIT-${arm}-${task.taskId}`});
+      issuer: "NYX-ULTRA-RESEARCH-PAIR", auditIdentity: `ULTRA-PAIR-AUDIT-${arm}-${task.taskId}${identitySuffix}`});
     if (arm === "STANDALONE_ULTRA") {
       const response = await bounded.complete(standaloneUltraRequest(task.question,
-        `ULTRA-PAIR-${arm}-${task.taskId}`, deadline));
+        `ULTRA-PAIR-${arm}-${task.taskId}${identitySuffix}`, deadline));
       const normalized = standaloneUltraResult(response, Date.now() < deadline);
       result = normalized.turn; rejection = normalized.rejection;
     } else {
-      result = await invokeExistingNyxText({sessionId: `ULTRA-PAIR-${arm}-${task.taskId}`, model: bounded,
+      result = await invokeExistingNyxText({sessionId: `ULTRA-PAIR-${arm}-${task.taskId}${identitySuffix}`, model: bounded,
         reader, candidateWriter: null, editablePaths: [], maxCandidatesPerTurn: 0, maxModelCallsPerTurn: 1,
         maxTurnMs: deadline - Date.now(), maxOutputTokens: policy.maxOutputTokens,
         actionContract: {kind: "REPLY_ONLY"}}, task.question, "DIRECT");
@@ -141,7 +151,7 @@ export async function runUltraResearchArm(task: PrivateTextTask, arm: UltraResea
     implementation: arm === "STANDALONE_ULTRA" ? "PROVIDER_PLUS_MINIMAL_SHARED_REPLY_IO_NO_NYX_SESSION" : "EXISTING_NYX_CHAT_SESSION_REPLY_ONLY",
     scope: "CLOSED_BOOK_PATH_NOT_FULL_TOOL_ENABLED_RESEARCH_ARCHITECTURE",
     authorization: {allowedActions: ["REPLY"], repositoryReadsExecuted: 0, toolsExecuted: 0, authorityDelta: "NONE"},
-    cleanup, logicalRequests, uncertainty: "NOT_MEASURED_NOT_INFERRED_FROM_CORRECTNESS"};
+    cleanup, logicalRequests, nativeEffort, uncertainty: "NOT_MEASURED_NOT_INFERRED_FROM_CORRECTNESS"};
 }
 export type UltraResearchRow = Awaited<ReturnType<typeof runUltraResearchArm>>;
 
@@ -149,7 +159,7 @@ export type UltraResearchRow = Awaited<ReturnType<typeof runUltraResearchArm>>;
 export function summarizeUltraResearchPairs(selected: readonly string[], rows: readonly UltraResearchRow[]) {
   if (!selected.length || new Set(selected).size !== selected.length
     || new Set(rows.map(r => `${r.arm}:${r.taskId}`)).size !== rows.length
-    || rows.some(r => !selected.includes(r.taskId) || !ULTRA_RESEARCH_PAIR_POLICY.arms.includes(r.arm)
+    || rows.some(r => !selected.includes(r.taskId) || !ULTRA_RESEARCH_PAIR_POLICY.arms.includes(r.arm) || r.nativeEffort !== "HIGH"
       || (r.correct === true) !== (r.state === "PASS")
       || (r.correct === false) !== (r.state === "REASONING_FAILURE"))) throw Error("ultra_research_result_identity_invalid");
   const arms = ULTRA_RESEARCH_PAIR_POLICY.arms.map(arm => {

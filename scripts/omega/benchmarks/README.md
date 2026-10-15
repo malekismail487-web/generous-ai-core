@@ -1,5 +1,50 @@
 # NYX benchmark capability program
 
+### Native Ultra HIGH versus MEDIUM: separate development ablation
+
+`nyx-ultra-native-effort-development/1` tests the specific completion-within-lease
+hypothesis from the incomplete `dfed49a5` pilot. It is **not a benchmark rerun,
+an architecture comparison, or a cognitive improvement claim**. The same actual
+NYX closed-book session, direct question, fixed Ultra model, strict typed reply,
+grader, SSE transport and resource bounds are used in both profiles. Only the
+supported native `reasoning_effort` field varies: HIGH versus MEDIUM. No unsupported
+thinking budget, Super fallback, deadline renewal or production-default change.
+
+Four synthetic development objectives cover constrained sequence counting,
+algebraic power sums, reaction-state equilibrium and steady heat balance.
+References are independently checked by exhaustive enumeration, an algebraic
+identity, exact rational row elimination and equation substitution in Python,
+separate from the host DP/recurrence/tree-weight/determinant methods. These are
+implementation-visible diagnostic tasks, **not frontier/held-out generalization
+evidence**. NYX sees only each question, never its host oracle or earlier sessions.
+
+Each domain counterbalances profile order. Both profiles must pass their own
+development availability task before comparison calls. One call/four HTTP attempts
+per cell, 16384 total completion tokens, original 360-second task/300-second
+request lifetime, ten total logical calls/40 HTTP attempts and 65-minute epoch
+remain unchanged. The original benchmark pair stays HIGH-only; mixed effort
+cannot masquerade as that architecture comparison.
+
+The existing runner gains a validated `DEVELOPMENT_EFFORT` mode rather than a new
+execution stack. It skips all benchmark downloads and records development costs
+separately from preflight. Per-profile accuracy exists only with complete grading;
+unknown usage, wrong answers, no-final timeouts, truncation and transient 503s
+remain distinct. Equal ceilings do not establish matched actual compute. Even a
+faster successful development profile is not automatically promoted: fresh transfer,
+regressions, real tool-enabled research comparisons and human review remain.
+
+The prospective one-shot development launch uses an exact commit-message gate;
+remove it after terminal evidence capture. It does not rerun the old benchmark
+epoch or begin additional campaigns automatically. Model/request identities differ
+between effort profiles while instructions and allowed actions remain identical.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: configuration separated from
+architecture, evidence over confidence, independent oracle validation, unchanged
+scope/leases and complete cost accounting. Supporting: reusable execution,
+provenance, strict admission and negative-outcome preservation. Deferred:
+benchmark/fresh-transfer validation, significant general reasoning mechanisms and
+profile promotion. No supersession of historical outcomes or authority increase.
+
 ### Ultra versus current NYX: frozen closed-book paired pilot
 
 `nyx-ultra-closed-book-pair/1` starts with one shared development availability

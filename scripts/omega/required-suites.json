@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/110",
+  "suiteVersion": "omega-institutional-suite/111",
   "criticalSuites": [
+    "OMEGA-ULTRA-EFFORT-DEVELOPMENT",
     "OMEGA-ULTRA-RESEARCH-PAIR",
     "OMEGA-NVIDIA-EVENT-STREAM",
     "OMEGA-QUOTA-CI-HOST-GUARD",
@@ -209,6 +210,7 @@
     { "suiteId": "OMEGA-BOUNDED-SUPPORT-INTERLEAVER", "file": "scripts/omegaBoundedSupportInterleaver.test.ts" },
     { "suiteId": "OMEGA-QUOTA-CI-HOST-GUARD", "file": "scripts/omegaQuotaCiHostGuard.test.mjs" },
     { "suiteId": "OMEGA-NVIDIA-EVENT-STREAM", "file": "scripts/omegaNvidiaEventStream.test.ts" },
-    { "suiteId": "OMEGA-ULTRA-RESEARCH-PAIR", "file": "scripts/omegaUltraResearchPair.test.ts" }
+    { "suiteId": "OMEGA-ULTRA-RESEARCH-PAIR", "file": "scripts/omegaUltraResearchPair.test.ts" },
+    { "suiteId": "OMEGA-ULTRA-EFFORT-DEVELOPMENT", "file": "scripts/omegaUltraEffortDevelopment.test.ts" }
   ]
 }

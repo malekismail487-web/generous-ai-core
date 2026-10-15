@@ -1,6 +1,15 @@
-name: Omega Ultra standalone versus current NYX closed-book pilot
+name: Omega Ultra bounded research comparison
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [BENCHMARK_PAIR, DEVELOPMENT_EFFORT]
+        default: BENCHMARK_PAIR
+        description: Frozen benchmark pair or separate synthetic native-effort development ablation
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-ultra-research-pair.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,9 +17,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   paired-ultra:
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'eval(nyx): freeze Ultra native effort development ablation'
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    env:
+      NYX_ULTRA_RESEARCH_MODE: ${{ github.event_name == 'push' && 'DEVELOPMENT_EFFORT' || inputs.mode || 'BENCHMARK_PAIR' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,10 +44,11 @@ jobs:
           OMEGA_POLYNOMIAL_PYTHON: python3
         run: |
           npm run typecheck:ratchet
-          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-ultra-research-pair.ts scripts/omegaUltraResearchPair.test.ts
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-ultra-research-pair.ts scripts/omegaUltraResearchPair.test.ts scripts/omegaUltraEffortDevelopment.test.ts
           npm run security:secrets
           npm run omega:tests
       - name: Reuse pinned author-data preparation without exposing references
+        if: env.NYX_ULTRA_RESEARCH_MODE == 'BENCHMARK_PAIR'
         id: prepare
         env:
           GIT_LFS_SKIP_SMUDGE: '1'

@@ -2689,6 +2689,12 @@
       ]
     },
     {
+      "name": "NYX_ULTRA_RESEARCH_MODE",
+      "files": [
+        "scripts/omega/nyx-ultra-research-pair.ts"
+      ]
+    },
+    {
       "name": "NYX_V3_FRESH_BUDGET_TRANSFER",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"
@@ -2826,6 +2832,7 @@
         "scripts/omegaScientificModelGeneration.test.ts",
         "scripts/omegaScientificStructureSearch.test.ts",
         "scripts/omegaSemanticPolynomialProof.test.ts",
+        "scripts/omegaUltraEffortDevelopment.test.ts",
         "scripts/omegaUltraMathematicsEvaluation.test.ts"
       ]
     },
