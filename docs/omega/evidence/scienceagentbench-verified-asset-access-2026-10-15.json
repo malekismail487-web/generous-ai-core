@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "identity": "SCIENCEAGENTBENCH-VERIFIED-ASSET-ACCESS-2026-10-15",
+  "baseCandidate": "dfed49a5fb2469c6f590dbffe033a2cedb5b096c",
+  "evidenceScope": "E4_ANONYMOUS_HTTP_ACCESS_OBSERVATION_NOT_MODEL_OR_COGNITIVE_EVIDENCE",
+  "source": {
+    "repository": "OSU-NLP-Group/ScienceAgentBench",
+    "revision": "c26e151ed601ba109dc4d35e057ff8e73fec469d",
+    "archiveSha256": "9749795e04cbafcb6a19e0161a64769949803862b9e873d2fed09127dc2f23cf",
+    "archiveBytes": 67706,
+    "readmeSha256": "0696fe4ffa234ea30346901d9d61263d20d548e58810049c873b2049ac1a04b1",
+    "assetLocator": "Author README updates and benchmark access: benchmark_verified.zip link",
+    "assetHost": "buckeyemailosu-my.sharepoint.com",
+    "priorAcquisitionReceipt": "frontier-science-math-acquisition-2026-10-15.json"
+  },
+  "observedAtUtc": "2026-10-15T18:43:00Z",
+  "timestampPrecision": "MINUTE",
+  "requests": [
+    {
+      "method": "HEAD",
+      "timeoutMs": 20000,
+      "statusCode": 401,
+      "contentType": "text/plain; charset=utf-8",
+      "contentLength": 0,
+      "credentials": "OMIT",
+      "responseBodyRead": false
+    },
+    {
+      "method": "GET",
+      "rangeRequested": "bytes=0-4095",
+      "timeoutMs": 20000,
+      "statusCode": 401,
+      "contentType": "text/plain; charset=utf-8",
+      "contentLength": 0,
+      "credentials": "OMIT",
+      "responseBodyRead": false
+    }
+  ],
+  "result": "AUTHOR_LINK_ANONYMOUS_ACCESS_DENIED",
+  "verifiedRuntimeArchive": "NOT_ACQUIRED",
+  "publicTaskTablesAndAuthorSource": "PREVIOUSLY_ACQUIRED_PRESERVED",
+  "credentialsDiscoveredOrSupplied": false,
+  "accessConditionsBypassed": false,
+  "protectedReferencesOpened": false,
+  "archiveExtracted": false,
+  "unfamiliarSourceExecuted": false,
+  "modelCalls": 0,
+  "cognitiveImprovementClaim": false,
+  "limitations": [
+    "This records the published link's response at the observation time, not proof that the asset is permanently private or unavailable everywhere.",
+    "Neither public table acquisition nor source acquisition certifies the verified task assets, runtime or grader.",
+    "No alternative credentials or private endpoints were sought."
+  ],
+  "minimumAcquisitionDependency": "Legitimate access to the author-provided verified archive, or an author-provided accessible public replacement link.",
+  "executionDependenciesRemain": [
+    "Appropriately isolated execution with declared resource limits.",
+    "Task-specific license preservation and independent grading admission.",
+    "Authorized independent visualization judging where the official protocol requires it."
+  ],
+  "otherCampaignWorkBlocked": false,
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "direct": ["Respect author access conditions", "Downloading is not capability verification", "Blocked is distinct from failed"],
+    "supporting": ["Source provenance", "No credential discovery", "No benchmark-oracle leakage"],
+    "deferred": ["Verified ScienceAgentBench runtime acquisition and execution"],
+    "conflicts": []
+  }
+}

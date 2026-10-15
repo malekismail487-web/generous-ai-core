@@ -58,6 +58,13 @@ promotion. No architectural conflict or supersession of historical results.
 
 ### Frontier mathematics/science directive: acquisition and baseline audit
 
+The [ScienceAgentBench verified-asset access receipt](../../../docs/omega/evidence/scienceagentbench-verified-asset-access-2026-10-15.json)
+records anonymous HEAD and bounded GET responses of **401** from the archive
+link in the pinned author README. No archive, credentials or protected references
+were opened. Previously acquired public tables/source remain valid; the verified
+runtime archive needs legitimate access or an accessible author replacement link.
+This does not block other benchmark work or establish a cognitive result.
+
 The new research directive prioritizes **standalone Nemotron 3 Ultra versus
 NYX + Ultra**, general corrections and independent cross-domain validation. An
 incomplete benchmark no longer blocks unrelated productive campaign work.
