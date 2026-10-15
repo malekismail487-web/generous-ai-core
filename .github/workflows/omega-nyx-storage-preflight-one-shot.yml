@@ -3,14 +3,15 @@ on:
   workflow_dispatch:
   push:
     branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml]
+    paths: [.github/workflows/omega-nyx-storage-preflight-one-shot.yml, scripts/omega/ci/**]
 permissions:
   contents: read
 jobs:
   storage-prerequisite:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'infra(nyx): exercise quota-backed CI storage'
+      github.event.head_commit.message == 'infra(nyx): exercise quota-backed CI storage' ||
+      github.event.head_commit.message == 'fix(nyx): scope quota-daemon logging to runner'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -35,11 +36,12 @@ jobs:
           bash -n scripts/omega/ci/run-quota-backed-preflight.sh
           shellcheck scripts/omega/ci/run-quota-backed-preflight.sh
       - name: Test the unchanged quota contract on a private quota-backed data root
+        id: quota
         env:
           OMEGA_ALLOW_QUOTA_HOST_SETUP: '1'
         run: bash scripts/omega/ci/run-quota-backed-preflight.sh
       - name: Preserve environment evidence regardless of availability
-        if: always()
+        if: always() && steps.quota.outcome != 'skipped'
         uses: actions/upload-artifact@v4
         with:
           name: nyx-storage-prerequisite-${{ github.sha }}

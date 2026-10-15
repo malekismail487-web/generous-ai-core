@@ -103,10 +103,12 @@ owned_mount
 taskPhase=START_OWNED_DAEMON
 # Only the disposable worker's daemon is stopped. Its original data is untouched.
 sudo systemctl stop docker.service docker.socket
-sudo dockerd --config-file "$taskConfig" --data-root "$taskData" --exec-root "$taskRoot/exec" \
-  --pidfile "$taskPidfile" --host unix:///var/run/docker.sock --storage-driver overlay2 \
-  --iptables=false --ip6tables=false --bridge=none --ip-forward=false --ip-masq=false \
-  >"$taskRoot/daemon.log" 2>&1 &
+# The private log belongs to the runner; only the daemon is elevated.
+{
+  sudo dockerd --config-file "$taskConfig" --data-root "$taskData" --exec-root "$taskRoot/exec" \
+    --pidfile "$taskPidfile" --host unix:///var/run/docker.sock --storage-driver overlay2 \
+    --iptables=false --ip6tables=false --bridge=none --ip-forward=false --ip-masq=false
+} >"$taskRoot/daemon.log" 2>&1 &
 taskDaemonStarted=1
 ready=0
 for _ in {1..60}; do
