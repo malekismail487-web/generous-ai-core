@@ -22,7 +22,8 @@ jobs:
   full-aime26:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): diagnose bounded Ultra streaming delivery'
+      github.event.head_commit.message == 'eval(nyx): diagnose bounded Ultra streaming delivery' ||
+      github.event.head_commit.message == 'fix(nyx): classify streamed service errors and retain usage'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:

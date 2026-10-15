@@ -18,7 +18,7 @@ termination and observed token usage. No bytes-to-token
 estimate is made. Missing usage stays unknown; delivered usage remains visible
 even when missing termination prevents content acceptance. A socket failure is
 transport, malformed framing is schema, and an expired request is not reasoning
-failure. Thirty-eight adversarial/integration checks exercise these boundaries;
+failure. Forty-three adversarial/integration checks exercise these boundaries;
 the unchanged provider regression suite retains its 368 checks.
 
 The existing AIME harness gains a DEVELOPMENT_STREAM_DIAGNOSIS mode: the two
@@ -28,8 +28,27 @@ grader, R1 read, token limits and 360-second task/300-second request boundaries.
 Maximum eight logical / sixteen HTTP calls and a 24-minute epoch. No benchmark
 data is prepared or loaded. Equal caps do not imply matched realized compute.
 This tests wire integration and observability, NOT AIME recovery, representative
-hard-task delivery, cognitive gain or a full benchmark score. Live result pending.
-The exact-message push hook launches only this finite development mode.
+hard-task delivery, cognitive gain or a full benchmark score.
+
+First live candidate `231a89a`, run `38735996870`: nonstreaming passed both
+development cases after three provider retries; SSE passed one and rejected the
+first event of the other before model content. The original metadata cannot
+identify that malformed frame's exact cause. No raw provider message or reasoning
+was retained. All three SSE HTTP calls had unknown token usage. This is NOT a
+matched-compute or latency-win claim. The [immutable first-result receipt](../../../docs/omega/evidence/nyx-stream-delivery-diagnosis-231a89a.json)
+binds eleven sources, archive/log and SHA256
+`943efb1cf9472cd8f8c464bbb9605051c5e05f7eecd2d70e76ead7c0fdd6bbdb`.
+
+The focused correction retains fixed parser reason codes and numeric service-error
+statuses only. An explicit service-error envelope inside HTTP 200 is distinguished
+from malformed model output; only known transient codes use the ORIGINAL shared
+retry/deadline limits. Unknown service errors remain failures. SSE now explicitly
+requests terminal usage, as described in NVIDIA's
+[streaming metadata guide](https://docs.nvidia.com/nemo/guardrails/v0.24.1/run-guardrailed-inference/using-python-apis/streaming).
+No unavailable usage is estimated. A single repeated DEVELOPMENT comparison is
+pending; no benchmark task is started. The exact-message push hook launches only
+this finite development mode. This correction does not claim the original
+unretained frame was a particular service error.
 
 Adversarial review also found that hashing a numeric answer's provider JSON
 envelope is still enumerable. Public mathematics rows now null those response

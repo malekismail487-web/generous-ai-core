@@ -4491,6 +4491,8 @@ function newNvidiaStreamDiagnostics() {
     lastEventAfterMs: null,
     usageReceived: false,
     reportedUsage: { promptTokens: null, completionTokens: null, totalTokens: null },
+    failureCode: null,
+    providerErrorStatusCode: null,
     terminal: "PENDING"
   };
 }
@@ -4501,6 +4503,7 @@ async function readNvidiaEventStream(response, signal, stats, now = Date.now) {
   const began = now();
   const fail2 = (state, code) => {
     stats.terminal = state;
+    stats.failureCode = code;
     throw Error(code);
   };
   if (response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !== "text/event-stream" || !response.body) {
@@ -4534,7 +4537,15 @@ async function readNvidiaEventStream(response, signal, stats, now = Date.now) {
       fail2("MALFORMED", "nvidia_stream_event_not_json");
     }
     const frame = record(raw);
-    if (!frame || "error" in frame || !Array.isArray(frame.choices) || frame.choices.length > 1)
+    if (frame && "error" in frame) {
+      const error = record(frame.error), code = error?.code ?? error?.status_code;
+      const status = typeof code === "number" ? code : typeof code === "string" && /^[45][0-9]{2}$/.test(code) ? Number(code) : null;
+      stats.providerErrorStatusCode = Number.isSafeInteger(status) && status >= 400 && status <= 599 ? status : null;
+      stats.terminal = "PROVIDER_ERROR";
+      stats.failureCode = "nvidia_stream_provider_error";
+      throw Error("nvidia_stream_provider_error");
+    }
+    if (!frame || !Array.isArray(frame.choices) || frame.choices.length > 1)
       fail2("MALFORMED", "nvidia_stream_event_shape_invalid");
     if (frame.usage !== void 0 && frame.usage !== null) {
       const value = record(frame.usage);
@@ -4625,6 +4636,7 @@ async function readNvidiaEventStream(response, signal, stats, now = Date.now) {
     }
     if (!done) {
       stats.terminal = "INCOMPLETE";
+      stats.failureCode = "nvidia_stream_incomplete";
       throw Error("nvidia_stream_incomplete");
     }
     try {
@@ -4715,6 +4727,9 @@ function failureDiagnostics(reason, statusCode) {
   if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
+  if (reason === "nvidia_provider_stream_error") return { category: "PROVIDER_STREAM_ERROR", retryability: "UNKNOWN" };
+  if (/^nvidia_provider_stream_http_[45][0-9]{2}$/.test(reason))
+    return failureDiagnostics("nvidia_provider_http_error", Number(reason.slice(-3)));
   if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content" || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid" || reason === "nvidia_provider_stream_invalid") {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
@@ -4791,6 +4806,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       max_tokens: request.maxTokens,
       temperature: request.temperature,
       stream: this.#config.responseMode === "BOUNDED_SSE",
+      ...this.#config.responseMode === "BOUNDED_SSE" ? { stream_options: { include_usage: true } } : {},
       ...responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {},
       ...request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON" ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE" || request.reasoningControl === "SUPER_HOSTED_NATIVE" ? {
         reasoning_effort: request.inferencePolicy === "CONSTRAINED_JSON" ? "none" : request.reasoningEffort === "MEDIUM" ? "medium" : "high",
@@ -4994,12 +5010,13 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         (allocation) => allocatedAttemptMs.push(allocation)
       );
       if (previous.evidence.networkAttempted) httpAttempts += 1;
-      if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
-      if (previous.evidence.statusCode === 429 && this.#capacity) {
+      const providerStatus = previous.evidence.streamDelivery?.providerErrorStatusCode ?? previous.evidence.statusCode;
+      if (providerStatus === 429) rateLimitedResponses += 1;
+      if (providerStatus === 429 && this.#capacity) {
         waitVisible = true;
         continue;
       }
-      if ([500, 502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
+      if ([500, 502, 503, 504].includes(providerStatus ?? 0)) {
         transientUnavailableResponses += 1;
         if (this.#capacity && (transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries || this.#httpAttemptBudgets.some((budget) => budget.transientRecovery) && this.#remainingHttpAttempts() > 0)) {
           waitVisible = true;
@@ -5186,6 +5203,24 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         if (controller.signal.aborted) throw error;
         if (streamDelivery && !(error instanceof Error && error.message.startsWith("nvidia_stream_"))) throw error;
         if (streamDelivery) controller.abort();
+        if (streamDelivery?.terminal === "PROVIDER_ERROR") {
+          const code = streamDelivery.providerErrorStatusCode;
+          if ([429, 500, 502, 503, 504].includes(code ?? 0)) this.#capacity?.defer(null);
+          return this.#result(
+            "PROVIDER_ERROR",
+            code === null ? "nvidia_provider_stream_error" : `nvidia_provider_stream_http_${code}`,
+            null,
+            null,
+            requestDigest,
+            null,
+            response.status,
+            streamDelivery.reportedUsage,
+            true,
+            providerRequestId,
+            null,
+            streamDelivery
+          );
+        }
         return this.#result(
           "PROVIDER_ERROR",
           streamDelivery ? "nvidia_provider_stream_invalid" : "nvidia_provider_response_not_json",

@@ -10,14 +10,16 @@ export interface NvidiaStreamDiagnostics {
   firstEventAfterMs: number | null; firstReasoningAfterMs: number | null; firstContentAfterMs: number | null;
   lastEventAfterMs: number | null; usageReceived: boolean;
   reportedUsage: {promptTokens: number | null; completionTokens: number | null; totalTokens: number | null};
-  terminal: "PENDING" | "DONE" | "INCOMPLETE" | "MALFORMED" | "LIMIT_EXCEEDED" | "ABORTED";
+  failureCode: string | null; providerErrorStatusCode: number | null;
+  terminal: "PENDING" | "DONE" | "INCOMPLETE" | "MALFORMED" | "LIMIT_EXCEEDED" | "ABORTED" | "PROVIDER_ERROR";
 }
 export function newNvidiaStreamDiagnostics(): NvidiaStreamDiagnostics {
   return {mode: "BOUNDED_SSE", scope: "LAST_HTTP_ATTEMPT_ONLY", timingOrigin: "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
     wireBytes: 0, chunks: 0, events: 0,
     reasoningDeltaBytes: 0, contentDeltaBytes: 0, firstEventAfterMs: null, firstReasoningAfterMs: null,
     firstContentAfterMs: null, lastEventAfterMs: null, usageReceived: false,
-    reportedUsage: {promptTokens: null, completionTokens: null, totalTokens: null}, terminal: "PENDING"};
+    reportedUsage: {promptTokens: null, completionTokens: null, totalTokens: null},
+    failureCode: null, providerErrorStatusCode: null, terminal: "PENDING"};
 }
 const record = (v: unknown): Record<string, unknown> | null =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
@@ -28,7 +30,7 @@ export async function readNvidiaEventStream(response: Response, signal: AbortSig
   stats: NvidiaStreamDiagnostics, now: () => number = Date.now) {
   const began = now();
   const fail = (state: "MALFORMED" | "LIMIT_EXCEEDED", code: string): never => {
-    stats.terminal = state; throw Error(code);
+    stats.terminal = state; stats.failureCode = code; throw Error(code);
   };
   if (response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !== "text/event-stream" || !response.body) {
     try { void response.body?.cancel().catch(() => undefined); } catch { /* best effort */ }
@@ -50,7 +52,16 @@ export async function readNvidiaEventStream(response: Response, signal: AbortSig
     let raw: unknown;
     try { raw = JSON.parse(data); } catch { fail("MALFORMED", "nvidia_stream_event_not_json"); }
     const frame = record(raw);
-    if (!frame || "error" in frame || !Array.isArray(frame.choices) || frame.choices.length > 1)
+    if (frame && "error" in frame) {
+      const error = record(frame.error), code = error?.code ?? error?.status_code;
+      // Only a numeric status is retained, never a provider message or a model
+      // delta. A JSON-looking string inside delta.content is NOT this envelope.
+      const status = typeof code === "number" ? code : typeof code === "string" && /^[45][0-9]{2}$/.test(code) ? Number(code) : null;
+      stats.providerErrorStatusCode = Number.isSafeInteger(status) && status! >= 400 && status! <= 599 ? status : null;
+      stats.terminal = "PROVIDER_ERROR"; stats.failureCode = "nvidia_stream_provider_error";
+      throw Error("nvidia_stream_provider_error");
+    }
+    if (!frame || !Array.isArray(frame.choices) || frame.choices.length > 1)
       fail("MALFORMED", "nvidia_stream_event_shape_invalid");
     if (frame!.usage !== undefined && frame!.usage !== null) {
       const value = record(frame!.usage);
@@ -123,7 +134,7 @@ export async function readNvidiaEventStream(response: Response, signal: AbortSig
       if (Buffer.byteLength(pending, "utf8") > NVIDIA_STREAM_LIMITS.eventBytes) fail("LIMIT_EXCEEDED", "nvidia_stream_frame_limit");
       if (done && pending.trim()) fail("MALFORMED", "nvidia_stream_data_after_done");
     }
-    if (!done) { stats.terminal = "INCOMPLETE"; throw Error("nvidia_stream_incomplete"); }
+    if (!done) { stats.terminal = "INCOMPLETE"; stats.failureCode = "nvidia_stream_incomplete"; throw Error("nvidia_stream_incomplete"); }
     try { if (decoder.decode().trim()) fail("MALFORMED", "nvidia_stream_data_after_done"); }
     catch { fail("MALFORMED", "nvidia_stream_utf8_invalid"); }
     signal.throwIfAborted();

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {NVIDIA_STREAM_LIMITS, newNvidiaStreamDiagnostics, readNvidiaEventStream} from "../src/lib/codelab/model/nvidiaEventStream";
 import {NvidiaNimProvider, type NvidiaNimCompletionRequest} from "../src/lib/codelab/model/nvidiaNimProvider";
 import {sanitizedTextResult} from "./omega/benchmarks/nyxTextBenchmark";
-import {mathematicsPublicResult} from "./omega/nyx-aime26-live-eval";
+import {mathematicsPublicResult, mathematicsTaskHadOutage} from "./omega/nyx-aime26-live-eval";
 let passed = 0, failed = 0;
 async function check(label: string, fn: () => unknown) {
   try { await fn(); passed++; } catch { failed++; console.error(`FAIL ${label}`); }
@@ -113,6 +113,7 @@ await check("The existing provider composes streaming with unchanged strict outp
   assert.equal(r.decision, "COMPLETED"); assert.equal(payload.stream, true); assert.equal(accept, "text/event-stream");
   assert.equal(r.evidence.streamDelivery?.terminal, "DONE"); assert.equal(r.evidence.usage.totalTokens, 30);
   assert.equal(r.evidence.delivery?.httpAttempts, 1); assert.equal(r.executorAuthorityGranted, false);
+  assert.deepEqual(payload.stream_options, {include_usage: true});
   assert(!JSON.stringify(r).includes("SYNTHETIC_INTERNAL_SENTINEL")); assert.equal(r.evidence.evidenceClass, "E3");
   const row = sanitizedTextResult({taskId: "STREAM-DEVELOPMENT", family: "DEVELOPMENT_DIAGNOSTIC", question: "synthetic", answer: "1"},
     null, [r.evidence], null, 1);
@@ -146,6 +147,23 @@ await check("A broken socket is a transport failure, not a schema or reasoning f
       {headers: {"content-type": "text/event-stream"}})});
   const r = await provider.complete(request); assert.equal(r.content, null);
   assert.equal(r.evidence.failureCategory, "PROVIDER_TRANSPORT_ERROR"); assert.equal(r.evidence.statusCode, 200);
+});
+for (const code of [503, 429, "500", null]) await check(`In-band service error ${code} is not malformed model reasoning`, async () => {
+  const provider = NvidiaNimProvider.create({...config, responseMode: "BOUNDED_SSE", transport: async () =>
+    response('data: ' + JSON.stringify({error: {code, message: "SYNTHETIC_WITHHELD_SERVICE_MESSAGE"}}) + "\n\n")});
+  const r = await provider.withHttpAttemptBudget(1).complete(request);
+  assert.equal(r.content, null); assert.equal(r.evidence.statusCode, 200); assert.notEqual(r.decision, "COMPLETED");
+  assert.equal(r.evidence.streamDelivery?.terminal, "PROVIDER_ERROR");
+  assert.equal(r.evidence.streamDelivery?.providerErrorStatusCode, code === null ? null : Number(code));
+  assert.equal(r.evidence.failureCategory, code === null ? "PROVIDER_STREAM_ERROR" : Number(code) === 429 ? "PROVIDER_RATE_LIMIT"
+    : Number(code) === 503 ? "PROVIDER_UNAVAILABLE" : "PROVIDER_SERVER_ERROR");
+  assert.equal(r.evidence.delivery?.httpAttempts, 1); assert(!JSON.stringify(r).includes("SYNTHETIC_WITHHELD_SERVICE_MESSAGE"));
+  assert(mathematicsTaskHadOutage({modelEvidence: [r.evidence]}));
+});
+await check("Malformed frame diagnostics retain only their fixed reason code", async () => {
+  const stats = newNvidiaStreamDiagnostics();
+  await assert.rejects(readNvidiaEventStream(response("data: malformed\n\n"), new AbortController().signal, stats));
+  assert.equal(stats.failureCode, "nvidia_stream_event_not_json"); assert.equal(stats.providerErrorStatusCode, null);
 });
 console.log(`OMEGA_NVIDIA_EVENT_STREAM_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

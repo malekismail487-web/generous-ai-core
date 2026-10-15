@@ -65,8 +65,8 @@ type PublicResult = ReturnType<typeof mathematicsPublicResult>;
  * Task/epoch limits still bound every unsuccessful experiment. No item identity,
  * question, answer, or correctness participates in this connectivity decision. */
 export function mathematicsTaskHadOutage(row: {readonly modelEvidence:
-  readonly Pick<PublicResult["modelEvidence"][number], "statusCode" | "failureCategory">[]}): boolean {
-  return !row.modelEvidence.some(item => item.statusCode === 200)
+  readonly Pick<PublicResult["modelEvidence"][number], "statusCode" | "failureCategory" | "streamDelivery">[]}): boolean {
+  return !row.modelEvidence.some(item => item.statusCode === 200 && item.streamDelivery?.terminal !== "PROVIDER_ERROR")
     && row.modelEvidence.some(item => item.failureCategory !== null);
 }
 

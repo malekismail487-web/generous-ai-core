@@ -109,7 +109,7 @@ export type NvidiaNimFinishReason = "stop" | "length" | "content_filter" | "tool
 
 export type NvidiaNimProviderFailureCategory = "PROVIDER_AUTH_FAILURE" | "PROVIDER_RATE_LIMIT"
   | "PROVIDER_SERVER_ERROR" | "PROVIDER_UNAVAILABLE" | "PROVIDER_TIMEOUT" | "PROVIDER_TRANSPORT_ERROR"
-  | "PROVIDER_REQUEST_REJECTED" | "PROVIDER_RESPONSE_SCHEMA_ERROR" | "PROVIDER_CANCELLED";
+  | "PROVIDER_REQUEST_REJECTED" | "PROVIDER_RESPONSE_SCHEMA_ERROR" | "PROVIDER_CANCELLED" | "PROVIDER_STREAM_ERROR";
 
 export type NvidiaNimRetryability = "YES" | "NO" | "UNKNOWN";
 
@@ -262,6 +262,9 @@ function failureDiagnostics(reason: string, statusCode: number | null): {
   if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
+  if (reason === "nvidia_provider_stream_error") return { category: "PROVIDER_STREAM_ERROR", retryability: "UNKNOWN" };
+  if (/^nvidia_provider_stream_http_[45][0-9]{2}$/.test(reason))
+    return failureDiagnostics("nvidia_provider_http_error", Number(reason.slice(-3)));
   if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content"
     || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid"
     || reason === "nvidia_provider_stream_invalid") {
@@ -350,6 +353,7 @@ export class NvidiaNimProvider {
     const responseFormat = responseFormatPayload(request.responseFormat);
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
       temperature: request.temperature, stream: this.#config.responseMode === "BOUNDED_SSE",
+      ...(this.#config.responseMode === "BOUNDED_SSE" ? {stream_options: {include_usage: true}} : {}),
       ...(responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
         ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE"
@@ -501,9 +505,12 @@ export class NvidiaNimProvider {
       previous = await this.#attempt(body, requestDigest, signal, deadline, () => { finalAttemptTimeoutUsed = true; },
         allocation => allocatedAttemptMs.push(allocation));
       if (previous.evidence.networkAttempted) httpAttempts += 1;
-      if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
-      if (previous.evidence.statusCode === 429 && this.#capacity) { waitVisible = true; continue; }
-      if ([500, 502, 503, 504].includes(previous.evidence.statusCode ?? 0)) {
+      // Preserve the actual HTTP status; an explicit provider error envelope
+      // arriving inside HTTP 200 may independently request bounded recovery.
+      const providerStatus = previous.evidence.streamDelivery?.providerErrorStatusCode ?? previous.evidence.statusCode;
+      if (providerStatus === 429) rateLimitedResponses += 1;
+      if (providerStatus === 429 && this.#capacity) { waitVisible = true; continue; }
+      if ([500, 502, 503, 504].includes(providerStatus ?? 0)) {
         transientUnavailableResponses += 1;
         if (this.#capacity
           && (transientUnavailableResponses <= NVIDIA_CAPACITY_POLICY.maxTransientUnavailableRetries
@@ -624,6 +631,13 @@ export class NvidiaNimProvider {
         // A reader/socket exception is transport failure, not malformed JSON.
         if (streamDelivery && !(error instanceof Error && error.message.startsWith("nvidia_stream_"))) throw error;
         if (streamDelivery) controller.abort(); // No rejected stream outlives the request.
+        if (streamDelivery?.terminal === "PROVIDER_ERROR") {
+          const code = streamDelivery.providerErrorStatusCode;
+          if ([429, 500, 502, 503, 504].includes(code ?? 0)) this.#capacity?.defer(null);
+          return this.#result("PROVIDER_ERROR", code === null ? "nvidia_provider_stream_error" : `nvidia_provider_stream_http_${code}`,
+            null, null, requestDigest, null, response.status, streamDelivery.reportedUsage, true,
+            providerRequestId, null, streamDelivery);
+        }
         return this.#result("PROVIDER_ERROR", streamDelivery ? "nvidia_provider_stream_invalid" : "nvidia_provider_response_not_json", null, null, requestDigest, null,
           response.status, streamDelivery?.reportedUsage ?? emptyUsage(), true, providerRequestId, null, streamDelivery);
       }
