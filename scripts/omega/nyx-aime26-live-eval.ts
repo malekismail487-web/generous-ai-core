@@ -22,10 +22,22 @@ export const AIME_2026_SOURCE = Object.freeze({dataset: "MathArena/aime_2026",
 
 // Custody/exposure metadata ONLY. No scheduling, prompt or acceptance decision
 // depends on an item's prior correctness or membership in this historical set.
-const PRIOR_AIME_2026 = Object.freeze({candidate: "a840700869f159e686289fca4d2bf08dc889c726",
-  runId: 38677741472, reportSha256: "006ef243a0041c6462209e743fada649aca905cb269b5ac5e16f90787af4d0a9",
-  attemptedTaskIds: Object.freeze(Array.from({length: 10}, (_, i) => `AIME-2026-${i + 1}`)),
-  originalSummary: {selected: 30, attempted: 10, graded: 7, correct: 7, wrong: 0, ungraded: 3, unexecuted: 20}});
+export const AIME_2026_PRIOR_EXPOSURE = Object.freeze({candidate: "b07e807b6141307710e5286d6c61fd12ce177350",
+  runId: 38694102125, reportSha256: "cebdae0ee7aee7d6f4ff4b22fef9d7682c4c5f3083306294484c39a824b867bf",
+  attemptedTaskIds: Object.freeze(Array.from({length: 30}, (_, i) => `AIME-2026-${i + 1}`)),
+  originalSummary: {selected: 30, attempted: 30, graded: 20, correct: 20, wrong: 0, ungraded: 10, unexecuted: 0},
+  earlierPartialEpoch: {candidate: "a840700869f159e686289fca4d2bf08dc889c726", runId: 38677741472,
+    reportSha256: "006ef243a0041c6462209e743fada649aca905cb269b5ac5e16f90787af4d0a9"}});
+const PRIOR_AIME_2026 = AIME_2026_PRIOR_EXPOSURE;
+
+/** Host-only experiment selection; cognition cannot select modes or change caps. */
+export function mathematicsEpochMode(mode: unknown) {
+  if (!["FROZEN_BENCHMARK", "FROZEN_STREAM_BENCHMARK", "DEVELOPMENT_CONTRACT_DIAGNOSIS", "DEVELOPMENT_STREAM_DIAGNOSIS"].includes(mode as string))
+    throw Error("aime_2026_mode_invalid");
+  const diagnose = mode === "DEVELOPMENT_CONTRACT_DIAGNOSIS", streamDiagnose = mode === "DEVELOPMENT_STREAM_DIAGNOSIS";
+  return Object.freeze({diagnose, streamDiagnose, development: diagnose || streamDiagnose,
+    benchmarkStream: mode === "FROZEN_STREAM_BENCHMARK"});
+}
 
 export function parseAime2026Data(raw: string, preparedSha256: string): readonly PrivateTextTask[] {
   if (Buffer.byteLength(raw, "utf8") > 2_000_000 || !/^[a-f0-9]{64}$/.test(preparedSha256)
@@ -88,9 +100,7 @@ export function mathematicsPopulationSummary(rows: readonly PublicResult[], sele
 
 export async function runAime2026Epoch() {
   const mode = process.env.NYX_AIME26_MODE ?? "FROZEN_BENCHMARK";
-  if (!["FROZEN_BENCHMARK", "DEVELOPMENT_CONTRACT_DIAGNOSIS", "DEVELOPMENT_STREAM_DIAGNOSIS"].includes(mode)) throw Error("aime_2026_mode_invalid");
-  const diagnose = mode === "DEVELOPMENT_CONTRACT_DIAGNOSIS";
-  const streamDiagnose = mode === "DEVELOPMENT_STREAM_DIAGNOSIS", development = diagnose || streamDiagnose;
+  const {diagnose, streamDiagnose, development, benchmarkStream} = mathematicsEpochMode(mode);
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("aime_2026_requires_explicit_network_and_injected_secret");
   const git = (...args: string[]) => execFileSync("git", args, {encoding: "utf8"}).trim();
@@ -127,16 +137,20 @@ export async function runAime2026Epoch() {
     ...(stream ? {responseMode: "BOUNDED_SSE" as const} : {}),
     transport: textDiagnosticTransport(value => requestRejections.push({...value, taskId: pending?.taskId ?? null,
       call: pending?.logicalCalls ?? null}))});
-  const provider = makeProvider(false), streamProvider = streamDiagnose ? makeProvider(true) : null;
+  const provider = makeProvider(benchmarkStream), streamProvider = streamDiagnose ? makeProvider(true) : null;
   const snapshot = () => ({schemaVersion: 1, identity: streamDiagnose ? "NYX-ULTRA-STREAM-DELIVERY-DIAGNOSIS-001"
-    : diagnose ? "NYX-ULTRA-CONTRACT-DIAGNOSIS-001" : "NYX-AIME2026-ULTRA-HIGH-REASONING-001", candidate, mode,
+    : diagnose ? "NYX-ULTRA-CONTRACT-DIAGNOSIS-001"
+      : benchmarkStream ? "NYX-AIME2026-ULTRA-STREAMING-HIGH-REASONING-001" : "NYX-AIME2026-ULTRA-HIGH-REASONING-001", candidate, mode,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID}`, environment: `${process.platform}-${process.arch}-node-${process.version}`,
-    policy: POLICY, source: AIME_2026_SOURCE, sourceBindings, preparedSha256: process.env.NYX_AIME26_PREPARED_SHA256,
+    policy: benchmarkStream ? {...POLICY, version: "nyx-ultra-high-reasoning-mathematics/4-stream",
+      responseMode: "BOUNDED_SSE", streamUsageRequested: true, resourceLimitsUnchanged: true} : POLICY,
+    source: AIME_2026_SOURCE, sourceBindings, preparedSha256: process.env.NYX_AIME26_PREPARED_SHA256,
     populationInputDigest: theoryDigest(tasks.map(task => ({taskId: task.taskId, question: task.question}))),
     selectedTaskIds: tasks.map(task => task.taskId), preflight, results: rows, diagnostics, deliveryDiagnostics,
     priorProgramExposure: development ? null : {priorEpoch: PRIOR_AIME_2026,
       previouslyUnexecutedTaskIds: tasks.map(task => task.taskId).filter(id => !PRIOR_AIME_2026.attemptedTaskIds.includes(id)),
-      scoreUsesOnlyThisEpoch: true, staleSuccessesMerged: false, mixedExposureNotFreshFullPopulation: true},
+      scoreUsesOnlyThisEpoch: true, staleSuccessesMerged: false, mixedExposureNotFreshFullPopulation: true,
+      entirePopulationPreviouslyAttempted: true, freshGeneralizationClaim: false},
     diagnosticPolicy: diagnose ? {variants: ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS,
       developmentTask: TEXT_SESSION_CONTRACT_DIAGNOSTICS[0].taskId, maxLogicalCalls: 8, maxPhysicalCalls: 16,
       maxEpochMs: 4 * POLICY.maxTaskMs, model: POLICY.model, maxOutputTokens: POLICY.maxOutputTokens,

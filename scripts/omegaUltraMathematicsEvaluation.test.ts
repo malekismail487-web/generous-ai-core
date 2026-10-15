@@ -11,7 +11,7 @@ import {TEXT_BENCHMARK_POLICY, ULTRA_MATHEMATICS_EVALUATION_POLICY as POLICY,
 import {ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS, ultraContractDiagnosticRequest,
   textRejectionHint} from "./omega/benchmarks/nyxTextBenchmark";
 import {AIME_2026_SOURCE, parseAime2026Data, mathematicsPopulationSummary,
-  mathematicsPublicResult, mathematicsTaskHadOutage} from "./omega/nyx-aime26-live-eval";
+  mathematicsPublicResult, mathematicsTaskHadOutage, mathematicsEpochMode, AIME_2026_PRIOR_EXPOSURE} from "./omega/nyx-aime26-live-eval";
 
 let passed = 0, failed = 0;
 function check(name: string, run: () => unknown) {
@@ -21,6 +21,28 @@ const request: NvidiaNimCompletionRequest = {schemaVersion: 1, requestId: "ULTRA
   messages: [{role: "user", content: "Development protocol test, not a benchmark question."}],
   maxTokens: POLICY.maxOutputTokens, temperature: 0.2, observedAtEpochMs: 100,
   deadlineEpochMs: 1000, responseFormat: "JSON_OBJECT"};
+for (const mode of ["FROZEN_BENCHMARK", "FROZEN_STREAM_BENCHMARK", "DEVELOPMENT_CONTRACT_DIAGNOSIS", "DEVELOPMENT_STREAM_DIAGNOSIS"]) {
+  check(`explicit host mode separates benchmark data from development ${mode}`, () => {
+    const parsed = mathematicsEpochMode(mode);
+    assert.equal(parsed.development, mode.startsWith("DEVELOPMENT_"));
+    assert.equal(parsed.benchmarkStream, mode === "FROZEN_STREAM_BENCHMARK");
+    assert.equal(parsed.streamDiagnose, mode === "DEVELOPMENT_STREAM_DIAGNOSIS");
+    assert.equal(parsed.diagnose, mode === "DEVELOPMENT_CONTRACT_DIAGNOSIS");
+    assert(Object.isFrozen(parsed));
+  });
+}
+check("model-like or unknown modes cannot turn on a benchmark or alter budgets", () => {
+  for (const mode of [undefined, null, {}, "AUTO", "FROZEN_STREAM_BENCHMARK;echo x"])
+    assert.throws(() => mathematicsEpochMode(mode));
+});
+check("the next epoch declares all thirty previously attempted inputs without importing answers", () => {
+  assert.equal(AIME_2026_PRIOR_EXPOSURE.attemptedTaskIds.length, 30);
+  assert.equal(new Set(AIME_2026_PRIOR_EXPOSURE.attemptedTaskIds).size, 30);
+  assert.equal(AIME_2026_PRIOR_EXPOSURE.originalSummary.graded, 20);
+  assert.equal(AIME_2026_PRIOR_EXPOSURE.originalSummary.ungraded, 10);
+  assert.equal(AIME_2026_PRIOR_EXPOSURE.runId, 38694102125);
+  assert(Object.isFrozen(AIME_2026_PRIOR_EXPOSURE.attemptedTaskIds));
+});
 check("independent preparation detector rejects malformed artificial source rows", () => {
   const run = spawnSync(process.env.OMEGA_POLYNOMIAL_PYTHON || "python3",
     ["scripts/omega/benchmarks/test-prepare-aime26.py"], {encoding: "utf8", timeout: 10000,

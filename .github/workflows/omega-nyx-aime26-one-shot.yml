@@ -5,7 +5,7 @@ on:
     inputs:
       mode:
         type: choice
-        options: [FROZEN_BENCHMARK, DEVELOPMENT_CONTRACT_DIAGNOSIS, DEVELOPMENT_STREAM_DIAGNOSIS]
+        options: [FROZEN_BENCHMARK, FROZEN_STREAM_BENCHMARK, DEVELOPMENT_CONTRACT_DIAGNOSIS, DEVELOPMENT_STREAM_DIAGNOSIS]
         default: FROZEN_BENCHMARK
   push:
     branches: [sol/omega-institutional-spine]
@@ -22,12 +22,11 @@ jobs:
   full-aime26:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): diagnose bounded Ultra streaming delivery' ||
-      github.event.head_commit.message == 'fix(nyx): classify streamed service errors and retain usage'
+      github.event.head_commit.message == 'eval(nyx): freeze full AIME streaming recovery epoch'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:
-      NYX_AIME26_MODE: ${{ inputs.mode || 'DEVELOPMENT_STREAM_DIAGNOSIS' }}
+      NYX_AIME26_MODE: ${{ inputs.mode || 'FROZEN_STREAM_BENCHMARK' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,7 +51,7 @@ jobs:
           npm run security:secrets
           npm run omega:tests
       - name: Prepare the complete author population without logging questions or reference answers
-        if: env.NYX_AIME26_MODE == 'FROZEN_BENCHMARK'
+        if: env.NYX_AIME26_MODE == 'FROZEN_BENCHMARK' || env.NYX_AIME26_MODE == 'FROZEN_STREAM_BENCHMARK'
         id: prepare
         run: |
           python -m pip install --disable-pip-version-check duckdb==1.5.6

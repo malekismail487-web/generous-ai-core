@@ -1,5 +1,52 @@
 # NYX benchmark capability program
 
+### Full AIME streaming recovery epoch (frozen before execution)
+
+The next full 30-question epoch uses explicit FROZEN_STREAM_BENCHMARK / profile
+4-stream. Only delivery changes to the development-exercised bounded SSE path
+with terminal usage requested. Ultra/high, 16384-token ceilings, two logical/four
+shared HTTP calls per task, 300-second request/360-second task lifetimes, the
+200-minute epoch, R1 observation and strict integer grader remain unchanged.
+Partial stream content never becomes an answer; default NYX stays nonstreaming.
+
+ALL thirty inputs were already attempted at `b07e807`. Exposure metadata now
+binds that whole epoch rather than incorrectly labeling twenty inputs unseen.
+Every question runs again in its own fresh local session; no old success is
+merged, no hidden-reference feedback is provided, and no provider unlearning or
+fresh-generalization claim is made. Success requires all thirty graded in this
+single epoch. Delivered correct answers, wrong valid integers, truncation, format,
+schema, service, authorization and infrastructure outcomes remain separate.
+The one exact-message push trigger starts only this bounded full epoch; the
+development triggers are removed. Result pending; no next benchmark is launched.
+
+### Public formal-mathematics source acquisition (not execution)
+
+Three author source archives are now cached outside Git and outside NYX's task
+namespace: **miniF2F v1** (`f0dcc8b`), **original ProofNet** (`509ad79`), and
+**PutnamBench** (`a635813`). Total compressed bytes: 16100111. SHA256, ZIP CRC,
+revision-named archive roots, entry bounds and license/configuration bindings
+were verified. No source was extracted or executed; no problem/proof text was
+inspected or supplied to a model. Integrity checking reads archive bytes, not
+mathematical solutions into the development context. File counts are NOT task
+population counts. Upstream notices remain intact; this is not production rights
+clearance or evidence of NYX mathematical capability.
+
+[miniF2F's authors](https://github.com/openai/miniF2F/tree/v1) specify the frozen
+v1 branch rather than main for reporting; that is the acquired revision.
+[ProofNet's original repository](https://github.com/zhangir-azerbayev/ProofNet)
+is Lean 3 and recommends a Lean 4 port for new experiments; it is not mislabeled
+as a ready Lean 4 suite. The acquired
+[PutnamBench revision](https://github.com/trishullab/PutnamBench/tree/a635813f5edf297d928f9bd5ef8324a26bdde09c)
+pins Lean 4.33.1; its toolchain/dependencies have not been installed or exercised.
+
+Formal scoring still requires protected statements/checker, no proof holes or
+extra axioms, and independent kernel replay in an explicitly authorized isolated
+runtime. Lean elaboration can execute code: a compiler invocation is not harmless
+text inspection and will not be run on the host by inference. No second benchmark
+campaign starts from this acquisition. See the [source/notice custody receipt](../../../docs/omega/evidence/formal-math-source-acquisition-2026-10-15.json).
+Coverage remains PARTIAL / JUST-IN-TIME; this does not claim every benchmark is
+downloaded, a complete evaluation environment exists, or any benchmark is passed.
+
 ### Bounded streaming delivery diagnosis (development experiment, not a score)
 
 An opt-in host `BOUNDED_SSE` mode composes with the SAME provider, fixed NVIDIA
@@ -45,10 +92,22 @@ from malformed model output; only known transient codes use the ORIGINAL shared
 retry/deadline limits. Unknown service errors remain failures. SSE now explicitly
 requests terminal usage, as described in NVIDIA's
 [streaming metadata guide](https://docs.nvidia.com/nemo/guardrails/v0.24.1/run-guardrailed-inference/using-python-apis/streaming).
-No unavailable usage is estimated. A single repeated DEVELOPMENT comparison is
-pending; no benchmark task is started. The exact-message push hook launches only
-this finite development mode. This correction does not claim the original
-unretained frame was a particular service error.
+No unavailable usage is estimated. The repeated DEVELOPMENT comparison at
+`8487211`, run `38738300681`, passed both SSE cases. All four delivered streaming
+completions reported usage: 2021 tokens across six HTTP calls, two unknown-usage
+failed attempts. Nonstreaming passed one case and exhausted four HTTP 503s before
+the other's required read: 975 known tokens across eight HTTP calls, six unknown
+attempts. Both cells retain the same resource caps; realized compute/provider
+conditions are NOT matched. No latency or cognitive advantage follows.
+
+The [verified correction receipt](../../../docs/omega/evidence/nyx-stream-delivery-correction-8487211.json)
+binds eleven sources, original outcomes and ZIP SHA256
+`1e68169db912eb5015ff0ff90c949b65982ae42181c59da6d2a64ebce251262a`.
+Clean CI passed 119 suites / 17723 checks, TypeScript zero, secret scan, build and
+package. This is E4 wire-contract/usage evidence on two development cases, not
+hard-task recovery or a stable serving environment. It does not prove the original
+unretained frame was a particular service error. No benchmark task ran in either
+diagnostic; the next separately frozen full epoch remains experimental.
 
 Adversarial review also found that hashing a numeric answer's provider JSON
 envelope is still enumerable. Public mathematics rows now null those response

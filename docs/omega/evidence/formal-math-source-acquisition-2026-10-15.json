@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-PUBLIC-FORMAL-MATH-SOURCE-ACQUISITION-2026-10-15",
+  "candidate": "84872112024f91686597f55339732d5628113063",
+  "evidenceClass": "E3",
+  "executionIdentity": "HOST-NODE-PUBLIC-ARCHIVE-358881-2026-10-15",
+  "observedAtUtc": "2026-10-15T13:04:21Z",
+  "environment": "WINDOWS_NODE_24_19_0_JSZIP_3_10_1",
+  "cacheScope": "OUTSIDE_GIT_AND_NYX_TASK_NAMESPACE",
+  "reproduction": "FETCH_CREDENTIAL_FREE_CODELOAD_GITHUB_COM_OWNER_REPOSITORY_ZIP_REVISION_THEN_VERIFY_ARCHIVE_SHA256_CRC_AND_ROOT_WITHOUT_EXTRACTING_OR_RUNNING_SOURCE",
+  "totalArchiveBytes": 16100111,
+  "sources": [
+    {
+      "benchmark": "miniF2F-v1",
+      "repo": "openai/miniF2F",
+      "revision": "f0dcc8b59e630fba00ba9569ca6714700e0a8801",
+      "ref": "refs/heads/v1",
+      "license": "SYSTEM_SPECIFIC_LICENSES_RETAINED",
+      "runtime": "LEAN3_METAMATH_ISABELLE_HOL_LIGHT",
+      "filename": "openai--miniF2F-f0dcc8b59e630fba00ba9569ca6714700e0a8801.zip",
+      "bytes": 663365,
+      "sha256": "3f8959b3929b0d3d20061e4240fb5dbc8e036f6b6b68e3f8c916ebe606d93caa",
+      "archiveOnly": true,
+      "sourceExecuted": false,
+      "existing": false,
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 1315,
+      "uncompressedBytes": 609576,
+      "formalSourceFileCounts": {
+        ".ml": 326,
+        ".thy": 488,
+        ".lean": 3,
+        ".toml": 1,
+        ".mm": 488
+      },
+      "countsAreNotTaskPopulation": true,
+      "licenseEntries": [
+        "hollight/LICENSE",
+        "isabelle/LICENSE",
+        "lean/LICENSE",
+        "metamath/LICENSE"
+      ],
+      "configBindings": {
+        "leanpkg.toml": "5f7636ef2fadce1703cc339cb8d6562d1525e0d6505c7ef54d972762185544ef"
+      },
+      "extracted": false,
+      "downloadedCodeExecuted": false,
+      "runtimeInstalled": false,
+      "benchmarkScoreClaim": false,
+      "licenseBindings": [
+        {
+          "path": "hollight/LICENSE",
+          "bytes": 1276,
+          "sha256": "7af480c38ce9b9dd5de06fb1f360f69b62aad9af3d6b60d3d01cd30f7226e8a0",
+          "identification": "BSD_STYLE_TEXT"
+        },
+        {
+          "path": "isabelle/LICENSE",
+          "bytes": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "identification": "APACHE_2_0_TEXT"
+        },
+        {
+          "path": "lean/LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "identification": "APACHE_2_0_TEXT"
+        },
+        {
+          "path": "metamath/LICENSE",
+          "bytes": 1063,
+          "sha256": "893951b3bf94db8df1b13e05da5cdeb499400960e4d44a3962a8b33ed0b4f28e",
+          "identification": "MIT_TEXT"
+        }
+      ],
+      "referenceProofContentsInspectedOrSentToModel": false
+    },
+    {
+      "benchmark": "ProofNet-original",
+      "repo": "zhangir-azerbayev/ProofNet",
+      "revision": "509ad79710ed4f46ff5c282ed5640c1aa9ac3f30",
+      "ref": "refs/heads/main",
+      "license": "MIT_REPOSITORY_LICENSE",
+      "runtime": "ORIGINAL_LEAN3_NOT_A_LEAN4_PORT",
+      "filename": "zhangir-azerbayev--ProofNet-509ad79710ed4f46ff5c282ed5640c1aa9ac3f30.zip",
+      "bytes": 13730938,
+      "sha256": "0194767e3ece6b6c76f4f71677f29db4bec5b1671d47e1375a59ec44fb2f87cf",
+      "archiveOnly": true,
+      "sourceExecuted": false,
+      "existing": false,
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 316,
+      "uncompressedBytes": 65989100,
+      "formalSourceFileCounts": {
+        ".lean": 131,
+        ".toml": 1
+      },
+      "countsAreNotTaskPopulation": true,
+      "licenseEntries": [
+        "LICENSE"
+      ],
+      "configBindings": {
+        "leanpkg.toml": "a35a9e70778a4a72a310ad28a90b537c795345dd14a9c4692ecfc580b5d08d23"
+      },
+      "extracted": false,
+      "downloadedCodeExecuted": false,
+      "runtimeInstalled": false,
+      "benchmarkScoreClaim": false,
+      "licenseBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1074,
+          "sha256": "01846beaa8adeceed591e968f4a878cc61eaafe2ccebad87c481c76fd43e83e2",
+          "identification": "MIT_TEXT"
+        }
+      ],
+      "referenceProofContentsInspectedOrSentToModel": false
+    },
+    {
+      "benchmark": "PutnamBench",
+      "repo": "trishullab/PutnamBench",
+      "revision": "a635813f5edf297d928f9bd5ef8324a26bdde09c",
+      "ref": "refs/heads/main",
+      "license": "VERIFY_SYSTEM_SPECIFIC_NOTICES",
+      "runtime": "LEAN4_PINNED_4.33.1_OTHER_SYSTEMS_NOT_EXECUTED",
+      "filename": "trishullab--PutnamBench-a635813f5edf297d928f9bd5ef8324a26bdde09c.zip",
+      "bytes": 1705808,
+      "sha256": "45fe98b614ab2294ffe5a8558bcfbb01015a5268daa9d0448d721fb527d5c498",
+      "archiveOnly": true,
+      "sourceExecuted": false,
+      "existing": false,
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 1764,
+      "uncompressedBytes": 3308958,
+      "formalSourceFileCounts": {
+        ".v": 412,
+        ".thy": 640,
+        ".lean": 674
+      },
+      "countsAreNotTaskPopulation": true,
+      "licenseEntries": [
+        "coq/LICENSE",
+        "isabelle/LICENSE",
+        "lean4/LICENSE"
+      ],
+      "configBindings": {
+        "lean4/lake-manifest.json": "86f328eaf63c87c7133c5fb4a480e1b368d1141631efb6f89f84ee71163cba0a",
+        "lean4/lakefile.lean": "54d9a1a690a447499f8b14a219645eb62ed971a034a13a180c1d012ce9b197a0",
+        "lean4/lean-toolchain": "7bc3447cbd72d5618fae8359a8f2eb94d86b4ad25dde7ce79df2a283247262e3"
+      },
+      "extracted": false,
+      "downloadedCodeExecuted": false,
+      "runtimeInstalled": false,
+      "benchmarkScoreClaim": false,
+      "licenseBindings": [
+        {
+          "path": "coq/LICENSE",
+          "bytes": 1109,
+          "sha256": "3b827918f5519d5f01e0197eedf478049de5cb21bbd91771f60f761fc08b0f0d",
+          "identification": "MIT_TEXT"
+        },
+        {
+          "path": "isabelle/LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "identification": "APACHE_2_0_TEXT"
+        },
+        {
+          "path": "lean4/LICENSE",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "identification": "APACHE_2_0_TEXT"
+        }
+      ],
+      "referenceProofContentsInspectedOrSentToModel": false
+    }
+  ],
+  "scope": {
+    "acquisitionOnly": true,
+    "taskSelectionAndScoringNotImplemented": true,
+    "noSourceArchiveExtracted": true,
+    "noDownloadedCodeExecuted": true,
+    "noReferenceProofContentsPrintedOrProvidedToNYX": true,
+    "archiveBytesReadForIntegrityChecks": true,
+    "modelCalls": 0,
+    "nyxCapabilityGranted": false,
+    "productionAuthority": false,
+    "allBenchmarksAcquiredClaim": false,
+    "cognitiveGainClaim": false
+  },
+  "remaining": {
+    "miniF2F": "VERSIONED_AUTHOR_HARNESS_AND_EXACT_STATEMENT_PRESERVATION_REQUIRED_OR_SEPARATELY_LABELED_LEAN4_PORT",
+    "ProofNet": "ORIGINAL_LEAN3_SOURCE_ACQUIRED_AUTHOR_RECOMMENDS_LEAN4_PORT_OR_HF_DATASET_FOR_NEW_EXPERIMENTS",
+    "PutnamBench": "PINNED_LEAN4_4.33.1_AND_MATHLIB_RUNTIME_NOT_INSTALLED_OR_EXECUTED",
+    "acceptance": "PROTECTED_STATEMENT_AND_CHECKER_INDEPENDENT_KERNEL_REPLAY_NO_PROOF_HOLES_OR_EXTRA_AXIOMS",
+    "security": "LEAN_ELABORATION_CAN_EXECUTE_CODE_REQUIRES_SEPARATE_ISOLATED_AUTHORIZED_CHECKER_PROFILE",
+    "license": "UPSTREAM_NOTICES_RETAINED_IDENTIFICATION_IS_NOT_PRODUCTION_OR_UNDERLYING_PROBLEM_RIGHTS_CLEARANCE"
+  },
+  "sourcePages": [
+    "https://github.com/openai/miniF2F/tree/v1",
+    "https://github.com/zhangir-azerbayev/ProofNet",
+    "https://github.com/trishullab/PutnamBench"
+  ],
+  "planCoverage": {
+    "direct": [
+      "PINNED_MATHEMATICAL_EVALUATION_SOURCES",
+      "PROVENANCE",
+      "REFERENCE_ISOLATION"
+    ],
+    "supporting": [
+      "NO_SELF_CERTIFICATION",
+      "SPECIFICATION_NOT_CAPABILITY"
+    ],
+    "deferred": [
+      "TRUSTED_FORMAL_RUNTIME",
+      "OFFICIAL_CAMPAIGNS",
+      "ORIGINAL_MATHEMATICAL_DISCOVERY"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}
