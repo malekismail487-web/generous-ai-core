@@ -1,5 +1,39 @@
 # NYX benchmark capability program
 
+### Full Ultra AIME 2026 epoch — prospective freeze (2026-10-15)
+
+The first primary population for the resumed benchmark program is all thirty
+`MathArena/aime_2026` problems, revision `d2de22f3c656b4f56cf8981212186377d1e23bc3`,
+Parquet SHA256 `d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957`.
+The author license is CC-BY-NC-SA-4.0. Questions/references stay outside Git and
+are not used for training, repair feedback or outcome-dependent selection.
+Public pretraining exposure is unknown; this is not a sealed benchmark.
+
+Reuse the existing NYX chat cognition, Nvidia provider, R1 question observation,
+disposable repository fixture and unchanged final-integer grader. An explicit
+evaluation-only Ultra profile enables hosted high reasoning with 12288 reasoning
+tokens inside the existing 16384-token chat ceiling, versus the older medium/
+2048 profile. This is not the provider's maximum possible context or an automatic
+default change. It is a configuration evaluation, not evidence of a new reasoning
+engine or a compute-matched architectural gain. No new execution authority.
+
+Each task has two logical/four HTTP calls at most and one original 360-second
+lease; the whole epoch has a 12000000-ms ceiling. Capacity waiting cannot renew
+authority. Two separate existing development protocol problems must pass before
+any benchmark problem is attempted; they are not benchmark scores. A provider
+outage stops after bounded recovery rather than silently switching models.
+Raw reasoning, answer/prediction hashes and credentials are excluded from reports.
+Record first-attempt correct/wrong, format, schema, truncation, provider and
+infrastructure outcomes separately; incomplete grading cannot establish a score.
+
+The task list and every first outcome remain fixed. Any later repair is a new,
+explicitly exposed recovery epoch, never an improved original first-attempt score.
+Keep all prior AIME 2025, GPQA and scientific-search outcomes unchanged. Target:
+100% on this primary benchmark; not yet attained, and no Astra comparison claimed.
+Plan coverage: general corrections, model/configuration diagnosis, independent
+acceptance, provenance and capability/authority separation. Coverage remains
+PARTIAL / JUST-IN-TIME; other benchmark execution stays deferred.
+
 ### Fresh evidence-retention transfer (prospective freeze, 2026-10-14)
 
 Reuses the scientific runner for six new compositions / three families. Compare

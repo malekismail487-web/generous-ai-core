@@ -2055,6 +2055,7 @@
     {
       "name": "GITHUB_RUN_ID",
       "files": [
+        "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-computation-transfer.ts",
@@ -2070,6 +2071,7 @@
       "name": "GITHUB_SHA",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-bounded-contract-probe.ts",
@@ -2222,6 +2224,7 @@
     {
       "name": "NVIDIA_API_KEY",
       "files": [
+        "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-bounded-contract-probe.ts",
@@ -2265,6 +2268,18 @@
         "scripts/omega/nyx-source-emission-live.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
+      ]
+    },
+    {
+      "name": "NYX_AIME26_DATA",
+      "files": [
+        "scripts/omega/nyx-aime26-live-eval.ts"
+      ]
+    },
+    {
+      "name": "NYX_AIME26_PREPARED_SHA256",
+      "files": [
+        "scripts/omega/nyx-aime26-live-eval.ts"
       ]
     },
     {
@@ -2667,6 +2682,7 @@
       "name": "OMEGA_ALLOW_NVIDIA_NETWORK",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-bounded-contract-probe.ts",
@@ -2779,7 +2795,8 @@
         "scripts/omega/nyx-scientific-world-live-eval.ts",
         "scripts/omegaScientificModelGeneration.test.ts",
         "scripts/omegaScientificStructureSearch.test.ts",
-        "scripts/omegaSemanticPolynomialProof.test.ts"
+        "scripts/omegaSemanticPolynomialProof.test.ts",
+        "scripts/omegaUltraMathematicsEvaluation.test.ts"
       ]
     },
     {
@@ -2835,6 +2852,7 @@
       "name": "RUNNER_TEMP",
       "files": [
         "scripts/omega/nvidia-nim-live-smoke.ts",
+        "scripts/omega/nyx-aime26-live-eval.ts",
         "scripts/omega/nyx-arc-benchmark-epoch.ts",
         "scripts/omega/nyx-arc-live-eval.ts",
         "scripts/omega/nyx-bounded-contract-probe.ts",

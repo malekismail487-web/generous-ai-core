@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-BENCHMARK-ACQUISITION-2026-10-15",
+  "newAuthorRepositories": [
+    {
+      "name": "gsm8k-author",
+      "url": "https://github.com/openai/grade-school-math.git",
+      "revision": "3101c7d5072418e28b9008a6636bde82a006892c",
+      "tree": "565dcdab3f9c299c758fa5e8974bcde5c1ac98aa",
+      "clean": true
+    },
+    {
+      "name": "minif2f-author",
+      "url": "https://github.com/openai/miniF2F.git",
+      "revision": "4e433ff5cadff23f9911a2bb5bbab2d351ce5554",
+      "tree": "170c7e7a9256a4de8161f3fdf98a094a66de8292",
+      "clean": true
+    },
+    {
+      "name": "evalplus-author",
+      "url": "https://github.com/evalplus/evalplus.git",
+      "revision": "26d6d00bb1fd0fa37f39c99d5290da67891d1c5e",
+      "tree": "1d0063f35139d70988828fd669aeb365e5030b68",
+      "clean": true
+    },
+    {
+      "name": "ruler-author",
+      "url": "https://github.com/NVIDIA/RULER.git",
+      "revision": "c3f5e3b4f87f97e048793bb510a3a6b19a46bf3a",
+      "tree": "a112a9409f73e109aab02e8f827cadcfb6e7142b",
+      "clean": true
+    },
+    {
+      "name": "longbench-author",
+      "url": "https://github.com/THUDM/LongBench.git",
+      "revision": "2e00731f8d0bff23dc4325161044d0ed8af94c1e",
+      "tree": "2089bb180ad9cb9202ec05ea08a711d48147010b",
+      "clean": true
+    },
+    {
+      "name": "proofnet-author",
+      "url": "https://github.com/zhangir-azerbayev/ProofNet.git",
+      "revision": "509ad79710ed4f46ff5c282ed5640c1aa9ac3f30",
+      "tree": "fdfe7f72391868736e62350afae2232787e1483e",
+      "clean": true
+    },
+    {
+      "name": "scicode-author",
+      "url": "https://github.com/scicode-bench/SciCode.git",
+      "revision": "e3158ea011d4235245a547460d3688d7ccbf9900",
+      "tree": "0a7334d84af7ed1993a364b9d3569387bdb45048",
+      "clean": true
+    },
+    {
+      "name": "critpt-author",
+      "url": "https://github.com/CritPt-Benchmark/CritPt.git",
+      "revision": "17c2545c302762d2f2d644d923ea4c301605cb08",
+      "tree": "e0d3ac8c40bd19cbaa74b8271aefec742f733a58",
+      "clean": true
+    },
+    {
+      "name": "lab-bench-author",
+      "url": "https://github.com/Future-House/LAB-Bench.git",
+      "revision": "998a8e0a40cf116c80e1b0e7a805ebb5fb9fa838",
+      "tree": "a7ba96ee320b0a2897d15863995eff6a5ed308e1",
+      "clean": true
+    },
+    {
+      "name": "bixbench-author",
+      "url": "https://github.com/Future-House/BixBench.git",
+      "revision": "49311180bdacb324c596f2e07596c126f2004008",
+      "tree": "5f79c956fda29d499b4b91c4a8d6789a62ba2dba",
+      "clean": true
+    },
+    {
+      "name": "livecodebench-author",
+      "url": "https://github.com/LiveCodeBench/LiveCodeBench.git",
+      "revision": "28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24",
+      "tree": "65790b9fc909976194ff54c84f673395c2a6c85d",
+      "clean": true
+    },
+    {
+      "name": "mmlu-pro-author",
+      "url": "https://github.com/TIGER-AI-Lab/MMLU-Pro.git",
+      "revision": "f418b116db00b065c2aea046518d8fcf74d39872",
+      "tree": "69f6d31a71a8d83419b21e3e4ff784d838813c0a",
+      "clean": true
+    },
+    {
+      "name": "scienceworld-author",
+      "url": "https://github.com/allenai/ScienceWorld.git",
+      "revision": "e8216d6044e8e39be9fcb185e3b2dfb602584b52",
+      "tree": "1e24d3d9dc7e20bae5e4982b71f7249b7470094b",
+      "clean": true
+    },
+    {
+      "name": "tau-bench-author",
+      "url": "https://github.com/sierra-research/tau-bench.git",
+      "revision": "59a200c6d575d595120f1cb70fea53cef0632f6b",
+      "tree": "c0f3df6c63e9bd9399d9434a19b07a4e762d1899",
+      "clean": true
+    },
+    {
+      "name": "tau2-bench-author",
+      "url": "https://github.com/sierra-research/tau2-bench.git",
+      "revision": "5ade54e282a4555e4d6c52d6b9b861ea8872afa6",
+      "tree": "deaa56a3bfdf74b76d8567f0c96a2dd8d0980031",
+      "clean": true
+    }
+  ],
+  "publicDatasets": [
+    {
+      "benchmark": "MATH-500",
+      "dataset": "HuggingFaceH4/MATH-500",
+      "revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": null,
+      "artifactCount": 1,
+      "totalVerifiedBytes": 446564,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "6c69c63ca56c9af9e64a6a117397c23ce44133ec09a1d4d1f7ce5f23d8fcec61",
+      "deferred": []
+    },
+    {
+      "benchmark": "AIME-2025",
+      "dataset": "MathArena/aime_2025",
+      "revision": "c94da77eb22bbd6439e62a323bec18493a421302",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "cc-by-nc-sa-4.0",
+      "artifactCount": 1,
+      "totalVerifiedBytes": 14313,
+      "authorLfsVerifiedFiles": 1,
+      "manifestSha256": "97ecbb9372da731f89d87992b1735da611624970831a8f9a9a6e1e131733050d",
+      "deferred": []
+    },
+    {
+      "benchmark": "AIME-2026",
+      "dataset": "MathArena/aime_2026",
+      "revision": "d2de22f3c656b4f56cf8981212186377d1e23bc3",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "cc-by-nc-sa-4.0",
+      "artifactCount": 1,
+      "totalVerifiedBytes": 10065,
+      "authorLfsVerifiedFiles": 1,
+      "manifestSha256": "5a94352ab171b229dfebba93a8f4670222f853dd676e119cad50c3c66426c286",
+      "deferred": []
+    },
+    {
+      "benchmark": "MMLU-Pro",
+      "dataset": "TIGER-Lab/MMLU-Pro",
+      "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "mit",
+      "artifactCount": 2,
+      "totalVerifiedBytes": 4187042,
+      "authorLfsVerifiedFiles": 2,
+      "manifestSha256": "6a486242394216f7a2931933bb885f313ecf42d1d3de184aca40f05394422513",
+      "deferred": []
+    },
+    {
+      "benchmark": "MMLU-ProX",
+      "dataset": "li-lab/MMLU-ProX",
+      "revision": "8e6106a6c6ce1c5027e66cc338143cf997b2aa09",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "mit",
+      "artifactCount": 58,
+      "totalVerifiedBytes": 178226103,
+      "authorLfsVerifiedFiles": 58,
+      "manifestSha256": "54107d3b8bfc2628ca3879633be12417c822e7fcb678c3e88a4a92f19ceee579",
+      "deferred": []
+    },
+    {
+      "benchmark": "HumanEval",
+      "dataset": "openai/openai_humaneval",
+      "revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": [
+        "mit"
+      ],
+      "artifactCount": 1,
+      "totalVerifiedBytes": 83920,
+      "authorLfsVerifiedFiles": 1,
+      "manifestSha256": "635519fecf792bb743f4857a7f86b2ef131c9880deac99180cfa018aecf8d24a",
+      "deferred": []
+    },
+    {
+      "benchmark": "MBPP",
+      "dataset": "google-research-datasets/mbpp",
+      "revision": "4bb6404fdc6cacfda99d4ac4205087b89d32030c",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": [
+        "cc-by-4.0"
+      ],
+      "artifactCount": 8,
+      "totalVerifiedBytes": 351491,
+      "authorLfsVerifiedFiles": 8,
+      "manifestSha256": "e0786f55a373e62ab2f891a798586236d33b30e78f6195499ff2940199f0d3b5",
+      "deferred": []
+    },
+    {
+      "benchmark": "LiveCodeBench",
+      "dataset": "livecodebench/code_generation_lite",
+      "revision": "0fe84c3912ea0c4d4a78037083943e8f0c4dd505",
+      "state": "ACQUISITION_ERROR",
+      "license": "cc",
+      "artifactCount": 0,
+      "totalVerifiedBytes": 0,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "deferred": []
+    },
+    {
+      "benchmark": "HLE",
+      "dataset": "cais/hle",
+      "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
+      "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+      "license": "mit",
+      "artifactCount": 0,
+      "totalVerifiedBytes": 0,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "deferred": []
+    },
+    {
+      "benchmark": "HLE-Diamond",
+      "dataset": "cais/hle-diamond",
+      "revision": "04eeb7efa7e3e4f83a00cbd5ce436a38fd5dda23",
+      "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+      "license": "mit",
+      "artifactCount": 0,
+      "totalVerifiedBytes": 0,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "deferred": []
+    },
+    {
+      "benchmark": "GAIA",
+      "dataset": "gaia-benchmark/GAIA",
+      "revision": "682dd723ee1e1697e00360edccf2366dc8418dd9",
+      "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+      "license": null,
+      "artifactCount": 0,
+      "totalVerifiedBytes": 0,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "deferred": []
+    },
+    {
+      "benchmark": "LAB-Bench",
+      "dataset": "futurehouse/lab-bench",
+      "revision": "5c77cec648430f30611808808861eb86f81d5eaa",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "cc-by-sa-4.0",
+      "artifactCount": 8,
+      "totalVerifiedBytes": 334181708,
+      "authorLfsVerifiedFiles": 8,
+      "manifestSha256": "60f4fa506cec3816a934dd438b8b76552e7afc1d443119e8bb65224e92a6cb70",
+      "deferred": []
+    },
+    {
+      "benchmark": "BixBench",
+      "dataset": "futurehouse/BixBench",
+      "revision": "f8cc3bdcc6357c88b8c3648306522b9c422dc95a",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "apache-2.0",
+      "artifactCount": 1,
+      "totalVerifiedBytes": 285842,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "89e63ca7f7e52d3392dbbc73b019994b7070ee3e538225df2ed56a31c408612b",
+      "deferred": []
+    },
+    {
+      "benchmark": "GDPval",
+      "dataset": "openai/gdpval",
+      "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": null,
+      "artifactCount": 1,
+      "totalVerifiedBytes": 1913489,
+      "authorLfsVerifiedFiles": 1,
+      "manifestSha256": "fa8e857dde12f2908d41aad99afec00e1caf8053af20602622a41f3d5ed4c81b",
+      "deferred": []
+    },
+    {
+      "benchmark": "LongBench-v2",
+      "dataset": "THUDM/LongBench-v2",
+      "revision": "2b48e494f2c7a2f0af81aae178e05c7e1dde0fe9",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "apache-2.0",
+      "artifactCount": 1,
+      "totalVerifiedBytes": 465490535,
+      "authorLfsVerifiedFiles": 1,
+      "manifestSha256": "74126d7b7ff82a5dfdaf07f2eee85709fe33917c206b5a8a357ba20a7b99d971",
+      "deferred": []
+    },
+    {
+      "benchmark": "AA-LCR",
+      "dataset": "ArtificialAnalysis/AA-LCR",
+      "revision": "9a77ef56b717057ade24ceab4d273712a0b4f19e",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "license": "apache-2.0",
+      "artifactCount": 1,
+      "totalVerifiedBytes": 145408,
+      "authorLfsVerifiedFiles": 0,
+      "manifestSha256": "349b608e900cd17b266819332f5fab36f90a3e5dafa5a74321c4f94439f12cac",
+      "deferred": []
+    }
+  ],
+  "primaryBenchmark": "AIME_2026",
+  "benchmarkExecutionsInAcquisition": 0,
+  "capabilityImprovementClaim": false,
+  "answersReadByCognition": false,
+  "downloadedCodeExecuted": false,
+  "authorityDelta": "NONE",
+  "fullBenchmarkUniverseAcquired": false,
+  "earlierAcquisitionsPreserved": [
+    "benchmark-acquisition-2026-10-03.json",
+    "nyx-public-benchmark-acquisition-2026-10-07.json"
+  ],
+  "knownExternalBlockers": [
+    "HLE/HLE-Diamond/GAIA author access conditions",
+    "Protected FrontierMath tasks and verifier access",
+    "Approved quota-enforcing container/VM environments for agent benchmarks"
+  ],
+  "planCoverage": {
+    "direct": [
+      "GENERAL_CORRECTIONS_NOT_RESERVED_ANSWER_TUNING",
+      "CANDIDATE_AND_DATA_IDENTITY",
+      "INDEPENDENT_ACCEPTANCE",
+      "FIRST_ATTEMPT_VS_RECOVERY"
+    ],
+    "supporting": [
+      "NO_AUTHORITY_WITHOUT_SCOPE",
+      "UNKNOWN_IS_NOT_PASS"
+    ],
+    "deferred": [
+      "FULL_BENCHMARK_UNIVERSE_ACQUISITION",
+      "OFFICIAL_HARNESS_EQUIVALENCE",
+      "ASTRA_COMPARISON",
+      "ORIGINAL_DISCOVERY"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

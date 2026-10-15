@@ -1,0 +1,73 @@
+name: Omega NYX full AIME 2026 Ultra high-reasoning evaluation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-aime26-one-shot.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omega-nyx-aime26-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full-aime26:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'eval(nyx): freeze full Ultra AIME 2026 epoch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 215
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Preserve TypeScript zero and independent capability checks before model calls
+        env:
+          OMEGA_POLYNOMIAL_PYTHON: python3
+        run: |
+          npm run typecheck:ratchet
+          npm run security:secrets
+          npm run omega:tests
+      - name: Prepare the complete author population without logging questions or reference answers
+        id: prepare
+        run: |
+          python -m pip install --disable-pip-version-check duckdb==1.5.6
+          curl --fail --location --proto '=https' --tlsv1.2 'https://huggingface.co/datasets/MathArena/aime_2026/resolve/d2de22f3c656b4f56cf8981212186377d1e23bc3/data/train-00000-of-00001.parquet' --output "$RUNNER_TEMP/aime-2026.parquet"
+          python scripts/omega/benchmarks/prepare-text-benchmarks.py prepare-aime-2026 --aime "$RUNNER_TEMP/aime-2026.parquet" --output "$RUNNER_TEMP/aime-2026.json" > "$RUNNER_TEMP/aime-2026-preparation.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          metadata = json.loads((Path(os.environ['RUNNER_TEMP']) / 'aime-2026-preparation.json').read_text())
+          assert metadata['prepared'] is True and metadata['population'] == 30 and metadata['answersLogged'] is False
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write('prepared_sha256=' + metadata['preparedSha256'] + '\n')
+          print(json.dumps(metadata))
+          PY
+      - name: Check Ultra delivery on separate development problems then evaluate all thirty AIME 2026 problems
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NYX_AIME26_DATA: ${{ runner.temp }}/aime-2026.json
+          NYX_AIME26_PREPARED_SHA256: ${{ steps.prepare.outputs.prepared_sha256 }}
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-aime26-live-eval.ts
+      - name: Preserve sanitized outcomes only, including incomplete or negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-aime26-ultra-${{ github.sha }}
+          path: ${{ runner.temp }}/nyx-aime26-*.json
+          if-no-files-found: warn

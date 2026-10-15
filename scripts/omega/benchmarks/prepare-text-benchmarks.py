@@ -19,6 +19,44 @@ BBEH_EVALUATOR_SHA256 = "4b4f06e5babb015de2ba639bae995a5526182ffb5b5890af54dfcf0
 GPQA_REVISION = "56686c06f5e19865c153de0fdb11be3890014df7"
 GPQA_ARCHIVE_SHA256 = "461ae7329f15a3e35f8184d2dac24b990f34fdf12f366ca4062d8e6638cd08dc"
 GPQA_CSV_SHA256 = "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305"
+AIME_2026_REVISION = "d2de22f3c656b4f56cf8981212186377d1e23bc3"
+AIME_2026_SHA256 = "d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957"
+
+
+def aime_2026_tasks(rows):
+    """Entire author population in index order; never inspect correctness to select."""
+    if len(rows) != 30 or any(len(row) != 3 for row in rows):
+        raise ValueError("aime_2026_population_invalid")
+    identifiers = [row[0] for row in rows]
+    if any(type(value) is not int for value in identifiers) or len(set(identifiers)) != 30:
+        raise ValueError("aime_2026_identity_invalid")
+    if identifiers != sorted(identifiers):
+        raise ValueError("aime_2026_order_invalid")
+    tasks = []
+    for index, problem, answer in rows:
+        if not isinstance(problem, str) or not problem.strip() or type(answer) is not int or not 0 <= answer <= 999:
+            raise ValueError("aime_2026_row_invalid")
+        tasks.append({"family": "AIME_2026", "taskId": f"AIME-2026-{index}",
+                      "question": problem, "answer": str(answer)})
+    return tasks
+
+
+def prepare_aime_2026(args):
+    import duckdb
+    source = Path(args.aime).resolve(strict=True)
+    if hashlib.sha256(source.read_bytes()).hexdigest() != AIME_2026_SHA256:
+        raise ValueError("aime_2026_source_changed")
+    rows = duckdb.connect().execute(
+        "SELECT problem_idx, problem, answer FROM read_parquet(?) ORDER BY problem_idx", [str(source)]
+    ).fetchall()
+    tasks = aime_2026_tasks(rows)
+    body = {"schemaVersion": 1, "family": "AIME_2026", "dataset": "MathArena/aime_2026",
+            "revision": AIME_2026_REVISION, "sourceSha256": AIME_2026_SHA256,
+            "license": "cc-by-nc-sa-4.0", "tasks": tasks}
+    output = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    Path(args.output).write_bytes(output)
+    print(json.dumps({"prepared": True, "population": len(tasks), "sourceSha256": AIME_2026_SHA256,
+                      "preparedSha256": hashlib.sha256(output).hexdigest(), "answersLogged": False}))
 
 
 def gpqa_tasks(rows):
@@ -142,13 +180,17 @@ def grade(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["prepare", "grade", "prepare-gpqa"])
+    parser.add_argument("mode", choices=["prepare", "grade", "prepare-gpqa", "prepare-aime-2026"])
     parser.add_argument("--bbeh")
     parser.add_argument("--gpqa")
     parser.add_argument("--aime")
     parser.add_argument("--output")
     args = parser.parse_args()
-    if args.mode == "prepare-gpqa":
+    if args.mode == "prepare-aime-2026":
+        if not args.aime or not args.output:
+            parser.error("prepare-aime-2026 requires --aime and --output")
+        prepare_aime_2026(args)
+    elif args.mode == "prepare-gpqa":
         if not args.gpqa or not args.output:
             parser.error("prepare-gpqa requires --gpqa and --output")
         prepare_gpqa(args)

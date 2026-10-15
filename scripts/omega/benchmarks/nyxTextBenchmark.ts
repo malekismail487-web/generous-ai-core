@@ -24,8 +24,30 @@ export function textEvaluationModel(model?: string) {
   return model;
 }
 
-export type TextTaskFamily = "AIME_2025" | "BBEH_MINI" | "GPQA_DIAMOND" | "DEVELOPMENT_DIAGNOSTIC";
+export type TextTaskFamily = "AIME_2025" | "AIME_2026" | "BBEH_MINI" | "GPQA_DIAMOND" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
+
+/** Explicit mathematics evaluation profile, not a default change or authority
+ * grant. Uses the existing chat session's highest supported completion ceiling.
+ * Additional realized inference compute must never be called an architectural gain. */
+export const ULTRA_MATHEMATICS_EVALUATION_POLICY = Object.freeze({
+  version: "nyx-ultra-high-reasoning-mathematics/1",
+  model: TEXT_BENCHMARK_POLICY.model, maxOutputTokens: 16_384,
+  reasoningBudgetTokens: 12_288, maxTaskMs: 360_000,
+  maxLogicalCalls: 2, maxPhysicalCalls: 4, maxEpochMs: 12_000_000,
+  tools: ["READ_ONLY_DISPOSABLE_QUESTION_FILE"], productionDefaultsChanged: false,
+  firstAttemptOnly: true, gradersVisibleToCognition: false, grantsAuthority: false,
+});
+
+export function ultraMathematicsRequest(request: NvidiaNimCompletionRequest,
+  questionObserved: boolean): NvidiaNimCompletionRequest {
+  if (typeof questionObserved !== "boolean"
+    || request.maxTokens !== ULTRA_MATHEMATICS_EVALUATION_POLICY.maxOutputTokens)
+    throw Error("ultra_mathematics_request_profile_invalid");
+  return {...request, inferencePolicy: questionObserved ? "REASONING_JSON" : "CONSTRAINED_JSON",
+    reasoningControl: "ULTRA_HOSTED_NATIVE", reasoningEffort: undefined,
+    reasoningBudgetTokens: questionObserved ? ULTRA_MATHEMATICS_EVALUATION_POLICY.reasoningBudgetTokens : undefined};
+}
 
 export const GPQA_DIAMOND_SOURCE = Object.freeze({
   revision: "56686c06f5e19865c153de0fdb11be3890014df7",

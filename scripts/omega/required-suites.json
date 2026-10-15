@@ -1,7 +1,9 @@
 {
   "schemaVersion": 1,
-  "suiteVersion": "omega-institutional-suite/102",
+  "suiteVersion": "omega-institutional-suite/104",
   "criticalSuites": [
+    "OMEGA-ULTRA-MATHEMATICS-EVALUATION",
+    "OMEGA-BENCHMARK-ACQUISITION",
     "OMEGA-SCIENTIFIC-STRUCTURE-SEARCH",
     "OMEGA-SCIENTIFIC-MODEL-GENERATION",
     "OMEGA-SEMANTIC-POLYNOMIAL-PROOF",
@@ -193,6 +195,8 @@
     { "suiteId": "OMEGA-SEC003-CLOSURE-EVIDENCE", "file": "scripts/omegaSec003ClosureEvidence.test.ts" },
     { "suiteId": "OMEGA-SEC003-ALE-RETIREMENT", "file": "scripts/omegaSec003AleRetirement.test.ts" },
     { "suiteId": "OMEGA-TS-RATCHET", "file": "scripts/omegaTsRatchet.test.mjs" },
-    { "suiteId": "OMEGA-VERIFICATION-COST", "file": "scripts/omegaVerificationCost.test.ts" }
+    { "suiteId": "OMEGA-VERIFICATION-COST", "file": "scripts/omegaVerificationCost.test.ts" },
+    { "suiteId": "OMEGA-ULTRA-MATHEMATICS-EVALUATION", "file": "scripts/omegaUltraMathematicsEvaluation.test.ts" },
+    { "suiteId": "OMEGA-BENCHMARK-ACQUISITION", "file": "scripts/omegaBenchmarkAcquisition.test.mjs" }
   ]
 }
