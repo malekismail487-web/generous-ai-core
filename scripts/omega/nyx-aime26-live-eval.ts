@@ -50,7 +50,7 @@ export function mathematicsPublicResult(row: FullResult) {
 }
 type PublicResult = ReturnType<typeof mathematicsPublicResult>;
 
-export function mathematicsPopulationSummary(rows: readonly PublicResult[], selected = AIME_2026_SOURCE.population) {
+export function mathematicsPopulationSummary(rows: readonly PublicResult[], selected: number = AIME_2026_SOURCE.population) {
   if (!Number.isSafeInteger(selected) || selected < 0 || rows.length > selected
     || new Set(rows.map(row => row.taskId)).size !== rows.length
     || rows.some(row => row.family !== "AIME_2026" || !/^AIME-2026-\d+$/.test(row.taskId)
@@ -111,7 +111,7 @@ export async function runAime2026Epoch() {
     diagnosticPolicy: diagnose ? {variants: ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS,
       developmentTask: TEXT_SESSION_CONTRACT_DIAGNOSTICS[0].taskId, maxLogicalCalls: 8, maxPhysicalCalls: 16,
       maxEpochMs: 4 * POLICY.maxTaskMs, model: POLICY.model, maxOutputTokens: POLICY.maxOutputTokens,
-      highReasoningEveryAnswer: true, explicitReasoningBudget: [POLICY.reasoningBudgetTokens, null],
+      highReasoningEveryAnswer: true, explicitReasoningBudget: [12_288, null],
       hostedGrammarVariedOnlyAfterObservation: true, localValidationUnchanged: true,
       benchmarkQuestionsLoaded: false, configurationPromotion: false} : null,
     summary: mathematicsPopulationSummary(rows, diagnose ? 0 : AIME_2026_SOURCE.population), requestRejections, capacityWaits, stopReason,

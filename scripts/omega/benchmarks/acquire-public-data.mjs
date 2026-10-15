@@ -28,6 +28,8 @@ export const PUBLIC_DATASETS = Object.freeze([
   ['Apex-Shortlist', 'MathArena/apex-shortlist'],
   ['FrontierScience', 'openai/frontierscience'],
   ['MultiChallenge', 'ScaleAI/MultiChallenge'],
+  ['SWE-bench-Pro', 'ScaleAI/SWE-bench_Pro'],
+  ['AA-Omniscience', 'ArtificialAnalysis/AA-Omniscience-Public'],
 ]);
 
 export function publicDatasetPath(root, dataset, revision, filename) {

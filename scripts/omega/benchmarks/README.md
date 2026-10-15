@@ -1,5 +1,38 @@
 # NYX benchmark capability program
 
+### Corrected Ultra high-reasoning evaluation profile v2 (prospective)
+
+Development-only factorial at `8967325`, run `38676698545`, completed all four
+cells: GUIDED_BUDGET and LOCAL_BUDGET each read successfully then received HTTP
+400; GUIDED_NO_BUDGET delivered HTTP 200 but failed strict local action parsing;
+LOCAL_NO_BUDGET delivered HTTP 200 and passed deterministic development acceptance.
+Eight logical/eight HTTP calls, 2606 known tokens, two unknown-usage calls, no
+benchmark question loaded or attempted. This establishes a configuration defect
+and one viable development delivery path, **not a cognitive or benchmark gain**.
+The exact backend internals remain unestablished. Artifact/source/log custody:
+`docs/omega/evidence/ultra-contract-diagnosis-8967325.json`.
+
+Profile `nyx-ultra-high-reasoning-mathematics/2` therefore omits explicit
+`reasoning_budget` and uses the existing STRICT_LOCAL output mode only after a
+successful R1 observation. High reasoning and the SAME typed response schema,
+local parser, independent authorization, exact integer oracle, model, total 16384
+completion ceiling, call ceilings and original task/epoch leases remain. The
+hosted reasoning default is unknown; no fixed final-content reservation is
+claimed. Malformed JSON, truncation and invalid answers remain distinct failures.
+There is no default/provider routing change and no runtime/safety authority delta.
+
+The original 2x2 remains reproducible independently of profile v2. Before the full
+unchanged AIME 2026 population runs, both existing development objectives must
+pass under v2. Original v1/preflight outcomes and older AIME 2025/GPQA/scientific
+outcomes remain preserved. No answer-specific repair, extra model turn, or
+compute-matched architectural improvement is claimed by this configuration fix.
+An explicit script typecheck also found two literal-type narrowing defects outside
+the application tsconfig; both are corrected, and these new script/test paths are
+now checked in CI and before secret injection. The application zero baseline is
+unchanged, not re-baselined.
+Plan coverage: evidence-backed general correction, held-apart evaluation,
+trust-preserving capability development; PARTIAL / JUST-IN-TIME.
+
 ### Ultra preflight rejection and focused diagnosis (2026-10-15)
 
 Frozen `14401a0`, run `38675508659`, is terminal. Clean CI passed 114 suites /

@@ -31,7 +31,8 @@ check("mathematics profile does not change reviewed default resource policy", ()
   assert.equal(TEXT_BENCHMARK_POLICY.maxOutputTokens, 8192);
   assert.equal(TEXT_BENCHMARK_POLICY.maxTaskMs, 180000);
   assert.equal(POLICY.productionDefaultsChanged, false); assert.equal(POLICY.grantsAuthority, false);
-  assert(POLICY.reasoningBudgetTokens < POLICY.maxOutputTokens);
+  assert.equal(POLICY.reasoningBudgetTokens, null);
+  assert.equal(POLICY.reasoningBudgetControl, "HOSTED_DEFAULT_UNVERIFIED_WITHIN_TOTAL_COMPLETION_CEILING");
   assert.equal(POLICY.maxLogicalCalls, 2);
 });
 check("unobserved question requests only deterministic read with no thinking budget", () => {
@@ -42,7 +43,8 @@ check("unobserved question requests only deterministic read with no thinking bud
 check("observed question enables hosted high reasoning without medium effort", () => {
   const r = ultraMathematicsRequest(request, true);
   assert.equal(r.inferencePolicy, "REASONING_JSON"); assert.equal(r.reasoningEffort, undefined);
-  assert.equal(r.reasoningBudgetTokens, 12288); assert.equal(r.responseFormat, request.responseFormat);
+  assert.equal(r.reasoningBudgetTokens, undefined); assert.equal(r.responseFormat, request.responseFormat);
+  assert.equal(r.structuredOutputMode, "STRICT_LOCAL");
   assert.equal(r.messages, request.messages); assert.equal(r.maxTokens, request.maxTokens);
 });
 for (const budget of [0, 8192, 32768, NaN]) check(`unexpected mathematical completion budget rejected ${budget}`, () =>
@@ -72,7 +74,7 @@ check("provider-stated reasoning/grammar conflicts retain fixed labels, not erro
 
 // Constructed development rows only. No downloaded question or answer is read.
 const development = () => ({schemaVersion: 1, family: "AIME_2026", dataset: AIME_2026_SOURCE.dataset,
-  revision: AIME_2026_SOURCE.revision, sourceSha256: AIME_2026_SOURCE.sourceSha256,
+  revision: AIME_2026_SOURCE.revision, sourceSha256: String(AIME_2026_SOURCE.sourceSha256),
   license: AIME_2026_SOURCE.license,
   tasks: Array.from({length: 30}, (_, i) => ({family: "AIME_2026", taskId: `AIME-2026-${i + 1}`,
     question: `Artificial development record ${i + 1}; never a source benchmark question.`, answer: "17"}))});
@@ -145,8 +147,8 @@ check("no raw model reasoning or reference-answer fields enter report implementa
   assert(source.includes("mathematicsPublicResult(sanitizedTextResult"));
   assert(source.includes("if (!cleanup.sourceUnchanged || !cleanup.cleanupVerified)"));
 });
-for (const mode of ["GUIDED", "LOCAL", "HOSTILE"] as const) {
-  const hostile = mode === "HOSTILE";
+for (const mode of ["PROFILE_V2", "GUIDED_REFERENCE", "HOSTILE", "HOSTILE_AFTER_READ"] as const) {
+  const hostile = mode.startsWith("HOSTILE");
   let reader: ReadOnlyRepositoryExecutor | null = null;
   const started = Date.now(), deadline = started + 10000;
   const question = "Artificial development arithmetic: add seventeen and nineteen.";
@@ -159,7 +161,8 @@ for (const mode of ["GUIDED", "LOCAL", "HOSTILE"] as const) {
       maxPromptBytes: 64000, maxOutputTokens: POLICY.maxOutputTokens, timeoutMs: 1000,
       transport: async (_url, init) => {
         payloads.push(JSON.parse(String(init?.body)));
-        const action = hostile ? {kind: "CONTAINER_EXEC", argv: ["sh", "-c", "not-executed"]}
+        const action = mode === "HOSTILE" || mode === "HOSTILE_AFTER_READ" && payloads.length > 1
+          ? {kind: "CONTAINER_EXEC", argv: ["sh", "-c", "not-executed"]}
           : payloads.length === 1 ? {kind: "READ_FILE", path: "src/question.mjs"}
           : {kind: "REPLY", message: "The answer is: 36"};
         return new Response(JSON.stringify({choices: [{message: {content: JSON.stringify(action)}, finish_reason: "stop"}],
@@ -175,20 +178,21 @@ for (const mode of ["GUIDED", "LOCAL", "HOSTILE"] as const) {
       actionContract: {kind: "READ_THEN_REPLY", path: "src/question.mjs"},
       model: {complete: request => {
         const observed = reader!.auditLog().some(event => event.observation.content === questionFile && event.authorization.allowed);
-        return provider.complete(mode === "LOCAL" ? ultraContractDiagnosticRequest(request, observed, "LOCAL_BUDGET")
+        return provider.complete(mode === "GUIDED_REFERENCE" ? ultraContractDiagnosticRequest(request, observed, "GUIDED_BUDGET")
           : ultraMathematicsRequest(request, observed));
       }}}
       , question, "SCOPED_FILE");
     check(`existing scoped chat obeys the high-reasoning mathematics protocol ${mode}`, () => {
       assert(result); assert.equal(result.sourceRepositoryMutated, false); assert.equal(result.broaderAuthorityGranted, false);
       assert(!result.events.some(event => ["COMPUTER", "CANDIDATE", "ANALYSIS"].includes(event.eventType)));
-      if (hostile) {assert.notEqual(result.outcome, "REPLIED"); assert.equal(reader!.auditLog().length, 0);}
+      if (hostile) {assert.notEqual(result.outcome, "REPLIED"); assert.equal(reader!.auditLog().length, mode === "HOSTILE_AFTER_READ" ? 1 : 0);}
       else {
         assert.equal(result.outcome, "REPLIED"); assert(gradeAime(result.message, "36")); assert.equal(payloads.length, 2);
         assert.equal(payloads[0].reasoning_effort, "none"); assert.equal(payloads[0].reasoning_budget, undefined);
-        assert.equal(payloads[1].reasoning_effort, "high"); assert.equal(payloads[1].reasoning_budget, 12288);
+        assert.equal(payloads[1].reasoning_effort, "high");
+        assert.equal(payloads[1].reasoning_budget, mode === "GUIDED_REFERENCE" ? 12288 : undefined);
         assert.equal(payloads[1].max_tokens, 16384); assert.equal(reader!.auditLog().length, 1);
-        assert.equal("response_format" in payloads[1], mode !== "LOCAL");
+        assert.equal("response_format" in payloads[1], mode === "GUIDED_REFERENCE");
         assert.equal("response_format" in payloads[0], true);
       }
     });

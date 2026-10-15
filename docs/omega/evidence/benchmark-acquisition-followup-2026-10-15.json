@@ -940,6 +940,95 @@
     "Author repositories were not executed; third-party dependencies and engines are not installed",
     "MathArena noncommercial dataset terms preserved; no raw examples committed"
   ],
+  "additionalPublicDataAfterFreeze": {
+    "publicData": {
+      "schemaVersion": 1,
+      "identity": "NYX-PUBLIC-DATA-ACQUISITION-2026-10-15",
+      "observedAt": "2026-10-15T03:32:36.753Z",
+      "root": "C:\\Users\\loka3\\Documents\\Codex\\2026-08-20\\h\\benchmark-data",
+      "maxFileBytes": 2147483648,
+      "maxTotalBytes": 4294967296,
+      "downloadTimeoutMs": 900000,
+      "downloadedBytes": 15282865,
+      "credentialsUsed": false,
+      "rawExamplesPrinted": false,
+      "sourceCodeExecuted": false,
+      "benchmarkScoreClaim": false,
+      "sources": [
+        {
+          "benchmark": "SWE-bench-Pro",
+          "dataset": "ScaleAI/SWE-bench_Pro",
+          "revision": "2d52cb3df914a3fcf80c7f66738b3a88ae37fc50",
+          "gated": false,
+          "license": null,
+          "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+          "artifacts": [
+            {
+              "filename": "data/default/test-00000-of-00001.parquet",
+              "bytes": 6511689,
+              "sha256": "1067f72c1f43bbc578276888625db3b836cebb535546c9eaf824c5d5dd104a7f",
+              "state": "DOWNLOADED",
+              "authorLfsVerified": true
+            },
+            {
+              "filename": "data/hard/test-00000-of-00001.parquet",
+              "bytes": 799741,
+              "sha256": "abe9b2280ae470ae5742698979855e40ecc5c83c7aa6c679afb4ee964e951d3c",
+              "state": "DOWNLOADED",
+              "authorLfsVerified": true
+            },
+            {
+              "filename": "data/v1/test-00000-of-00001.parquet",
+              "bytes": 7816820,
+              "sha256": "c8cd7115496ad4e9a8b21d088cef576a65bf821bb542b24336f13f714cef13f8",
+              "state": "DOWNLOADED",
+              "authorLfsVerified": true
+            }
+          ],
+          "deferred": []
+        },
+        {
+          "benchmark": "AA-Omniscience",
+          "dataset": "ArtificialAnalysis/AA-Omniscience-Public",
+          "revision": "e4883edbb9f5ccf2b2a8fdc6fb65e01a58e99849",
+          "gated": false,
+          "license": "apache-2.0",
+          "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+          "artifacts": [
+            {
+              "filename": "AA-Omniscience_dataset_public.csv",
+              "bytes": 154615,
+              "sha256": "1e04603dafa3bd0d16d8151f07a5eb74c43d90c3a85d2fca120da2359174d02f",
+              "state": "DOWNLOADED",
+              "authorLfsVerified": false
+            }
+          ],
+          "deferred": []
+        }
+      ]
+    },
+    "authorRepository": {
+      "url": "https://github.com/scaleapi/SWE-bench_Pro-os.git",
+      "revision": "66f92766bba642462d4bbe5479e83f91f9211862",
+      "tree": "beb15336e37995a2dc2e5908e2bde931d59cef1e",
+      "clean": true,
+      "v2TaskDirectories": 642,
+      "sourceLicense": "MIT",
+      "containerImagesNotDownloaded": true,
+      "sourceCodeExecuted": false
+    },
+    "combinedTableSummary": {
+      "sources": 21,
+      "tableFiles": 98,
+      "verifiedBytes": 5488123552,
+      "gated": [
+        "HLE",
+        "HLE-Diamond",
+        "GAIA"
+      ],
+      "completeUniverseClaim": false
+    }
+  },
   "planCoverage": {
     "direct": [
       "BENCHMARK_VERSION_AND_SOURCE_CUSTODY",

@@ -31,9 +31,11 @@ export interface PrivateTextTask { family: TextTaskFamily; taskId: string; quest
  * grant. Uses the existing chat session's highest supported completion ceiling.
  * Additional realized inference compute must never be called an architectural gain. */
 export const ULTRA_MATHEMATICS_EVALUATION_POLICY = Object.freeze({
-  version: "nyx-ultra-high-reasoning-mathematics/1",
+  version: "nyx-ultra-high-reasoning-mathematics/2",
   model: TEXT_BENCHMARK_POLICY.model, maxOutputTokens: 16_384,
-  reasoningBudgetTokens: 12_288, maxTaskMs: 360_000,
+  reasoningBudgetTokens: null, maxTaskMs: 360_000,
+  reasoningBudgetControl: "HOSTED_DEFAULT_UNVERIFIED_WITHIN_TOTAL_COMPLETION_CEILING",
+  structuredOutput: "HOSTED_READ_STRICT_LOCAL_ANSWER",
   maxLogicalCalls: 2, maxPhysicalCalls: 4, maxEpochMs: 12_000_000,
   tools: ["READ_ONLY_DISPOSABLE_QUESTION_FILE"], productionDefaultsChanged: false,
   firstAttemptOnly: true, gradersVisibleToCognition: false, grantsAuthority: false,
@@ -46,7 +48,11 @@ export function ultraMathematicsRequest(request: NvidiaNimCompletionRequest,
     throw Error("ultra_mathematics_request_profile_invalid");
   return {...request, inferencePolicy: questionObserved ? "REASONING_JSON" : "CONSTRAINED_JSON",
     reasoningControl: "ULTRA_HOSTED_NATIVE", reasoningEffort: undefined,
-    reasoningBudgetTokens: questionObserved ? ULTRA_MATHEMATICS_EVALUATION_POLICY.reasoningBudgetTokens : undefined};
+    // Live factorial at 8967325 rejected this field in both grammar modes.
+    // The total completion ceiling still bounds ALL generated tokens. Do not
+    // pretend the hosted default reserves a known number for final content.
+    reasoningBudgetTokens: undefined,
+    structuredOutputMode: questionObserved ? "STRICT_LOCAL" : undefined};
 }
 
 /** Development-only factorial wire experiment. Not fallback, model routing,
@@ -62,8 +68,9 @@ export function ultraContractDiagnosticRequest(request: NvidiaNimCompletionReque
   const configured = ultraMathematicsRequest(request, questionObserved);
   return {...configured,
     // Only answer generation is varied; all cells use the SAME observed R1 read.
-    ...(questionObserved && variant.startsWith("LOCAL") ? {structuredOutputMode: "STRICT_LOCAL" as const} : {}),
-    ...(questionObserved && variant.endsWith("NO_BUDGET") ? {reasoningBudgetTokens: undefined} : {})};
+    // Freeze the original 2x2 even as the separately versioned profile changes.
+    structuredOutputMode: questionObserved && variant.startsWith("LOCAL") ? "STRICT_LOCAL" : undefined,
+    reasoningBudgetTokens: questionObserved && !variant.endsWith("NO_BUDGET") ? 12_288 : undefined};
 }
 
 export const GPQA_DIAMOND_SOURCE = Object.freeze({

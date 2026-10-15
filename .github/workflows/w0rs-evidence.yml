@@ -40,6 +40,7 @@ jobs:
           --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck
           scripts/omegaNvidiaNimProvider.test.ts scripts/omegaResearchParty.test.ts
           scripts/omegaNyxTextBenchmark.test.ts scripts/omega/nvidia-nim-live-smoke.ts
+          scripts/omegaUltraMathematicsEvaluation.test.ts scripts/omega/nyx-aime26-live-eval.ts
           scripts/omega/nyx-text-benchmark-epoch.ts
           scripts/omega/benchmarks/native-replay-crosscheck.ts
           scripts/omegaResearchExecutableTransfer.test.ts scripts/omegaNyxAdmissionGuidance.test.ts

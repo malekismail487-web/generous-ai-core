@@ -22,11 +22,11 @@ jobs:
   full-aime26:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'diagnose(nyx): isolate Ultra reasoning request rejection'
+      github.event.head_commit.message == 'eval(nyx): freeze corrected Ultra AIME 2026 epoch'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:
-      NYX_AIME26_MODE: ${{ github.event_name == 'push' && 'DEVELOPMENT_CONTRACT_DIAGNOSIS' || inputs.mode || 'FROZEN_BENCHMARK' }}
+      NYX_AIME26_MODE: ${{ inputs.mode || 'FROZEN_BENCHMARK' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,6 +47,7 @@ jobs:
           OMEGA_POLYNOMIAL_PYTHON: python3
         run: |
           npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omegaUltraMathematicsEvaluation.test.ts scripts/omega/nyx-aime26-live-eval.ts
           npm run security:secrets
           npm run omega:tests
       - name: Prepare the complete author population without logging questions or reference answers
