@@ -2,6 +2,7 @@ import { snapshotBoundedReasoningData } from "./boundedReasoningWorkbench";
 import { canonicalRationalLiteral as interpreterCanonical,deriveQuantities,createExactOperandMemo } from "./exactQuantitativeDerivation";
 import { exactScalar as interpreterScalar,fitExactLinearSystem } from "./exactLinearFit";
 import {createExactModularRefuter} from "./exactModularRefutation";
+import {interleaveBoundedSupports} from "./boundedSupportInterleaver";
 import { lowerQuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { fitScientificStructure, type ScientificModelStructure, type ScientificStructureFit } from "./scientificModelFit";
 import type { ScientificModelTask } from "./scientificModelGeneration";
@@ -11,7 +12,7 @@ import { immutableTheoryValue } from "./theoryContracts";
  * worlds. All scalar work uses the existing exact interpreter and caller tick.
  * Search ranking is not admission, a scientific claim, or execution authority. */
 export const SCIENTIFIC_SEARCH_POLICY = /* @__PURE__ */ Object.freeze({
-  version: "nyx-scientific-structure-search/6", maxDegree: 3, maxCoefficients: 8,
+  version: "nyx-scientific-structure-search/7", maxDegree: 3, maxCoefficients: 8,
   maxCandidates: 256, maxModels: 3, maxAtoms: 58, maxLaurentDescriptors: 82, grantsAuthority: false,
   scope: "FINITE_RATIONAL_GRAMMAR_CALIBRATION_HYPOTHESES_NOT_SCIENTIFIC_TRUTH",
   method: "BOUNDED_DIAGONAL_SUPPORTS_WITH_ORIGINAL_ROW_CONSISTENCY",
@@ -23,7 +24,7 @@ export interface ScientificSearchSpec {
   readonly maxDegree: number; readonly includeReciprocals: boolean;
   readonly allowDenominatorTerms: boolean; readonly maxCoefficients: number;
   readonly maxCandidates: number; readonly maxModels: number;
-  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT" | "EVIDENCE_MEMOIZED" | "EVIDENCE_MODULAR" | "EVIDENCE_LAURENT_MODULAR";
+  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT" | "EVIDENCE_MEMOIZED" | "EVIDENCE_MODULAR" | "EVIDENCE_LAURENT_MODULAR" | "EVIDENCE_LAURENT_INTERLEAVED";
 }
 export interface ScientificSearchCandidate {
   readonly structure: ScientificModelStructure; readonly fit: ScientificStructureFit;
@@ -58,14 +59,14 @@ export function scientificSearchSchema() {
     properties: { schemaVersion: { type: "integer", enum: [1] }, nonzeroConstantId: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" },
       maxDegree: { type: "integer", minimum: 1, maximum: 3 }, includeReciprocals: { type: "boolean" }, allowDenominatorTerms: { type: "boolean" },
       maxCoefficients: { type: "integer", minimum: 1, maximum: 8 }, maxCandidates: { type: "integer", minimum: 1, maximum: 256 },
-      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"] } } };
+      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR", "EVIDENCE_LAURENT_INTERLEAVED"] } } };
 }
 export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearchSpec {
   const s = snapshotBoundedReasoningData(proposed) as ScientificSearchSpec;
   if (!keys(s, scientificSearchSchema().required) || s.schemaVersion !== 1
     || typeof s.nonzeroConstantId !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s.nonzeroConstantId)
     || typeof s.includeReciprocals !== "boolean" || typeof s.allowDenominatorTerms !== "boolean"
-    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(s.strategy)
+    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR", "EVIDENCE_LAURENT_INTERLEAVED"].includes(s.strategy)
     || !Number.isSafeInteger(s.maxDegree) || s.maxDegree < 1 || s.maxDegree > 3
     || !Number.isSafeInteger(s.maxCoefficients) || s.maxCoefficients < 1 || s.maxCoefficients > 8
     || !Number.isSafeInteger(s.maxCandidates) || s.maxCandidates < 1 || s.maxCandidates > 256
@@ -103,9 +104,10 @@ function mixedLaurentExpressions(variables: readonly string[], degree: number, t
  * No other task data, hidden response, IO, model call or execution exists here. */
 export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}, onCompleted: () => void = () => {}): ScientificSearchResult {
   tick(); const spec = snapshotScientificSearchSpec(proposed);
-  const laurent = spec.strategy === "EVIDENCE_LAURENT_MODULAR";
-  const evidencePriority = ["EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(spec.strategy);
-  const memo=["EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR", "EVIDENCE_LAURENT_MODULAR"].includes(spec.strategy)?createExactOperandMemo(tick):undefined;
+  const interleaved = spec.strategy === "EVIDENCE_LAURENT_INTERLEAVED";
+  const laurent = spec.strategy === "EVIDENCE_LAURENT_MODULAR" || interleaved;
+  const evidencePriority = laurent || ["EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy);
+  const memo=laurent || ["EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy)?createExactOperandMemo(tick):undefined;
   const modular = spec.strategy === "EVIDENCE_MODULAR" || laurent ? createExactModularRefuter(tick, memo) : undefined;
   const canonicalRationalLiteral=(value:string,owner:()=>void)=>interpreterCanonical(value,owner,memo);
   const exactScalar=(op:"ADD"|"SUB"|"MUL"|"DIV",left:string,right:string,owner:()=>void)=>interpreterScalar(op,left,right,owner,memo);
@@ -339,6 +341,17 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
       for (let i=start;i<=maximum-remaining&&!done()&&evaluatedSupports<limit;i++) { tick(); visit([...prefix,i],i+1,remaining-1,maximum,limit); }
     };
     const explore = (minimumSize: number, maximumSize: number, limit: number) => {
+      // Saturated fallback retains its original diagonal order: cycling a
+      // single lexicographic size would pin the same core features and repeat
+      // one exact witness instead of supplying competing hypotheses.
+      if (interleaved && maximumSize < distinctInputs) {
+        if (maximumSize < minimumSize) return;
+        const stream = interleaveBoundedSupports(atoms.length, minimumSize, maximumSize, tick);
+        try {while (!done() && evaluatedSupports < limit) {
+          tick(); const next = stream.next(); if (next.done === true) break; evaluate(next.value);
+        }} finally {stream.return();}
+        return;
+      }
       for (let maximum=0;maximum<atoms.length&&!done()&&evaluatedSupports<limit;maximum++)
         for (let size=minimumSize;size<=Math.min(maximumSize,maximum+1)&&!done()&&evaluatedSupports<limit;size++) visit([],0,size-1,maximum,limit);
     };

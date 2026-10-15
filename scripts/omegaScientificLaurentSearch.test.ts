@@ -192,5 +192,53 @@ check("Existing typed NYX search composes with independent fits and ordinary adm
 });
 bridge.revoke();
 // POST_TRANSFER_REGRESSION_END
+// Disjoint scheduling development: compact laws at later grammar positions.
+const interleavedDevelopment = [
+  ["cubic_channel_offset", ([u]: readonly string[]) => q("ADD", q("MUL", "1/17", q("MUL", u, q("MUL", u, u))), "2/19")],
+  ["cross_channel_offset", ([u, v]: readonly string[]) => q("ADD", q("MUL", "3/23", q("MUL", u, q("MUL", v, v))), "5/29")],
+  ["mixed_inverse_square", ([u, v]: readonly string[]) => q("ADD", q("MUL", "7/31", q("DIV", v, q("MUL", u, u))), "11/37")],
+  ["affine_retention", ([u, v]: readonly string[]) => q("ADD", q("ADD", q("MUL", "13/41", u), q("MUL", "17/43", v)), "19/47")],
+] as const;
+const interleavedRows = [];
+for (const [name, law] of interleavedDevelopment) for (const strategy of ["EVIDENCE_LAURENT_MODULAR", "EVIDENCE_LAURENT_INTERLEAVED"] as const)
+  interleavedRows.push({name, ...exercise(task(law, calibration, prospective), law, strategy)});
+console.log("OMEGA_INTERLEAVED_SEARCH_DEVELOPMENT " + JSON.stringify({scope: "DISJOINT_DEVELOPMENT_NOT_FRESH_TRANSFER", rows: interleavedRows, liveModelCalls: 0}));
+check("The interleaved exploratory path preserves independent competing hypotheses on every development law", () => {
+  const corrected = interleavedRows.filter(r => r.strategy === "EVIDENCE_LAURENT_INTERLEAVED");
+  assert.equal(corrected.length, 4); assert(corrected.every(r => r.admissions.length >= 2 && r.admissions[0].prospectiveCorrect));
+});
+// Second newly composed transfer epoch, frozen before first execution. This is
+// NOT a rerun of the exposed fourth case, and NOT independently authored.
+const interleavedTransferCalibration = [["3/2", "7/3"], ["8/5", "13/4"], ["17/6", "19/7"], ["23/8", "29/9"]];
+const interleavedTransferProspective = [["31/10", "37/11"], ["41/12", "43/13"], ["47/14", "53/15"]];
+const interleavedTransferCases = [
+  ["signed_cubic", ([u]: readonly string[]) => q("ADD", q("MUL", "-3/7", q("MUL", u, q("MUL", u, u))), "5/11")],
+  ["mixed_cubic", ([u, v]: readonly string[]) => q("ADD", q("MUL", "7/13", q("MUL", q("MUL", u, u), v)), "11/17")],
+  ["inverse_square_coupling", ([u, v]: readonly string[]) => q("ADD", q("MUL", "13/19", q("DIV", u, q("MUL", v, v))), "17/23")],
+  ["signed_affine_guard", ([u, v]: readonly string[]) => q("ADD", q("SUB", q("MUL", "19/29", u), q("MUL", "23/31", v)), "29/37")],
+  ["ratio_linear_guard", ([u, v]: readonly string[]) => q("ADD", q("ADD", q("MUL", "31/41", q("DIV", v, u)), q("MUL", "37/43", u)), "41/47")],
+  ["quadratic_denominator", ([u, v]: readonly string[]) => q("DIV", q("ADD", q("MUL", "43/53", u), "47/59"), q("ADD", "1", q("MUL", "53/61", q("MUL", v, v))))],
+  ["no_bias_mixed_polynomial", ([u, v]: readonly string[]) => q("ADD", q("MUL", "59/67", q("MUL", u, q("MUL", u, u))), q("MUL", "61/71", q("MUL", v, v)))],
+] as const;
+const interleavedTransferFreeze = {calibration: interleavedTransferCalibration, prospective: interleavedTransferProspective,
+  cases: interleavedTransferCases.map(([name]) => name), sameGrammarAndSolver: true,
+  maxWorkUnits: 300000, maxNativeElapsedMs: 3000, maxRequests: 8, maxCandidates: 256, maxModels: 3, maxCoefficients: 4,
+  sameSaturatedFallback: true, privateOrIndependentDesign: false, liveModelCalls: 0, equalRealizedTotalComputeClaim: false};
+const interleavedTransferRows = [];
+for (const [i, [name, law]] of interleavedTransferCases.entries()) {
+  const t = task(law, interleavedTransferCalibration, interleavedTransferProspective);
+  const arms = ["EVIDENCE_LAURENT_MODULAR", "EVIDENCE_LAURENT_INTERLEAVED"] as const;
+  for (let k = 0; k < arms.length; k++) {
+    const row = exercise(t, law, arms[(i + k) % arms.length]);
+    interleavedTransferRows.push({name, ...row, acceptedLeadingPrediction: row.admissions.length >= 2 && row.admissions[0].prospectiveCorrect});
+  }
+}
+console.log("OMEGA_INTERLEAVED_SEARCH_TRANSFER " + JSON.stringify({freeze: interleavedTransferFreeze, rows: interleavedTransferRows}));
+// INTERLEAVED_TRANSFER_REGRESSION_BEGIN: added after preserved first outcomes.
+check("Preserve at least six accepted leading prospective results without requiring the seventh to fail", () => {
+  const corrected = interleavedTransferRows.filter(r => r.strategy === "EVIDENCE_LAURENT_INTERLEAVED");
+  assert.equal(corrected.length, 7); assert(corrected.filter(r => r.acceptedLeadingPrediction).length >= 6);
+});
+// INTERLEAVED_TRANSFER_REGRESSION_END
 console.log(`OMEGA_SCIENTIFIC_LAURENT_SEARCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;

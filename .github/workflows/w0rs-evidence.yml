@@ -52,6 +52,7 @@ jobs:
           scripts/omegaScientificModelGeneration.test.ts
           scripts/omegaScientificStructureSearch.test.ts
           scripts/omegaScientificLaurentSearch.test.ts
+          scripts/omegaBoundedSupportInterleaver.test.ts
           scripts/omega/benchmarks/scientific-model-replay.ts
           scripts/omega/nyx-scientific-fit-live-eval.ts
           scripts/omega/nyx-scientific-fit-fixtures.ts

@@ -1,0 +1,1463 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-INTERLEAVED-SCIENTIFIC-SEARCH-TRANSFER-001",
+  "evidenceClass": "E3",
+  "state": "NATIVE_TOOL_SEARCH_COVERAGE_GAIN_IN_ISOLATION",
+  "baselineCandidate": "5da856cf13fb1d768018b1259a73398303ccfa59",
+  "sourceBindings": {
+    "src/lib/codelab/research/boundedSupportInterleaver.ts": "eae0b4ce7e853d213d22f7a1f480d32e54f1b40187045cfd7c7a991329b3af6f",
+    "src/lib/codelab/research/scientificModelSearch.ts": "f9cc55c0ab4dce2b32ebe1b011f823dbb2a0420dbc8b77eb9b5aaede9acb05e9",
+    "scripts/omegaScientificLaurentSearch.test.ts": "8783c53ade6fbd55363c8f7aff21882f81ba257a4be39b501427a0543082b82f",
+    "scripts/omegaBoundedSupportInterleaver.test.ts": "cd033fb4bceee87f9a5083aad47b3561023fa3dba7825ea168ce06e8fefc090e",
+    "src/lib/codelab/research/scientificModelGeneration.ts": "234d3ccc5d8858ee519cbff2815dd602e5758d403a64bacc9230a7d1e4a64842",
+    "src/lib/codelab/research/scientificModelFit.ts": "a6a10cf829d14bbfcd863f7880c45f64c7ba599a7e7e91a7ea8f022c5a4dc8de",
+    "scripts/omega/benchmarks/scientific-model-replay.ts": "72ba926d3c8a6a0359a8a3428145a9fbd633ee5228dd014649644aea64601807"
+  },
+  "implementation": {
+    "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+    "searchPolicy": "nyx-scientific-structure-search/7",
+    "generatorPolicy": "bounded-support-interleaver/1",
+    "mechanism": "ONE_LAZY_LEXICOGRAPHIC_SUPPORT_PER_EXPLORATORY_CARDINALITY_PER_ROUND",
+    "sameGrammar": true,
+    "sameScalarArithmetic": true,
+    "sameModularFilter": true,
+    "sameWitnessDeduplication": true,
+    "sameSaturatedFallback": true,
+    "oldStrategiesChanged": false,
+    "defaultStrategyChanged": false,
+    "ownerWorkAndExpiryUnchanged": true,
+    "independentAdmissionUnchanged": true,
+    "authorityGranted": false
+  },
+  "diagnosis": {
+    "scope": "DISJOINT_SYNTHETIC_DEVELOPMENT",
+    "initialSourceBindings": [
+      {
+        "path": "src/lib/codelab/research/scientificModelSearch.ts",
+        "sha256": "816e4d66c06b09d3159826baea700a384bdae01a5f679d276a289bb40fc39752"
+      },
+      {
+        "path": "src/lib/codelab/research/boundedSupportInterleaver.ts",
+        "sha256": "eae0b4ce7e853d213d22f7a1f480d32e54f1b40187045cfd7c7a991329b3af6f"
+      },
+      {
+        "path": "scripts/omegaScientificLaurentSearch.test.ts",
+        "sha256": "3c8d7978672c1fba59e2a8cc6154f26db6a67fda22edb4ccd522f8ea768a218e"
+      }
+    ],
+    "initialDevelopment": {
+      "scope": "DISJOINT_DEVELOPMENT_NOT_FRESH_TRANSFER",
+      "rows": [
+        {
+          "name": "cubic_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "a568ff2bf4dfd6a97dacbd2837c0c340220423501a8aa84e244286632aad4b0e",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 200580,
+          "totalWork": 255827,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 39.64900000000034,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 335.1857999999993,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 381.59119999999984
+        },
+        {
+          "name": "cubic_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "a568ff2bf4dfd6a97dacbd2837c0c340220423501a8aa84e244286632aad4b0e",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 194256,
+          "totalWork": 237803,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 27.99120000000039,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 4
+          },
+          "independentCalls": 6,
+          "independentMs": 332.0490000000009,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 366.66040000000066
+        },
+        {
+          "name": "cross_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "b92d583f24d0897503446fc472e7806d8e39e77ff685af7bd52f0d8d4106638f",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 187517,
+          "totalWork": 234502,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 31.774999999998727,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 343.437399999998,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 384.1395999999995
+        },
+        {
+          "name": "cross_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "b92d583f24d0897503446fc472e7806d8e39e77ff685af7bd52f0d8d4106638f",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 180493,
+          "totalWork": 218025,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 26.230200000000877,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 3
+          },
+          "independentCalls": 6,
+          "independentMs": 342.22110000000157,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 376.77990000000045
+        },
+        {
+          "name": "mixed_inverse_square",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "760c9e358351fe2a982b3aa48be0819bc882d42bec1742b442e58489332f0099",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 203170,
+          "totalWork": 258645,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 29.73319999999967,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 349.40720000000147,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 386.72760000000017
+        },
+        {
+          "name": "mixed_inverse_square",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "760c9e358351fe2a982b3aa48be0819bc882d42bec1742b442e58489332f0099",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 195218,
+          "totalWork": 239711,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 27.173999999999978,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 4
+          },
+          "independentCalls": 6,
+          "independentMs": 339.4982000000009,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 374.77790000000005
+        },
+        {
+          "name": "affine_retention",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "b66e04ff656823176bda00792c421020404587b3f0f3d137485d6401698392fc",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 194571,
+          "totalWork": 238752,
+          "supports": 248,
+          "requests": 7,
+          "nativeMs": 43.15519999999924,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 2
+          },
+          "independentCalls": 6,
+          "independentMs": 336.90520000000015,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 386.8678
+        },
+        {
+          "name": "affine_retention",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "b66e04ff656823176bda00792c421020404587b3f0f3d137485d6401698392fc",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 198493,
+          "totalWork": 206202,
+          "supports": 256,
+          "requests": 3,
+          "nativeMs": 24.252800000000207,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 12
+          },
+          "independentCalls": 2,
+          "independentMs": 110.54120000000148,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 136.41899999999987
+        }
+      ],
+      "liveModelCalls": 0
+    },
+    "failureFound": "Applying lexicographic interleaving to saturated fallback repeated the same core features and returned only one independently admitted affine hypothesis, violating the existing competing-model precondition.",
+    "correction": "Interleave only the overdetermined exploratory phase; retain the original diagonal saturated fallback. No evaluator or precondition was relaxed.",
+    "correctedDevelopment": {
+      "scope": "DISJOINT_DEVELOPMENT_NOT_FRESH_TRANSFER",
+      "rows": [
+        {
+          "name": "cubic_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "6203388ece24ac78f11d0d40cf990560e980e1efc102feeb8d373f9ce4c669f0",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 200580,
+          "totalWork": 255827,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 32.842100000000755,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 337.978900000001,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 378.1332000000002
+        },
+        {
+          "name": "cubic_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "6203388ece24ac78f11d0d40cf990560e980e1efc102feeb8d373f9ce4c669f0",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 194253,
+          "totalWork": 237800,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 27.966699999999037,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 4
+          },
+          "independentCalls": 6,
+          "independentMs": 347.96710000000076,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 383.6133
+        },
+        {
+          "name": "cross_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "aaf89e783212a118da771b4a72e3f360cd7f42a1f24ddba7ba184a2808955803",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 187517,
+          "totalWork": 234502,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 27.73570000000018,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 329.46729999999934,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 364.46900000000005
+        },
+        {
+          "name": "cross_channel_offset",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "aaf89e783212a118da771b4a72e3f360cd7f42a1f24ddba7ba184a2808955803",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 180490,
+          "totalWork": 218022,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 24.55199999999968,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 3
+          },
+          "independentCalls": 6,
+          "independentMs": 347.22170000000006,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 378.02970000000005
+        },
+        {
+          "name": "mixed_inverse_square",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "eac34fbf2208011e7685e775c4293a884348d783c877c93dbe3350824b838f27",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 203170,
+          "totalWork": 258645,
+          "supports": 247,
+          "requests": 7,
+          "nativeMs": 34.16789999999855,
+          "admissions": [
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 0
+          },
+          "independentCalls": 6,
+          "independentMs": 341.84899999999925,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 383.89339999999993
+        },
+        {
+          "name": "mixed_inverse_square",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "eac34fbf2208011e7685e775c4293a884348d783c877c93dbe3350824b838f27",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 195215,
+          "totalWork": 239708,
+          "supports": 246,
+          "requests": 7,
+          "nativeMs": 34.310599999999795,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 4
+          },
+          "independentCalls": 6,
+          "independentMs": 330.4372999999996,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 371.16899999999987
+        },
+        {
+          "name": "affine_retention",
+          "strategy": "EVIDENCE_LAURENT_MODULAR",
+          "maxModels": 3,
+          "taskDigest": "5a210f116bd8b057f7d3b50d54d7fee2fe8aebd45e560673930c68db354c98ac",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 194571,
+          "totalWork": 238752,
+          "supports": 248,
+          "requests": 7,
+          "nativeMs": 27.350600000001577,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 2
+          },
+          "independentCalls": 6,
+          "independentMs": 351.4441999999981,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 386.03349999999955
+        },
+        {
+          "name": "affine_retention",
+          "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+          "maxModels": 3,
+          "taskDigest": "5a210f116bd8b057f7d3b50d54d7fee2fe8aebd45e560673930c68db354c98ac",
+          "state": "CANDIDATES_NOT_ADMITTED",
+          "reason": null,
+          "searchWork": 194671,
+          "totalWork": 238852,
+          "supports": 248,
+          "requests": 7,
+          "nativeMs": 29.295099999999366,
+          "admissions": [
+            {
+              "rank": 3,
+              "prospectiveCorrect": true
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            },
+            {
+              "rank": 4,
+              "prospectiveCorrect": false
+            }
+          ],
+          "grammar": {
+            "kind": "BOUNDED_MIXED_LAURENT",
+            "proposedAtoms": 34,
+            "retainedAtoms": 34,
+            "prunedAtoms": 0,
+            "maxAtoms": 58,
+            "maxTotalDegree": 3,
+            "reciprocalOptionHonored": true,
+            "duplicateExactWitnesses": 2
+          },
+          "independentCalls": 6,
+          "independentMs": 344.7872000000025,
+          "independentCpuMs": 0,
+          "unknownIndependentCpu": 0,
+          "elapsedMs": 380.53930000000037
+        }
+      ],
+      "liveModelCalls": 0
+    }
+  },
+  "generatorValidation": {
+    "tests": 18,
+    "failures": 0,
+    "checks": [
+      "SMALL_EXHAUSTIVE_COMPLETENESS_AND_NO_DUPLICATES",
+      "ALL_58_SINGLETONS_WITHIN_244_EXPLORATORY_SUPPORTS",
+      "ROUND_ROBIN_CARDINALITY_FAIRNESS",
+      "LAZY_58_CHOOSE_8_PREFIX",
+      "EXHAUSTED_STREAM_RETENTION",
+      "MALFORMED_DIMENSION_REJECTION",
+      "OWNER_REVOCATION",
+      "BOUNDED_CLEANUP_WITHOUT_RENEWAL"
+    ]
+  },
+  "firstTransfer": {
+    "freeze": {
+      "calibration": [
+        [
+          "3/2",
+          "7/3"
+        ],
+        [
+          "8/5",
+          "13/4"
+        ],
+        [
+          "17/6",
+          "19/7"
+        ],
+        [
+          "23/8",
+          "29/9"
+        ]
+      ],
+      "prospective": [
+        [
+          "31/10",
+          "37/11"
+        ],
+        [
+          "41/12",
+          "43/13"
+        ],
+        [
+          "47/14",
+          "53/15"
+        ]
+      ],
+      "cases": [
+        "signed_cubic",
+        "mixed_cubic",
+        "inverse_square_coupling",
+        "signed_affine_guard",
+        "ratio_linear_guard",
+        "quadratic_denominator",
+        "no_bias_mixed_polynomial"
+      ],
+      "sameGrammarAndSolver": true,
+      "maxWorkUnits": 300000,
+      "maxNativeElapsedMs": 3000,
+      "maxRequests": 8,
+      "maxCandidates": 256,
+      "maxModels": 3,
+      "maxCoefficients": 4,
+      "sameSaturatedFallback": true,
+      "privateOrIndependentDesign": false,
+      "liveModelCalls": 0,
+      "equalRealizedTotalComputeClaim": false
+    },
+    "rows": [
+      {
+        "name": "signed_cubic",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "b0d30534a6b0c9e2deed9be9d2a74f15448ee3b8ba54561172d2a9171e52e719",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 201824,
+        "totalWork": 257891,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 30.064500000000407,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 347.07050000000163,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 384.39609999999993,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "signed_cubic",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "b0d30534a6b0c9e2deed9be9d2a74f15448ee3b8ba54561172d2a9171e52e719",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 191166,
+        "totalWork": 232595,
+        "supports": 246,
+        "requests": 7,
+        "nativeMs": 27.953300000001036,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 4
+        },
+        "independentCalls": 6,
+        "independentMs": 345.97760000000017,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 380.78250000000116,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "mixed_cubic",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "26a5583792d51b6b5936748c3e16daba11f5764864912bd4fa7ccb09ddfa1a5f",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 185172,
+        "totalWork": 224652,
+        "supports": 246,
+        "requests": 7,
+        "nativeMs": 26.831900000001042,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 3
+        },
+        "independentCalls": 6,
+        "independentMs": 338.4249999999993,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 372.0003000000015,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "mixed_cubic",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "26a5583792d51b6b5936748c3e16daba11f5764864912bd4fa7ccb09ddfa1a5f",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 197172,
+        "totalWork": 250036,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 29.8786999999993,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 348.81050000000323,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 386.41089999999895,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "inverse_square_coupling",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "f288617da542088e0671169e6679acd7ba13b39af574ccbbe117b5a37780f2a4",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 219770,
+        "totalWork": 286799,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 31.451100000000224,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 340.3122999999996,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 379.41799999999967,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "inverse_square_coupling",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "f288617da542088e0671169e6679acd7ba13b39af574ccbbe117b5a37780f2a4",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 210200,
+        "totalWork": 262106,
+        "supports": 246,
+        "requests": 7,
+        "nativeMs": 34.772799999998824,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 4
+        },
+        "independentCalls": 6,
+        "independentMs": 336.0370999999959,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 377.3042999999998,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "signed_affine_guard",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "e2e13cb964955e9c479f633f296b01dc4770ed93104ff9cbc2cd5468d6b3bba6",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 209077,
+        "totalWork": 261319,
+        "supports": 248,
+        "requests": 7,
+        "nativeMs": 30.852499999999054,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 2
+        },
+        "independentCalls": 6,
+        "independentMs": 339.32280000000173,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 377.8865000000005,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "signed_affine_guard",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "e2e13cb964955e9c479f633f296b01dc4770ed93104ff9cbc2cd5468d6b3bba6",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 208107,
+        "totalWork": 260349,
+        "supports": 248,
+        "requests": 7,
+        "nativeMs": 27.926299999999173,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 2
+        },
+        "independentCalls": 6,
+        "independentMs": 329.2537999999968,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 364.0214999999989,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "ratio_linear_guard",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "96da9a5bcb66bf54b6861ad4cb9aff4e6ee1c0eb0fc5b91dabadfad68f2476fa",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 209678,
+        "totalWork": 262129,
+        "supports": 248,
+        "requests": 7,
+        "nativeMs": 37.84929999999986,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 2
+        },
+        "independentCalls": 6,
+        "independentMs": 343.3211999999985,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 388.3658999999989,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "ratio_linear_guard",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "96da9a5bcb66bf54b6861ad4cb9aff4e6ee1c0eb0fc5b91dabadfad68f2476fa",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 211110,
+        "totalWork": 263561,
+        "supports": 248,
+        "requests": 7,
+        "nativeMs": 33.96059999999852,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 2
+        },
+        "independentCalls": 6,
+        "independentMs": 360.3999999999978,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 401.1172999999999,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "quadratic_denominator",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "7d08992c025d8219917ba1d23007f985b5c558fb17fdfed19eccd4dff8051127",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 240539,
+        "totalWork": 300000,
+        "supports": 246,
+        "requests": 6,
+        "nativeMs": 34.92909999999938,
+        "admissions": [
+          {
+            "rank": 3,
+            "prospectiveCorrect": true
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 4,
+        "independentMs": 217.34619999999813,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 257.08719999999994,
+        "acceptedLeadingPrediction": true
+      },
+      {
+        "name": "quadratic_denominator",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "7d08992c025d8219917ba1d23007f985b5c558fb17fdfed19eccd4dff8051127",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 282337,
+        "totalWork": 300000,
+        "supports": 247,
+        "requests": 4,
+        "nativeMs": 37.531300000000556,
+        "admissions": [],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 0,
+        "independentMs": 0,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 37.56770000000142,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "no_bias_mixed_polynomial",
+        "strategy": "EVIDENCE_LAURENT_MODULAR",
+        "maxModels": 3,
+        "taskDigest": "6f232ae1d1d0757c2b2e2cdf4f625c68c12c86501d8dbec5a7a684bf854edad7",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 227628,
+        "totalWork": 298956,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 33.52989999999954,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 6,
+        "independentMs": 336.73069999999825,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 378.4910999999993,
+        "acceptedLeadingPrediction": false
+      },
+      {
+        "name": "no_bias_mixed_polynomial",
+        "strategy": "EVIDENCE_LAURENT_INTERLEAVED",
+        "maxModels": 3,
+        "taskDigest": "6f232ae1d1d0757c2b2e2cdf4f625c68c12c86501d8dbec5a7a684bf854edad7",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "searchWork": 229589,
+        "totalWork": 300000,
+        "supports": 247,
+        "requests": 7,
+        "nativeMs": 36.71140000000014,
+        "admissions": [
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          },
+          {
+            "rank": 4,
+            "prospectiveCorrect": false
+          }
+        ],
+        "grammar": {
+          "kind": "BOUNDED_MIXED_LAURENT",
+          "proposedAtoms": 34,
+          "retainedAtoms": 34,
+          "prunedAtoms": 0,
+          "maxAtoms": 58,
+          "maxTotalDegree": 3,
+          "reciprocalOptionHonored": true,
+          "duplicateExactWitnesses": 0
+        },
+        "independentCalls": 5,
+        "independentMs": 283.9437000000016,
+        "independentCpuMs": 0,
+        "unknownIndependentCpu": 0,
+        "elapsedMs": 327.63640000000123,
+        "acceptedLeadingPrediction": false
+      }
+    ]
+  },
+  "summary": {
+    "selectedTasks": 7,
+    "pairedArms": 2,
+    "baselineAcceptedLeadingPredictions": 2,
+    "correctedAcceptedLeadingPredictions": 6,
+    "baselineAdmittedLeadingPredictionsWrong": 4,
+    "baselineNoIndependentAdmission": 1,
+    "correctedAdmittedLeadingPredictionsWrong": 1,
+    "inferenceCalls": 0,
+    "publicBenchmarkScoreClaim": false,
+    "liveNyxCognitiveGainClaim": false,
+    "astraSuperiorityClaim": false
+  },
+  "cost": {
+    "sameUpperCeilings": true,
+    "sameRealizedTotalCompute": false,
+    "controlIndependentCalls": 36,
+    "correctedIndependentCalls": 39,
+    "controlNativeWork": 1916160,
+    "correctedNativeWork": 1844233,
+    "resourceFailuresRemainFailures": true,
+    "reason": "Native enumeration and independent replay costs vary and are retained separately. An admission not reached because of exhausted native work is not a wrong model answer or a provider failure."
+  },
+  "limitations": [
+    "The remaining no-intercept mixed-polynomial task is unsolved; its admitted saturated hypotheses fail prospective checks.",
+    "The previous quadratic-denominator control reached no independent admission; the exact per-request rejection subtype was not retained by the first-execution reporter.",
+    "The corrected quadratic-denominator and no-intercept rows exhausted native work during admission; not every returned candidate was independently admitted.",
+    "Seven developer-authored synthetic tasks are not sealed, independently designed or a public mathematics/science benchmark; all are now exposed regression data.",
+    "Correctness is tested on three prospective points, not universal identity, physical causation or original discovery.",
+    "No live model selected this new strategy. These are deterministic tool gains, not evidence that NYX outperforms a frontier model."
+  ],
+  "sourceReproduction": {
+    "path": "scripts/omegaScientificLaurentSearch.test.ts",
+    "firstExecutionTestSha256": "8783c53ade6fbd55363c8f7aff21882f81ba257a4be39b501427a0543082b82f",
+    "currentTestSha256": "3d6952a440dbe6ca1cd8793b1cf3cf97707c75f7a49c79400b8eec622810316b",
+    "removeBlockMarkers": [
+      "INTERLEAVED_TRANSFER_REGRESSION_BEGIN",
+      "INTERLEAVED_TRANSFER_REGRESSION_END"
+    ],
+    "firstSourceReproducedAndHashed": true,
+    "mathematicalAlgorithmAndFixturesUnchangedAfterFirstOutcomes": true
+  },
+  "postTransferBuildCorrection": {
+    "change": "PURE_POLICY_INITIALIZER_ANNOTATION_FOR_UNUSED_RESEARCH_CODE_TREE_SHAKING",
+    "packageRuntimeChanged": false,
+    "firstSourceReproducedByRemovingAnnotationAndExplicitBooleanDiscriminant": true,
+    "mathematicalAlgorithmChanged": false,
+    "scope": "RESEARCH_STRATEGY_NOT_EXPOSED_IN_THE_SHIPPED_CLI"
+  },
+  "postTransferTypeCorrection": {
+  "change": "EXPLICIT_ITERATOR_DONE_BOOLEAN_DISCRIMINANT_FOR_PROJECT_TYPESCRIPT",
+  "reason": "Project type checking rejected truthiness narrowing of void-or-support iterator results. Using done === true preserves the owned generator's actual boolean runtime behavior.",
+  "firstSourceBindingsPreserved": true,
+  "currentSourceBindings": {
+    "src/lib/codelab/research/scientificModelSearch.ts": "d8eea12c08a75a4943cb30c3ec51115f68233f2cb24e7e45fdfb2bbda8b2d434",
+    "src/lib/codelab/research/boundedSupportInterleaver.ts": "4718bcdeea47e5b264351ede14e16392663e3f43006f08ae951b6243d619275a"
+  },
+  "firstSourcesReproducedFromCurrentAndHashed": true,
+  "mathematicalAlgorithmChanged": false,
+  "resourceOrAcceptanceChanged": false
+},
+  "planCoverage": {
+    "direct": [
+      "GENERAL_SEARCH_FAILURE_REPAIR",
+      "CAPABILITY_GAIN_REQUIRES_CHANGED_FRESH_OUTCOMES",
+      "DETECTOR_VALIDATION",
+      "NO_SELF_CERTIFICATION"
+    ],
+    "supporting": [
+      "FAIR_BOUNDED_COMPUTE_ALLOCATION",
+      "EXACT_ARITHMETIC_AND_INDEPENDENT_REPLAY",
+      "FAILURE_RETENTION_AND_RESOURCE_ACCOUNTING"
+    ],
+    "deferred": [
+      "LIVE_MODEL_SELECTION",
+      "BROADER_SCIENTIFIC_TRANSFER",
+      "UNBOUNDED_SYMBOLIC_SEARCH",
+      "ORIGINAL_DISCOVERY",
+      "ASTRA_COMPARISON"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

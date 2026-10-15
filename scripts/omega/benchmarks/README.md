@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Interleaved finite-support science-tool transfer (2026-10-15)
+
+The opt-in EVIDENCE_LAURENT_INTERLEAVED mode changes only exploratory support
+scheduling: one lazy lexicographic support per active cardinality per round.
+It uses the SAME Laurent atoms, exact arithmetic, modular filter, witness cache,
+independent checks and resource ceilings as EVIDENCE_LAURENT_MODULAR. All previous
+strategies remain unchanged. Eighteen generator checks cover finite completeness,
+uniqueness, fairness, lazy bounded prefixes, malformed inputs, revocation and
+cleanup. This algorithm grants neither execution nor mathematical acceptance.
+
+Development found a retention defect when this schedule was also used for
+saturated fallback: repeated core features produced only one affine hypothesis.
+The correction limits interleaving to the overdetermined exploratory phase and
+retains the original diagonal fallback. The competing-model precondition stays.
+
+On seven newly composed, frozen synthetic cases, accepted leading prospective
+results increased from **2/7 to 6/7**. Four baseline rows had wrong admitted
+leading predictions; one reached no independent admission. The corrected mode
+still misses the no-intercept mixed polynomial. Those outcomes are preserved,
+not rewritten or used to alter the solver/fixtures after first execution.
+
+These are native-tool coverage gains, not live NYX cognitive or public benchmark
+scores. Both arms use zero model calls. Realized native work is 1916160 versus
+1844233 units; independent verification calls are 36 versus 39. Equal ceilings
+are NOT equal total compute, and timings/costs remain separately reported.
+The corrected quadratic-denominator and remaining failed row exhaust work during
+ordinary admission; not every returned candidate is independently admitted.
+
+Three prospective points per developer-authored law do not establish physical
+causation, universal mathematical identity, original discovery or Astra-level
+performance. The cohort is now exposed regression data. Earlier transfer receipts
+remain historical at their pinned sources. The frozen AIME campaign at `b07e807`
+is unaffected; no other live model campaign is started by this change.
+See [first outcomes, costs and source custody](../../../docs/omega/evidence/interleaved-search-transfer-2026-10-15.json).
+Plan coverage: general failure correction, bounded fair computation, independent
+admission and detector validation; PARTIAL / JUST-IN-TIME.
+
 ### Bounded mixed-ratio science-tool transfer (2026-10-15)
 
 The opt-in EVIDENCE_LAURENT_MODULAR strategy adds mixed-sign monomials such as
