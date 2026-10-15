@@ -1,4 +1,4 @@
-import { quotaProbeArgs, quotaProbeInspection, quotaCreationFailure } from "./omega/nyx-docker-storage-preflight";
+import { quotaProbeArgs, quotaProbeInspection, quotaProbeInspectionIssues, quotaCreationFailure } from "./omega/nyx-docker-storage-preflight";
 import { NYX_CONTAINER_SUPERVISOR, validateNyxContainerInspection } from "../src/lib/codelab/executor/nyxContainerExecution";
 
 let passed = 0; let failed = 0;
@@ -13,6 +13,16 @@ const fixture = () => ({Id: id, Image: image, Mounts: [], State: {Running: true}
     NanoCpus: 1000000000, PidsLimit: 32, StorageOpt: {size: "64m"}, Tmpfs: null}});
 const accepts = (raw: unknown) => quotaProbeInspection(raw, id, image, owner);
 check(accepts(fixture()), "fixed offline bounded probe inspection accepted");
+const omittedTmpfs = fixture(); delete (omittedTmpfs.HostConfig as {Tmpfs?: unknown}).Tmpfs;
+check(accepts(omittedTmpfs), "documented Docker omitempty empty tmpfs map preserves the same no-mount policy");
+for (const malformedTmpfs of [undefined, [], false, "", {"/tmp": "rw,size=1g"}]) {
+  const raw = fixture(); raw.HostConfig.Tmpfs = malformedTmpfs as never;
+  check(!accepts(raw) && quotaProbeInspectionIssues(raw, id, image, owner).includes("TMPFS_NOT_EMPTY"),
+    "only omitted/null/empty-object tmpfs permitted; typed diagnostics disclose no raw values");
+}
+const injectedMount = omittedTmpfs as ReturnType<typeof fixture>;
+injectedMount.Mounts = [{Type: "bind", Source: "/foreign"}] as never;
+check(!accepts(injectedMount), "omitted tmpfs cannot hide an actual mount");
 check(Object.isFrozen(quotaProbeArgs(image, owner)) && quotaProbeArgs(image, owner).includes("--storage-opt=size=64m"),
   "quota required before any writable-layer provisioning");
 check(!quotaProbeArgs(image, owner).some(x => /mount|volume|privileged|NVIDIA_API_KEY/.test(x)),

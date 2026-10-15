@@ -24,31 +24,43 @@ export function quotaProbeArgs(imageId: string, owner: string): readonly string[
     "--label", `${LABEL}=${owner}`, imageId, ...NYX_CONTAINER_SUPERVISOR]);
 }
 
-export function quotaProbeInspection(raw: unknown, id: string, imageId: string, owner: string): boolean {
-  if (!/^[a-f0-9]{64}$/.test(id) || !/^sha256:[a-f0-9]{64}$/.test(imageId) || !/^[a-f0-9]{32}$/.test(owner)) return false;
+/** Codes only: never retain raw inspection, environment values or daemon errors. */
+export function quotaProbeInspectionIssues(raw: unknown, id: string, imageId: string, owner: string): readonly string[] {
+  if (!/^[a-f0-9]{64}$/.test(id) || !/^sha256:[a-f0-9]{64}$/.test(imageId) || !/^[a-f0-9]{32}$/.test(owner)) return ["IDENTITY_INVALID"];
   const value = record(raw), host = record(value?.HostConfig), config = record(value?.Config);
   const labels = record(config?.Labels), storage = record(host?.StorageOpt);
   const ports = record(host?.PortBindings);
   const envNames = new Set(["PATH", "LANG", "GPG_KEY", "PYTHON_VERSION", "PYTHON_SHA256", "PYTHON_PIP_VERSION",
     "PYTHON_SETUPTOOLS_VERSION", "PYTHON_GET_PIP_URL", "PYTHON_GET_PIP_SHA256"]);
-  try { return !!value && !!host && !!config && value.Id === id && value.Image === imageId && labels?.[LABEL] === owner
-    && host.NetworkMode === "none" && (empty(host.PortBindings) || !!ports && Object.keys(ports).length === 0)
-    && empty(host.Links) && host.Privileged === false && host.ReadonlyRootfs === false
+  if (!value || !host || !config) return ["INSPECTION_SHAPE_INVALID"];
+  try { const checks: readonly (readonly [string, boolean])[] = [
+    ["IDENTITY_UNBOUND", value.Id === id && value.Image === imageId && labels?.[LABEL] === owner],
+    ["NETWORK_NOT_CONFINED", host.NetworkMode === "none" && (empty(host.PortBindings) || !!ports && Object.keys(ports).length === 0)
+      && empty(host.Links)],
+    ["HOST_ACCESS_OR_PRIVILEGE", host.Privileged === false && host.ReadonlyRootfs === false
     && host.PidMode === "" && host.IpcMode === "private" && empty(host.Binds) && empty(host.CapAdd)
-    && empty(host.Devices) && empty(host.DeviceRequests) && empty(host.VolumesFrom)
-    && nyxCanonical(host.CapDrop) === nyxCanonical(["ALL"])
+    && empty(host.Devices) && empty(host.DeviceRequests) && empty(host.VolumesFrom)],
+    ["SECURITY_PROFILE_INVALID", nyxCanonical(host.CapDrop) === nyxCanonical(["ALL"])
     && Array.isArray(host.SecurityOpt) && host.SecurityOpt.length === 1
-    && ["no-new-privileges", "no-new-privileges:true"].includes(String(host.SecurityOpt[0]))
-    && host.Memory === 134217728 && host.MemorySwap === host.Memory && host.NanoCpus === 1000000000
-    && host.PidsLimit === 32 && !!storage && Object.keys(storage).length === 1 && storage.size === "64m"
-    && (host.Tmpfs === null || !!record(host.Tmpfs) && Object.keys(record(host.Tmpfs)!).length === 0)
-    && Array.isArray(value.Mounts) && value.Mounts.length === 0
-    && config.User === "65534:65534" && config.WorkingDir === "/tmp"
-    && nyxCanonical(config.Cmd) === nyxCanonical(NYX_CONTAINER_SUPERVISOR)
-    && Array.isArray(config.Env) && config.Env.every(item => typeof item === "string"
+    && ["no-new-privileges", "no-new-privileges:true"].includes(String(host.SecurityOpt[0]))],
+    ["RESOURCE_LIMITS_INVALID", host.Memory === 134217728 && host.MemorySwap === host.Memory && host.NanoCpus === 1000000000
+      && host.PidsLimit === 32],
+    ["QUOTA_OPTION_INVALID", !!storage && Object.keys(storage).length === 1 && storage.size === "64m"],
+    // Docker's HostConfig uses json:",omitempty" for Tmpfs. Omission means an
+    // empty map, NOT an unknown mount policy. Explicit malformed values still
+    // fail, and both actual mounts and binds must independently remain empty.
+    ["TMPFS_NOT_EMPTY", !("Tmpfs" in host) || host.Tmpfs === null || !!record(host.Tmpfs) && Object.keys(record(host.Tmpfs)!).length === 0],
+    ["MOUNTS_NOT_EMPTY", Array.isArray(value.Mounts) && value.Mounts.length === 0],
+    ["USER_OR_WORKDIR_INVALID", config.User === "65534:65534" && config.WorkingDir === "/tmp"],
+    ["SUPERVISOR_INVALID", nyxCanonical(config.Cmd) === nyxCanonical(NYX_CONTAINER_SUPERVISOR)],
+    ["ENVIRONMENT_NOT_ALLOWLISTED", Array.isArray(config.Env) && config.Env.every(item => typeof item === "string"
       && envNames.has(item.split("=", 1)[0]) && !nyxContainsSecretLike(item)
-      && (!item.startsWith("GPG_KEY=") || /^GPG_KEY=[A-F0-9]{40}$/.test(item))); }
-  catch { return false; }
+      && (!item.startsWith("GPG_KEY=") || /^GPG_KEY=[A-F0-9]{40}$/.test(item)))],
+  ]; return Object.freeze(checks.filter(([, valid]) => !valid).map(([code]) => code)); }
+  catch { return ["INSPECTION_VALUE_INVALID"]; }
+}
+export function quotaProbeInspection(raw: unknown, id: string, imageId: string, owner: string): boolean {
+  return quotaProbeInspectionIssues(raw, id, imageId, owner).length === 0;
 }
 
 export function quotaCreationFailure(stderr: string): "STORAGE_QUOTA_UNSUPPORTED" | "CONTAINER_CREATION_FAILED" {
@@ -90,6 +102,7 @@ export async function runQuotaPreflight() {
   let state = "INFRASTRUCTURE_FAILURE", reason = "PRECONDITION_NOT_ESTABLISHED", cleanupVerified = false;
   let proof: Record<string, unknown> | null = null;
   let storageEnvironment: Record<string, unknown> | null = null;
+  let inspectionIssues: readonly string[] = [];
   try {
     const info = JSON.parse((await docker(["info", "--format", "{{json .}}"])).stdout);
     storageEnvironment = {driver: info.Driver, driverStatus: info.DriverStatus, serverVersion: info.ServerVersion};
@@ -107,10 +120,12 @@ export async function runQuotaPreflight() {
       const createdId = creation.stdout.trim();
       if (!/^[a-f0-9]{64}$/.test(createdId)) throw Error("container_identity_invalid");
       id = createdId;
-      if (!quotaProbeInspection(await driver.inspect(id), id, imageId!, owner)) throw Error("quota_profile_not_proven");
+      inspectionIssues = quotaProbeInspectionIssues(await driver.inspect(id), id, imageId!, owner);
+      if (inspectionIssues.length) throw Error("quota_profile_not_proven");
       await docker(["start", id]);
       const fresh = await driver.inspect(id) as {State?: {Running?: boolean}};
-      if (!quotaProbeInspection(fresh, id, imageId!, owner) || fresh.State?.Running !== true) throw Error("quota_profile_not_running");
+      inspectionIssues = quotaProbeInspectionIssues(fresh, id, imageId!, owner);
+      if (inspectionIssues.length || fresh.State?.Running !== true) throw Error("quota_profile_not_running");
       const output = await docker(["exec", "--user=65534:65534", "--workdir=/tmp", id,
         "/usr/bin/timeout", "--signal=KILL", "10s", "python", "-I", "-c", WRITE_PROBE], 15000);
       proof = record(JSON.parse(output.stdout));
@@ -141,7 +156,7 @@ export async function runQuotaPreflight() {
   }
   const receipt = {schemaVersion: 1, identity: "NYX-OFFICIAL-TASK-WRITABLE-LAYER-PREREQUISITE-001", candidate,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID || "unknown"}`, evidenceClass: "E3",
-    state, reason, storageEnvironment, proof, imageId, containerIdentityDigest: id ? nyxSha256(id) : null,
+    state, reason, storageEnvironment, inspectionIssues, proof, imageId, containerIdentityDigest: id ? nyxSha256(id) : null,
     cleanupVerified, nyxCapabilityGranted: false, modelCalls: 0, benchmarkTasksExecuted: 0,
     automaticFallback: false, productionAuthority: false,
     limitation: "QUOTA_DIAGNOSTIC_ONLY_NOT_A_COMPLETE_BENCHMARK_ENVIRONMENT_OR_KERNEL_ESCAPE_PROOF"};

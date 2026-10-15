@@ -18,7 +18,7 @@ remain owned by the ephemeral worker until VM teardown; the host receipt scopes
 cleanup to daemon, mount and loop resources, not deletion of every temporary byte.
 
 The fixture rejects non-GitHub-hosted/non-authorized invocations before mutation.
-Twenty-eight ownership/negative-path tests and the unchanged 25-check storage
+Twenty-eight ownership/negative-path tests and the 32-check storage
 contract precede the real probe. Shell syntax/lint checks precede root setup.
 Only a PASS from the ORIGINAL empirical quota probe can pass preparation. The
 kernel quota proof is still pending; unit checks are not a substitute for it.
@@ -35,6 +35,15 @@ runner-inaccessible-to-tasks daemon metadata mount. Docker's root-owned
 container device, mount, capability, network or writable quota is relaxed.
 The daemon now requires its 64 MiB default quota at startup rather than silently
 continuing without project-quota support. A fresh empirical run is still required.
+
+The corrected daemon then created the quota-constrained container successfully
+and verified full daemon/mount/loop cleanup, but the diagnostic inspection still
+rejected it before execution. Docker documents `Tmpfs` as an `omitempty` map:
+absence is the same empty policy, while malformed values and ANY actual mount
+remain rejected. The diagnostic now honors that documented wire representation
+and emits only fixed failure codes for future inspection mismatches. This does
+not change the NYX executor's readonly-root/tmpfs profile or admit the writable
+diagnostic as a NYX capability. Empirical write enforcement is not yet proved.
 
 No model credentials, model calls or benchmark tasks are involved. No NYX
 capability, unrestricted host authority, benchmark profile or cognitive improvement
