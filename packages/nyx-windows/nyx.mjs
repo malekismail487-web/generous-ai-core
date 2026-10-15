@@ -74,7 +74,19 @@ function validQuantitativeProgram(problem, value) {
 }
 var ArithmeticBoundary = class extends Error {
 };
+var EXACT_OPERAND_MEMO_POLICY = Object.freeze({
+  version: "nyx-exact-operand-memo/1",
+  maxEntries: 256,
+  maxRetainedUnits: 262144,
+  scope: "ONE_OWNER_EXACT_INTERPRETER_PARSE_REUSE_NOT_AUTHORITY",
+  grantsAuthority: false
+});
+var operandMemos = /* @__PURE__ */ new WeakMap();
 function deriveQuantities(problem, program, budget) {
+  const originalBudget = budget, ownerTick = budget.tick;
+  const memo = budget.operandMemo === void 0 ? null : operandMemos.get(budget.operandMemo);
+  if (budget.operandMemo !== void 0 && (!memo || memo.owner !== ownerTick)) throw Error("exact_operand_memo_owner");
+  budget = Object.freeze({ tick: () => ownerTick.call(originalBudget), operandMemo: budget.operandMemo });
   const bits = (n) => (n < 0n ? -n : n).toString(2).length;
   function charge(...values2) {
     for (const value of values2) {
@@ -101,8 +113,36 @@ function deriveQuantities(problem, program, budget) {
     return { n: n / a, d: d / a };
   }
   function parse(value) {
-    const [n, d = "1"] = value.split("/");
-    return rational(BigInt(n), BigInt(d));
+    if (memo) {
+      budget.tick();
+      for (let at = 0; at < value.length; at += 64) budget.tick();
+      const cached = memo.entries.get(value);
+      if (cached) {
+        memo.hits++;
+        return cached.value;
+      }
+      memo.misses++;
+    }
+    const [n, d = "1"] = value.split("/"), parsed = rational(BigInt(n), BigInt(d));
+    if (memo) {
+      budget.tick();
+      const retainedUnits = value.length + bits(parsed.n) + bits(parsed.d);
+      for (let at = 0; at < retainedUnits; at += 64) budget.tick();
+      if (retainedUnits <= EXACT_OPERAND_MEMO_POLICY.maxRetainedUnits) {
+        while (memo.entries.size >= EXACT_OPERAND_MEMO_POLICY.maxEntries || memo.retainedUnits + retainedUnits > EXACT_OPERAND_MEMO_POLICY.maxRetainedUnits) {
+          budget.tick();
+          const oldest = memo.entries.keys().next().value;
+          const old = memo.entries.get(oldest);
+          memo.entries.delete(oldest);
+          memo.retainedUnits -= old.retainedUnits;
+          memo.evictions++;
+        }
+        budget.tick();
+        memo.entries.set(value, { value: Object.freeze(parsed), retainedUnits });
+        memo.retainedUnits += retainedUnits;
+      }
+    }
+    return parsed;
   }
   const show = (v) => v.d === 1n ? String(v.n) : `${v.n}/${v.d}`;
   const values = /* @__PURE__ */ new Map();
@@ -1244,6 +1284,29 @@ var SEMANTIC_POLYNOMIAL_POLICY = Object.freeze({
   grantsAuthority: false,
   acceptanceRequiresIndependentVerifier: true,
   cognitiveGainDemonstrated: false
+});
+
+// src/lib/codelab/research/exactLinearFit.ts
+var EXACT_LINEAR_FIT_POLICY = /* @__PURE__ */ Object.freeze({
+  version: "nyx-exact-linear-fit/1",
+  maxRows: 12,
+  maxColumns: 8,
+  method: "EXACT_RREF_WITH_ORIGINAL_ROW_RESIDUALS",
+  grantsAuthority: false
+});
+
+// src/lib/codelab/research/exactModularRefutation.ts
+var EXACT_MODULAR_REFUTATION_POLICY = Object.freeze({
+  version: "nyx-exact-modular-refutation/1",
+  prime: 65521,
+  maxRows: EXACT_LINEAR_FIT_POLICY.maxRows,
+  maxColumns: EXACT_LINEAR_FIT_POLICY.maxColumns,
+  maxEntries: 256,
+  maxRetainedUnits: 262144,
+  workAccounting: "CHARGED_FINITE_WORD_ARITHMETIC_PLUS_OWNER_VALIDATION_AND_CACHE_WORK",
+  scope: "FULL_COLUMN_RANK_MODULAR_INCONSISTENCY_ONLY",
+  admitsSolution: false,
+  grantsAuthority: false
 });
 
 // src/lib/codelab/research/nyxQuantitativeReasoning.ts
@@ -4506,7 +4569,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     if (config.finalAttemptTimeoutMs !== void 0 && (!Number.isSafeInteger(config.finalAttemptTimeoutMs) || config.finalAttemptTimeoutMs < config.timeoutMs || config.finalAttemptTimeoutMs > 18e4)) {
       throw new Error("provider_final_attempt_timeout_invalid");
     }
-    if (config.finalAttemptSelection !== void 0 && (config.finalAttemptSelection !== "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" || config.finalAttemptTimeoutMs === void 0)) throw new Error("provider_final_attempt_selection_invalid");
+    if (config.finalAttemptSelection !== void 0 && (!["LAST_ATTEMPT_OR_NO_RETRY_WINDOW", "REMAINING_REQUEST_WINDOW"].includes(config.finalAttemptSelection) || config.finalAttemptTimeoutMs === void 0)) throw new Error("provider_final_attempt_selection_invalid");
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
     if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
@@ -4597,6 +4660,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     let timedOutAttempts = 0;
     let capacityWaitMs = 0;
     let finalAttemptTimeoutUsed = false;
+    const allocatedAttemptMs = [];
     let previous = null;
     let waitVisible = false;
     let waiting = false;
@@ -4651,6 +4715,10 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           callerDeadlineEpochMs: request.deadlineEpochMs,
           finalAttemptUsed: finalAttemptTimeoutUsed,
           selection: this.#config.finalAttemptSelection ?? "LAST_SHARED_ATTEMPT",
+          ...this.#config.finalAttemptSelection === "REMAINING_REQUEST_WINDOW" ? {
+            allocatedAttemptMs: Object.freeze([...allocatedAttemptMs]),
+            requestLifetimeMs: NVIDIA_CAPACITY_POLICY.defaultRequestLifetimeMs
+          } : {},
           authorityRenewed: false
         }) } : {},
         ...budget ? { httpAttemptBudget: Object.freeze({
@@ -4724,9 +4792,16 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         if (signal.aborted) return stopped(true);
         if (now() >= deadline) return stopped(false);
       }
-      previous = await this.#attempt(body, requestDigest, signal, deadline, () => {
-        finalAttemptTimeoutUsed = true;
-      });
+      previous = await this.#attempt(
+        body,
+        requestDigest,
+        signal,
+        deadline,
+        () => {
+          finalAttemptTimeoutUsed = true;
+        },
+        (allocation) => allocatedAttemptMs.push(allocation)
+      );
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
       if (previous.evidence.statusCode === 429 && this.#capacity) {
@@ -4765,7 +4840,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       return finish(previous);
     }
   }
-  async #attempt(body, requestDigest, signal, deadlineEpochMs, usedFinalTimeout) {
+  async #attempt(body, requestDigest, signal, deadlineEpochMs, usedFinalTimeout, allocated) {
     if (this.#remainingHttpAttempts() < 1) return this.#result(
       "BLOCKED",
       "nvidia_http_attempt_budget_exhausted",
@@ -4818,10 +4893,11 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     }
     let timeoutTriggered = false;
     let networkAttempted = false;
-    const lastUsefulAttempt = this.#remainingHttpAttempts() === 1 || this.#config.finalAttemptSelection === "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" && remainingMs <= this.#config.timeoutMs + NVIDIA_CAPACITY_POLICY.fallbackRetryAfterMs;
+    const remainingWindow = this.#config.finalAttemptSelection === "REMAINING_REQUEST_WINDOW";
+    const lastUsefulAttempt = remainingWindow || this.#remainingHttpAttempts() === 1 || this.#config.finalAttemptSelection === "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" && remainingMs <= this.#config.timeoutMs + NVIDIA_CAPACITY_POLICY.fallbackRetryAfterMs;
     const useFinalTimeout = lastUsefulAttempt && this.#config.finalAttemptTimeoutMs !== void 0;
     if (useFinalTimeout) usedFinalTimeout();
-    const attemptTimeoutMs = useFinalTimeout ? this.#config.finalAttemptTimeoutMs : this.#config.timeoutMs;
+    const attemptTimeoutMs = remainingWindow ? remainingMs : useFinalTimeout ? this.#config.finalAttemptTimeoutMs : this.#config.timeoutMs;
     const timeout = setTimeout(() => {
       timeoutTriggered = true;
       controller.abort();
@@ -4861,6 +4937,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         }
         this.#capacity?.recordDispatch();
         networkAttempted = true;
+        allocated(Math.min(attemptTimeoutMs, remainingMs));
         return this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
           method: "POST",
           headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },

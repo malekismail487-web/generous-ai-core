@@ -53,6 +53,8 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
         +"FORWARD_RESIDUAL is an exact greedy heuristic; LEXICOGRAPHIC is a simpler same-grammar alternative. Neither is guaranteed to find the correct structure. "
         +"DIAGONAL_EXACT reaches larger supports early and checks original-row consistency; DIAGONAL_NORMAL isolates scheduling with the prior residual solver. "
         +"EVIDENCE_EXACT explores supports with extra distinct calibration constraints first, reserving saturated-fit fallback. This is a finite search preference, not proof or confidence. "
+        +"EVIDENCE_MEMOIZED uses the same traversal and exact interpreter with an owner-scoped parsed-operand cache; construction and lookups consume the original work budget. It does not enlarge limits or certify hypotheses. "
+        +"EVIDENCE_MODULAR adds a full-column-rank modular inconsistency filter to that same traversal. It only rejects impossible linear supports; every survivor still requires ordinary exact fitting, domain checks and independent replay. Modular consistency never certifies a model. "
         +"maxCandidates counts tested supports, not returned models; maxModels counts returned hypotheses. A cap of a few supports explores only a tiny prefix. "
         +"All computation consumes the existing session budget. Search candidates still require independent fit replay and ordinary model admission. "
         +"Aim to find competing hypotheses where data permit. Do not invent constants, observations, authority, executable text or private reasoning. "
@@ -129,7 +131,7 @@ export async function runNyxScientificModelGeneration(input:{readonly session:Sc
     record(sessionStopped?"SESSION_UNAVAILABLE":models.length>=2?"COMPETING_MODEL_DERIVATIONS_ADMITTED":"MODEL_PROPOSALS_NOT_ADMITTED");feedback=searchMeta?{search:searchMeta,proposals}:proposals;
   }
   const remaining=input.session.usage();
-  return Object.freeze({version:input.nativeSearch?"nyx-scientific-model-generation/native-search-3":input.nativeFit?"nyx-scientific-model-generation/native-fit-1":"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
+  return Object.freeze({version:input.nativeSearch?"nyx-scientific-model-generation/native-search-4":input.nativeFit?"nyx-scientific-model-generation/native-fit-1":"nyx-scientific-model-generation/1",taskDigest:input.session.taskDigest,models:Object.freeze(models),
     attempts:immutableTheoryValue(attempts),calls:attempts.length,firstAttemptAdmitted:attempts[0]?.outcome==="COMPETING_MODEL_DERIVATIONS_ADMITTED",
     competingModelsAdmitted:models.length>=2,nativeUsage:input.session.usage(),elapsedMs:Math.max(0,now()-start),
     budgetStopReason:remaining.remainingWorkUnits===0?"WORK_BUDGET_EXHAUSTED":remaining.remainingNativeElapsedMs===0?"NATIVE_TIME_BUDGET_EXHAUSTED":null,

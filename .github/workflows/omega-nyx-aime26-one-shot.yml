@@ -22,7 +22,7 @@ jobs:
   full-aime26:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): freeze corrected Ultra AIME 2026 epoch'
+      github.event.head_commit.message == 'eval(nyx): freeze bounded Ultra delivery recovery epoch'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:

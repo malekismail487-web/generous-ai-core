@@ -75,20 +75,42 @@ class ArithmeticBoundary extends Error {}
 /** Bounded canonicalization reuses the SAME exact interpreter. This establishes
  * rational representation equality, never scientific truth or tool authority.
  */
-export function canonicalRationalLiteral(value: string, tick:()=>void=()=>{}):string {
+export function canonicalRationalLiteral(value: string, tick:()=>void=()=>{}, operandMemo?:ExactOperandMemo):string {
   // Derived/native measurement scalars may be wider than source constants.
   // Preserve the source validator's 128-digit limit; the interpreter itself
   // enforces its original 4096-bit arithmetic ceiling on this bounded string.
   if(typeof value!=="string"||!/^-(?:0|[1-9][0-9]{0,1233})(?:\/[1-9][0-9]{0,1233})?$/.test(value)
     &&!/^(?:0|[1-9][0-9]{0,1233})(?:\/[1-9][0-9]{0,1233})?$/.test(value))throw Error("rational_literal_invalid");
   const result=deriveQuantities({kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"scalar",value}]},
-    {schemaVersion:1,registers:[],blocks:[],outputs:[{label:"value",source:"scalar"}]},{tick});
+    {schemaVersion:1,registers:[],blocks:[],outputs:[{label:"value",source:"scalar"}]},{tick,operandMemo});
   if(result.status!=="CONSTRUCTED"||!result.payload.outputs)throw Error("rational_literal_insufficient");
   return result.payload.outputs[0].value;
 }
 interface Rational { n: bigint; d: bigint }
+export const EXACT_OPERAND_MEMO_POLICY=Object.freeze({version:"nyx-exact-operand-memo/1",maxEntries:256,maxRetainedUnits:262144,
+  scope:"ONE_OWNER_EXACT_INTERPRETER_PARSE_REUSE_NOT_AUTHORITY",grantsAuthority:false});
+export interface ExactOperandMemo {
+  readonly version:typeof EXACT_OPERAND_MEMO_POLICY.version;
+  statistics():{readonly hits:number;readonly misses:number;readonly evictions:number;readonly entries:number;readonly retainedUnits:number};
+}
+type OperandEntry={readonly value:Rational;readonly retainedUnits:number};
+const operandMemos=new WeakMap<ExactOperandMemo,{owner:()=>void;entries:Map<string,OperandEntry>;hits:number;misses:number;evictions:number;retainedUnits:number}>();
+/** Opaque trusted object ownership, never a model-supplied cache or cross-task
+ * store. Only parsed operands are reused; every actual arithmetic primitive,
+ * normalization and original bit check still runs in the SAME interpreter. */
+export function createExactOperandMemo(tick:()=>void):ExactOperandMemo {
+  if(typeof tick!=="function")throw Error("exact_operand_memo_owner");tick();
+  const state={owner:tick,entries:new Map<string,OperandEntry>(),hits:0,misses:0,evictions:0,retainedUnits:0};
+  const memo=Object.freeze({version:EXACT_OPERAND_MEMO_POLICY.version,statistics:()=>{tick();return Object.freeze({hits:state.hits,misses:state.misses,evictions:state.evictions,entries:state.entries.size,retainedUnits:state.retainedUnits});}});
+  operandMemos.set(memo,state);return memo;
+}
 /** Every primitive and Euclidean iteration consumes the SAME session's finite work budget. */
-export function deriveQuantities(problem: QuantitativeProblem, program: QuantitativeProgram, budget: { tick(): void }) {
+export function deriveQuantities(problem: QuantitativeProblem, program: QuantitativeProgram, budget: { tick(): void;operandMemo?:ExactOperandMemo }) {
+  const originalBudget=budget,ownerTick=budget.tick;
+  const memo=budget.operandMemo===undefined?null:operandMemos.get(budget.operandMemo);
+  if(budget.operandMemo!==undefined&&(!memo||memo.owner!==ownerTick))throw Error("exact_operand_memo_owner");
+  // Capture identity without losing a method-based budget's original receiver.
+  budget=Object.freeze({tick:()=>ownerTick.call(originalBudget),operandMemo:budget.operandMemo});
   const bits = (n: bigint) => (n < 0n ? -n : n).toString(2).length;
   function charge(...values: bigint[]) {
     for (const value of values) {
@@ -106,7 +128,26 @@ export function deriveQuantities(problem: QuantitativeProblem, program: Quantita
     return { n: n / a, d: d / a };
   }
   function parse(value: string): Rational {
-    const [n, d = "1"] = value.split("/"); return rational(BigInt(n), BigInt(d));
+    if(memo){
+      budget.tick();for(let at=0;at<value.length;at+=64)budget.tick();
+      const cached=memo.entries.get(value);
+      if(cached){memo.hits++;return cached.value;}memo.misses++;
+    }
+    const [n, d = "1"] = value.split("/"),parsed=rational(BigInt(n),BigInt(d));
+    if(memo){
+      // Charge measuring/retaining the operand and every eviction. Unsuccessful
+      // parsing or an interrupted insertion never installs a partial value.
+      budget.tick();const retainedUnits=value.length+bits(parsed.n)+bits(parsed.d);
+      for(let at=0;at<retainedUnits;at+=64)budget.tick();
+      if(retainedUnits<=EXACT_OPERAND_MEMO_POLICY.maxRetainedUnits){
+        while(memo.entries.size>=EXACT_OPERAND_MEMO_POLICY.maxEntries||memo.retainedUnits+retainedUnits>EXACT_OPERAND_MEMO_POLICY.maxRetainedUnits){
+          budget.tick();const oldest=memo.entries.keys().next().value!;const old=memo.entries.get(oldest)!;
+          memo.entries.delete(oldest);memo.retainedUnits-=old.retainedUnits;memo.evictions++;
+        }
+        budget.tick();memo.entries.set(value,{value:Object.freeze(parsed),retainedUnits});memo.retainedUnits+=retainedUnits;
+      }
+    }
+    return parsed;
   }
   const show = (v: Rational) => v.d === 1n ? String(v.n) : `${v.n}/${v.d}`;
   const values = new Map<string, Rational>();

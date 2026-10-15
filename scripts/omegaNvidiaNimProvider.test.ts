@@ -4,6 +4,7 @@ import {
   NvidiaNimProvider,
   nvidiaNimCredentialFromEnvironment,
   type NvidiaNimCompletionRequest,
+  type NvidiaNimCompletionResult,
   type NvidiaNimEvidence,
   type NvidiaNimTransport,
   type NvidiaNimCapacityProgress,
@@ -1422,6 +1423,62 @@ check(nvidiaRetryAfterMs("9999999999999999999999999", NOW) === Number.MAX_SAFE_I
       finalAttemptSelection: selection as never});} catch {rejected = true;}
     check(rejected, "unrecognized final-attempt selection fails closed");
   }
+}
+
+// A long non-streaming development response can fit the ORIGINAL caller window
+// but neither shorter retry cutoff. No inference or benchmark question is used.
+{
+  const make = (transport: NvidiaNimTransport, mode: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" | "REMAINING_REQUEST_WINDOW") => NvidiaNimProvider.create({
+    providerId: "WHOLE-REQUEST-DEVELOPMENT", model: "nvidia/development-model", authorityMode: "TEST_DOUBLE_ONLY",
+    credentialSource: {sourceIdentity: "synthetic:whole-request", read: () => "synthetic-development-credential"},
+    maxPromptBytes: 4096, maxOutputTokens: 128, timeoutMs: 100, finalAttemptTimeoutMs: 500,
+    finalAttemptSelection: mode, transport});
+  for (const phase of ["FETCH", "BODY"] as const) {
+    const results: NvidiaNimCompletionResult[] = [], payloads: string[] = [];
+    for (const mode of ["LAST_ATTEMPT_OR_NO_RETRY_WINDOW", "REMAINING_REQUEST_WINDOW"] as const) {
+      let calls = 0;
+      const raw = {choices: [{message: {content: "DEVELOPMENT_LONG_WINDOW"}, finish_reason: "stop"}],
+        usage: {prompt_tokens: 6, completion_tokens: 2, total_tokens: 8}};
+      const delay = () => new Promise<void>(resolve => setTimeout(resolve, 650));
+      const client = make(async (_url, init) => {
+        calls++; payloads.push(String(init?.body));
+        if (phase === "FETCH") {await delay(); return new Response(JSON.stringify(raw), {status: 200});}
+        return {ok: true, status: 200, headers: new Headers(), json: async () => {await delay(); return raw;}} as Response;
+      }, mode).withHttpAttemptBudget(4);
+      const deadline = Date.now() + 1000, result = await client.complete(request({deadlineEpochMs: deadline}));
+      results.push(result);
+      check(mode === "REMAINING_REQUEST_WINDOW" ? result.decision === "COMPLETED" : result.evidence.failureCategory === "PROVIDER_TIMEOUT",
+        `${phase}: whole-request allocation recovers a development response without a larger caller window`);
+      check(calls === 1 && result.evidence.delivery?.httpAttemptBudget?.dispatched === 1
+        && result.evidence.delivery?.attemptTimeout?.callerDeadlineEpochMs === deadline
+        && result.evidence.delivery?.authorityRenewed === false,
+        `${phase}: allocation retains one physical call, shared accounting and the unchanged deadline`);
+      if (mode === "REMAINING_REQUEST_WINDOW") check(result.evidence.delivery?.attemptTimeout?.allocatedAttemptMs?.length === 1
+        && result.evidence.delivery.attemptTimeout.allocatedAttemptMs[0] <= 1000,
+        `${phase}: evidence reports dispatch allocation ceilings, not a fictional final timeout`);
+    }
+    check(payloads.length === 2 && payloads[0] === payloads[1]
+      && results[0].evidence.requestDigest === results[1].evidence.requestDigest,
+      `${phase}: model, payload, output budget and reasoning settings match across scheduling controls`);
+  }
+  let calls = 0;
+  const immediate = make(async () => {calls++; return success();}, "REMAINING_REQUEST_WINDOW");
+  const bounded = immediate.withHttpAttemptBudget(4);
+  const noDeadline = await bounded.complete(request());
+  const noBudget = await immediate.complete(request({deadlineEpochMs: Date.now() + 1000}));
+  check(noDeadline.decision === "REJECTED" && noBudget.decision === "REJECTED" && calls === 0,
+    "whole-request allocation requires an owned dispatch budget and original caller deadline");
+  const longCaller = await bounded.complete(request({deadlineEpochMs: Date.now() + 600000}));
+  const allocation = longCaller.evidence.delivery?.attemptTimeout;
+  check(longCaller.decision === "COMPLETED" && allocation?.requestLifetimeMs === 300000
+    && allocation.allocatedAttemptMs?.length === 1 && allocation.allocatedAttemptMs[0] <= 300000,
+    "a longer caller lease cannot enlarge the original provider request lifetime");
+  const short = make(async () => {await new Promise<void>(resolve => setTimeout(resolve, 200)); return success();}, "REMAINING_REQUEST_WINDOW")
+    .withHttpAttemptBudget(4);
+  const shortDeadline = Date.now() + 80, expired = await short.complete(request({deadlineEpochMs: shortDeadline}));
+  check(expired.evidence.failureCategory === "PROVIDER_TIMEOUT" && expired.evidence.delivery?.httpAttempts === 1
+    && expired.evidence.delivery?.attemptTimeout?.allocatedAttemptMs?.[0] <= 80,
+    "whole-request allocation is clipped by an earlier caller deadline, never renewed");
 }
 
 assert(NVIDIA_NIM_PROVIDER_STATUS.newCapability === "BOUNDED_NVIDIA_NIM_CHAT_COMPLETION", "chunk reports exact model capability gain");

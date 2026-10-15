@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-EXACT-MODULAR-SEARCH-TRANSFER-001",
+  "evidenceClass": "E3",
+  "state": "NATIVE_TOOL_COVERAGE_GAIN_IN_ISOLATION",
+  "implementation": "EVIDENCE_MODULAR_OPT_IN_EXISTING_SCIENTIFIC_SEARCH",
+  "sourceBindings": {
+    "src/lib/codelab/research/exactModularRefutation.ts": "20367feea1a6211f8b44f5c73b34fbd3a72ecade1b0706269ee6a0c0899f30f6",
+    "src/lib/codelab/research/exactQuantitativeDerivation.ts": "9616ea052574f7841e2365f6c219023c2a61b034bbf782dd27b574443bc12297",
+    "src/lib/codelab/research/exactLinearFit.ts": "a333ad9072ef9c52b055b03946a914404f12f1d5c4c8189dccc7b9ae98391d28",
+    "src/lib/codelab/research/scientificModelSearch.ts": "e14d9ea97534cff2e28a9e499fd1cb332fcc696d3faa408fd0c235b58b6e7447",
+    "src/lib/codelab/research/scientificModelFit.ts": "a6a10cf829d14bbfcd863f7880c45f64c7ba599a7e7e91a7ea8f022c5a4dc8de",
+    "src/lib/codelab/research/scientificModelGeneration.ts": "234d3ccc5d8858ee519cbff2815dd602e5758d403a64bacc9230a7d1e4a64842",
+    "src/lib/codelab/research/nyxQuantitativeReasoning.ts": "561d0023038de31aafffa8a262e520f656a77804d8f69421c789ed86f0236a43",
+    "scripts/omegaScientificStructureSearch.test.ts": "67b56e4949ea418e900107974d6b4f176484b93a1bed4319db3a19e3c2b6ff4f",
+    "scripts/omegaExactModularRefutation.test.ts": "51198814dbc3c1f8804e9ad0f2d3214a76c479ff4c755fc3a52a8058da8f5d68",
+    "scripts/omega/benchmarks/scientific-model-replay.ts": "72ba926d3c8a6a0359a8a3428145a9fbd633ee5228dd014649644aea64601807"
+  },
+  "scope": {
+    "syntheticDevelopmentAndTransferOnly": true,
+    "privateOrIndependentTaskDesign": false,
+    "firstTransferOutcomesPreserved": true,
+    "cohortNowExposedRegressionData": true,
+    "modelCalls": 0,
+    "modelCognitiveGainClaim": false,
+    "publicBenchmarkScoreClaim": false,
+    "productionAuthority": false,
+    "scientificTruthEstablished": false
+  },
+  "hypothesis": "A full-column-rank finite-field contradiction can cheaply reject impossible rational supports while all surviving supports retain the original exact fit, domain, independent fit replay and point replay.",
+  "soundness": {
+    "prime": 65521,
+    "inputDenominatorsMustBeInvertible": true,
+    "fullColumnRankRequired": true,
+    "badPrimeFallsThrough": true,
+    "modularConsistencyNeverAccepts": true,
+    "argument": "An invertible pivot minor modulo p makes any unique rational solution p-integral when input denominators are invertible; a contradictory reduced original row therefore excludes a rational solution.",
+    "formalMachineCheckedProof": false,
+    "adversarialUnitChecks": 276,
+    "plantedFalseRefutationsObserved": 0
+  },
+  "resourceComparison": {
+    "sameGrammar": true,
+    "sameCalibrationAndProspectiveInputs": true,
+    "sameOriginalNativeWorkAndRequestLimits": true,
+    "sameIndependentAcceptanceChecks": true,
+    "sameRealizedTotalCompute": false,
+    "reason": "Controls exhausted native work before producing candidates. Corrected cases additionally executed six independent verification calls each; their costs are separately reported.",
+    "additionalInferenceCompute": 0,
+    "defaultSearchStrategiesUnchanged": true
+  },
+  "earlierDevelopment": {
+    "memoizedControls": "THREE_OF_THREE_EXHAUSTED_300000_WITH_NO_RESULT",
+    "modular": "THREE_SEARCHES_COMPLETED_WITHIN_ORIGINAL_CAP",
+    "correctLeadingHypotheses": 1,
+    "remainingLimitations": [
+      "Inverse-ratio law is outside the current atom grammar",
+      "Quadratic-denominator law is not reached before the finite support cap",
+      "Saturated calibration alternatives can disagree on prospective points and remain uncertain hypotheses"
+    ]
+  },
+  "firstTransfer": {
+    "freeze": {
+      "maxWorkUnits": 300000,
+      "maxNativeElapsedMs": 3000,
+      "maxRequests": 8,
+      "maxCandidates": 256,
+      "maxModels": 3,
+      "maxCoefficients": 4,
+      "calibrationPoints": [
+        [
+          "3/5",
+          "7/6"
+        ],
+        [
+          "8/7",
+          "11/9"
+        ],
+        [
+          "13/8",
+          "17/10"
+        ],
+        [
+          "19/11",
+          "23/12"
+        ]
+      ],
+      "prospectiveInputs": [
+        [
+          "29/13",
+          "31/17"
+        ],
+        [
+          "37/19",
+          "41/23"
+        ],
+        [
+          "43/29",
+          "47/31"
+        ]
+      ],
+      "taskNames": [
+        "mixed_response",
+        "inverse_channel",
+        "coupled_rational"
+      ],
+      "liveModelCalls": 0,
+      "modelCognitiveGainClaim": false,
+      "privateOrIndependentDesign": false
+    },
+    "rows": [
+      {
+        "name": "mixed_response",
+        "strategy": "EVIDENCE_EXACT",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "543cfc7de539430ab9a43e1a48b2944666b3ece8eed04e16bc9924ec1ef232a9",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 85,
+        "completed": 84,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 40.32550000000083,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 40.371399999999994
+      },
+      {
+        "name": "mixed_response",
+        "strategy": "EVIDENCE_MEMOIZED",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "543cfc7de539430ab9a43e1a48b2944666b3ece8eed04e16bc9924ec1ef232a9",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 112,
+        "completed": 111,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 41.15779999999904,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 41.197299999999814
+      },
+      {
+        "name": "mixed_response",
+        "strategy": "EVIDENCE_MODULAR",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "taskDigest": "543cfc7de539430ab9a43e1a48b2944666b3ece8eed04e16bc9924ec1ef232a9",
+        "searchWork": 187498,
+        "totalWork": 234471,
+        "requests": 7,
+        "supports": 246,
+        "completed": 246,
+        "modular": {
+          "queries": 246,
+          "refutations": 243,
+          "rankSkipped": 0,
+          "denominatorSkipped": 0,
+          "hits": 3535,
+          "misses": 49,
+          "evictions": 0,
+          "entries": 49,
+          "retainedUnits": 794,
+          "prime": 65521,
+          "admitsSolution": false,
+          "grantsAuthority": false
+        },
+        "admissions": [
+          {
+            "rank": 3,
+            "correct": true
+          },
+          {
+            "rank": 4,
+            "correct": false
+          },
+          {
+            "rank": 4,
+            "correct": false
+          }
+        ],
+        "success": true,
+        "nativeMs": 29.046699999997145,
+        "independentCalls": 6,
+        "independentElapsedMs": 332.4225999999999,
+        "elapsedMs": 369.71670000000086
+      },
+      {
+        "name": "inverse_channel",
+        "strategy": "EVIDENCE_MEMOIZED",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "79943b8cb1e3b67856e59b789052a7594be90dda28451f7023f9acf9b641b60f",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 114,
+        "completed": 113,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 38.77690000000075,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 38.812299999999595
+      },
+      {
+        "name": "inverse_channel",
+        "strategy": "EVIDENCE_MODULAR",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "taskDigest": "79943b8cb1e3b67856e59b789052a7594be90dda28451f7023f9acf9b641b60f",
+        "searchWork": 181589,
+        "totalWork": 224823,
+        "requests": 7,
+        "supports": 246,
+        "completed": 246,
+        "modular": {
+          "queries": 246,
+          "refutations": 243,
+          "rankSkipped": 0,
+          "denominatorSkipped": 0,
+          "hits": 3535,
+          "misses": 49,
+          "evictions": 0,
+          "entries": 49,
+          "retainedUnits": 781,
+          "prime": 65521,
+          "admitsSolution": false,
+          "grantsAuthority": false
+        },
+        "admissions": [
+          {
+            "rank": 3,
+            "correct": true
+          },
+          {
+            "rank": 4,
+            "correct": false
+          },
+          {
+            "rank": 4,
+            "correct": false
+          }
+        ],
+        "success": true,
+        "nativeMs": 31.3645000000015,
+        "independentCalls": 6,
+        "independentElapsedMs": 335.4931000000033,
+        "elapsedMs": 373.7550999999985
+      },
+      {
+        "name": "inverse_channel",
+        "strategy": "EVIDENCE_EXACT",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "79943b8cb1e3b67856e59b789052a7594be90dda28451f7023f9acf9b641b60f",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 87,
+        "completed": 86,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 62.49799999999959,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 62.51629999999932
+      },
+      {
+        "name": "coupled_rational",
+        "strategy": "EVIDENCE_MODULAR",
+        "state": "CANDIDATES_NOT_ADMITTED",
+        "reason": null,
+        "taskDigest": "5cfae2eae8092512cda15e9457981eb809311b581fa13638749b409700ab7c79",
+        "searchWork": 219583,
+        "totalWork": 286733,
+        "requests": 7,
+        "supports": 246,
+        "completed": 246,
+        "modular": {
+          "queries": 246,
+          "refutations": 243,
+          "rankSkipped": 0,
+          "denominatorSkipped": 0,
+          "hits": 3535,
+          "misses": 49,
+          "evictions": 0,
+          "entries": 49,
+          "retainedUnits": 791,
+          "prime": 65521,
+          "admitsSolution": false,
+          "grantsAuthority": false
+        },
+        "admissions": [
+          {
+            "rank": 3,
+            "correct": true
+          },
+          {
+            "rank": 4,
+            "correct": false
+          },
+          {
+            "rank": 4,
+            "correct": false
+          }
+        ],
+        "success": true,
+        "nativeMs": 36.23949999999968,
+        "independentCalls": 6,
+        "independentElapsedMs": 359.6599000000024,
+        "elapsedMs": 406.63440000000264
+      },
+      {
+        "name": "coupled_rational",
+        "strategy": "EVIDENCE_EXACT",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "5cfae2eae8092512cda15e9457981eb809311b581fa13638749b409700ab7c79",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 80,
+        "completed": 79,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 41.514100000000326,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 41.525299999997515
+      },
+      {
+        "name": "coupled_rational",
+        "strategy": "EVIDENCE_MEMOIZED",
+        "state": "INSUFFICIENT_EVIDENCE",
+        "reason": "SEARCH_RESOURCE_BUDGET",
+        "taskDigest": "5cfae2eae8092512cda15e9457981eb809311b581fa13638749b409700ab7c79",
+        "searchWork": 300000,
+        "totalWork": 300000,
+        "requests": 1,
+        "supports": 104,
+        "completed": 103,
+        "modular": null,
+        "admissions": [],
+        "success": false,
+        "nativeMs": 40.693599999998696,
+        "independentCalls": 0,
+        "independentElapsedMs": 0,
+        "elapsedMs": 40.70460000000094
+      }
+    ]
+  },
+  "sourceReproduction": {
+    "path": "scripts/omegaScientificStructureSearch.test.ts",
+    "firstExecutionSourceSha256": "67b56e4949ea418e900107974d6b4f176484b93a1bed4319db3a19e3c2b6ff4f",
+    "currentRegressionSourceSha256": "fd1a6893aaf2309a105050748d5f083cf2ea476e0a755f223ea709b5e173309e",
+    "changes": [
+      "ADDED_REGRESSION_ASSERTION_AFTER_FIRST_OUTCOMES",
+      "STRENGTHENED_NATIVE_TIME_BOUND_ASSERTION"
+    ],
+    "solverOrFixtureChanged": false
+  },
+  "postTransferMeteringReview": {
+    "originalSourceBindingsAndFirstOutcomesPreserved": true,
+    "changes": [
+      "REJECT_NON_STRING_FIELD_LITERALS_EXPLICITLY",
+      "CHARGE_HOT_CACHE_LOOKUPS_PER_ADDITIONAL_64_LITERAL_CHARACTERS",
+      "ADD_LONG_LITERAL_WORK_ACCOUNTING_REGRESSION"
+    ],
+    "currentSourceBindings": {
+      "src/lib/codelab/research/exactModularRefutation.ts": "a09dfb18eccaaea1c21fdbcadcf0053f2ccdd58bbc585c1ca2a58a0029a9df22",
+      "scripts/omegaExactModularRefutation.test.ts": "507117d25022eb3e485f68d3a5677d6bad06a5b8af7a53b4b593ff3538a1ac63"
+    },
+    "currentAdversarialUnitChecks": 277,
+    "currentAdversarialUnitFailures": 0,
+    "transferFixturesUnchanged": true,
+    "transferUsesOnlyStringLiteralsBelowAdditionalChargingThreshold": true,
+    "regressionRerunsAreNotFreshTransferEvidence": true,
+    "scope": "METERING_AND_INPUT_CONTRACT_STRENGTHENING_NOT_NEW_CAPABILITY_EVIDENCE"
+  },
+  "planCoverage": {
+    "direct": [
+      "GENERAL_ALGORITHMIC_CORRECTION",
+      "GENERATOR_REQUIRES_DETECTOR",
+      "DETECTOR_REQUIRES_VALIDATION",
+      "NO_SELF_CERTIFICATION"
+    ],
+    "supporting": [
+      "RATIONAL_EXACTNESS",
+      "LEASE_AND_WORK_BUDGET_PRESERVATION",
+      "CRITICAL_FALSIFICATION_OUTRANKS_POSITIVE_VOTES"
+    ],
+    "deferred": [
+      "LIVE_MODEL_SELECTION_AND_SCIENTIFIC_CONCLUSION",
+      "OPEN_ENDED_DISCOVERY",
+      "UNRESTRICTED_SYMBOLIC_MATHEMATICS",
+      "ASTRA_COMPARISON"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

@@ -1,6 +1,7 @@
 import { snapshotBoundedReasoningData } from "./boundedReasoningWorkbench";
-import { canonicalRationalLiteral, deriveQuantities } from "./exactQuantitativeDerivation";
-import { exactScalar, fitExactLinearSystem } from "./exactLinearFit";
+import { canonicalRationalLiteral as interpreterCanonical,deriveQuantities,createExactOperandMemo } from "./exactQuantitativeDerivation";
+import { exactScalar as interpreterScalar,fitExactLinearSystem } from "./exactLinearFit";
+import {createExactModularRefuter} from "./exactModularRefutation";
 import { lowerQuantitativeAlgebraicForm } from "./quantitativeAlgebraicCompiler";
 import { fitScientificStructure, type ScientificModelStructure, type ScientificStructureFit } from "./scientificModelFit";
 import type { ScientificModelTask } from "./scientificModelGeneration";
@@ -10,7 +11,7 @@ import { immutableTheoryValue } from "./theoryContracts";
  * worlds. All scalar work uses the existing exact interpreter and caller tick.
  * Search ranking is not admission, a scientific claim, or execution authority. */
 export const SCIENTIFIC_SEARCH_POLICY = /* @__PURE__ */ Object.freeze({
-  version: "nyx-scientific-structure-search/3", maxDegree: 3, maxCoefficients: 8,
+  version: "nyx-scientific-structure-search/5", maxDegree: 3, maxCoefficients: 8,
   maxCandidates: 256, maxModels: 3, maxAtoms: 58, grantsAuthority: false,
   scope: "FINITE_RATIONAL_GRAMMAR_CALIBRATION_HYPOTHESES_NOT_SCIENTIFIC_TRUTH",
   method: "BOUNDED_DIAGONAL_SUPPORTS_WITH_ORIGINAL_ROW_CONSISTENCY",
@@ -22,7 +23,7 @@ export interface ScientificSearchSpec {
   readonly maxDegree: number; readonly includeReciprocals: boolean;
   readonly allowDenominatorTerms: boolean; readonly maxCoefficients: number;
   readonly maxCandidates: number; readonly maxModels: number;
-  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT";
+  readonly strategy: "FORWARD_RESIDUAL" | "LEXICOGRAPHIC" | "DIAGONAL_EXACT" | "DIAGONAL_NORMAL" | "EVIDENCE_EXACT" | "EVIDENCE_MEMOIZED" | "EVIDENCE_MODULAR";
 }
 export interface ScientificSearchCandidate {
   readonly structure: ScientificModelStructure; readonly fit: ScientificStructureFit;
@@ -42,6 +43,8 @@ export interface ScientificSearchResult {
   readonly atoms: number; readonly gramsComputed: number;
   readonly evidencePriority?: { readonly distinctCalibrationInputs: number; readonly exploratorySupportLimit: number;
     readonly reservedFallbackSupports: number; readonly fallbackExercised: boolean };
+  readonly operandMemo?:{readonly hits:number;readonly misses:number;readonly evictions:number;readonly entries:number;readonly retainedUnits:number};
+  readonly modularRefutation?: ReturnType<ReturnType<typeof createExactModularRefuter>["statistics"]>;
   readonly scientificTruthEstablished: false; readonly grantsAuthority: false;
 }
 const keys = (v: unknown, names: readonly string[]) => !!v && typeof v === "object" && !Array.isArray(v)
@@ -52,14 +55,14 @@ export function scientificSearchSchema() {
     properties: { schemaVersion: { type: "integer", enum: [1] }, nonzeroConstantId: { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,47}$" },
       maxDegree: { type: "integer", minimum: 1, maximum: 3 }, includeReciprocals: { type: "boolean" }, allowDenominatorTerms: { type: "boolean" },
       maxCoefficients: { type: "integer", minimum: 1, maximum: 8 }, maxCandidates: { type: "integer", minimum: 1, maximum: 256 },
-      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT"] } } };
+      maxModels: { type: "integer", minimum: 1, maximum: 3 }, strategy: { type: "string", enum: ["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"] } } };
 }
 export function snapshotScientificSearchSpec(proposed: unknown): ScientificSearchSpec {
   const s = snapshotBoundedReasoningData(proposed) as ScientificSearchSpec;
   if (!keys(s, scientificSearchSchema().required) || s.schemaVersion !== 1
     || typeof s.nonzeroConstantId !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(s.nonzeroConstantId)
     || typeof s.includeReciprocals !== "boolean" || typeof s.allowDenominatorTerms !== "boolean"
-    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT"].includes(s.strategy)
+    || !["FORWARD_RESIDUAL", "LEXICOGRAPHIC", "DIAGONAL_EXACT", "DIAGONAL_NORMAL", "EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(s.strategy)
     || !Number.isSafeInteger(s.maxDegree) || s.maxDegree < 1 || s.maxDegree > 3
     || !Number.isSafeInteger(s.maxCoefficients) || s.maxCoefficients < 1 || s.maxCoefficients > 8
     || !Number.isSafeInteger(s.maxCandidates) || s.maxCandidates < 1 || s.maxCandidates > 256
@@ -74,7 +77,11 @@ const isArithmeticBoundary = (e: unknown) => e instanceof Error && e.message ===
  * No other task data, hidden response, IO, model call or execution exists here. */
 export function searchScientificStructures(task: ScientificModelTask, proposed: unknown, tick: () => void, onCandidate: () => void = () => {}, onCompleted: () => void = () => {}): ScientificSearchResult {
   tick(); const spec = snapshotScientificSearchSpec(proposed);
-  const evidencePriority = spec.strategy === "EVIDENCE_EXACT";
+  const evidencePriority = ["EVIDENCE_EXACT", "EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy);
+  const memo=["EVIDENCE_MEMOIZED", "EVIDENCE_MODULAR"].includes(spec.strategy)?createExactOperandMemo(tick):undefined;
+  const modular = spec.strategy === "EVIDENCE_MODULAR" ? createExactModularRefuter(tick, memo) : undefined;
+  const canonicalRationalLiteral=(value:string,owner:()=>void)=>interpreterCanonical(value,owner,memo);
+  const exactScalar=(op:"ADD"|"SUB"|"MUL"|"DIV",left:string,right:string,owner:()=>void)=>interpreterScalar(op,left,right,owner,memo);
   // Repeated/reordered/equivalent rational input rows must not manufacture
   // extra calibration constraints. Unique design points are NOT independent
   // physical observations or a statistical confidence estimate.
@@ -190,13 +197,19 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     try {
       if (direct) {
         const matrix = task.observations.map((_,row)=>support.map(i=>atoms[i].values[row]));
+        // One-sided exact finite-field refutation only. Rank loss, bad primes,
+        // and modular consistency all fall through to the ORIGINAL rational
+        // solver, full-row residuals, source fit, domain and independent replay.
+        if (modular?.refute(matrix, rhs).state === "PROVABLY_INCONSISTENT") {
+          inconsistentSupports++; seenSupports.set(key, null); return complete(null);
+        }
         // A prefix contradiction is a necessary-condition rejection, never
         // a fitted model. A rank-deficient prefix cannot reject a support that
         // later rows may identify. Unique prefix coefficients must satisfy
         // EVERY original row before the ordinary full-source fit is attempted.
         const prefixRows = Math.min(matrix.length,support.length+1);
-        let fit = fitExactLinearSystem(matrix.slice(0,prefixRows),rhs.slice(0,prefixRows),tick);
-        if (fit.state === "UNDERDETERMINED" && prefixRows < matrix.length) fit = fitExactLinearSystem(matrix,rhs,tick);
+        let fit = fitExactLinearSystem(matrix.slice(0,prefixRows),rhs.slice(0,prefixRows),tick,memo);
+        if (fit.state === "UNDERDETERMINED" && prefixRows < matrix.length) fit = fitExactLinearSystem(matrix,rhs,tick,memo);
         if (fit.state === "INCONSISTENT") { inconsistentSupports++; seenSupports.set(key,null); return complete(null); }
         if (fit.state !== "UNIQUE") { rankDeficientSupports++; seenSupports.set(key,null); return complete(null); }
         for (let row = 0; row < matrix.length; row++) {
@@ -277,5 +290,7 @@ export function searchScientificStructures(task: ScientificModelTask, proposed: 
     candidates, evaluatedSupports, completedSupports, rankDeficientSupports, inconsistentSupports, supportsBySize, arithmeticBlockedSupports, invalidFits, duplicatePredictions,
     ...(evidencePriority ? { evidencePriority: { distinctCalibrationInputs: distinctInputs, exploratorySupportLimit,
       reservedFallbackSupports, fallbackExercised } } : {}),
+    ...(memo?{operandMemo:memo.statistics()}:{}),
+    ...(modular?{modularRefutation:modular.statistics()}:{}),
     domainBlockedAtoms, atoms: atoms.length, gramsComputed: gram.size, scientificTruthEstablished: false, grantsAuthority: false });
 }

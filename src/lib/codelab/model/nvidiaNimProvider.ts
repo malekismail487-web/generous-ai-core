@@ -38,8 +38,9 @@ export interface NvidiaNimProviderConfig {
   readonly timeoutMs: number;
   /** Host-only experiment: the last shared-budget attempt may wait longer, but never beyond the caller's existing lease. */
   readonly finalAttemptTimeoutMs?: number;
-  /** Opt-in: unused dispatch slots cannot help when timeout + cooldown exhaust the original lease. */
-  readonly finalAttemptSelection?: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW";
+  /** Host-only allocation experiment. REMAINING_REQUEST_WINDOW may give one
+   * dispatch the full already-bounded request lifetime, not a renewed lease. */
+  readonly finalAttemptSelection?: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" | "REMAINING_REQUEST_WINDOW";
   readonly transport?: NvidiaNimTransport;
   /** Deterministic delivery testing only. Live instances always share the process-local gate. */
   readonly testCapacity?: NvidiaCapacityCoordinator;
@@ -152,7 +153,10 @@ export interface NvidiaNimDeliveryEvidence {
     readonly finalAttemptMs: number;
     readonly callerDeadlineEpochMs: number;
     readonly finalAttemptUsed: boolean;
-    readonly selection?: "LAST_SHARED_ATTEMPT" | "LAST_ATTEMPT_OR_NO_RETRY_WINDOW";
+    readonly selection?: "LAST_SHARED_ATTEMPT" | "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" | "REMAINING_REQUEST_WINDOW";
+    /** Allocation ceilings at actual HTTP dispatch, not observed completion latency. */
+    readonly allocatedAttemptMs?: readonly number[];
+    readonly requestLifetimeMs?: number;
     readonly authorityRenewed: false;
   };
   /** Host-owned dispatch budget shared by logical calls and retries, never supplied to the model. */
@@ -301,7 +305,7 @@ export class NvidiaNimProvider {
       || config.finalAttemptTimeoutMs < config.timeoutMs || config.finalAttemptTimeoutMs > 180_000)) {
       throw new Error("provider_final_attempt_timeout_invalid");
     }
-    if (config.finalAttemptSelection !== undefined && (config.finalAttemptSelection !== "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
+    if (config.finalAttemptSelection !== undefined && (!["LAST_ATTEMPT_OR_NO_RETRY_WINDOW", "REMAINING_REQUEST_WINDOW"].includes(config.finalAttemptSelection)
       || config.finalAttemptTimeoutMs === undefined)) throw new Error("provider_final_attempt_selection_invalid");
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
@@ -402,6 +406,7 @@ export class NvidiaNimProvider {
     let timedOutAttempts = 0;
     let capacityWaitMs = 0;
     let finalAttemptTimeoutUsed = false;
+    const allocatedAttemptMs: number[] = [];
     let previous: NvidiaNimCompletionResult | null = null;
     let waitVisible = false;
     let waiting = false;
@@ -438,6 +443,10 @@ export class NvidiaNimProvider {
           configuredMs: this.#config.timeoutMs, finalAttemptMs: this.#config.finalAttemptTimeoutMs,
           callerDeadlineEpochMs: request.deadlineEpochMs!, finalAttemptUsed: finalAttemptTimeoutUsed,
           selection: this.#config.finalAttemptSelection ?? "LAST_SHARED_ATTEMPT",
+          ...(this.#config.finalAttemptSelection === "REMAINING_REQUEST_WINDOW" ? {
+            allocatedAttemptMs: Object.freeze([...allocatedAttemptMs]),
+            requestLifetimeMs: NVIDIA_CAPACITY_POLICY.defaultRequestLifetimeMs,
+          } : {}),
           authorityRenewed: false as const }) } : {}),
         ...(budget ? { httpAttemptBudget: Object.freeze({ scope: "HOST_OWNED_RUN_INCLUDING_RETRIES" as const,
           limit: budget.limit, dispatched: budget.dispatched, remainingAttempts: this.#remainingHttpAttempts(),
@@ -478,7 +487,8 @@ export class NvidiaNimProvider {
         if (signal.aborted) return stopped(true);
         if (now() >= deadline) return stopped(false);
       }
-      previous = await this.#attempt(body, requestDigest, signal, deadline, () => { finalAttemptTimeoutUsed = true; });
+      previous = await this.#attempt(body, requestDigest, signal, deadline, () => { finalAttemptTimeoutUsed = true; },
+        allocation => allocatedAttemptMs.push(allocation));
       if (previous.evidence.networkAttempted) httpAttempts += 1;
       if (previous.evidence.statusCode === 429) rateLimitedResponses += 1;
       if (previous.evidence.statusCode === 429 && this.#capacity) { waitVisible = true; continue; }
@@ -512,7 +522,7 @@ export class NvidiaNimProvider {
   }
 
   async #attempt(body: string, requestDigest: string, signal: AbortSignal, deadlineEpochMs: number,
-    usedFinalTimeout: () => void): Promise<NvidiaNimCompletionResult> {
+    usedFinalTimeout: () => void, allocated: (milliseconds: number) => void): Promise<NvidiaNimCompletionResult> {
     if (this.#remainingHttpAttempts() < 1) return this.#result("BLOCKED", "nvidia_http_attempt_budget_exhausted",
       null, null, requestDigest, null, null, emptyUsage(), false);
     let credential: string | undefined;
@@ -532,12 +542,18 @@ export class NvidiaNimProvider {
       null, null, requestDigest, null, null, emptyUsage(), false); }
     let timeoutTriggered = false;
     let networkAttempted = false;
-    const lastUsefulAttempt = this.#remainingHttpAttempts() === 1
+    // Opt-in allocation experiment: one non-streaming reasoning request may
+    // use the existing request window instead of discarding it at a shorter
+    // cutoff and retrying the SAME computation. Never changes either absolute
+    // deadline, the 300-second request lifetime, or shared dispatch accounting.
+    const remainingWindow = this.#config.finalAttemptSelection === "REMAINING_REQUEST_WINDOW";
+    const lastUsefulAttempt = remainingWindow || this.#remainingHttpAttempts() === 1
       || this.#config.finalAttemptSelection === "LAST_ATTEMPT_OR_NO_RETRY_WINDOW"
         && remainingMs <= this.#config.timeoutMs + NVIDIA_CAPACITY_POLICY.fallbackRetryAfterMs;
     const useFinalTimeout = lastUsefulAttempt && this.#config.finalAttemptTimeoutMs !== undefined;
     if (useFinalTimeout) usedFinalTimeout();
-    const attemptTimeoutMs = useFinalTimeout ? this.#config.finalAttemptTimeoutMs! : this.#config.timeoutMs;
+    const attemptTimeoutMs = remainingWindow ? remainingMs
+      : useFinalTimeout ? this.#config.finalAttemptTimeoutMs! : this.#config.timeoutMs;
     const timeout = setTimeout(() => { timeoutTriggered = true; controller.abort(); }, Math.min(attemptTimeoutMs, remainingMs));
     const bounded = <T>(operation: () => Promise<T>): Promise<T> => new Promise((resolve, reject) => {
       const aborted = () => { cleanup(); reject(new DOMException("Provider request aborted", "AbortError")); };
@@ -557,6 +573,7 @@ export class NvidiaNimProvider {
           dispatchDeniedReason = "nvidia_http_attempt_budget_exhausted"; return Promise.resolve(null);
         }
         this.#capacity?.recordDispatch(); networkAttempted = true;
+        allocated(Math.min(attemptTimeoutMs, remainingMs));
         return this.#transport!(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
           method: "POST",
           headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },

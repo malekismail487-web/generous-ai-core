@@ -11,7 +11,7 @@ import {TEXT_BENCHMARK_POLICY, ULTRA_MATHEMATICS_EVALUATION_POLICY as POLICY,
 import {ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS, ultraContractDiagnosticRequest,
   textRejectionHint} from "./omega/benchmarks/nyxTextBenchmark";
 import {AIME_2026_SOURCE, parseAime2026Data, mathematicsPopulationSummary,
-  mathematicsPublicResult} from "./omega/nyx-aime26-live-eval";
+  mathematicsPublicResult, mathematicsTaskHadOutage} from "./omega/nyx-aime26-live-eval";
 
 let passed = 0, failed = 0;
 function check(name: string, run: () => unknown) {
@@ -104,6 +104,14 @@ const result = (id: number, correct: boolean | null, state: string) => ({taskId:
   family: "AIME_2026" as const, state, correct}) as Parameters<typeof mathematicsPopulationSummary>[0][number];
 check("empty coverage cannot establish a mathematics score", () => {
   const r = mathematicsPopulationSummary([]); assert.equal(r.score, null); assert.equal(r.target100Reached, false);
+});
+check("a slow answer after an HTTP 200 read is not a complete endpoint outage", () => {
+  assert.equal(mathematicsTaskHadOutage({modelEvidence: [{statusCode: 200, failureCategory: null},
+    {statusCode: null, failureCategory: "PROVIDER_TIMEOUT"}]}), false);
+  assert.equal(mathematicsTaskHadOutage({modelEvidence: [{statusCode: null, failureCategory: "PROVIDER_TIMEOUT"}]}), true);
+  assert.equal(mathematicsTaskHadOutage({modelEvidence: [{statusCode: 503, failureCategory: "PROVIDER_UNAVAILABLE"}]}), true);
+  assert.equal(mathematicsTaskHadOutage({modelEvidence: []}), false);
+  assert.equal(mathematicsTaskHadOutage({modelEvidence: [{statusCode: 200, failureCategory: "PROVIDER_RESPONSE_SCHEMA_ERROR"}]}), false);
 });
 check("development-only diagnosis selects zero benchmark tasks and cannot earn a vacuous perfect score", () => {
   const r = mathematicsPopulationSummary([], 0);

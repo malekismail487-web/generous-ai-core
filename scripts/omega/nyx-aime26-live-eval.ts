@@ -20,6 +20,13 @@ export const AIME_2026_SOURCE = Object.freeze({dataset: "MathArena/aime_2026",
   license: "cc-by-nc-sa-4.0", population: 30,
   grading: "EXACT_FINAL_INTEGER_EXISTING_NYX_ADAPTER_NOT_MATHARENA_INFERENCE_HARNESS"});
 
+// Custody/exposure metadata ONLY. No scheduling, prompt or acceptance decision
+// depends on an item's prior correctness or membership in this historical set.
+const PRIOR_AIME_2026 = Object.freeze({candidate: "a840700869f159e686289fca4d2bf08dc889c726",
+  runId: 38677741472, reportSha256: "006ef243a0041c6462209e743fada649aca905cb269b5ac5e16f90787af4d0a9",
+  attemptedTaskIds: Object.freeze(Array.from({length: 10}, (_, i) => `AIME-2026-${i + 1}`)),
+  originalSummary: {selected: 30, attempted: 10, graded: 7, correct: 7, wrong: 0, ungraded: 3, unexecuted: 20}});
+
 export function parseAime2026Data(raw: string, preparedSha256: string): readonly PrivateTextTask[] {
   if (Buffer.byteLength(raw, "utf8") > 2_000_000 || !/^[a-f0-9]{64}$/.test(preparedSha256)
     || createHash("sha256").update(raw, "utf8").digest("hex") !== preparedSha256)
@@ -49,6 +56,15 @@ export function mathematicsPublicResult(row: FullResult) {
   return Object.freeze({...publicRow, correct: ["PASS", "REASONING_FAILURE"].includes(row.state) ? row.correct : null});
 }
 type PublicResult = ReturnType<typeof mathematicsPublicResult>;
+
+/** A slow answer after a delivered read is not evidence of a complete outage.
+ * Task/epoch limits still bound every unsuccessful experiment. No item identity,
+ * question, answer, or correctness participates in this connectivity decision. */
+export function mathematicsTaskHadOutage(row: {readonly modelEvidence:
+  readonly Pick<PublicResult["modelEvidence"][number], "statusCode" | "failureCategory">[]}): boolean {
+  return !row.modelEvidence.some(item => item.statusCode === 200)
+    && row.modelEvidence.some(item => item.failureCategory !== null);
+}
 
 export function mathematicsPopulationSummary(rows: readonly PublicResult[], selected: number = AIME_2026_SOURCE.population) {
   if (!Number.isSafeInteger(selected) || selected < 0 || rows.length > selected
@@ -100,7 +116,7 @@ export async function runAime2026Epoch() {
     model: POLICY.model, authorityMode: "EXPLICIT_LIVE_NVIDIA_NIM",
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
     maxOutputTokens: POLICY.maxOutputTokens, timeoutMs: 120000, finalAttemptTimeoutMs: 180000,
-    finalAttemptSelection: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+    finalAttemptSelection: POLICY.timeoutAllocation,
     transport: textDiagnosticTransport(value => requestRejections.push({...value, taskId: pending?.taskId ?? null,
       call: pending?.logicalCalls ?? null}))});
   const snapshot = () => ({schemaVersion: 1, identity: diagnose ? "NYX-ULTRA-CONTRACT-DIAGNOSIS-001" : "NYX-AIME2026-ULTRA-HIGH-REASONING-001", candidate, mode,
@@ -108,6 +124,9 @@ export async function runAime2026Epoch() {
     policy: POLICY, source: AIME_2026_SOURCE, sourceBindings, preparedSha256: process.env.NYX_AIME26_PREPARED_SHA256,
     populationInputDigest: theoryDigest(tasks.map(task => ({taskId: task.taskId, question: task.question}))),
     selectedTaskIds: tasks.map(task => task.taskId), preflight, results: rows, diagnostics,
+    priorProgramExposure: diagnose ? null : {priorEpoch: PRIOR_AIME_2026,
+      previouslyUnexecutedTaskIds: tasks.map(task => task.taskId).filter(id => !PRIOR_AIME_2026.attemptedTaskIds.includes(id)),
+      scoreUsesOnlyThisEpoch: true, staleSuccessesMerged: false, mixedExposureNotFreshFullPopulation: true},
     diagnosticPolicy: diagnose ? {variants: ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS,
       developmentTask: TEXT_SESSION_CONTRACT_DIAGNOSTICS[0].taskId, maxLogicalCalls: 8, maxPhysicalCalls: 16,
       maxEpochMs: 4 * POLICY.maxTaskMs, model: POLICY.model, maxOutputTokens: POLICY.maxOutputTokens,
@@ -197,7 +216,7 @@ export async function runAime2026Epoch() {
         const row = await execute(task);
         if (!row) {stopReason = "CAPACITY_OR_FROZEN_EPOCH_LIMIT"; break;}
         rows.push(row); await checkpoint();
-        consecutiveDeliveryFailures = row.modelEvidence.some(item => item.failureCategory !== null) ? consecutiveDeliveryFailures + 1 : 0;
+        consecutiveDeliveryFailures = mathematicsTaskHadOutage(row) ? consecutiveDeliveryFailures + 1 : 0;
         if (consecutiveDeliveryFailures >= 2) {stopReason = "CONSECUTIVE_PROVIDER_FAILURES"; break;}
       }
       if (stopReason === "IN_PROGRESS") stopReason = "SELECTION_EXHAUSTED";

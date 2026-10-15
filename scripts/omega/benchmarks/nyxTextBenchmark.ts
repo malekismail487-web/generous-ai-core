@@ -31,11 +31,14 @@ export interface PrivateTextTask { family: TextTaskFamily; taskId: string; quest
  * grant. Uses the existing chat session's highest supported completion ceiling.
  * Additional realized inference compute must never be called an architectural gain. */
 export const ULTRA_MATHEMATICS_EVALUATION_POLICY = Object.freeze({
-  version: "nyx-ultra-high-reasoning-mathematics/2",
+  version: "nyx-ultra-high-reasoning-mathematics/3",
   model: TEXT_BENCHMARK_POLICY.model, maxOutputTokens: 16_384,
   reasoningBudgetTokens: null, maxTaskMs: 360_000,
   reasoningBudgetControl: "HOSTED_DEFAULT_UNVERIFIED_WITHIN_TOTAL_COMPLETION_CEILING",
   structuredOutput: "HOSTED_READ_STRICT_LOCAL_ANSWER",
+  timeoutAllocation: "REMAINING_REQUEST_WINDOW",
+  outageStop: "TWO_TASKS_WITH_NO_HTTP_200_CONNECTIVITY",
+  attemptDefinition: "FIRST_COMPLETION_PER_TASK_IN_THIS_EPOCH_NOT_HISTORICAL_FIRST_ATTEMPT",
   maxLogicalCalls: 2, maxPhysicalCalls: 4, maxEpochMs: 12_000_000,
   tools: ["READ_ONLY_DISPOSABLE_QUESTION_FILE"], productionDefaultsChanged: false,
   firstAttemptOnly: true, gradersVisibleToCognition: false, grantsAuthority: false,

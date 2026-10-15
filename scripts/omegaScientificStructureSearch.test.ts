@@ -1,6 +1,7 @@
 import { ScientificModelSession, type ScientificModelTask } from "../src/lib/codelab/research/scientificModelGeneration";
 import { searchScientificStructures, snapshotScientificSearchSpec, type ScientificSearchSpec } from "../src/lib/codelab/research/scientificModelSearch";
 import { exactScalar } from "../src/lib/codelab/research/exactLinearFit";
+import {canonicalRationalLiteral,createExactOperandMemo,EXACT_OPERAND_MEMO_POLICY,deriveQuantities} from "../src/lib/codelab/research/exactQuantitativeDerivation";
 import { theoryDigest } from "../src/lib/codelab/research/theoryContracts";
 import { scientificFitReplay, scientificModelReplay } from "./omega/benchmarks/scientific-model-replay";
 import { runNyxScientificModelGeneration } from "../src/lib/codelab/research/nyxQuantitativeReasoning";
@@ -530,5 +531,137 @@ for(const version of [1,"1",2])for(const operation of ["CONCLUDE","NO_CONCLUSION
   check((result.choice!==null)===expected,"Combinatorial contract validation preserves strict original acceptance and zero planted false acceptances");
 }
 console.log("OMEGA_DIAGONAL_SEARCH_DEVELOPMENT "+JSON.stringify({metrics:diagonalMetrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
+// Separate rational-coordinate/parameter development stress. Sampling reads
+// stack function names only, never values, answers or private model reasoning.
+// Periodic samples diagnose work sites; they are not exact CPU attribution.
+const rationalDevelopment=[
+  ["offset_squared_channels",(u:string,v:string)=>q("ADD",q("ADD",q("MUL","2/19",q("MUL",u,u)),q("MUL","3/31",q("MUL",v,v))),"5/43")],
+  ["inverse_ratio_linear",(u:string,v:string)=>q("ADD",q("ADD",q("DIV","2/19",u),q("MUL","3/31",q("DIV",u,v))),q("MUL","5/43",v))],
+  ["quadratic_denominator",(u:string,v:string)=>q("DIV",q("ADD",q("MUL","2/19",u),"3/31"),q("ADD","1",q("MUL","5/43",q("MUL",v,v))))],
+]as const;
+const rationalPoints=[["2/3","5/4"],["7/5","3/2"],["11/7","9/5"],["13/9","17/6"]];
+const rationalWorkProfile:any[]=[];
+for(const[name,fn]of rationalDevelopment){
+  const t=planeTask(fn,rationalPoints);let work=0,started=0,completed=0,state="UNEXECUTED",returned=0;
+  const samples:Record<string,number>={},begin=performance.now();
+  try{const found=searchScientificStructures(t,{...spec,strategy:"EVIDENCE_EXACT",maxModels:3,maxCoefficients:4},()=>{
+    if(work>=300000)throw Error("DEVELOPMENT_WORK_CAP");work++;
+    if(work%256===0){const stack=new Error().stack??"";const site=stack.includes("at parse (")?"OPERAND_PARSE_AND_NORMALIZATION":stack.includes("at rational (")?"ARITHMETIC_NORMALIZATION":stack.includes("at fitExactLinearSystem (")?"MATRIX_CONTROL":stack.includes("at compile")||stack.includes("at lower")?"REPRESENTATION":"OTHER";samples[site]=(samples[site]??0)+1;}
+  },()=>{started++;},()=>{completed++;});state=found.state;returned=found.candidates.length;
+  }catch(error){if(!(error instanceof Error)||error.message!=="DEVELOPMENT_WORK_CAP")throw error;state="WORK_EXHAUSTED_NO_RESULT";}
+  rationalWorkProfile.push({name,work,started,completed,state,returned,periodicSamples:samples,profiledElapsedMs:performance.now()-begin});
+  check(work<=300000&&completed<=started,"Disjoint rational work profiling preserves the original ceiling and started/completed distinction");
+}
+console.log("OMEGA_RATIONAL_WORK_PROFILE "+JSON.stringify({rows:rationalWorkProfile,source:"DISJOINT_DEVELOPMENT_ONLY",samplePeriod:256,liveModelCalls:0,cognitiveGainDemonstrated:false}));
+let plainScalarWork=0,memoScalarWork=0;
+const plainTick=()=>{plainScalarWork++;},memoTick=()=>{memoScalarWork++;},scalarMemo=createExactOperandMemo(memoTick);
+for(let pass=0;pass<2;pass++)for(let i=-3;i<=3;i++)for(let j=-3;j<=3;j++)for(const op of ["ADD","SUB","MUL","DIV"]as const){
+  let expected:string|null=null,actual:string|null=null,expectedError:string|null=null,actualError:string|null=null;
+  try{expected=exactScalar(op,String(i)+"/7",String(j)+"/11",plainTick);}catch(e){expectedError=(e as Error).message;}
+  try{actual=exactScalar(op,String(i)+"/7",String(j)+"/11",memoTick,scalarMemo);}catch(e){actualError=(e as Error).message;}
+  check(expected===actual&&expectedError===actualError,"Owner-scoped operand reuse exactly preserves signed rational operations and division boundaries");
+}
+check(scalarMemo.statistics().hits>0&&memoScalarWork<plainScalarWork,"Parsed-operand reuse reduces charged real parsing work, not the original arithmetic limits");
+check(Object.isFrozen(scalarMemo)&&scalarMemo.statistics().entries<=EXACT_OPERAND_MEMO_POLICY.maxEntries,"Opaque memo exposes counts only and respects its finite entry boundary");
+throws(()=>exactScalar("ADD","1","2",()=>{},scalarMemo),"A different owning callback cannot borrow parsed operands");
+throws(()=>exactScalar("ADD","1","2",memoTick,{version:scalarMemo.version,statistics:()=>scalarMemo.statistics()}),"A structurally similar object cannot forge trusted cache ownership");
+const hugeOperand=(1n<<4095n).toString();canonicalRationalLiteral(hugeOperand,memoTick,scalarMemo);
+throws(()=>exactScalar("MUL",hugeOperand,"2",memoTick,scalarMemo),"A cached legal operand cannot bypass the original intermediate 4096-bit ceiling");
+for(const value of ["01","1/0","9".repeat(1234)]){
+  throws(()=>canonicalRationalLiteral(value,memoTick,scalarMemo),"Memoization preserves invalid literal and integer-bound rejection");
+}
+for(let i=0;i<300;i++)canonicalRationalLiteral(String(10000+i),memoTick,scalarMemo);
+check(scalarMemo.statistics().evictions>0&&scalarMemo.statistics().entries<=256&&scalarMemo.statistics().retainedUnits<=262144,"FIFO eviction and retained representation units remain bounded and charged");
+let liveOwner=true;const lifecycleTick=()=>{if(!liveOwner)throw Error("OWNER_REVOKED");},lifecycleMemo=createExactOperandMemo(lifecycleTick);
+canonicalRationalLiteral("17/23",lifecycleTick,lifecycleMemo);liveOwner=false;
+throws(()=>canonicalRationalLiteral("17/23",lifecycleTick,lifecycleMemo),"A hot cache hit still checks the original owner's revoked lifetime");
+throws(()=>lifecycleMemo.statistics(),"Cache introspection cannot bypass revoked ownership either");
+let coupledWork=0,coupledBudget:any=null;const coupledTick=()=>{coupledWork++;if(coupledBudget)coupledBudget.tick=()=>{};},coupledMemo=createExactOperandMemo(coupledTick);
+coupledBudget={tick:coupledTick,operandMemo:coupledMemo};
+deriveQuantities({kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"x",value:"17/23"}]},{schemaVersion:1,registers:[],blocks:[],outputs:[{label:"value",source:"x"}]},coupledBudget);
+check(coupledWork>3,"An interpreter captures the owning callback before execution; caller mutation cannot swap in a free callback");
+const receiverBudget={units:0,tick(){this.units++;}};
+const receiverResult=deriveQuantities({kind:"EXACT_QUANTITATIVE_DERIVATION",constants:[{id:"x",value:"17/23"}]},{schemaVersion:1,registers:[],blocks:[],outputs:[{label:"value",source:"x"}]},receiverBudget);
+check(receiverResult.status==="CONSTRUCTED"&&receiverBudget.units>3,"Callback capture preserves the original receiver and accounting of method-based budgets");
+const rationalMemoMetrics:any[]=[];
+for(const[name,fn]of rationalDevelopment){
+  const t=planeTask(fn,rationalPoints),s=session(t,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+  const begin=performance.now(),found=search(s,{...spec,strategy:"EVIDENCE_MEMOIZED",maxModels:3,maxCoefficients:4}),searchUsage=s.usage();
+  const admissions:any[]=[],replayCosts:any[]=[];
+  if(found.state==="CANDIDATES_NOT_ADMITTED")for(const c of found.candidates){
+    if(s.usage().remainingRequests<2)break;
+    const f=s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:c.structure},scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c)));
+    if(f.state!=="FITTED_CANDIDATE_NOT_ADMITTED")continue;
+    const a=s.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,draft:f.fit.draft},scientificModelReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c)));
+    if(a.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")admissions.push({rank:c.fit.linear.rank,correct:s.inspect(a.model).predictions.filter(p=>p.pointId.startsWith("Unfitted")).every(p=>fn(p.inputs.find(i=>i.id==="u")!.value,p.inputs.find(i=>i.id==="v")!.value)===p.value)});
+  }
+  rationalMemoMetrics.push({name,state:found.state,reason:"reason"in found?found.reason:null,searchWork:searchUsage.workUnits,totalWork:s.usage().workUnits,
+    supports:searchUsage.searchSupports,completed:searchUsage.completedSearchSupports,memo:"operandMemo"in found?found.operandMemo:null,admissions,
+    requests:s.usage().requests,nativeMs:s.usage().nativeElapsedMs,independentCalls:replayCosts.length,independentElapsedMs:replayCosts.reduce((n,c)=>n+c.elapsedMs,0),elapsedMs:performance.now()-begin});
+  check(s.usage().workUnits<=300000&&s.usage().requests<=8,"Memoized search and uncached ordinary admission share the original work/request ceiling");s.revoke();
+}
+console.log("OMEGA_RATIONAL_MEMO_DEVELOPMENT "+JSON.stringify({rows:rationalMemoMetrics,scalarWork:{plain:plainScalarWork,memoized:memoScalarWork},liveModelCalls:0,cognitiveGainDemonstrated:false}));
+const rationalModularMetrics:any[]=[];
+for(const[name,fn]of rationalDevelopment){
+  const t=planeTask(fn,rationalPoints),s=session(t,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+  const begin=performance.now(),found=search(s,{...spec,strategy:"EVIDENCE_MODULAR",maxModels:3,maxCoefficients:4}),searchUsage=s.usage();
+  const admissions:any[]=[],replayCosts:any[]=[];
+  if(found.state==="CANDIDATES_NOT_ADMITTED")for(const c of found.candidates){
+    if(s.usage().remainingRequests<2)break;
+    const f=s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:c.structure},scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c)));
+    if(f.state!=="FITTED_CANDIDATE_NOT_ADMITTED")continue;
+    const a=s.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,draft:f.fit.draft},scientificModelReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replayCosts.push(c)));
+    if(a.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")admissions.push({rank:c.fit.linear.rank,correct:s.inspect(a.model).predictions.filter(p=>p.pointId.startsWith("Unfitted")).every(p=>fn(p.inputs.find(i=>i.id==="u")!.value,p.inputs.find(i=>i.id==="v")!.value)===p.value)});
+  }
+  rationalModularMetrics.push({name,state:found.state,reason:"reason"in found?found.reason:null,searchWork:searchUsage.workUnits,totalWork:s.usage().workUnits,
+    supports:searchUsage.searchSupports,completed:searchUsage.completedSearchSupports,modular:"modularRefutation"in found?found.modularRefutation:null,admissions,
+    requests:s.usage().requests,nativeMs:s.usage().nativeElapsedMs,independentCalls:replayCosts.length,independentElapsedMs:replayCosts.reduce((n,c)=>n+c.elapsedMs,0),elapsedMs:performance.now()-begin});
+  check(s.usage().workUnits<=300000&&s.usage().requests<=8,"Modular rejection, exact fitting and uncached ordinary admission share the original work/request ceiling");s.revoke();
+}
+console.log("OMEGA_RATIONAL_MODULAR_DEVELOPMENT "+JSON.stringify({rows:rationalModularMetrics,liveModelCalls:0,cognitiveGainDemonstrated:false,scope:"EXPOSED_DEVELOPMENT_NOT_FRESH_TRANSFER"}));
+// Freeze these new synthetic compositions before their FIRST execution. They
+// are not private/sealed or author-independent; no benchmark question is used.
+const modularTransferPoints=[["3/5","7/6"],["8/7","11/9"],["13/8","17/10"],["19/11","23/12"]];
+const modularTransferHidden=[["29/13","31/17"],["37/19","41/23"],["43/29","47/31"]];
+const modularTransferCases=[
+  ["mixed_response",(u:string,v:string)=>q("ADD",q("ADD",q("MUL","3/23",q("MUL",u,v)),q("MUL","5/37",q("MUL",v,v))),"11/43")],
+  ["inverse_channel",(u:string,v:string)=>q("ADD",q("ADD",q("DIV","7/29",u),q("MUL","13/41",v)),"17/47")],
+  ["coupled_rational",(u:string,v:string)=>q("DIV",q("ADD",q("MUL","11/31",u),q("MUL","19/53",v)),q("ADD","1",q("MUL","23/61",u)))],
+]as const;
+const modularTransferFreeze=Object.freeze({maxWorkUnits:300000,maxNativeElapsedMs:3000,maxRequests:8,
+  maxCandidates:256,maxModels:3,maxCoefficients:4,calibrationPoints:modularTransferPoints,prospectiveInputs:modularTransferHidden,
+  taskNames:modularTransferCases.map(([name])=>name),liveModelCalls:0,modelCognitiveGainClaim:false,privateOrIndependentDesign:false});
+const modularTransferMetrics:any[]=[];
+for(const[index,[name,fn]]of modularTransferCases.entries()){
+  const base=planeTask(fn,modularTransferPoints),t={...base,experiments:base.experiments.map((e,i)=>({...e,
+    inputs:[{id:"u",value:modularTransferHidden[i][0]},{id:"v",value:modularTransferHidden[i][1]}]}))};
+  const arms=["EVIDENCE_EXACT","EVIDENCE_MEMOIZED","EVIDENCE_MODULAR"]as const;
+  for(let order=0;order<arms.length;order++){
+    const strategy=arms[(index+order)%arms.length],s=session(t,{...limits,maxWorkUnits:300000,maxNativeElapsedMs:3000});
+    const started=performance.now(),found=search(s,{...spec,strategy,maxCandidates:256,maxModels:3,maxCoefficients:4}),searchUsage=s.usage();
+    const admissions:any[]=[],replays:any[]=[];
+    if(found.state==="CANDIDATES_NOT_ADMITTED")for(const c of found.candidates){
+      if(s.usage().remainingRequests<2)break;
+      const f=s.fit({schemaVersion:1,operation:"FIT_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,structure:c.structure},scientificFitReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replays.push(c)));
+      if(f.state!=="FITTED_CANDIDATE_NOT_ADMITTED")continue;
+      const a=s.propose({schemaVersion:1,operation:"PROPOSE_SCIENTIFIC_MODEL",taskDigest:s.taskDigest,draft:f.fit.draft},scientificModelReplay(process.env.OMEGA_POLYNOMIAL_PYTHON??"python",5000,c=>replays.push(c)));
+      if(a.state==="ADMITTED_PREDICTIONS_NOT_SCIENTIFIC_TRUTH")admissions.push({rank:c.fit.linear.rank,correct:s.inspect(a.model).predictions.filter(p=>p.pointId.startsWith("Unfitted")).every(p=>fn(p.inputs.find(i=>i.id==="u")!.value,p.inputs.find(i=>i.id==="v")!.value)===p.value)});
+    }
+    modularTransferMetrics.push({name,strategy,state:found.state,reason:"reason"in found?found.reason:null,
+      taskDigest:s.taskDigest,searchWork:searchUsage.workUnits,totalWork:s.usage().workUnits,requests:s.usage().requests,
+      supports:searchUsage.searchSupports,completed:searchUsage.completedSearchSupports,
+      modular:"modularRefutation"in found?found.modularRefutation:null,admissions,
+      success:admissions.length>=2&&admissions[0].rank===3&&admissions[0].correct,
+      nativeMs:s.usage().nativeElapsedMs,independentCalls:replays.length,
+      independentElapsedMs:replays.reduce((n,c)=>n+c.elapsedMs,0),elapsedMs:performance.now()-started});
+    check(s.usage().workUnits<=300000&&s.usage().requests<=8&&s.usage().nativeElapsedMs<=3000,"New transfer arms preserve all original request/work/native-time ceilings and independent admission");s.revoke();
+  }
+}
+console.log("OMEGA_MODULAR_SEARCH_TRANSFER "+JSON.stringify({freeze:modularTransferFreeze,rows:modularTransferMetrics}));
+// First-execution results are retained separately. This cohort is NOW exposed
+// regression data; future CI replays do not become new blind evidence.
+check(modularTransferMetrics.filter(r=>r.strategy==="EVIDENCE_MODULAR").length===3
+  &&modularTransferMetrics.filter(r=>r.strategy==="EVIDENCE_MODULAR").every(r=>r.success),
+  "Preserve the measured three-task native coverage gain without weakening independent acceptance");
 console.log("OMEGA_SCIENTIFIC_SEARCH_DEVELOPMENT "+JSON.stringify({metrics,liveModelCalls:0,cognitiveGainDemonstrated:false}));
 console.log(`OMEGA_SCIENTIFIC_STRUCTURE_SEARCH_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);if(failed)process.exitCode=1;

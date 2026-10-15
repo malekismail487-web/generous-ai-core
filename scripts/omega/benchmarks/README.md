@@ -1,5 +1,68 @@
 # NYX benchmark capability program
 
+### AIME 2026 partial result and bounded allocation recovery (2026-10-15)
+
+Frozen `a840700`, run `38677741472`, ended after ten attempted questions: seven
+graded/correct, zero wrong valid integers, three ungraded answer-request timeouts,
+twenty unexecuted. Both separate development preflights passed. No schema/format
+or truncation failure was observed in attempted benchmark questions. This is NOT
+a complete score or evidence that the remaining questions would be correct.
+Artifact SHA256 `8c2c144a1f0711ff32d9f2efa3dd0ca716e41f6fe851c4ce0c8b92489a648482`;
+custody, source bindings, all outcomes and known/unknown usage are preserved in
+`docs/omega/evidence/aime2026-ultra-partial-a840700.json`.
+
+Each timed-out answer consumed approximately 120 seconds, 60 seconds cooldown,
+and 120 more seconds inside the original 300-second provider lifetime. The
+configured 180-second final attempt was clipped by that unchanged lifetime.
+Profile v3 opts into REMAINING_REQUEST_WINDOW: one non-streaming attempt can use
+the contiguous remainder of the SAME original request window. This can allocate
+up to 300 seconds to one dispatch instead of the legacy 120/180 cutoffs, but does
+not increase the 300-second request lifetime, 360-second task lease, 200-minute
+epoch, token ceiling, shared HTTP allowance or tool authority. Defaults and old
+allocation modes are unchanged. Allocation ceilings are recorded separately from
+actual latency. Independent delayed-fetch/body tests preserve identical payloads
+and recover responses inside the same original window; expired/unowned requests
+still fail closed. This does not prove NVIDIA will deliver a longer request.
+
+A delivered HTTP-200 read followed by an answer timeout no longer counts as a
+complete endpoint outage. The two-task outage guard now requires no HTTP-200
+connectivity in either task. Individual failures remain ungraded and all original
+resource limits still apply. This is connectivity classification, not acceptance.
+The next complete epoch retains all thirty questions and unchanged strict grading;
+ten were previously attempted and twenty were unexecuted. Report that mixed
+exposure explicitly. Never merge old successes, call it a blind full-population
+test, or turn coverage gains into a cognitive-improvement claim.
+
+### Native exact-search transfer: one-sided modular refutation
+
+EVIDENCE_MODULAR is an opt-in tool algorithm, not a new model/brain layer. It uses
+full-column-rank inconsistency modulo the fixed prime 65521 to reject impossible
+linear supports. Rank loss or a noninvertible input denominator falls through;
+modular consistency NEVER admits a candidate. The original rational solver,
+original-row residuals, domain checks, Python fit/point replay, quarantine and
+authority boundaries remain. Work includes finite-word arithmetic, canonical
+input validation, lookups and evictions; memory is owner-scoped and bounded.
+The finite-field approach is informed by established exact-linear-algebra
+practice ([FFLAS-FFPACK](https://linbox-team.github.io/fflas-ffpack/)); the narrow
+soundness argument and adversarial tests apply to this implementation, not a
+claim of formal verification or wholesale adoption of that library.
+
+On three newly composed synthetic transfer tasks, both EVIDENCE_EXACT and the
+operand-memo-only ablation exhausted 300000 native work units without candidates.
+The modular arm produced a correct leading rank-three hypothesis on all three,
+with at least two ordinarily admitted alternative hypotheses per task and the
+same independent checks. Total native work was 234471, 224823 and 286733. Each
+successful arm additionally used six independent verification calls; ceilings are
+matched, realized total compute is NOT. Zero model inference was used. This is
+bounded native-tool coverage gain, not a live NYX cognitive or benchmark score.
+The formerly unseen transfer cohort is now exposed regression data. Two
+higher-parameter alternatives per case fail prospective truth checks and remain
+uncertain hypotheses: calibration agreement is not scientific truth. The earlier
+development cohort still exposes missing-grammar and finite-search-coverage limits.
+Evidence: `docs/omega/evidence/exact-modular-search-transfer-2026-10-15.json`.
+Plan coverage: general correction, detector validation, independent admission,
+scope/provenance/resource preservation; PARTIAL / JUST-IN-TIME.
+
 ### Public acquisition coverage while the frozen AIME run executes
 
 Canonical author tables for SWE-bench full/Lite/Verified/Multilingual/Multimodal
