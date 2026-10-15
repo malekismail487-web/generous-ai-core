@@ -47,6 +47,19 @@ campaign starts from this acquisition. See the [source/notice custody receipt](.
 Coverage remains PARTIAL / JUST-IN-TIME; this does not claim every benchmark is
 downloaded, a complete evaluation environment exists, or any benchmark is passed.
 
+The separately acquired [Lean 4 port recommended by ProofNet's authors](https://github.com/zhangir-azerbayev/ProofNet#proofnet)
+is pinned at DeepSeek-Prover-V1.5 `2c4ba91`. Its archive, exact declared
+`xinhjBrant/mathlib4` revision and seven root-manifest dependencies total nine
+archives / 23408106 bytes, outside Git/NYX context. CRC, revision roots and
+selected Git source bindings were checked; examples/proofs were not inspected
+or supplied to cognition. No model weights or executable installation occurred.
+The actual parent toolchain is **Lean 4.9.0-rc1**, not PutnamBench's 4.33.1.
+Child toolchain/lockfiles differ, and the REPL fork has no recognized root license
+notice: build compatibility, dependency closure and redistribution rights remain
+uncertified. This is source acquisition only, not formal reasoning capability or
+a score. See the [port/dependency receipt](../../../docs/omega/evidence/formal-math-lean4-port-acquisition-2026-10-15.json).
+The already-running frozen AIME campaign is unchanged; no second benchmark starts.
+
 ### Bounded streaming delivery diagnosis (development experiment, not a score)
 
 An opt-in host `BOUNDED_SSE` mode composes with the SAME provider, fixed NVIDIA
