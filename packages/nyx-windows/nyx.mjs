@@ -1386,8 +1386,8 @@ function nyxContainsSecretLike(value) {
 function nyxCanonical(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(nyxCanonical).join(",")}]`;
-  const record = value;
-  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${nyxCanonical(record[key])}`).join(",")}}`;
+  const record2 = value;
+  return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${nyxCanonical(record2[key])}`).join(",")}}`;
 }
 function nyxSafeRelativePath(value) {
   if (typeof value !== "string" || value.length < 1 || value.length > 240 || value.includes("\0") || value.startsWith("/") || value.startsWith("\\") || /^[A-Za-z]:/.test(value)) return false;
@@ -3513,15 +3513,15 @@ var ReadOnlyRepositoryExecutor = class _ReadOnlyRepositoryExecutor {
     if (!Number.isFinite(revokedAtEpochMs) || !nonEmpty3(reason)) throw new Error("Revocation time and reason are required");
     this.#revoked = true;
     this.#terminated ||= terminal;
-    const record = Object.freeze({
+    const record2 = Object.freeze({
       revocationId: `REVOKE-${this.#revocations.length + 1}`,
       tokenId: this.token.tokenId,
       revokedAtEpochMs,
       reason,
       terminal
     });
-    this.#revocations.push(record);
-    return record;
+    this.#revocations.push(record2);
+    return record2;
   }
   terminate(terminatedAtEpochMs, reason) {
     return this.revoke(terminatedAtEpochMs, reason, true);
@@ -4466,6 +4466,188 @@ var NvidiaCapacityCoordinator = class {
 };
 var liveNvidiaCapacity = new NvidiaCapacityCoordinator();
 
+// src/lib/codelab/model/nvidiaEventStream.ts
+var NVIDIA_STREAM_LIMITS = Object.freeze({
+  wireBytes: 8 * 1024 * 1024,
+  eventBytes: 262144,
+  contentBytes: 262144,
+  events: 65536,
+  chunks: 131072,
+  consecutiveEmptyChunks: 32
+});
+function newNvidiaStreamDiagnostics() {
+  return {
+    mode: "BOUNDED_SSE",
+    scope: "LAST_HTTP_ATTEMPT_ONLY",
+    timingOrigin: "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
+    wireBytes: 0,
+    chunks: 0,
+    events: 0,
+    reasoningDeltaBytes: 0,
+    contentDeltaBytes: 0,
+    firstEventAfterMs: null,
+    firstReasoningAfterMs: null,
+    firstContentAfterMs: null,
+    lastEventAfterMs: null,
+    usageReceived: false,
+    reportedUsage: { promptTokens: null, completionTokens: null, totalTokens: null },
+    terminal: "PENDING"
+  };
+}
+var record = (v) => v !== null && typeof v === "object" && !Array.isArray(v) ? v : null;
+var finishReasons = /* @__PURE__ */ new Set(["stop", "length", "content_filter", "tool_calls", "function_call"]);
+var finite = (v) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
+async function readNvidiaEventStream(response, signal, stats, now = Date.now) {
+  const began = now();
+  const fail2 = (state, code) => {
+    stats.terminal = state;
+    throw Error(code);
+  };
+  if (response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !== "text/event-stream" || !response.body) {
+    try {
+      void response.body?.cancel().catch(() => void 0);
+    } catch {
+    }
+    fail2("MALFORMED", "nvidia_stream_media_type_invalid");
+  }
+  const reader = response.body.getReader(), decoder = new TextDecoder("utf-8", { fatal: true });
+  let pending = "", event = "", content = "", terminal = null, done = false, emptyChunks = 0;
+  let usage;
+  const elapsed = () => Math.max(0, now() - began);
+  const consumeEvent = () => {
+    if (!event) return;
+    const data2 = event.slice(0, -1);
+    event = "";
+    if (++stats.events > NVIDIA_STREAM_LIMITS.events) fail2("LIMIT_EXCEEDED", "nvidia_stream_event_limit");
+    stats.firstEventAfterMs ??= elapsed();
+    stats.lastEventAfterMs = elapsed();
+    if (data2 === "[DONE]") {
+      if (terminal === null) fail2("MALFORMED", "nvidia_stream_missing_finish_reason");
+      done = true;
+      stats.terminal = "DONE";
+      return;
+    }
+    let raw;
+    try {
+      raw = JSON.parse(data2);
+    } catch {
+      fail2("MALFORMED", "nvidia_stream_event_not_json");
+    }
+    const frame = record(raw);
+    if (!frame || "error" in frame || !Array.isArray(frame.choices) || frame.choices.length > 1)
+      fail2("MALFORMED", "nvidia_stream_event_shape_invalid");
+    if (frame.usage !== void 0 && frame.usage !== null) {
+      const value = record(frame.usage);
+      if (!value || usage !== void 0) fail2("MALFORMED", "nvidia_stream_usage_invalid");
+      usage = value;
+      stats.usageReceived = [usage.prompt_tokens, usage.completion_tokens, usage.total_tokens].every(finite);
+      stats.reportedUsage = {
+        promptTokens: finite(usage.prompt_tokens) ? usage.prompt_tokens : null,
+        completionTokens: finite(usage.completion_tokens) ? usage.completion_tokens : null,
+        totalTokens: finite(usage.total_tokens) ? usage.total_tokens : null
+      };
+    }
+    const choices = frame.choices;
+    if (choices.length === 0) {
+      if (frame.usage === void 0 || frame.usage === null) fail2("MALFORMED", "nvidia_stream_empty_event");
+      return;
+    }
+    const choice = record(choices[0]), delta = record(choice?.delta);
+    if (!choice || choice.index !== 0 || !delta || terminal !== null || delta.role !== void 0 && delta.role !== "assistant" || delta.tool_calls !== void 0 || delta.function_call !== void 0)
+      fail2("MALFORMED", "nvidia_stream_choice_invalid");
+    for (const key of ["content", "reasoning_content"]) {
+      const text2 = delta[key];
+      if (text2 === void 0 || text2 === null) continue;
+      if (typeof text2 !== "string") fail2("MALFORMED", "nvidia_stream_delta_invalid");
+      const bytes = Buffer.byteLength(text2, "utf8");
+      if (key === "reasoning_content") {
+        stats.reasoningDeltaBytes += bytes;
+        if (bytes) stats.firstReasoningAfterMs ??= elapsed();
+      } else {
+        stats.contentDeltaBytes += bytes;
+        if (stats.contentDeltaBytes > NVIDIA_STREAM_LIMITS.contentBytes) fail2("LIMIT_EXCEEDED", "nvidia_stream_content_limit");
+        content += text2;
+        if (bytes) stats.firstContentAfterMs ??= elapsed();
+      }
+    }
+    if (choice.finish_reason !== void 0 && choice.finish_reason !== null) {
+      if (typeof choice.finish_reason !== "string" || !finishReasons.has(choice.finish_reason))
+        fail2("MALFORMED", "nvidia_stream_finish_reason_invalid");
+      terminal = choice.finish_reason;
+    }
+  };
+  const read = () => new Promise((resolve7, reject) => {
+    const abort = () => {
+      cleanup();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const cleanup = () => signal.removeEventListener("abort", abort);
+    if (signal.aborted) {
+      abort();
+      return;
+    }
+    signal.addEventListener("abort", abort, { once: true });
+    reader.read().then((value) => {
+      cleanup();
+      resolve7(value);
+    }, (error) => {
+      cleanup();
+      reject(error);
+    });
+  });
+  try {
+    while (!done) {
+      signal.throwIfAborted();
+      const chunk = await read();
+      if (chunk.done) break;
+      if (++stats.chunks > NVIDIA_STREAM_LIMITS.chunks) fail2("LIMIT_EXCEEDED", "nvidia_stream_chunk_limit");
+      emptyChunks = chunk.value.byteLength ? 0 : emptyChunks + 1;
+      if (emptyChunks > NVIDIA_STREAM_LIMITS.consecutiveEmptyChunks) fail2("LIMIT_EXCEEDED", "nvidia_stream_empty_chunk_limit");
+      stats.wireBytes += chunk.value.byteLength;
+      if (stats.wireBytes > NVIDIA_STREAM_LIMITS.wireBytes) fail2("LIMIT_EXCEEDED", "nvidia_stream_wire_limit");
+      try {
+        pending += decoder.decode(chunk.value, { stream: true });
+      } catch {
+        fail2("MALFORMED", "nvidia_stream_utf8_invalid");
+      }
+      let index;
+      while ((index = pending.indexOf("\n")) >= 0 && !done) {
+        let line = pending.slice(0, index);
+        pending = pending.slice(index + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line === "") consumeEvent();
+        else if (line.startsWith("data:")) event += line.slice(5).replace(/^ /, "") + "\n";
+        else if (!line.startsWith(":")) fail2("MALFORMED", "nvidia_stream_field_invalid");
+        if (Buffer.byteLength(event, "utf8") > NVIDIA_STREAM_LIMITS.eventBytes) fail2("LIMIT_EXCEEDED", "nvidia_stream_frame_limit");
+      }
+      if (Buffer.byteLength(pending, "utf8") > NVIDIA_STREAM_LIMITS.eventBytes) fail2("LIMIT_EXCEEDED", "nvidia_stream_frame_limit");
+      if (done && pending.trim()) fail2("MALFORMED", "nvidia_stream_data_after_done");
+    }
+    if (!done) {
+      stats.terminal = "INCOMPLETE";
+      throw Error("nvidia_stream_incomplete");
+    }
+    try {
+      if (decoder.decode().trim()) fail2("MALFORMED", "nvidia_stream_data_after_done");
+    } catch {
+      fail2("MALFORMED", "nvidia_stream_utf8_invalid");
+    }
+    signal.throwIfAborted();
+    return { choices: [{ message: { content }, finish_reason: terminal }], usage };
+  } finally {
+    if (signal.aborted) stats.terminal = "ABORTED";
+    else if (stats.terminal === "PENDING") stats.terminal = "INCOMPLETE";
+    try {
+      void reader.cancel().catch(() => void 0);
+    } catch {
+    }
+    try {
+      reader.releaseLock();
+    } catch {
+    }
+  }
+}
+
 // src/lib/codelab/model/nvidiaNimProvider.ts
 var NVIDIA_NIM_CHAT_COMPLETIONS_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 var NVIDIA_NIM_PROVIDER_STATUS = Object.freeze({
@@ -4533,7 +4715,7 @@ function failureDiagnostics(reason, statusCode) {
   if (reason === "nvidia_provider_timeout") return { category: "PROVIDER_TIMEOUT", retryability: "YES" };
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
-  if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content" || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid") {
+  if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content" || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid" || reason === "nvidia_provider_stream_invalid") {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
   if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
@@ -4571,6 +4753,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     }
     if (config.finalAttemptSelection !== void 0 && (!["LAST_ATTEMPT_OR_NO_RETRY_WINDOW", "REMAINING_REQUEST_WINDOW"].includes(config.finalAttemptSelection) || config.finalAttemptTimeoutMs === void 0)) throw new Error("provider_final_attempt_selection_invalid");
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
+    if (config.responseMode !== void 0 && config.responseMode !== "BOUNDED_SSE") throw Error("provider_response_mode_invalid");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
     if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
       throw new Error("test_capacity_cannot_override_live_gate");
@@ -4607,7 +4790,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       messages: request.messages,
       max_tokens: request.maxTokens,
       temperature: request.temperature,
-      stream: false,
+      stream: this.#config.responseMode === "BOUNDED_SSE",
       ...responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {},
       ...request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON" ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE" || request.reasoningControl === "SUPER_HOSTED_NATIVE" ? {
         reasoning_effort: request.inferencePolicy === "CONSTRAINED_JSON" ? "none" : request.reasoningEffort === "MEDIUM" ? "medium" : "high",
@@ -4733,7 +4916,15 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         }) } : {}
       });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
-      return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery }) });
+      const streamDelivery = result.evidence.streamDelivery ?? previous?.evidence.streamDelivery;
+      return Object.freeze({ ...result, evidence: Object.freeze({
+        ...result.evidence,
+        delivery,
+        ...streamDelivery ? {
+          streamDelivery,
+          ...result.reason === "nvidia_capacity_requires_renewed_run" ? { usage: streamDelivery.reportedUsage } : {}
+        } : {}
+      }) });
     };
     const stopped = (cancelled, notBeforeEpochMs = null) => finish(this.#result(
       cancelled ? "BLOCKED" : "WAITING_FOR_CAPACITY",
@@ -4893,6 +5084,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
     }
     let timeoutTriggered = false;
     let networkAttempted = false;
+    let streamDelivery;
     const remainingWindow = this.#config.finalAttemptSelection === "REMAINING_REQUEST_WINDOW";
     const lastUsefulAttempt = remainingWindow || this.#remainingHttpAttempts() === 1 || this.#config.finalAttemptSelection === "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" && remainingMs <= this.#config.timeoutMs + NVIDIA_CAPACITY_POLICY.fallbackRetryAfterMs;
     const useFinalTimeout = lastUsefulAttempt && this.#config.finalAttemptTimeoutMs !== void 0;
@@ -4940,7 +5132,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         allocated(Math.min(attemptTimeoutMs, remainingMs));
         return this.#transport(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
           method: "POST",
-          headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${credential}`, Accept: this.#config.responseMode === "BOUNDED_SSE" ? "text/event-stream" : "application/json", "Content-Type": "application/json" },
           body,
           signal: controller.signal
         });
@@ -4981,20 +5173,32 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       }
       let parsed;
       try {
-        parsed = await bounded(() => response.json());
+        if (this.#config.responseMode === "BOUNDED_SSE") {
+          streamDelivery = newNvidiaStreamDiagnostics();
+          parsed = await bounded(() => readNvidiaEventStream(
+            response,
+            controller.signal,
+            streamDelivery,
+            () => this.#capacity?.clock.now() ?? Date.now()
+          ));
+        } else parsed = await bounded(() => response.json());
       } catch (error) {
         if (controller.signal.aborted) throw error;
+        if (streamDelivery && !(error instanceof Error && error.message.startsWith("nvidia_stream_"))) throw error;
+        if (streamDelivery) controller.abort();
         return this.#result(
           "PROVIDER_ERROR",
-          "nvidia_provider_response_not_json",
+          streamDelivery ? "nvidia_provider_stream_invalid" : "nvidia_provider_response_not_json",
           null,
           null,
           requestDigest,
           null,
           response.status,
-          emptyUsage(),
+          streamDelivery?.reportedUsage ?? emptyUsage(),
           true,
-          providerRequestId
+          providerRequestId,
+          null,
+          streamDelivery
         );
       }
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -5019,7 +5223,7 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
       const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
-      const reasoningOutputBytes = typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null;
+      const reasoningOutputBytes = streamDelivery?.reasoningDeltaBytes ?? (typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null);
       if (typeof content !== "string" || !content.trim()) {
         return this.#result(
           "PROVIDER_ERROR",
@@ -5032,7 +5236,8 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           usage,
           true,
           providerRequestId,
-          reasoningOutputBytes
+          reasoningOutputBytes,
+          streamDelivery
         );
       }
       const finishReason = safeFinishReason(rawFinishReason);
@@ -5047,7 +5252,9 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
           response.status,
           usage,
           true,
-          providerRequestId
+          providerRequestId,
+          reasoningOutputBytes,
+          streamDelivery
         );
       }
       return this.#result(
@@ -5061,17 +5268,32 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
         usage,
         true,
         providerRequestId,
-        reasoningOutputBytes
+        reasoningOutputBytes,
+        streamDelivery
       );
     } catch (error) {
+      if (controller.signal.aborted && streamDelivery) streamDelivery.terminal = "ABORTED";
       const reason = timeoutTriggered ? "nvidia_provider_timeout" : signal.aborted || error instanceof Error && error.name === "AbortError" ? "nvidia_provider_cancelled" : "nvidia_provider_transport_failure";
-      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), networkAttempted);
+      return this.#result(
+        "PROVIDER_ERROR",
+        reason,
+        null,
+        null,
+        requestDigest,
+        null,
+        streamDelivery ? 200 : null,
+        streamDelivery?.reportedUsage ?? emptyUsage(),
+        networkAttempted,
+        null,
+        null,
+        streamDelivery
+      );
     } finally {
       clearTimeout(timeout);
       signal.removeEventListener("abort", abort);
     }
   }
-  #result(decision, reason, content, finishReason, requestDigest, responseDigest, statusCode, usage, networkAttempted, providerRequestId = null, reasoningOutputBytes = null) {
+  #result(decision, reason, content, finishReason, requestDigest, responseDigest, statusCode, usage, networkAttempted, providerRequestId = null, reasoningOutputBytes = null, streamDelivery) {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
     const diagnostics2 = failureDiagnostics(reason, statusCode);
     let contentShape = null;
@@ -5107,7 +5329,11 @@ var NvidiaNimProvider = class _NvidiaNimProvider {
       finishReason,
       usage,
       reasoningOutputBytes,
-      contentShape
+      contentShape,
+      ...streamDelivery ? { streamDelivery: Object.freeze({
+        ...streamDelivery,
+        reportedUsage: Object.freeze({ ...streamDelivery.reportedUsage })
+      }) } : {}
     });
     return Object.freeze({ decision, reason, content, finishReason, evidence: evidence2, executorAuthorityGranted: false });
   }

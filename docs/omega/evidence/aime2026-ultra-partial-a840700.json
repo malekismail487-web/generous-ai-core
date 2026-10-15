@@ -16,6 +16,13 @@
     "reportSha256": "006ef243a0041c6462209e743fada649aca905cb269b5ac5e16f90787af4d0a9"
   },
   "custody": {
+    "publicReportProjection": {
+      "redactedFields": ["modelEvidence[*].responseDigest"],
+      "reason": "NUMERIC_ANSWER_JSON_ENVELOPE_HASHES_CAN_BE_ENUMERATED",
+      "originalArtifactAndLogVerifiedBeforeProjection": true,
+      "originalReportSha256Unchanged": true,
+      "originalPublishedArtifactsOrHistoryErased": false
+    },
     "allTenSourceBindingsMatchFrozenGit": true,
     "reportLogAgreementExceptElapsedSnapshots": true,
     "artifactElapsedMs": 1280000,
@@ -62,6 +69,7 @@
     }
   },
   "interpretation": {
+    "historicalPrivacyFinding": "ORIGINAL_RAW_REPORT_FALSE_NO_LOW_ENTROPY_HASH_DECLARATION_DID_NOT_COVER_PROVIDER_JSON_ENVELOPE_HASHES",
     "selected": 30,
     "attempted": 10,
     "graded": 7,
@@ -184,7 +192,7 @@
         "modelEvidence": [
           {
             "requestDigest": "70d885479ddec0d48780a776e18d0fe069ec542d2263a14107868d0f77f7fb1b",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -229,7 +237,7 @@
           },
           {
             "requestDigest": "3d6e8e658cd18f2a1850f4839e11fa722eb73359d5667afc7c4d698ad1ad8628",
-            "responseDigest": "fa00b6f1d52a9d57d7e056960341cb15977ef50b9e8dc61c7f2de1a858930a4f",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -324,7 +332,7 @@
         "modelEvidence": [
           {
             "requestDigest": "8c04c6ac7fd6438a8a531c8af099f03794369cd797771748fdbf0b490f3e65f0",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -369,7 +377,7 @@
           },
           {
             "requestDigest": "3ae23158e6de42021b4f57ed6fa2e5b441f3bea145a4b64e206722e4a89a4cc8",
-            "responseDigest": "9216ec30b864b7dfdf5e5e195083abfd1a2ff8cd8c6b7719e2bf589cb1db4b90",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -466,7 +474,7 @@
         "modelEvidence": [
           {
             "requestDigest": "b0a5460fa7a6798209a11c233ac674a94388f1f988b7f952a40a8a108f17fbb8",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -511,7 +519,7 @@
           },
           {
             "requestDigest": "2570862b8701b154008b886ed9ffb2416c8d0efb96eeaaf36f19532e895bdb8e",
-            "responseDigest": "7607af6ad14e7605ceaa952a7c159d2da46bdefeb2c5ba3dca55a5abea6bf120",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -606,7 +614,7 @@
         "modelEvidence": [
           {
             "requestDigest": "788a4c90f37e1c840a7c81e46b3534fd8c5d0ae486842898be7a36da0dab967e",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -651,7 +659,7 @@
           },
           {
             "requestDigest": "4638228d40cbec2ad43ddfba19e23d9400ae0e83fb823b50d20a94d0a354f572",
-            "responseDigest": "186ba8296dce04103e25b360dece5501aa202ef6271492445019681529c80686",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -746,7 +754,7 @@
         "modelEvidence": [
           {
             "requestDigest": "77efaf7487b368fd45f1ac3aeb981c3c2202abc681af4c9a83fb9832820447d0",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -791,7 +799,7 @@
           },
           {
             "requestDigest": "df474cc5c40036dcd42dd9cf757c2ff59f0a67eb2cac31c2374401280f984a14",
-            "responseDigest": "7df6ade4fc3f7734920c64050df42e9f557acb36320a811b4054f9296e315c20",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -886,7 +894,7 @@
         "modelEvidence": [
           {
             "requestDigest": "4ba885b7ae6f4b37bdc5fa72bcfd45e5cc9d8f1c2bce1f4b7a476146dce03ef7",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1016,7 +1024,7 @@
         "modelEvidence": [
           {
             "requestDigest": "d1c50bb52ca3a5ece23a102a93cb3a9c7a6d426b138bd34f065c5d2ec4f0e8f5",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1061,7 +1069,7 @@
           },
           {
             "requestDigest": "dbe1c4b9acf1b4fd78acf232fd0b64ad3703daf5f68c0b29c6e96d3d540a6da2",
-            "responseDigest": "a33523b43eabe34c883e223a8f53767b8f9a67764e46bba49dcd55e010e46d58",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1156,7 +1164,7 @@
         "modelEvidence": [
           {
             "requestDigest": "91df8ec78b1c42349fabdb9f0ef6d4718874b1447e5f5bf9d4c20dbff72370da",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1201,7 +1209,7 @@
           },
           {
             "requestDigest": "ddc4df581ec564240868e4d9d36c5d794bbfb6499a291b1610cb4f4ab3333203",
-            "responseDigest": "972da8df46b8d92d24bc6c78b2a143fb80d871d1ccf482993ca6b219f7e12819",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1296,7 +1304,7 @@
         "modelEvidence": [
           {
             "requestDigest": "b008cc4fefa2c576c590f8eb6e3a99cc51a8d268be172331466aa3a47d5c4273",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1341,7 +1349,7 @@
           },
           {
             "requestDigest": "634b337f3567362adb01206be87411a2680dd8fe9f2e3e137b50370fa5f56727",
-            "responseDigest": "fa0dac04ac677a64f41a4c9778999134291fdb74e44fe1819bcc1362730b0c52",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1436,7 +1444,7 @@
         "modelEvidence": [
           {
             "requestDigest": "56636882111b5a479815e8b6555048ff3364d5920201c498aa4a43163bcf70a3",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1481,7 +1489,7 @@
           },
           {
             "requestDigest": "cd7b404397395eea11b4a49802085a60636fa7ad754a9103d33c2560e8a967a5",
-            "responseDigest": "84053b2cd123d892d0c78c3389df020de072493e310833116a278d3e64a8cd12",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1576,7 +1584,7 @@
         "modelEvidence": [
           {
             "requestDigest": "ca1f3045586472b3ec32ccd2369b02663c6653ea13bb2bdcc30d47255f4bb190",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",
@@ -1706,7 +1714,7 @@
         "modelEvidence": [
           {
             "requestDigest": "8926ab4423c8ded9011bcf3f5236885a1c734638a0df09be026018184de5e6f7",
-            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "responseDigest": null,
             "providerRequestId": null,
             "statusCode": 200,
             "finishReason": "stop",

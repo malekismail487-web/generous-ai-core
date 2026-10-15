@@ -5,8 +5,11 @@ on:
     inputs:
       mode:
         type: choice
-        options: [FROZEN_BENCHMARK, DEVELOPMENT_CONTRACT_DIAGNOSIS]
+        options: [FROZEN_BENCHMARK, DEVELOPMENT_CONTRACT_DIAGNOSIS, DEVELOPMENT_STREAM_DIAGNOSIS]
         default: FROZEN_BENCHMARK
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-nyx-aime26-one-shot.yml]
 
 permissions:
   contents: read
@@ -17,11 +20,13 @@ concurrency:
 
 jobs:
   full-aime26:
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'eval(nyx): diagnose bounded Ultra streaming delivery'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:
-      NYX_AIME26_MODE: ${{ inputs.mode || 'FROZEN_BENCHMARK' }}
+      NYX_AIME26_MODE: ${{ inputs.mode || 'DEVELOPMENT_STREAM_DIAGNOSIS' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,7 +66,7 @@ jobs:
               output.write('prepared_sha256=' + metadata['preparedSha256'] + '\n')
           print(json.dumps(metadata))
           PY
-      - name: Check Ultra delivery on separate development problems then evaluate all thirty AIME 2026 problems
+      - name: Execute selected frozen benchmark or development-only delivery diagnostic
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}

@@ -587,6 +587,7 @@ export function sanitizedTextResult(task: PrivateTextTask, result: NyxChatTurnRe
       providerRequestId: item.providerRequestId, statusCode: item.statusCode, finishReason: item.finishReason,
       failureCategory: item.failureCategory, reasoningOutputBytes: item.reasoningOutputBytes ?? null,
       contentShape: item.contentShape ?? null,
+      ...(item.streamDelivery ? {streamDelivery: item.streamDelivery} : {}),
       delivery: item.delivery ?? null})),
     eventDigests: result?.events.map(item => theoryDigest(item)) ?? [],
     eventOutcomes: result?.events.map(item => ({sequence: item.sequence, eventType: item.eventType,

@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Bounded streaming delivery diagnosis (development experiment, not a score)
+
+An opt-in host `BOUNDED_SSE` mode composes with the SAME provider, fixed NVIDIA
+endpoint, process-local capacity gate, shared HTTP budgets, original absolute
+deadlines and strict NYX action parser. Defaults remain nonstreaming. Partial
+content is never executable or an accepted answer: a recognized finish reason
+and `[DONE]` are both required. EOF, malformed events, multiple choices, tool-call
+payloads, already-buffered data after termination and invalid UTF-8 fail closed. Wire/frame/event/
+content/read-count limits and cancellation bound a broken stream; zero-byte
+chunks cannot create an endless microtask loop.
+
+Reasoning deltas are counted and discarded, never concatenated into persistent
+reasoning. Evidence retains only last-attempt event/byte counts, first-event/
+reasoning/content timings relative to response headers (not dispatch TTFT),
+termination and observed token usage. No bytes-to-token
+estimate is made. Missing usage stays unknown; delivered usage remains visible
+even when missing termination prevents content acceptance. A socket failure is
+transport, malformed framing is schema, and an expired request is not reasoning
+failure. Thirty-eight adversarial/integration checks exercise these boundaries;
+the unchanged provider regression suite retains its 368 checks.
+
+The existing AIME harness gains a DEVELOPMENT_STREAM_DIAGNOSIS mode: the two
+existing DEVELOPMENT protocol problems, each paired between nonstreaming and SSE
+with counterbalanced order, the same Ultra/high settings, questions, integer
+grader, R1 read, token limits and 360-second task/300-second request boundaries.
+Maximum eight logical / sixteen HTTP calls and a 24-minute epoch. No benchmark
+data is prepared or loaded. Equal caps do not imply matched realized compute.
+This tests wire integration and observability, NOT AIME recovery, representative
+hard-task delivery, cognitive gain or a full benchmark score. Live result pending.
+The exact-message push hook launches only this finite development mode.
+
+Adversarial review also found that hashing a numeric answer's provider JSON
+envelope is still enumerable. Public mathematics rows now null those response
+digests as well as omitting direct prediction/reference hashes. Whole-artifact
+custody remains. Earlier public artifacts/history are not erased by this change;
+tip receipts explicitly identify their redacted projections and original exposure.
+
 ### AIME 2026 Ultra delivery recovery: full attempts, incomplete grading
 
 Frozen `b07e807`, [run 38694102125](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38694102125),

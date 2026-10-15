@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { liveNvidiaCapacity, NvidiaCapacityCoordinator, NVIDIA_CAPACITY_POLICY } from "./nvidiaCapacity";
+import {newNvidiaStreamDiagnostics, readNvidiaEventStream, type NvidiaStreamDiagnostics} from "./nvidiaEventStream";
 
 export const NVIDIA_NIM_CHAT_COMPLETIONS_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
@@ -42,6 +43,8 @@ export interface NvidiaNimProviderConfig {
    * dispatch the full already-bounded request lifetime, not a renewed lease. */
   readonly finalAttemptSelection?: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW" | "REMAINING_REQUEST_WINDOW";
   readonly transport?: NvidiaNimTransport;
+  /** Host-owned delivery experiment only. Omission preserves all reviewed wire defaults. */
+  readonly responseMode?: "BOUNDED_SSE";
   /** Deterministic delivery testing only. Live instances always share the process-local gate. */
   readonly testCapacity?: NvidiaCapacityCoordinator;
   /** Host-only, sanitized delivery status; never sent to NYX or used as execution authority. */
@@ -133,6 +136,7 @@ export interface NvidiaNimEvidence {
   /** Shape only; no generated text, extracted JSON, reasoning or secret fragments. */
   readonly contentShape?: { readonly json: "OBJECT" | "ARRAY" | "SCALAR" | "INVALID";
     readonly leadingMarkdownFence: boolean; readonly thinkingDelimiterPresent: boolean } | null;
+  readonly streamDelivery?: Readonly<NvidiaStreamDiagnostics>;
 }
 
 export interface NvidiaNimDeliveryEvidence {
@@ -259,7 +263,8 @@ function failureDiagnostics(reason: string, statusCode: number | null): {
   if (reason === "nvidia_provider_cancelled") return { category: "PROVIDER_CANCELLED", retryability: "NO" };
   if (reason === "nvidia_provider_transport_failure") return { category: "PROVIDER_TRANSPORT_ERROR", retryability: "UNKNOWN" };
   if (reason === "nvidia_provider_response_not_json" || reason === "nvidia_provider_response_missing_content"
-    || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid") {
+    || reason === "nvidia_provider_response_finish_reason_invalid" || reason === "nvidia_provider_response_shape_invalid"
+    || reason === "nvidia_provider_stream_invalid") {
     return { category: "PROVIDER_RESPONSE_SCHEMA_ERROR", retryability: "NO" };
   }
   if (statusCode === 401 || statusCode === 403) return { category: "PROVIDER_AUTH_FAILURE", retryability: "NO" };
@@ -308,6 +313,7 @@ export class NvidiaNimProvider {
     if (config.finalAttemptSelection !== undefined && (!["LAST_ATTEMPT_OR_NO_RETRY_WINDOW", "REMAINING_REQUEST_WINDOW"].includes(config.finalAttemptSelection)
       || config.finalAttemptTimeoutMs === undefined)) throw new Error("provider_final_attempt_selection_invalid");
     if (config.authorityMode === "TEST_DOUBLE_ONLY" && !config.transport) throw new Error("test_double_transport_required");
+    if (config.responseMode !== undefined && config.responseMode !== "BOUNDED_SSE") throw Error("provider_response_mode_invalid");
     if (config.authorityMode !== "TEST_DOUBLE_ONLY" && config.authorityMode !== "EXPLICIT_LIVE_NVIDIA_NIM") throw new Error("provider_authority_mode_invalid");
     if (config.testCapacity && (config.authorityMode !== "TEST_DOUBLE_ONLY" || !(config.testCapacity instanceof NvidiaCapacityCoordinator))) {
       throw new Error("test_capacity_cannot_override_live_gate");
@@ -343,7 +349,7 @@ export class NvidiaNimProvider {
     const requestId = typeof request.requestId === "string" && request.requestId.trim() ? request.requestId : "MALFORMED";
     const responseFormat = responseFormatPayload(request.responseFormat);
     const payload = { model: this.#config.model, messages: request.messages, max_tokens: request.maxTokens,
-      temperature: request.temperature, stream: false,
+      temperature: request.temperature, stream: this.#config.responseMode === "BOUNDED_SSE",
       ...(responseFormat && request.structuredOutputMode !== "STRICT_LOCAL" ? { response_format: responseFormat } : {}),
       ...(request.inferencePolicy === "CONSTRAINED_JSON" || request.inferencePolicy === "REASONING_JSON"
         ? request.reasoningControl === "ULTRA_NATIVE" || request.reasoningControl === "ULTRA_HOSTED_NATIVE"
@@ -455,7 +461,12 @@ export class NvidiaNimProvider {
           ...(this.#httpAttemptBudgets.some(scope => scope.transientRecovery)
             ? {transientRecovery: "WITHIN_SHARED_BUDGET" as const} : {}) }) } : {}) });
       if (waitVisible) progress(result.decision === "COMPLETED" ? "COMPLETED" : "STOPPED", notBeforeEpochMs);
-      return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery }) });
+      // A capacity/lease stop must not erase observed partial-delivery metadata.
+      // It remains last-HTTP-attempt data, not an aggregate or accepted content.
+      const streamDelivery = result.evidence.streamDelivery ?? previous?.evidence.streamDelivery;
+      return Object.freeze({ ...result, evidence: Object.freeze({ ...result.evidence, delivery,
+        ...(streamDelivery ? {streamDelivery,
+          ...(result.reason === "nvidia_capacity_requires_renewed_run" ? {usage: streamDelivery.reportedUsage} : {})} : {}) }) });
     };
     const stopped = (cancelled: boolean, notBeforeEpochMs: number | null = null) => finish(this.#result(
       cancelled ? "BLOCKED" : "WAITING_FOR_CAPACITY", cancelled ? "nvidia_provider_cancelled" : "nvidia_capacity_requires_renewed_run",
@@ -542,6 +553,7 @@ export class NvidiaNimProvider {
       null, null, requestDigest, null, null, emptyUsage(), false); }
     let timeoutTriggered = false;
     let networkAttempted = false;
+    let streamDelivery: NvidiaStreamDiagnostics | undefined;
     // Opt-in allocation experiment: one non-streaming reasoning request may
     // use the existing request window instead of discarding it at a shorter
     // cutoff and retrying the SAME computation. Never changes either absolute
@@ -576,7 +588,8 @@ export class NvidiaNimProvider {
         allocated(Math.min(attemptTimeoutMs, remainingMs));
         return this.#transport!(NVIDIA_NIM_CHAT_COMPLETIONS_URL, {
           method: "POST",
-          headers: { Authorization: `Bearer ${credential}`, Accept: "application/json", "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${credential}`, Accept: this.#config.responseMode === "BOUNDED_SSE"
+            ? "text/event-stream" : "application/json", "Content-Type": "application/json" },
           body,
           signal: controller.signal,
         });
@@ -599,11 +612,20 @@ export class NvidiaNimProvider {
           response.status, emptyUsage(), true, providerRequestId);
       }
       let parsed: ProviderResponse;
-      try { parsed = await bounded(() => response.json()) as ProviderResponse; }
+      try {
+        if (this.#config.responseMode === "BOUNDED_SSE") {
+          streamDelivery = newNvidiaStreamDiagnostics();
+          parsed = await bounded(() => readNvidiaEventStream(response, controller.signal, streamDelivery!,
+            () => this.#capacity?.clock.now() ?? Date.now()));
+        } else parsed = await bounded(() => response.json()) as ProviderResponse;
+      }
       catch (error) {
         if (controller.signal.aborted) throw error;
-        return this.#result("PROVIDER_ERROR", "nvidia_provider_response_not_json", null, null, requestDigest, null,
-          response.status, emptyUsage(), true, providerRequestId);
+        // A reader/socket exception is transport failure, not malformed JSON.
+        if (streamDelivery && !(error instanceof Error && error.message.startsWith("nvidia_stream_"))) throw error;
+        if (streamDelivery) controller.abort(); // No rejected stream outlives the request.
+        return this.#result("PROVIDER_ERROR", streamDelivery ? "nvidia_provider_stream_invalid" : "nvidia_provider_response_not_json", null, null, requestDigest, null,
+          response.status, streamDelivery?.reportedUsage ?? emptyUsage(), true, providerRequestId, null, streamDelivery);
       }
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_shape_invalid", null, null,
@@ -614,23 +636,26 @@ export class NvidiaNimProvider {
       const content = parsed.choices?.[0]?.message?.content;
       const rawFinishReason = parsed.choices?.[0]?.finish_reason;
       const reasoning = parsed.choices?.[0]?.message?.reasoning_content;
-      const reasoningOutputBytes = typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null;
+      const reasoningOutputBytes = streamDelivery?.reasoningDeltaBytes
+        ?? (typeof reasoning === "string" ? Buffer.byteLength(reasoning, "utf8") : null);
       if (typeof content !== "string" || !content.trim()) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_missing_content", null, safeFinishReason(rawFinishReason), requestDigest, null,
-          response.status, usage, true, providerRequestId, reasoningOutputBytes);
+          response.status, usage, true, providerRequestId, reasoningOutputBytes, streamDelivery);
       }
       const finishReason = safeFinishReason(rawFinishReason);
       if (finishReason === null) {
         return this.#result("PROVIDER_ERROR", "nvidia_provider_response_finish_reason_invalid", null, null, requestDigest,
-          sha256(content), response.status, usage, true, providerRequestId);
+          sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes, streamDelivery);
       }
       return this.#result("COMPLETED", "nvidia_nim_completion_observed", content,
-        finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes);
+        finishReason, requestDigest, sha256(content), response.status, usage, true, providerRequestId, reasoningOutputBytes, streamDelivery);
     } catch (error) {
+      if (controller.signal.aborted && streamDelivery) streamDelivery.terminal = "ABORTED";
       const reason = timeoutTriggered ? "nvidia_provider_timeout"
         : signal.aborted || (error instanceof Error && error.name === "AbortError")
           ? "nvidia_provider_cancelled" : "nvidia_provider_transport_failure";
-      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, null, emptyUsage(), networkAttempted);
+      return this.#result("PROVIDER_ERROR", reason, null, null, requestDigest, null, streamDelivery ? 200 : null,
+        streamDelivery?.reportedUsage ?? emptyUsage(), networkAttempted, null, null, streamDelivery);
     } finally {
       clearTimeout(timeout);
       signal.removeEventListener("abort", abort);
@@ -639,7 +664,8 @@ export class NvidiaNimProvider {
 
   #result(decision: NvidiaNimCompletionResult["decision"], reason: string, content: string | null, finishReason: NvidiaNimFinishReason | null,
     requestDigest: string, responseDigest: string | null, statusCode: number | null, usage: NvidiaNimUsage,
-    networkAttempted: boolean, providerRequestId: string | null = null, reasoningOutputBytes: number | null = null): NvidiaNimCompletionResult {
+    networkAttempted: boolean, providerRequestId: string | null = null, reasoningOutputBytes: number | null = null,
+    streamDelivery?: NvidiaStreamDiagnostics): NvidiaNimCompletionResult {
     const evidenceClass = this.#config.authorityMode === "EXPLICIT_LIVE_NVIDIA_NIM" && networkAttempted ? "E4" : "E3";
     const diagnostics = failureDiagnostics(reason, statusCode);
     let contentShape: NvidiaNimEvidence["contentShape"] = null;
@@ -657,7 +683,9 @@ export class NvidiaNimProvider {
       requestDigest, responseDigest, credentialSourceIdentity: this.#config.credentialSource.sourceIdentity,
       credentialPersisted: false, promptPersisted: false, networkAttempted, statusCode,
       failureCategory: diagnostics.category, retryability: diagnostics.retryability,
-      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes, contentShape });
+      providerRequestId: safeProviderRequestId(providerRequestId), finishReason, usage, reasoningOutputBytes, contentShape,
+      ...(streamDelivery ? {streamDelivery: Object.freeze({...streamDelivery,
+        reportedUsage: Object.freeze({...streamDelivery.reportedUsage})})} : {}) });
     return Object.freeze({ decision, reason, content, finishReason, evidence, executorAuthorityGranted: false });
   }
 }

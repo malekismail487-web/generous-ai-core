@@ -1,4 +1,5 @@
 /** Exact source refinement, not a replacement of any historical scored-source identity. */
+import {NVIDIA_STREAM_PROVIDER_REFINEMENT} from "./nyx-stream-delivery-refinement";
 export const NYX_ARC_CORE_REFINEMENT = Object.freeze({
   predecessor: "513845addbe6146a4ad1b08a68176bff1b5f8b24",
   purpose: "MATCH_INFERENCE_CANCELLATION_ARRAY_BOUNDS_OPT_IN_DELIVERY_QUALITY_AND_DECISION_REQUIRED_GENERATION",
@@ -665,6 +666,12 @@ const sourceSiteEmissionRefinement: [string, string, number][] = [
   ]
 ];
 export function arcCorePredecessorSource(path: string, current: string): string {
+  if (path === "src/lib/codelab/model/nvidiaNimProvider.ts") {
+    for (const [before, after] of NVIDIA_STREAM_PROVIDER_REFINEMENT.hunks) {
+      if (current.split(after).length !== 2) throw Error("arc_stream_delivery_refinement_hunk_mismatch");
+      current = current.split(after).join(before);
+    }
+  }
   if (path === cognitivePath) {
     for (const [after, before] of [
       ['import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema, nyxSourceSitePromptCatalog,\n', 'import { buildNyxSourceSiteCatalog, resolveNyxSourceSites, withNyxSourceSiteSchema,\n'],
