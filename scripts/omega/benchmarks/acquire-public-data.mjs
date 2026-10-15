@@ -30,6 +30,11 @@ export const PUBLIC_DATASETS = Object.freeze([
   ['MultiChallenge', 'ScaleAI/MultiChallenge'],
   ['SWE-bench-Pro', 'ScaleAI/SWE-bench_Pro'],
   ['AA-Omniscience', 'ArtificialAnalysis/AA-Omniscience-Public'],
+  ['SWE-bench', 'SWE-bench/SWE-bench'],
+  ['SWE-bench-Lite', 'SWE-bench/SWE-bench_Lite'],
+  ['SWE-bench-Verified', 'SWE-bench/SWE-bench_Verified'],
+  ['SWE-bench-Multilingual', 'SWE-bench/SWE-bench_Multilingual'],
+  ['SWE-bench-Multimodal', 'SWE-bench/SWE-bench_Multimodal'],
 ]);
 
 export function publicDatasetPath(root, dataset, revision, filename) {

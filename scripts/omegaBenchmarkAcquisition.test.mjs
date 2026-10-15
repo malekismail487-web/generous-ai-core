@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {mkdtemp, readFile, rm, lstat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve, relative, isAbsolute} from 'node:path';
-import {publicDatasetPath, acquirePublicDatasets} from './omega/benchmarks/acquire-public-data.mjs';
+import {PUBLIC_DATASETS, publicDatasetPath, acquirePublicDatasets} from './omega/benchmarks/acquire-public-data.mjs';
 
 let passed = 0, failed = 0;
 function check(name, action) {
@@ -11,6 +11,12 @@ function check(name, action) {
 }
 const root = resolve(tmpdir(), 'nyx-acquisition-development-paths');
 const revision = 'a'.repeat(40);
+check('public catalog preserves canonical SWE variants without duplicate identities or model-output datasets', () => {
+  assert.equal(new Set(PUBLIC_DATASETS.map(([, dataset]) => dataset)).size, PUBLIC_DATASETS.length);
+  for (const name of ['SWE-bench', 'SWE-bench_Lite', 'SWE-bench_Verified', 'SWE-bench_Multilingual', 'SWE-bench_Multimodal'])
+    assert(PUBLIC_DATASETS.some(([, dataset]) => dataset === `SWE-bench/${name}`));
+  assert(!PUBLIC_DATASETS.some(([, dataset]) => /(?:_outputs|model[-_]trajectories)/i.test(dataset)));
+});
 check('public data path remains below the dedicated immutable revision', () =>
   assert.equal(publicDatasetPath(root, 'author/data', revision, 'data/test.jsonl'),
     resolve(root, 'public-datasets', 'author--data', revision, 'data/test.jsonl')));

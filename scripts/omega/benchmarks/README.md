@@ -1,5 +1,23 @@
 # NYX benchmark capability program
 
+### Public acquisition coverage while the frozen AIME run executes
+
+Canonical author tables for SWE-bench full/Lite/Verified/Multilingual/Multimodal
+are now cached and digest-checked, in addition to Pro V2/HARD-51/v1. The new eight
+files total 58996749 bytes; split names and revisions remain distinct. No question,
+reference patch, answer or model trajectory was inspected or sent to cognition.
+The ARC-AGI-3 author benchmarking and Kaggle starter repositories are pinned too;
+neither means the full protected game population is downloaded or executable.
+
+The combined public-table acquisition record covers 26 sources, 106 files and
+5547120301 verified bytes; three sources remain author-access-gated. This is not
+all benchmarks, complete external assets, prepared execution environments, a new
+capability, or a score. In particular Docker images, multimodal images, ARC account
+access, competition-rule acceptance and license permissions remain separate.
+Historical acquisition receipts/failures are preserved in
+`docs/omega/evidence/benchmark-acquisition-followup-2026-10-15.json`.
+No other primary model benchmark was started while the AIME epoch was active.
+
 ### Corrected Ultra high-reasoning evaluation profile v2 (prospective)
 
 Development-only factorial at `8967325`, run `38676698545`, completed all four
