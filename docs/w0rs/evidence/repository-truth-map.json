@@ -2065,6 +2065,7 @@
         "scripts/omega/nyx-public-witness-cycle.ts",
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
+        "scripts/omega/nyx-ultra-research-pair.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2099,6 +2100,7 @@
         "scripts/omega/nyx-source-site-transfer.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
+        "scripts/omega/nyx-ultra-research-pair.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2249,6 +2251,7 @@
         "scripts/omega/nyx-source-site-transfer.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
+        "scripts/omega/nyx-ultra-research-pair.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2668,6 +2671,24 @@
       ]
     },
     {
+      "name": "NYX_ULTRA_PAIR_AIME",
+      "files": [
+        "scripts/omega/nyx-ultra-research-pair.ts"
+      ]
+    },
+    {
+      "name": "NYX_ULTRA_PAIR_AIME_SHA256",
+      "files": [
+        "scripts/omega/nyx-ultra-research-pair.ts"
+      ]
+    },
+    {
+      "name": "NYX_ULTRA_PAIR_GPQA",
+      "files": [
+        "scripts/omega/nyx-ultra-research-pair.ts"
+      ]
+    },
+    {
       "name": "NYX_V3_FRESH_BUDGET_TRANSFER",
       "files": [
         "scripts/omega/nyx-source-representation-cycle.ts"
@@ -2719,6 +2740,7 @@
         "scripts/omega/nyx-source-site-transfer.ts",
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
+        "scripts/omega/nyx-ultra-research-pair.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2886,6 +2908,7 @@
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-transfer-epoch-compare.ts",
+        "scripts/omega/nyx-ultra-research-pair.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts",
         "scripts/omegaNyxWorkbenchTransfer.test.ts"
       ]

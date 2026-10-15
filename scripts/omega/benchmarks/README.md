@@ -1,5 +1,61 @@
 # NYX benchmark capability program
 
+### Ultra versus current NYX: frozen closed-book paired pilot
+
+`nyx-ultra-closed-book-pair/1` starts with one shared development availability
+problem in each arm. Only two independently accepted replies admit benchmark
+inference. The exact requested model is `nvidia/nemotron-3-ultra-550b-a55b`;
+non-Ultra overrides are rejected, with no fallback. Historical Super evidence is
+unchanged. Hosted weight/build identity is not independently attested.
+
+The pilot selects two AIME 2026 and two GPQA Diamond problems by a prospective
+hash ranking of policy/family/task identity, never by answer or prior outcome.
+Both arms receive identical frozen question text directly, without reference
+answers, tools, prior sessions or repairs. Arm order is counterbalanced within
+each family. These are previously exposed public program corpora, **not fresh
+held-out generalization tasks**; provider pretraining exposure is unknown.
+
+Standalone Ultra uses a minimal prompt and the shared strict typed-reply I/O.
+Current NYX uses the actual existing `NyxChatSession` through
+`invokeExistingNyxText`, restricted to `REPLY_ONLY`. This compares the **closed-book
+path, not the full tool-enabled NYX research architecture**. Existing disposable
+R3 fixtures and R1 confinement are reused, with zero repository reads/actions.
+No second execution stack, cognitive layer or authority grant is introduced.
+
+Both arms use temperature 0.2, native Ultra reasoning (high by the reviewed
+adapter default; no unsupported explicit reasoning budget), the 16384 total
+completion-token ceiling, strict local JSON/answer parsing and the same pinned
+independent graders. The opt-in SSE delivery profile is shared by both arms for
+this pilot only; its prior incomplete AIME results remain preserved and it is
+**not promoted to the production default**. Incomplete/late output is not graded.
+
+Limits: one logical call and four HTTP attempts per task-arm, 360-second original
+task lease, 300-second provider request lifetime, 65-minute epoch, ten logical
+calls/40 HTTP attempts including both development preflights. No answer retries
+or best-of accumulation. Equal ceilings do not mean equal realized compute:
+paired reported-token/call differences, unknown usage and delivery failures are
+recorded explicitly. Uncertainty calibration is not measured by this pilot.
+
+Reports contain sanitized task/input/source identities, authorization outcomes,
+cleanup/source integrity, separate preflight/benchmark/interrupted usage and
+first-reply grading. No raw questions, predictions, private reasoning, credentials
+or enumerable answer/provider-envelope hashes are persisted. A complete four-task
+pilot is still not a complete AIME/GPQA score or evidence of general improvement.
+
+Development checks exercise both actual isolated fixture paths with explicitly
+synthetic model completions, plus malformed actions, unknown model identities,
+truncation, delivery failure, exceptions, stale leases and false result claims.
+These checks establish evaluation integrity, not live Ultra capability. The
+one-shot launch hook is exact-message gated and must be removed after terminal
+evidence capture. No additional inference campaign is launched automatically.
+
+Ω plan coverage: **PARTIAL / JUST-IN-TIME**. Direct: evidence over confidence,
+same-budget controls, no self-certification, capability distinct from authority.
+Supporting: provenance, scoped execution, source preservation and honest failure
+classification. Deferred: tool-enabled comparisons, fresh transfer, all remaining
+benchmark families, formal/scientific capability improvements and human-reviewed
+promotion. No architectural conflict or supersession of historical results.
+
 ### Frontier mathematics/science directive: acquisition and baseline audit
 
 The new research directive prioritizes **standalone Nemotron 3 Ultra versus
