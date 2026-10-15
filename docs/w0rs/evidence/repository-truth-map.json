@@ -2277,6 +2277,12 @@
       ]
     },
     {
+      "name": "NYX_AIME26_MODE",
+      "files": [
+        "scripts/omega/nyx-aime26-live-eval.ts"
+      ]
+    },
+    {
       "name": "NYX_AIME26_PREPARED_SHA256",
       "files": [
         "scripts/omega/nyx-aime26-live-eval.ts"

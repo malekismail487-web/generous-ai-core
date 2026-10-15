@@ -1,0 +1,959 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-BENCHMARK-ACQUISITION-FOLLOWUP-2026-10-15",
+  "observedAt": "2026-10-15T03:27:10.098Z",
+  "previousReceipt": "benchmark-acquisition-2026-10-15.json",
+  "originalLiveCodeBenchDownloadFailurePreserved": true,
+  "sourceReceiptSha256": "c7a4657b1847edfd46d79119bd69bb718e71c3cb31502ef4edfee06afe15d106",
+  "additionalAuthorRepositories": [
+    {
+      "name": "nemo-skills-author",
+      "url": "https://github.com/NVIDIA/NeMo-Skills.git",
+      "revision": "bcf059af55c20a89f797724598f9908d126153e6",
+      "tree": "97d6d11a83648aa9ceb1f9cc08332935605b44d9",
+      "clean": true
+    },
+    {
+      "name": "imo-bench-author",
+      "url": "https://github.com/google-deepmind/superhuman.git",
+      "revision": "80b2527a0b4e4bfc6a8b28825fadbdcfdd6048a1",
+      "tree": "c16037fe369a6e1b20e8f7a100a7c06bf38eb164",
+      "clean": true
+    },
+    {
+      "name": "ifbench-author",
+      "url": "https://github.com/allenai/IFBench.git",
+      "revision": "1c40f0c10d9b5c5c2f10a175a28007ebb64f7f4d",
+      "tree": "6844134893f9bfa2d6663f4b4acf5ecc6a9bf7f7",
+      "clean": true
+    },
+    {
+      "name": "matharena-author",
+      "url": "https://github.com/eth-sri/matharena.git",
+      "revision": "b89f2f0ad64ced464d2944f08c3c0aaeaa0df64b",
+      "tree": "f13178cbbc2ff9ed138f872d66e9efdd0e263498",
+      "clean": true
+    }
+  ],
+  "publicData": {
+    "schemaVersion": 1,
+    "identity": "NYX-PUBLIC-DATA-ACQUISITION-2026-10-15",
+    "observedAt": "2026-10-15T03:27:10.098Z",
+    "root": "C:\\Users\\loka3\\Documents\\Codex\\2026-08-20\\h\\benchmark-data",
+    "maxFileBytes": 2147483648,
+    "maxTotalBytes": 12884901888,
+    "downloadTimeoutMs": 900000,
+    "downloadedBytes": 0,
+    "credentialsUsed": false,
+    "rawExamplesPrinted": false,
+    "sourceCodeExecuted": false,
+    "benchmarkScoreClaim": false,
+    "sources": [
+      {
+        "benchmark": "MATH-500",
+        "dataset": "HuggingFaceH4/MATH-500",
+        "revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+        "gated": false,
+        "license": null,
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "test.jsonl",
+            "bytes": 446564,
+            "sha256": "35dc41080a3680858b27fa7e0533d2d547825316fc5dafe5d316f4ccc5a06132",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": false
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "AIME-2025",
+        "dataset": "MathArena/aime_2025",
+        "revision": "c94da77eb22bbd6439e62a323bec18493a421302",
+        "gated": false,
+        "license": "cc-by-nc-sa-4.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/train-00000-of-00001.parquet",
+            "bytes": 14313,
+            "sha256": "9f9066ff48ad2e31f9bf1b1ac6d5e80693195f987985f2859f89dd25ffa51c2d",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "AIME-2026",
+        "dataset": "MathArena/aime_2026",
+        "revision": "d2de22f3c656b4f56cf8981212186377d1e23bc3",
+        "gated": false,
+        "license": "cc-by-nc-sa-4.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/train-00000-of-00001.parquet",
+            "bytes": 10065,
+            "sha256": "d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "MMLU-Pro",
+        "dataset": "TIGER-Lab/MMLU-Pro",
+        "revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+        "gated": false,
+        "license": "mit",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/test-00000-of-00001.parquet",
+            "bytes": 4144185,
+            "sha256": "0e24a191921c2f453518a537a8b2117bd137e7714d4ef1565e9ba06c1ecb9ad8",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "data/validation-00000-of-00001.parquet",
+            "bytes": 42857,
+            "sha256": "139423c23722e480c807ac4a191409a710cfce4eba744c1d641cf88e730e2078",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "MMLU-ProX",
+        "dataset": "li-lab/MMLU-ProX",
+        "revision": "8e6106a6c6ce1c5027e66cc338143cf997b2aa09",
+        "gated": false,
+        "license": "mit",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "af/test-00000-of-00001.parquet",
+            "bytes": 5335165,
+            "sha256": "7594157669242cfb0e38d9d0e5cb6bb88cf599b22e0e9657e5228f2789fa2321",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "af/validation-00000-of-00001.parquet",
+            "bytes": 53488,
+            "sha256": "6a8eb36451e0a3bdd08e8360c8126cd392f2f9975ee20211f6ffdd09f80bbb97",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ar/test-00000-of-00001.parquet",
+            "bytes": 5957104,
+            "sha256": "a103ec2065e58aef1ea1f88c99f9d8eababe442c6804af01cc04b2b8e1ae83ad",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ar/validation-00000-of-00001.parquet",
+            "bytes": 57010,
+            "sha256": "e27efc037c1ae5588856d1473e502e47d97dd431161a206aa865a5d8778d31ba",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "bn/test-00000-of-00001.parquet",
+            "bytes": 7429729,
+            "sha256": "f243f051eece488d88bd65c080e17a1b410978e601723b806f81f95418fb197d",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "bn/validation-00000-of-00001.parquet",
+            "bytes": 74795,
+            "sha256": "95459e21adc1f2c87430af2f71ad5af18f2de74859fce73ae6bc71335bf63b9a",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "cs/test-00000-of-00001.parquet",
+            "bytes": 5612815,
+            "sha256": "302fe7027a6acbff5698b3594688039ae2a8ff1280439724382588778ded66eb",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "cs/validation-00000-of-00001.parquet",
+            "bytes": 54212,
+            "sha256": "ed57e07d1878b44eef830c3568021b45928db1dba7ff89e0f067b9e332abf9c5",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "de/test-00000-of-00001.parquet",
+            "bytes": 5648375,
+            "sha256": "c641ae0cef6e885fe8b6a8364c58def1f0866b779d7a77ea6b0746c8756eba18",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "de/validation-00000-of-00001.parquet",
+            "bytes": 57028,
+            "sha256": "6d36a12bba886a0e234af626978056f22e71ae7f04e59d882973cc8d7dc385ae",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "en/test-00000-of-00001.parquet",
+            "bytes": 5105360,
+            "sha256": "0b0e1451ca45d44385d936c953336a3a9e68a53af498c699b02c4f960ae24b7f",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "en/validation-00000-of-00001.parquet",
+            "bytes": 51933,
+            "sha256": "2db70f771e66a321b8c6dd816b461d2dcc06044a4dff0d95bfc3ffd97fe3ef54",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "es/test-00000-of-00001.parquet",
+            "bytes": 5470339,
+            "sha256": "81841f53bdfb69e6baba9c01d6d4035447e37fe44b2c68b284924587711edaf0",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "es/validation-00000-of-00001.parquet",
+            "bytes": 52994,
+            "sha256": "27b41446c83be65a3bf76851e8a2384c133f0b9ab1295cf435c2dd57882e4d3c",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "fr/test-00000-of-00001.parquet",
+            "bytes": 5622478,
+            "sha256": "1c41b831d27fa57eab9456774065d760f169dc07b50aec929dbfc01360962636",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "fr/validation-00000-of-00001.parquet",
+            "bytes": 55593,
+            "sha256": "1414899a28715eecc1901a7568e11cb281a2846ba1ab6f3d6dd1b218d29807f5",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "hi/test-00000-of-00001.parquet",
+            "bytes": 7308873,
+            "sha256": "cf3c849fd995037bfacd2f39dcbb3cb93d7fb9e56040068623f175cbf87292b9",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "hi/validation-00000-of-00001.parquet",
+            "bytes": 71929,
+            "sha256": "cb5894ee481786e102eef29590fdac1bd5684ce42c904dd09294742a20703d84",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "hu/test-00000-of-00001.parquet",
+            "bytes": 5808585,
+            "sha256": "8980f9dfe5c6c4bdd39b5e75c2df6b583c0aec36f898d07a591707d48f7be080",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "hu/validation-00000-of-00001.parquet",
+            "bytes": 56156,
+            "sha256": "423ca5c4bbcac1ac957996008e1680dce0d9f1668b223297cb8b7fb82bf73107",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "id/test-00000-of-00001.parquet",
+            "bytes": 5158854,
+            "sha256": "a466f60701871a43d9af5fdff32095d1288ed133670f12d0a427a25992d04af2",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "id/validation-00000-of-00001.parquet",
+            "bytes": 53449,
+            "sha256": "4df25a8a7ff6a3d423d05cc93142ad12f88b4fb54bfc468252be70998c91a935",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "it/test-00000-of-00001.parquet",
+            "bytes": 5579731,
+            "sha256": "9266d0793870628cff0929da0cb9b0dc60529303f0e8104caff29044c4376468",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "it/validation-00000-of-00001.parquet",
+            "bytes": 54468,
+            "sha256": "57a5616348ef6a249db57f5544092d4bf64151aedb17382e1b094ebba5df0908",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ja/test-00000-of-00001.parquet",
+            "bytes": 5344773,
+            "sha256": "442a074c184a2cde8d534d48e40a1c518b2237107e84c24322fa9da59daab35c",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ja/validation-00000-of-00001.parquet",
+            "bytes": 55526,
+            "sha256": "80c0df898b8edbe536dca28475df25d0d64872efc2f1c3ef7a2b14fe013e460c",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ko/test-00000-of-00001.parquet",
+            "bytes": 5260834,
+            "sha256": "ba8576b9924fe7a84eec3ceb268a6ccd5b97243f63ce348207e8f74a15b2deb0",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ko/validation-00000-of-00001.parquet",
+            "bytes": 53254,
+            "sha256": "76b4a17260ad835246fdf4951fbad650f940fd125fdec892e74c05d512e32f66",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "mr/test-00000-of-00001.parquet",
+            "bytes": 7985785,
+            "sha256": "cc88b123481df47fbeed05cbba648db34b897d4d37e9851e793f471d6ee7714d",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "mr/validation-00000-of-00001.parquet",
+            "bytes": 74784,
+            "sha256": "c539d5d75fc08a9d350abbb1e7f497555ca73b736b0c81c23b06fd7f2bb616eb",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ne/test-00000-of-00001.parquet",
+            "bytes": 7672868,
+            "sha256": "87b9f931c9c7e7e954017d705600bce30c559752f1381b071fcadac9ea479e76",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ne/validation-00000-of-00001.parquet",
+            "bytes": 74521,
+            "sha256": "54a2ae8f4425568790cbd666897d6fa7b3a375abec7f9cb9a55a19f7bfe8e1e1",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "pt/test-00000-of-00001.parquet",
+            "bytes": 5410915,
+            "sha256": "7990e62c9808fa94ee794d516f5932e060886d1893e7c1e31155a30f19a70b6b",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "pt/validation-00000-of-00001.parquet",
+            "bytes": 52239,
+            "sha256": "cdda094a624725b75601354ad863912e703972fecf6e5cc81c280d1e4718dc81",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ru/test-00000-of-00001.parquet",
+            "bytes": 7397811,
+            "sha256": "00fbd67cab968df4f7f136235d6c9f8c33fb4044933aa2f5c15b0423a1eb7dbf",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ru/validation-00000-of-00001.parquet",
+            "bytes": 74181,
+            "sha256": "22102323dcb75063ff2f23085a5ab444cabe888305e7f70ae613135f989f15cc",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sr/test-00000-of-00001.parquet",
+            "bytes": 5475979,
+            "sha256": "ba87d44e9cf523d6e85d3fd293cd226814343e816834432ab16f556ba03a46e9",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sr/validation-00000-of-00001.parquet",
+            "bytes": 52114,
+            "sha256": "1d67e10778cfcb9f00a8699e05b386659a51249dca65ab71f18b47ad492526e0",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sw/test-00000-of-00001.parquet",
+            "bytes": 4936864,
+            "sha256": "6fccb1c34ca390d37b759c479b9b6b51eab6a3dfd6ac7a2cf2b1a58129124cd9",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sw/validation-00000-of-00001.parquet",
+            "bytes": 49312,
+            "sha256": "feefc35a76703bc212e4f53a6f41366f874bec0fed758a19eb3ceccebbda0f06",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "te/test-00000-of-00001.parquet",
+            "bytes": 8036682,
+            "sha256": "14817ebce488a2b541f106bc1be9216492f706ccc163bcf06cbfe86bfe0b38c8",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "te/validation-00000-of-00001.parquet",
+            "bytes": 76461,
+            "sha256": "c6588bc84443344c05a2a229098015f728bb8f5e14779ad2f8314688d4729ca3",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "th/test-00000-of-00001.parquet",
+            "bytes": 7454076,
+            "sha256": "660da5b011693c82247e48021cc4dcf62b4afbd36b861e1454883817001d96c6",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "th/validation-00000-of-00001.parquet",
+            "bytes": 73201,
+            "sha256": "ec3d509f74b02f252c3d7938059e8329eb1a9eaee5ada27fde8604a28f36b318",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "uk/test-00000-of-00001.parquet",
+            "bytes": 7220399,
+            "sha256": "c74e89228824128cd8d9ccea54f75a3ebcdb167b2b154ab45fdde79cb0ed9881",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "uk/validation-00000-of-00001.parquet",
+            "bytes": 66413,
+            "sha256": "3b877f41272dda495e639a8abc0e372491be11d0660e7bf7b57e83a8f40bfcca",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ur/test-00000-of-00001.parquet",
+            "bytes": 6687145,
+            "sha256": "0d3c70d24c9bde8913e790e09ea751110e20a37bdf4ce955c72687a30af106e1",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ur/validation-00000-of-00001.parquet",
+            "bytes": 62985,
+            "sha256": "b027cc053e519b8338a59a1836a762be49f6048e036bae746c241eb40ae672b4",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "vi/test-00000-of-00001.parquet",
+            "bytes": 5785416,
+            "sha256": "93044d3c5e880859de0ac87b8ab126a66c857f5e5bde0354bb82dcde6ba60b5b",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "vi/validation-00000-of-00001.parquet",
+            "bytes": 56540,
+            "sha256": "0cf9cc8fd98e48cde5be50afc55bd333547f41e4d599bbd2d1531fd6f266d1b3",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "wo/test-00000-of-00001.parquet",
+            "bytes": 5399550,
+            "sha256": "586213da79933c2458200560774fd56d56d8f1c52863d560fa7c4a9cf393de9f",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "wo/validation-00000-of-00001.parquet",
+            "bytes": 52584,
+            "sha256": "6e635a2a5f9fb490172ee1075cef379db94ad7754327d76c08011623cce41864",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "yo/test-00000-of-00001.parquet",
+            "bytes": 5962985,
+            "sha256": "c78be4be0a514ca717d74a564462d2416f9ac47819f91eb862ccfae0db4a2ca6",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "yo/validation-00000-of-00001.parquet",
+            "bytes": 57007,
+            "sha256": "8416f8bfce8f04cab26a694516c7cb5a82f1d21ef7b52a960696d5bdeb32e24a",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "zh/test-00000-of-00001.parquet",
+            "bytes": 4687799,
+            "sha256": "61c6e41acc62d6a8ba02b560754cfae751da56cfb220bb438d2d3bd7cbdc11ab",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "zh/validation-00000-of-00001.parquet",
+            "bytes": 48790,
+            "sha256": "22c3d98cc2be5fe01ee6a100670036b6eb8d6d1c4263704e42b9f3a591cfe7be",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "zu/test-00000-of-00001.parquet",
+            "bytes": 5741220,
+            "sha256": "755eb8b83c357f095235dc2bda03be8d37cebb0e6b1d9feb3c803c88c32334aa",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "zu/validation-00000-of-00001.parquet",
+            "bytes": 54627,
+            "sha256": "5dc132ff670784e68ff5656a49be2ce6870ac347c5db75514b6578474efc91eb",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "HumanEval",
+        "dataset": "openai/openai_humaneval",
+        "revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+        "gated": false,
+        "license": [
+          "mit"
+        ],
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "openai_humaneval/test-00000-of-00001.parquet",
+            "bytes": 83920,
+            "sha256": "2f2871a15fbc95b6c683043359f4ed8e144c5a1c4f24f25f66bc51f598dfcfb6",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "MBPP",
+        "dataset": "google-research-datasets/mbpp",
+        "revision": "4bb6404fdc6cacfda99d4ac4205087b89d32030c",
+        "gated": false,
+        "license": [
+          "cc-by-4.0"
+        ],
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "full/prompt-00000-of-00001.parquet",
+            "bytes": 7878,
+            "sha256": "a053e4bb85ceb77430ae80592addb4ca4dc6ba087592f9e04537800ee88b7431",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "full/test-00000-of-00001.parquet",
+            "bytes": 115824,
+            "sha256": "566fd53060ffba5766dace1d1e2f4c38906781526de222b0dfbdbc325b696c77",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "full/train-00000-of-00001.parquet",
+            "bytes": 87223,
+            "sha256": "09d125ca31edacb7800be8c67c45abff618faf0214ff551291817d06bdb914ae",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "full/validation-00000-of-00001.parquet",
+            "bytes": 25144,
+            "sha256": "3f0ec060987432d99fe8fb409d31e6c67445b208a01741c5583517c80a10fe80",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sanitized/prompt-00000-of-00001.parquet",
+            "bytes": 6717,
+            "sha256": "73c623309b7b5d65fd5661204b35f779f8e66301aa9832d1ad4b8fc3b21151fd",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sanitized/test-00000-of-00001.parquet",
+            "bytes": 60864,
+            "sha256": "e9e9efa2c0d59ef5e55537a9d126b8f875d5ac010a8d75628d76824884e15850",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sanitized/train-00000-of-00001.parquet",
+            "bytes": 33854,
+            "sha256": "d95f8ad6d2fff08fe4826122d6e3e31f75716825d0c5c340d297aca5e9e0de0e",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "sanitized/validation-00000-of-00001.parquet",
+            "bytes": 13987,
+            "sha256": "27e065fcab3c863959933328a7fdbf404e1bcb5464b1be6fe0dcd9530e420204",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "LiveCodeBench",
+        "dataset": "livecodebench/code_generation_lite",
+        "revision": "0fe84c3912ea0c4d4a78037083943e8f0c4dd505",
+        "gated": false,
+        "license": "cc",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "test.jsonl",
+            "bytes": 1252609773,
+            "sha256": "2bd02b38beb48e8c46b5b9987095d999ff38cd8efc255ea5d58974317c48f63f",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "test2.jsonl",
+            "bytes": 713377060,
+            "sha256": "095df7c5daf15f882c51a9deb84085cff1e073495a5dbcf95015a564d485f3a3",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "test3.jsonl",
+            "bytes": 623360766,
+            "sha256": "28ed26cc83363ce3f1fe2d5fad9f8393077beb1907b167a31bd3b32f80801b79",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "test4.jsonl",
+            "bytes": 1204644685,
+            "sha256": "d711138ddaebfcf5f8ec6a4283ee677298c0f5c5d374a235af92aaf0584510da",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "test5.jsonl",
+            "bytes": 557699297,
+            "sha256": "7f77571c2a6df0c2a72a3277650309f67e01e0008e18117e624633df53f81214",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "test6.jsonl",
+            "bytes": 134303240,
+            "sha256": "bb4c364f71921c4495a6ad15abe1a927350b720009f4933e2e71f8af0f6fd1f5",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "HLE",
+        "dataset": "cais/hle",
+        "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
+        "gated": "auto",
+        "license": "mit",
+        "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+        "artifacts": [],
+        "deferred": []
+      },
+      {
+        "benchmark": "HLE-Diamond",
+        "dataset": "cais/hle-diamond",
+        "revision": "04eeb7efa7e3e4f83a00cbd5ce436a38fd5dda23",
+        "gated": "auto",
+        "license": "mit",
+        "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+        "artifacts": [],
+        "deferred": []
+      },
+      {
+        "benchmark": "GAIA",
+        "dataset": "gaia-benchmark/GAIA",
+        "revision": "682dd723ee1e1697e00360edccf2366dc8418dd9",
+        "gated": "auto",
+        "license": null,
+        "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+        "artifacts": [],
+        "deferred": []
+      },
+      {
+        "benchmark": "LAB-Bench",
+        "dataset": "futurehouse/lab-bench",
+        "revision": "5c77cec648430f30611808808861eb86f81d5eaa",
+        "gated": false,
+        "license": "cc-by-sa-4.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "CloningScenarios/train-00000-of-00001.parquet",
+            "bytes": 100981,
+            "sha256": "f0ab6514adc9c97707797009c57cdaea03f226b98f801be7ada0f46ff601d463",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "DbQA/train-00000-of-00001.parquet",
+            "bytes": 171083,
+            "sha256": "0f20e6de5f2a7afeaeba8b2f7bfcd16146540c92b7405496476b8335eca33e46",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "FigQA/train-00000-of-00001.parquet",
+            "bytes": 227002936,
+            "sha256": "0fb49d673e3f09846e3e3a6801326bf9ee72cae8b11545fc4cd1903d3d10fead",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "LitQA2/train-00000-of-00001.parquet",
+            "bytes": 99737,
+            "sha256": "3e578fdaaa4728a77e884954dbf85ae0e3899791631a3be0838313b3e2334114",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "ProtocolQA/train-00000-of-00001.parquet",
+            "bytes": 261207,
+            "sha256": "d48d455638ff49b0c02ae96135703f239ea865a5936233045ee010a5d819239a",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "SeqQA/train-00000-of-00001.parquet",
+            "bytes": 370670,
+            "sha256": "5864776d3d85774f91d82432e30ac31e9222f1670621e8ea141414173c5e9b46",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "SuppQA/train-00000-of-00001.parquet",
+            "bytes": 25320,
+            "sha256": "de56250036401e28eea12370a1c9fa569187f7570c24efa811815f3a00ecd8a6",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          },
+          {
+            "filename": "TableQA/train-00000-of-00001.parquet",
+            "bytes": 106149774,
+            "sha256": "6af76a6a16fa460809f84dceb906c1be0a904ac49dbd760fa8998f16ad2b5a04",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "BixBench",
+        "dataset": "futurehouse/BixBench",
+        "revision": "f8cc3bdcc6357c88b8c3648306522b9c422dc95a",
+        "gated": false,
+        "license": "apache-2.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "BixBench.jsonl",
+            "bytes": 285842,
+            "sha256": "0d1204dcdae7193a9132ced5a3502008f6b3b163debc1b65b2aa2d86cb132dc9",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": false
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "GDPval",
+        "dataset": "openai/gdpval",
+        "revision": "11e7900cdcac61bc4daf59e65feb238acda98fbf",
+        "gated": false,
+        "license": null,
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/train-00000-of-00001.parquet",
+            "bytes": 1913489,
+            "sha256": "f8422fab9b21d90c0ee5f0659842ab666d418cb8940842918f9f4b0df7ae0202",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "LongBench-v2",
+        "dataset": "THUDM/LongBench-v2",
+        "revision": "2b48e494f2c7a2f0af81aae178e05c7e1dde0fe9",
+        "gated": false,
+        "license": "apache-2.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data.json",
+            "bytes": 465490535,
+            "sha256": "15d61c22d92c96900b3c4948b6aeea218d3214b676a65df48e7b8555604c7fe2",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "AA-LCR",
+        "dataset": "ArtificialAnalysis/AA-LCR",
+        "revision": "9a77ef56b717057ade24ceab4d273712a0b4f19e",
+        "gated": false,
+        "license": "apache-2.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "AA-LCR_Dataset.csv",
+            "bytes": 145408,
+            "sha256": "aea5198982436fa774f616964bbeb34716de9e94368a123275b9355765c9b73b",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": false
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "Apex-Shortlist",
+        "dataset": "MathArena/apex-shortlist",
+        "revision": "f3efdf224ef665f129ddaae37699f6098c65781b",
+        "gated": false,
+        "license": "cc-by-nc-sa-4.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/train-00000-of-00001.parquet",
+            "bytes": 19024,
+            "sha256": "12f2300323d4d0cbd51b4c7528ae45b626e1681b0103c3df94d5488324c44acc",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "FrontierScience",
+        "dataset": "openai/frontierscience",
+        "revision": "25ed67db7da8f4591484e764008ff585544f5a30",
+        "gated": false,
+        "license": "apache-2.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "olympiad/test.jsonl",
+            "bytes": 142436,
+            "sha256": "450e7fceb53c8140283a752f0d62a3abc69a85e252d4dbbd5d9dfbfb762db4e4",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": false
+          },
+          {
+            "filename": "research/test.jsonl",
+            "bytes": 372607,
+            "sha256": "96c0434abfcbadd6ef6f59a03cc374be4caf9c1f2d5e62d8fe921e768f66aa46",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": false
+          }
+        ],
+        "deferred": []
+      },
+      {
+        "benchmark": "MultiChallenge",
+        "dataset": "ScaleAI/MultiChallenge",
+        "revision": "670fd81f270314d0f8f82b34fcfe2187fd28f699",
+        "gated": false,
+        "license": "cc-by-4.0",
+        "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+        "artifacts": [
+          {
+            "filename": "data/test-00000-of-00001.parquet",
+            "bytes": 975319,
+            "sha256": "2711646aba61f814823297714aaf757e3a1b71c66c501402231de48490650515",
+            "state": "EXISTING_BYTES_REHASHED",
+            "authorLfsVerified": true
+          }
+        ],
+        "deferred": []
+      }
+    ]
+  },
+  "summary": {
+    "sources": 19,
+    "tableFiles": 94,
+    "verifiedBytes": 5472840687,
+    "gated": [
+      "HLE",
+      "HLE-Diamond",
+      "GAIA"
+    ],
+    "fullUniverseAcquired": false,
+    "downloadedHarnessIsNotFullDataset": true,
+    "modelCalls": 0
+  },
+  "limitations": [
+    "AA-LCR context text assets not acquired by the table-file filter",
+    "BixBench/GDPval external assets not certified",
+    "Gated HLE/HLE-Diamond/GAIA access conditions require operator-approved access; no bypass",
+    "FrontierMath protected tests are not acquired",
+    "Author repositories were not executed; third-party dependencies and engines are not installed",
+    "MathArena noncommercial dataset terms preserved; no raw examples committed"
+  ],
+  "planCoverage": {
+    "direct": [
+      "BENCHMARK_VERSION_AND_SOURCE_CUSTODY",
+      "ACQUISITION_IS_NOT_CAPABILITY",
+      "AUTHOR_ACCESS_CONDITIONS"
+    ],
+    "supporting": [
+      "PUBLIC_POPULATION_CONTAMINATION_UNKNOWN"
+    ],
+    "deferred": [
+      "OTHER_PRIMARY_BENCHMARK_EXECUTION",
+      "VENDOR_SUPERIORITY_CLAIM"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

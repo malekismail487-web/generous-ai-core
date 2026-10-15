@@ -8,6 +8,8 @@ import {ReadOnlyRepositoryExecutor} from "../src/lib/codelab/executor/readOnlyEx
 import {R3BenchmarkRepositorySession} from "./omega/benchmarks/r3RepositorySession";
 import {TEXT_BENCHMARK_POLICY, ULTRA_MATHEMATICS_EVALUATION_POLICY as POLICY,
   ultraMathematicsRequest, sanitizedTextResult, gradeAime, invokeExistingNyxText} from "./omega/benchmarks/nyxTextBenchmark";
+import {ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS, ultraContractDiagnosticRequest,
+  textRejectionHint} from "./omega/benchmarks/nyxTextBenchmark";
 import {AIME_2026_SOURCE, parseAime2026Data, mathematicsPopulationSummary,
   mathematicsPublicResult} from "./omega/nyx-aime26-live-eval";
 
@@ -47,6 +49,26 @@ for (const budget of [0, 8192, 32768, NaN]) check(`unexpected mathematical compl
   assert.throws(() => ultraMathematicsRequest({...request, maxTokens: budget}, true)));
 for (const observed of [null, 1, "true", {}]) check(`forged observation flag rejected ${typeof observed}`, () =>
   assert.throws(() => ultraMathematicsRequest(request, observed as boolean)));
+for (const variant of ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS) {
+  check(`development wire factorial preserves the observation and authority contract ${variant}`, () => {
+    const before = ultraContractDiagnosticRequest(request, false, variant);
+    assert.deepEqual(before, ultraMathematicsRequest(request, false));
+    const after = ultraContractDiagnosticRequest(request, true, variant);
+    assert.equal(after.messages, request.messages); assert.equal(after.responseFormat, request.responseFormat);
+    assert.equal(after.maxTokens, 16384); assert.equal(after.deadlineEpochMs, request.deadlineEpochMs);
+    assert.equal(after.reasoningEffort, undefined); assert.equal(after.inferencePolicy, "REASONING_JSON");
+    assert.equal(after.structuredOutputMode, variant.startsWith("LOCAL") ? "STRICT_LOCAL" : undefined);
+    assert.equal(after.reasoningBudgetTokens, variant.endsWith("NO_BUDGET") ? undefined : 12288);
+  });
+}
+check("unknown diagnostic configuration cannot become a fallback", () =>
+  assert.throws(() => ultraContractDiagnosticRequest(request, true, "AUTO" as never)));
+check("provider-stated reasoning/grammar conflicts retain fixed labels, not error echoes", () => {
+  const hint = textRejectionHint(JSON.stringify({error: {message:
+    "Model validation: guided decoding is incompatible with reasoning. PRIVATE_ECHO"}}));
+  assert(hint.signals.includes("REASONING_GUIDANCE_CONFLICT")); assert(hint.signals.includes("GUIDANCE_BACKEND"));
+  assert(!JSON.stringify(hint).includes("PRIVATE_ECHO"));
+});
 
 // Constructed development rows only. No downloaded question or answer is read.
 const development = () => ({schemaVersion: 1, family: "AIME_2026", dataset: AIME_2026_SOURCE.dataset,
@@ -80,6 +102,12 @@ const result = (id: number, correct: boolean | null, state: string) => ({taskId:
   family: "AIME_2026" as const, state, correct}) as Parameters<typeof mathematicsPopulationSummary>[0][number];
 check("empty coverage cannot establish a mathematics score", () => {
   const r = mathematicsPopulationSummary([]); assert.equal(r.score, null); assert.equal(r.target100Reached, false);
+});
+check("development-only diagnosis selects zero benchmark tasks and cannot earn a vacuous perfect score", () => {
+  const r = mathematicsPopulationSummary([], 0);
+  assert.equal(r.selected, 0); assert.equal(r.score, null); assert.equal(r.fullyGraded, false);
+  assert.equal(r.correctFractionOfSelected, null); assert.equal(r.target100Reached, false);
+  assert.throws(() => mathematicsPopulationSummary([result(1, true, "PASS")], 0));
 });
 check("twenty-nine correct tasks cannot satisfy thirty-task target", () => {
   const r = mathematicsPopulationSummary(Array.from({length: 29}, (_, i) => result(i, true, "PASS")));
@@ -117,7 +145,8 @@ check("no raw model reasoning or reference-answer fields enter report implementa
   assert(source.includes("mathematicsPublicResult(sanitizedTextResult"));
   assert(source.includes("if (!cleanup.sourceUnchanged || !cleanup.cleanupVerified)"));
 });
-for (const hostile of [false, true]) {
+for (const mode of ["GUIDED", "LOCAL", "HOSTILE"] as const) {
+  const hostile = mode === "HOSTILE";
   let reader: ReadOnlyRepositoryExecutor | null = null;
   const started = Date.now(), deadline = started + 10000;
   const question = "Artificial development arithmetic: add seventeen and nineteen.";
@@ -144,10 +173,13 @@ for (const hostile of [false, true]) {
       candidateWriter: null, editablePaths: [], maxCandidatesPerTurn: 0, maxModelCallsPerTurn: 2,
       maxOutputTokens: POLICY.maxOutputTokens, maxTurnMs: deadline - Date.now(),
       actionContract: {kind: "READ_THEN_REPLY", path: "src/question.mjs"},
-      model: {complete: request => provider.complete(ultraMathematicsRequest(request,
-        reader!.auditLog().some(event => event.observation.content === questionFile && event.authorization.allowed)))}}
+      model: {complete: request => {
+        const observed = reader!.auditLog().some(event => event.observation.content === questionFile && event.authorization.allowed);
+        return provider.complete(mode === "LOCAL" ? ultraContractDiagnosticRequest(request, observed, "LOCAL_BUDGET")
+          : ultraMathematicsRequest(request, observed));
+      }}}
       , question, "SCOPED_FILE");
-    check(`existing scoped chat obeys the high-reasoning mathematics protocol hostile=${hostile}`, () => {
+    check(`existing scoped chat obeys the high-reasoning mathematics protocol ${mode}`, () => {
       assert(result); assert.equal(result.sourceRepositoryMutated, false); assert.equal(result.broaderAuthorityGranted, false);
       assert(!result.events.some(event => ["COMPUTER", "CANDIDATE", "ANALYSIS"].includes(event.eventType)));
       if (hostile) {assert.notEqual(result.outcome, "REPLIED"); assert.equal(reader!.auditLog().length, 0);}
@@ -156,9 +188,11 @@ for (const hostile of [false, true]) {
         assert.equal(payloads[0].reasoning_effort, "none"); assert.equal(payloads[0].reasoning_budget, undefined);
         assert.equal(payloads[1].reasoning_effort, "high"); assert.equal(payloads[1].reasoning_budget, 12288);
         assert.equal(payloads[1].max_tokens, 16384); assert.equal(reader!.auditLog().length, 1);
+        assert.equal("response_format" in payloads[1], mode !== "LOCAL");
+        assert.equal("response_format" in payloads[0], true);
       }
     });
-  } catch {failed++; console.error(`FAILED mathematical protocol integration hostile=${hostile}`);}
+  } catch {failed++; console.error(`FAILED mathematical protocol integration ${mode}`);}
   finally {
     reader?.terminate(Date.now(), "TEST_FINISHED");
     const cleanup = await repository.close();

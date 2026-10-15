@@ -1,5 +1,33 @@
 # NYX benchmark capability program
 
+### Ultra preflight rejection and focused diagnosis (2026-10-15)
+
+Frozen `14401a0`, run `38675508659`, is terminal. Clean CI passed 114 suites /
+16844 checks, TypeScript zero, production build, package verification and inventory.
+The development preflight read succeeded (HTTP 200); answer generation was rejected
+(HTTP 400). Two logical/two physical calls, 317 known tokens and one unknown-usage
+call. All thirty AIME 2026 problems remain **unattempted**, not wrong; score is null.
+The artifact and all ten source bindings are verified in
+`docs/omega/evidence/aime2026-ultra-preflight-14401a0.json`. Final log and artifact
+agree except elapsed time (2334 vs 2318 ms, successive snapshots). No hidden answer
+was opened, no inference fallback occurred, and no capability was promoted.
+
+One bounded development-only diagnostic now varies hosted grammar and explicit
+reasoning budget in a 2x2 factorial, using one existing artificial protocol task.
+It does not load AIME data. Same Ultra, high reasoning, 16384 output ceiling,
+two logical/four HTTP calls and original 360-second lease per cell; four cells,
+eight logical/sixteen HTTP calls and 24 minutes total. Local action parsing,
+observation-first phase contract, independent R1 authorization and acceptance
+remain unchanged even when hosted grammar is absent. No automatic configuration
+selection or benchmark retry. This isolates a request-contract failure, not
+mathematical capability. NVIDIA's hosted API documents high reasoning and a
+top-level reasoning budget; its separate Dynamo/vLLM guidance describes structured
+output interactions, but does not establish this hosted failure's root cause:
+[hosted API](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer),
+[self-hosted limitations](https://docs.nvidia.com/dynamo/dev/recipes/nemotron-3-ultra).
+Plan coverage: configuration diagnosis, detector validation, preserved authority,
+general correction before reserved evaluation; PARTIAL / JUST-IN-TIME.
+
 ### Full Ultra AIME 2026 epoch — prospective freeze (2026-10-15)
 
 The first primary population for the resumed benchmark program is all thirty

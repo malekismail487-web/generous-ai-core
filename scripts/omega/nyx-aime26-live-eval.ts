@@ -11,6 +11,7 @@ import {R3BenchmarkRepositorySession} from "./benchmarks/r3RepositorySession";
 import {gradeAime, invokeExistingNyxText, sanitizedTextResult, textBoundedTaskRequest,
   textDiagnosticTransport, textRejectionHint, ultraMathematicsRequest,
   ULTRA_MATHEMATICS_EVALUATION_POLICY as POLICY, TEXT_SESSION_CONTRACT_DIAGNOSTICS,
+  ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS, ultraContractDiagnosticRequest, type UltraContractDiagnosticVariant,
   type PrivateTextTask} from "./benchmarks/nyxTextBenchmark";
 
 export const AIME_2026_SOURCE = Object.freeze({dataset: "MathArena/aime_2026",
@@ -50,7 +51,7 @@ export function mathematicsPublicResult(row: FullResult) {
 type PublicResult = ReturnType<typeof mathematicsPublicResult>;
 
 export function mathematicsPopulationSummary(rows: readonly PublicResult[], selected = AIME_2026_SOURCE.population) {
-  if (!Number.isSafeInteger(selected) || selected < 1 || rows.length > selected
+  if (!Number.isSafeInteger(selected) || selected < 0 || rows.length > selected
     || new Set(rows.map(row => row.taskId)).size !== rows.length
     || rows.some(row => row.family !== "AIME_2026" || !/^AIME-2026-\d+$/.test(row.taskId)
       || ![true, false, null].includes(row.correct)
@@ -58,25 +59,28 @@ export function mathematicsPopulationSummary(rows: readonly PublicResult[], sele
       || (row.correct === false) !== (row.state === "REASONING_FAILURE"))) throw Error("mathematics_result_population_invalid");
   const graded = rows.filter(row => row.correct !== null).length;
   const correct = rows.filter(row => row.correct === true).length;
-  const complete = rows.length === selected && graded === selected;
+  const complete = selected > 0 && rows.length === selected && graded === selected;
   return {selected, attempted: rows.length, graded, correct, wrong: graded - correct,
     ungraded: rows.length - graded, unexecuted: selected - rows.length,
     fullyGraded: complete, score: complete ? correct / selected : null,
-    correctFractionOfSelected: correct / selected, target100Reached: complete && correct === selected};
+    correctFractionOfSelected: selected > 0 ? correct / selected : null, target100Reached: complete && correct === selected};
 }
 
 export async function runAime2026Epoch() {
+  const mode = process.env.NYX_AIME26_MODE ?? "FROZEN_BENCHMARK";
+  if (!["FROZEN_BENCHMARK", "DEVELOPMENT_CONTRACT_DIAGNOSIS"].includes(mode)) throw Error("aime_2026_mode_invalid");
+  const diagnose = mode === "DEVELOPMENT_CONTRACT_DIAGNOSIS";
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("aime_2026_requires_explicit_network_and_injected_secret");
   const git = (...args: string[]) => execFileSync("git", args, {encoding: "utf8"}).trim();
   const candidate = git("rev-parse", "HEAD");
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== process.env.GITHUB_SHA || git("status", "--porcelain"))
     throw Error("aime_2026_requires_frozen_clean_candidate");
-  if (!process.env.NYX_AIME26_DATA || !process.env.NYX_AIME26_PREPARED_SHA256)
+  if (!diagnose && (!process.env.NYX_AIME26_DATA || !process.env.NYX_AIME26_PREPARED_SHA256))
     throw Error("aime_2026_verified_preparation_required");
-  const tasks = parseAime2026Data(await readFile(resolve(process.env.NYX_AIME26_DATA), "utf8"),
-    process.env.NYX_AIME26_PREPARED_SHA256);
-  const began = Date.now(), epochDeadline = began + POLICY.maxEpochMs;
+  const tasks = diagnose ? [] : parseAime2026Data(await readFile(resolve(process.env.NYX_AIME26_DATA!), "utf8"),
+    process.env.NYX_AIME26_PREPARED_SHA256!);
+  const began = Date.now(), epochDeadline = began + (diagnose ? 4 * POLICY.maxTaskMs : POLICY.maxEpochMs);
   const indexedSource = git("ls-files", "-s");
   const sourceBindings = Object.fromEntries(await Promise.all([
     "scripts/omega/nyx-aime26-live-eval.ts", "scripts/omega/benchmarks/nyxTextBenchmark.ts",
@@ -86,7 +90,8 @@ export async function runAime2026Epoch() {
     "src/lib/codelab/executor/readOnlyExecutor.ts", ".github/workflows/omega-nyx-aime26-one-shot.yml",
   ].map(async path => [path, createHash("sha256").update(await readFile(path)).digest("hex")])));
   const rows: PublicResult[] = [], preflight: PublicResult[] = [];
-  const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number})[] = [];
+  const diagnostics: {variant: UltraContractDiagnosticVariant; result: PublicResult}[] = [];
+  const requestRejections: (ReturnType<typeof textRejectionHint> & {status: number; taskId: string | null; call: number | null})[] = [];
   const capacityWaits: {beforeTaskId: string; state: string; waitedMs: number}[] = [];
   let stopReason = "IN_PROGRESS";
   let infrastructureCode: string | null = null;
@@ -96,13 +101,20 @@ export async function runAime2026Epoch() {
     credentialSource: nvidiaNimCredentialFromEnvironment(process.env), maxPromptBytes: 64000,
     maxOutputTokens: POLICY.maxOutputTokens, timeoutMs: 120000, finalAttemptTimeoutMs: 180000,
     finalAttemptSelection: "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
-    transport: textDiagnosticTransport(value => requestRejections.push(value))});
-  const snapshot = () => ({schemaVersion: 1, identity: "NYX-AIME2026-ULTRA-HIGH-REASONING-001", candidate,
+    transport: textDiagnosticTransport(value => requestRejections.push({...value, taskId: pending?.taskId ?? null,
+      call: pending?.logicalCalls ?? null}))});
+  const snapshot = () => ({schemaVersion: 1, identity: diagnose ? "NYX-ULTRA-CONTRACT-DIAGNOSIS-001" : "NYX-AIME2026-ULTRA-HIGH-REASONING-001", candidate, mode,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID}`, environment: `${process.platform}-${process.arch}-node-${process.version}`,
     policy: POLICY, source: AIME_2026_SOURCE, sourceBindings, preparedSha256: process.env.NYX_AIME26_PREPARED_SHA256,
     populationInputDigest: theoryDigest(tasks.map(task => ({taskId: task.taskId, question: task.question}))),
-    selectedTaskIds: tasks.map(task => task.taskId), preflight, results: rows,
-    summary: mathematicsPopulationSummary(rows), requestRejections, capacityWaits, stopReason,
+    selectedTaskIds: tasks.map(task => task.taskId), preflight, results: rows, diagnostics,
+    diagnosticPolicy: diagnose ? {variants: ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS,
+      developmentTask: TEXT_SESSION_CONTRACT_DIAGNOSTICS[0].taskId, maxLogicalCalls: 8, maxPhysicalCalls: 16,
+      maxEpochMs: 4 * POLICY.maxTaskMs, model: POLICY.model, maxOutputTokens: POLICY.maxOutputTokens,
+      highReasoningEveryAnswer: true, explicitReasoningBudget: [POLICY.reasoningBudgetTokens, null],
+      hostedGrammarVariedOnlyAfterObservation: true, localValidationUnchanged: true,
+      benchmarkQuestionsLoaded: false, configurationPromotion: false} : null,
+    summary: mathematicsPopulationSummary(rows, diagnose ? 0 : AIME_2026_SOURCE.population), requestRejections, capacityWaits, stopReason,
     infrastructureCode, interruptedAttempt: pending ? {taskId: pending.taskId, logicalCalls: pending.logicalCalls,
       completedCallEvidence: pending.evidence, callsWithoutTerminalEvidence: pending.logicalCalls - pending.evidence.length,
       grading: "NOT_ADMITTED_AFTER_INFRASTRUCTURE_FAILURE"} : null,
@@ -120,7 +132,7 @@ export async function runAime2026Epoch() {
     await writeFile(`${path}.pending`, JSON.stringify(report)); await rename(`${path}.pending`, path);
     console.log(`NYX_AIME26_PROGRESS ${JSON.stringify({candidate, preflight: preflight.length, ...report.summary, stopReason})}`);
   };
-  const execute = async (task: PrivateTextTask) => {
+  const execute = async (task: PrivateTextTask, variant?: UltraContractDiagnosticVariant) => {
     const ready = await liveNvidiaCapacity.waitUntilReady(epochDeadline, new AbortController().signal);
     capacityWaits.push({beforeTaskId: task.taskId, state: ready.state, waitedMs: ready.waitedMs});
     if (ready.state !== "READY" || Date.now() >= epochDeadline) return null;
@@ -146,7 +158,9 @@ export async function runAime2026Epoch() {
           const observed = reader!.auditLog().some(event => event.request.action === "READ_FILE"
             && event.request.resourcePath === "src/question.mjs" && event.authorization.allowed
             && event.toolAction !== null && event.observation.content === questionFile);
-          const response = await taskProvider.complete(textBoundedTaskRequest(ultraMathematicsRequest(request, observed), deadline));
+          const configured = variant ? ultraContractDiagnosticRequest(request, observed, variant)
+            : ultraMathematicsRequest(request, observed);
+          const response = await taskProvider.complete(textBoundedTaskRequest(configured, deadline));
           evidence.push(response.evidence); return response;
         }}}, task.question, "SCOPED_FILE");
       const correct = result?.outcome === "REPLIED" && !evidence.some(item => item.finishReason === "length")
@@ -161,6 +175,16 @@ export async function runAime2026Epoch() {
   };
   await checkpoint();
   try {
+    if (diagnose) {
+      for (const variant of ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS) {
+        const task = {...TEXT_SESSION_CONTRACT_DIAGNOSTICS[0], taskId: `ULTRA-WIRE-${variant}`};
+        const row = await execute(task, variant);
+        if (!row) {stopReason = "CAPACITY_OR_FROZEN_DIAGNOSTIC_LIMIT"; break;}
+        diagnostics.push({variant, result: row}); await checkpoint();
+      }
+      if (stopReason === "IN_PROGRESS") stopReason = "DEVELOPMENT_CONTRACT_DIAGNOSTIC_EXHAUSTED_NO_BENCHMARK_EXECUTED";
+    }
+    if (!diagnose) {
     for (const task of TEXT_SESSION_CONTRACT_DIAGNOSTICS) {
       const row = await execute(task);
       if (row) preflight.push(row);
@@ -178,6 +202,7 @@ export async function runAime2026Epoch() {
       }
       if (stopReason === "IN_PROGRESS") stopReason = "SELECTION_EXHAUSTED";
     }
+    }
   } catch (error) {
     stopReason = "INFRASTRUCTURE_FAILURE_SANITIZED";
     const message = error instanceof Error ? error.message : "";
@@ -188,7 +213,7 @@ export async function runAime2026Epoch() {
   await checkpoint();
   const report = snapshot();
   console.log(`NYX_AIME26_EPOCH ${JSON.stringify(report)}`);
-  if (!report.sourceUnchanged || !report.summary.fullyGraded) process.exitCode = 1;
+  if (!report.sourceUnchanged || (diagnose ? report.diagnostics.length !== 4 : !report.summary.fullyGraded)) process.exitCode = 1;
   return report;
 }
 

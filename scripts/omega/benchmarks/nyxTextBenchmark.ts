@@ -49,6 +49,23 @@ export function ultraMathematicsRequest(request: NvidiaNimCompletionRequest,
     reasoningBudgetTokens: questionObserved ? ULTRA_MATHEMATICS_EVALUATION_POLICY.reasoningBudgetTokens : undefined};
 }
 
+/** Development-only factorial wire experiment. Not fallback, model routing,
+ * answer repair, or a change to the frozen mathematics profile. The SAME local
+ * action schema/parser/authorization remains mandatory in every cell. */
+export const ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS = Object.freeze([
+  "GUIDED_BUDGET", "GUIDED_NO_BUDGET", "LOCAL_BUDGET", "LOCAL_NO_BUDGET",
+] as const);
+export type UltraContractDiagnosticVariant = typeof ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS[number];
+export function ultraContractDiagnosticRequest(request: NvidiaNimCompletionRequest,
+  questionObserved: boolean, variant: UltraContractDiagnosticVariant): NvidiaNimCompletionRequest {
+  if (!ULTRA_CONTRACT_DIAGNOSTIC_VARIANTS.includes(variant)) throw Error("ultra_contract_variant_invalid");
+  const configured = ultraMathematicsRequest(request, questionObserved);
+  return {...configured,
+    // Only answer generation is varied; all cells use the SAME observed R1 read.
+    ...(questionObserved && variant.startsWith("LOCAL") ? {structuredOutputMode: "STRICT_LOCAL" as const} : {}),
+    ...(questionObserved && variant.endsWith("NO_BUDGET") ? {reasoningBudgetTokens: undefined} : {})};
+}
+
 export const GPQA_DIAMOND_SOURCE = Object.freeze({
   revision: "56686c06f5e19865c153de0fdb11be3890014df7",
   archiveDigest: "461ae7329f15a3e35f8184d2dac24b990f34fdf12f366ca4062d8e6638cd08dc",
@@ -383,6 +400,10 @@ const REJECTION_SIGNALS = [
   ["EXTRA_FIELDS", /extra(?: inputs| fields| parameters)?[\s\S]{0,40}(?:not permitted|forbidden|unexpected)/i],
   ["VALIDATION", /(?:validation|invalid argument|invalid request|bad request)/i],
   ["CAPACITY", /(?:capacity|overload|rate limit|too many requests|quota|try again|temporar)/i],
+  ["REASONING_GUIDANCE_CONFLICT", /(?:reasoning|thinking)[\s\S]{0,160}(?:guided|structured|json_schema|response_format)|(?:guided|structured|json_schema|response_format)[\s\S]{0,160}(?:reasoning|thinking)/i],
+  ["GUIDANCE_BACKEND", /(?:xgrammar|outlines|guided decoding|grammar backend)/i],
+  ["MESSAGE_ROLE_CONTRACT", /(?:alternat(?:e|ing)|last message|message role|roles must|system message)/i],
+  ["SCHEMA_VALIDATION", /(?:json.?schema|additionalProperties|schema validation|invalid schema)/i],
 ] as const;
 /** Only fixed labels survive. Provider error text, echoed prompts and credentials never enter evidence. */
 export function textRejectionHint(raw: string) {

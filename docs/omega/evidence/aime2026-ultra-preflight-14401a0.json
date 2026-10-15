@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-AIME2026-ULTRA-PREFLIGHT-RECEIPT-2026-10-15",
+  "candidate": "14401a063fcb4b1002aa46a0ac2b6b8258055f2d",
+  "run": {
+    "id": 38675508659,
+    "jobId": 116228070792,
+    "status": "completed",
+    "conclusion": "failure",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/38675508659"
+  },
+  "artifact": {
+    "id": 11945762772,
+    "sha256": "e648d0144234877c51371b7a2f6e7d2b54ebeb8968743cdfd3f02adf05a41eb3",
+    "bytes": 3283,
+    "member": "nyx-aime26-14401a063fcb4b1002aa46a0ac2b6b8258055f2d.json",
+    "reportSha256": "26fdb1ef2ddc1f94d7abe55a2e1783fa4ebcc040514226b6f5e23591959781cb"
+  },
+  "custody": {
+    "archiveDigestMatchesGitHub": true,
+    "allTenSourceBindingsMatchFrozenGit": true,
+    "reportLogAgreement": "ALL_FIELDS_EXCEPT_ELAPSED_MS_DIFFERENT_SNAPSHOT_TIMES",
+    "artifactElapsedMs": 2318,
+    "terminalLogElapsedMs": 2334
+  },
+  "cleanVerification": {
+    "runId": 38675508524,
+    "conclusion": "success",
+    "omegaSuites": 114,
+    "passedChecks": 16844,
+    "typeScript": "5.8.3 baseline=0 current=0 new=0",
+    "productionBuild": "PASS",
+    "packagedRuntime": "PASS",
+    "inventory": "PASS"
+  },
+  "classification": {
+    "benchmarkAttempted": 0,
+    "benchmarkGraded": 0,
+    "benchmarkUnexecuted": 30,
+    "benchmarkScore": null,
+    "developmentPreflight": "READ_200_THEN_ANSWER_400",
+    "reasoningFailuresObserved": 0,
+    "requestContractFailuresObserved": 1,
+    "rootCause": "UNESTABLISHED_MODEL_VALIDATION_CLUE_NOT_MODEL_UNAVAILABILITY",
+    "nextAction": "DEVELOPMENT_ONLY_WIRE_FACTORIAL_NO_BENCHMARK_DATA"
+  },
+  "report": {
+    "schemaVersion": 1,
+    "identity": "NYX-AIME2026-ULTRA-HIGH-REASONING-001",
+    "candidate": "14401a063fcb4b1002aa46a0ac2b6b8258055f2d",
+    "executionIdentity": "github-actions-38675508659",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-ultra-high-reasoning-mathematics/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "maxOutputTokens": 16384,
+      "reasoningBudgetTokens": 12288,
+      "maxTaskMs": 360000,
+      "maxLogicalCalls": 2,
+      "maxPhysicalCalls": 4,
+      "maxEpochMs": 12000000,
+      "tools": [
+        "READ_ONLY_DISPOSABLE_QUESTION_FILE"
+      ],
+      "productionDefaultsChanged": false,
+      "firstAttemptOnly": true,
+      "gradersVisibleToCognition": false,
+      "grantsAuthority": false
+    },
+    "source": {
+      "dataset": "MathArena/aime_2026",
+      "revision": "d2de22f3c656b4f56cf8981212186377d1e23bc3",
+      "sourceSha256": "d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957",
+      "license": "cc-by-nc-sa-4.0",
+      "population": 30,
+      "grading": "EXACT_FINAL_INTEGER_EXISTING_NYX_ADAPTER_NOT_MATHARENA_INFERENCE_HARNESS"
+    },
+    "sourceBindings": {
+      "scripts/omega/nyx-aime26-live-eval.ts": "1810e78a0b72d4330f69f2968b182f2c6570459223187e3fd5950ff8ee9355a6",
+      "scripts/omega/benchmarks/nyxTextBenchmark.ts": "ccf9494dd80914da75604b77ff9e101865e0989c699e3cd919793bfbd73610f3",
+      "scripts/omega/benchmarks/prepare-text-benchmarks.py": "bf16e4b45ad67ec414581b0ae29e7de1e5b5db1ed1623a32cc3fa6a8b5ca0add",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "src/lib/codelab/cli/nyxChatSession.ts": "8fac7ca3d54df9e1d2a061099dc5b763673c0a7af08f1b3d8ea7d012984cc0f0",
+      "src/lib/codelab/cli/nyxChatProtocol.ts": "7895e0e39a7d65ba7d678c89ddeb435b41b90edda2b50ac605e83cbb0daafd2d",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "c2f1e3cdb2a15e5a019413c7eb08da4c3c3abbade3fb5c79bb6725f002aa9723",
+      "src/lib/codelab/model/nvidiaCapacity.ts": "6bc1154b98db896c2f4a0bae53bef7cec4cd39792cae0804ac87dbe0d9771d4a",
+      "src/lib/codelab/executor/readOnlyExecutor.ts": "fde4893c4e663c1eeebafba8f7c3194e7d429883993bb933c624a23637bb9bef",
+      ".github/workflows/omega-nyx-aime26-one-shot.yml": "60413c9b49acd8d655deadbec32fc7130e870fae8ef12a8d7e9130bdc03b4721"
+    },
+    "preparedSha256": "de61625fe768eee2e49732c6b3fda5976ee5a9825ea2e622d210604b35315a1f",
+    "populationInputDigest": "977544287aa0b6c8a16bb12177c0a3467c83895407bb583f2abac333fce89a3a",
+    "selectedTaskIds": [
+      "AIME-2026-1",
+      "AIME-2026-2",
+      "AIME-2026-3",
+      "AIME-2026-4",
+      "AIME-2026-5",
+      "AIME-2026-6",
+      "AIME-2026-7",
+      "AIME-2026-8",
+      "AIME-2026-9",
+      "AIME-2026-10",
+      "AIME-2026-11",
+      "AIME-2026-12",
+      "AIME-2026-13",
+      "AIME-2026-14",
+      "AIME-2026-15",
+      "AIME-2026-16",
+      "AIME-2026-17",
+      "AIME-2026-18",
+      "AIME-2026-19",
+      "AIME-2026-20",
+      "AIME-2026-21",
+      "AIME-2026-22",
+      "AIME-2026-23",
+      "AIME-2026-24",
+      "AIME-2026-25",
+      "AIME-2026-26",
+      "AIME-2026-27",
+      "AIME-2026-28",
+      "AIME-2026-29",
+      "AIME-2026-30"
+    ],
+    "preflight": [
+      {
+        "taskId": "CONTRACT-READINGS",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "e7a4659f5ccb6d4ec646de65c136fdf65affb45f4c350185af93ff1c02cdae0a",
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 2,
+          "physicalCalls": 2,
+          "httpAttempts": 2,
+          "reportedTokens": 317,
+          "unknownUsageCalls": 1,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 2293,
+          "providerFailures": 1,
+          "retries": 0
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "70d885479ddec0d48780a776e18d0fe069ec542d2263a14107868d0f77f7fb1b",
+            "responseDigest": "9d860a66363455148c2c292218a6754b0a96ac98e29892f0dedd2b7462cc4aaa",
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": "stop",
+            "failureCategory": null,
+            "reasoningOutputBytes": null,
+            "contentShape": {
+              "json": "OBJECT",
+              "leadingMarkdownFence": false,
+              "thinkingDelimiterPresent": false
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "DELIVERED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1792034837143,
+                "finalAttemptUsed": false,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 1,
+                "remainingAttempts": 3,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          },
+          {
+            "requestDigest": "7cd8d63ee58f4a8acf6dd023564178c56cfbf31a465208b85acef19bc9dcdbd6",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 400,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_REQUEST_REJECTED",
+            "reasoningOutputBytes": null,
+            "contentShape": null,
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 1,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 0,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 0,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1792034837143,
+                "finalAttemptUsed": false,
+                "selection": "LAST_ATTEMPT_OR_NO_RETRY_WINDOW",
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 2,
+                "remainingAttempts": 2,
+                "exhausted": false,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "COMPLETED",
+            "evidenceClass": "E4"
+          },
+          {
+            "sequence": 2,
+            "eventType": "READ",
+            "outcome": "OBSERVED",
+            "evidenceClass": "E3"
+          },
+          {
+            "sequence": 3,
+            "eventType": "MODEL",
+            "outcome": "PROVIDER_ERROR",
+            "evidenceClass": "E4"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false
+      }
+    ],
+    "results": [],
+    "summary": {
+      "selected": 30,
+      "attempted": 0,
+      "graded": 0,
+      "correct": 0,
+      "wrong": 0,
+      "ungraded": 0,
+      "unexecuted": 30,
+      "fullyGraded": false,
+      "score": null,
+      "correctFractionOfSelected": 0,
+      "target100Reached": false
+    },
+    "requestRejections": [
+      {
+        "category": "REQUEST_PARAMETER_REJECTION",
+        "parameters": [
+          "model"
+        ],
+        "signals": [
+          "VALIDATION"
+        ],
+        "status": 400
+      }
+    ],
+    "capacityWaits": [
+      {
+        "beforeTaskId": "CONTRACT-READINGS",
+        "state": "READY",
+        "waitedMs": 0
+      }
+    ],
+    "stopReason": "DEVELOPMENT_DELIVERY_PREFLIGHT_FAILED_NO_BENCHMARK_TASK_ATTEMPTED",
+    "infrastructureCode": null,
+    "interruptedAttempt": null,
+    "elapsedMs": 2318,
+    "sourceUnchanged": true,
+    "rawQuestionsStored": false,
+    "rawAnswersStored": false,
+    "lowEntropyAnswerHashesStored": false,
+    "rawModelReasoningStored": false,
+    "credentialsStored": false,
+    "additionalReasoningTurns": false,
+    "originalAime2025ResultsPreserved": true,
+    "memory": "NEW_SESSION_PER_TASK_DISPOSED_AFTER_USE_NOT_PROVIDER_UNLEARNING",
+    "contamination": "PUBLIC_POPULATION_PRETRAINING_EXPOSURE_UNKNOWN_NOT_SEALED",
+    "benchmarkHarness": "CUSTOM_NYX_CLOSED_BOOK_EXACT_INTEGER_NOT_MATHARENA_INFERENCE_HARNESS",
+    "sourceRepositoryMutation": false,
+    "authorityDelta": "NONE",
+    "architecturalCognitiveGainClaim": false,
+    "vendorSuperiorityClaim": false,
+    "defaultUltraConfigurationChanged": false
+  },
+  "planCoverage": {
+    "direct": [
+      "TRANSPORT_FAILURE_IS_NOT_REASONING_FAILURE",
+      "ORIGINAL_OUTCOMES_IMMUTABLE",
+      "NO_AUTHORITY_WITHOUT_SCOPE"
+    ],
+    "supporting": [
+      "GENERAL_CORRECTIONS_ON_SEPARATE_DEVELOPMENT_INPUTS"
+    ],
+    "deferred": [
+      "ASTRA_COMPARISON",
+      "CAPABILITY_PROMOTION"
+    ],
+    "conflicts": [],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

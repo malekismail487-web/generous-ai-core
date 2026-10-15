@@ -25,6 +25,9 @@ export const PUBLIC_DATASETS = Object.freeze([
   ['GDPval', 'openai/gdpval'],
   ['LongBench-v2', 'THUDM/LongBench-v2'],
   ['AA-LCR', 'ArtificialAnalysis/AA-LCR'],
+  ['Apex-Shortlist', 'MathArena/apex-shortlist'],
+  ['FrontierScience', 'openai/frontierscience'],
+  ['MultiChallenge', 'ScaleAI/MultiChallenge'],
 ]);
 
 export function publicDatasetPath(root, dataset, revision, filename) {
