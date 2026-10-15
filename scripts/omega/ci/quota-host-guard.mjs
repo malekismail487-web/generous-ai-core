@@ -19,7 +19,9 @@ export function assertMountIdentity(raw, device, target) {
   if (!Array.isArray(rows) || rows.length !== 1 || row?.source !== device || row?.target !== target
     || row?.fstype !== "xfs" || typeof row?.options !== "string" || row.children?.length) reject("MOUNT_IDENTITY_NOT_OWNED");
   const flags = new Set(row.options.split(","));
-  if (!flags.has("rw") || !flags.has("nosuid") || !flags.has("nodev")
+  // This is trusted daemon metadata, not a NYX/task filesystem. Docker's
+  // quotactl backing-device lookup requires dev on this private host mount.
+  if (!flags.has("rw") || !flags.has("nosuid") || flags.has("nodev")
     || !(flags.has("pquota") || flags.has("prjquota"))) reject("PROJECT_QUOTA_MOUNT_NOT_PROVEN");
 }
 function uniqueFlag(argv, flag) {
@@ -68,6 +70,7 @@ function writeReport(path, candidate, phase, prepared, cleanup, sourceUnchanged)
     state: prepared === "1" && cleanup === "1" && sourceUnchanged === "1" ? "PASS" : "FAIL",
     existingQuotaProbePassed: prepared === "1", hostResourceCleanupVerified: cleanup === "1", sourceUnchanged: sourceUnchanged === "1",
     hostCleanupScope: "OWNED_DAEMON_MOUNT_AND_LOOP_DEVICE_TEMP_FILES_LEFT_TO_EPHEMERAL_VM_TEARDOWN",
+    hostMountDevicePolicy: "DEV_FOR_DAEMON_QUOTACTL_ONLY_NO_CONTAINER_DEVICE_GRANT",
     trustedCiHostMutationUsed: true, nyxCapabilityGranted: false, modelCalls: 0, benchmarkTasksExecuted: 0, productionAuthority: false,
     pythonOrModelCredentialsRequested: false, tools: {node: process.version, platform: process.platform},
     sourceBindings: Object.fromEntries(paths.map(p => [p, createHash("sha256").update(readFileSync(resolve(root, p))).digest("hex")])),

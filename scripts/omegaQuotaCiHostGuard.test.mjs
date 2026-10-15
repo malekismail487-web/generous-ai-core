@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {assertLoopAssociation, assertMountIdentity, assertOwnedDaemonArgs, assertReportTarget} from "./omega/ci/quota-host-guard.mjs";
 let passed = 0, failed = 0;
 function check(label, fn) {try {fn(); passed++;} catch (e) {failed++; console.error(`FAIL ${label}: ${e.message}`);}}
 const image = "/tmp/job/nyx-quota-host.12345678/backing.abcdefgh.xfs", device = "/dev/loop27";
 const mount = "/tmp/job/nyx-quota-host.12345678/mount", data = mount + "/docker", pidfile = "/tmp/job/nyx-quota-host.12345678/docker.pid";
 const loopInfo = () => ({loopdevices: [{name: device, "back-file": image}]});
-const mountInfo = () => ({filesystems: [{source: device, target: mount, fstype: "xfs", options: "rw,nosuid,nodev,relatime,prjquota"}]});
+const mountInfo = () => ({filesystems: [{source: device, target: mount, fstype: "xfs", options: "rw,nosuid,relatime,prjquota"}]});
 const args = () => ["/usr/bin/dockerd", "--data-root", data, "--pidfile", pidfile, "--storage-driver", "overlay2",
   "--host", "unix:///var/run/docker.sock", "--bridge=none", "--iptables=false", "--ip6tables=false", "--ip-forward=false", "--ip-masq=false",
   "--config-file", "/repo/scripts/omega/ci/quota-host-daemon.json", "--exec-root", "/tmp/job/nyx-quota-host.12345678/exec"];
@@ -20,9 +21,22 @@ check("Root and traversal expectations are forbidden", () => {
 });
 check("Owned writable XFS project quota mount is accepted", () => assert.doesNotThrow(() => assertMountIdentity(mountInfo(), device, mount)));
 for (const change of [r => {r.source = "/dev/sda";}, r => {r.target = "/";}, r => {r.fstype = "ext4";},
-  r => {r.options = "rw,nosuid,nodev";}, r => {r.options = "ro,nosuid,nodev,pquota";}, r => {r.options = "rw,pquota";}]) {
+  r => {r.options = "rw,nosuid";}, r => {r.options = "ro,nosuid,pquota";}, r => {r.options = "rw,pquota";}]) {
   check("Wrong mount, missing quota and weakened mount flags fail closed", () => {const raw = mountInfo(); change(raw.filesystems[0]); assert.throws(() => assertMountIdentity(raw, device, mount));});
 }
+check("nodev blocks the daemon's required quota-device lookup, not a task privilege", () => {
+  const raw = mountInfo(); raw.filesystems[0].options += ",nodev";
+  assert.throws(() => assertMountIdentity(raw, device, mount));
+});
+check("Detach passes its one validated device as the required option argument", () => {
+  const shell = readFileSync(new URL("./omega/ci/run-quota-backed-preflight.sh", import.meta.url), "utf8");
+  assert.match(shell, /owned_loop \|\| return 1\s+#.*\s+sudo losetup --detach="\$taskLoop" \|\| return 1/);
+  assert.doesNotMatch(shell, /sudo losetup --detach --/);
+});
+check("Daemon refuses startup when its original writable-layer quota is unsupported", () => {
+  const config = JSON.parse(readFileSync(new URL("./omega/ci/quota-host-daemon.json", import.meta.url), "utf8"));
+  assert.deepEqual(config, {features: {"containerd-snapshotter": false}, "storage-opts": ["overlay2.size=64m"]});
+});
 check("An unrelated parent mount cannot be mistaken for the exact target", () => {
   const raw = mountInfo(); raw.filesystems[0].target = "/tmp/job"; assert.throws(() => assertMountIdentity(raw, device, mount));
 });

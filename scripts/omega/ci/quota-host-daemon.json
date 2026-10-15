@@ -1,3 +1,4 @@
 {
-  "features": {"containerd-snapshotter": false}
+  "features": {"containerd-snapshotter": false},
+  "storage-opts": ["overlay2.size=64m"]
 }

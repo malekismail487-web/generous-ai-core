@@ -64,7 +64,8 @@ cleanup_owned_resources() {
   fi
   if [[ -n $taskLoop ]]; then
     owned_loop || return 1
-    sudo losetup --detach -- "$taskLoop" || return 1
+    # --detach REQUIRES an argument: a separate -- would become the device.
+    sudo losetup --detach="$taskLoop" || return 1
     # Absence of THIS association is required, not absence of unrelated loops.
     local after
     after=$(sudo losetup --associated "$taskImage" --noheadings --output NAME) || return 1
@@ -97,7 +98,11 @@ mkdir -m 700 -- "$taskMount"
 [[ ! -L $taskMount && $(realpath -e -- "$taskMount") == "$taskMount" ]] || exit 1
 taskPhase=MOUNT_PROJECT_QUOTA
 owned_loop
-sudo mount -t xfs -o pquota,nosuid,nodev -- "$taskLoop" "$taskMount"
+# Docker's trusted quota controller creates a root-only backingFsBlockDev here
+# and passes that node to quotactl. nodev makes that kernel lookup fail. This
+# private daemon metadata mount is NOT mounted into a task container; the
+# unchanged container contract still grants no devices, mounts or capabilities.
+sudo mount -t xfs -o pquota,nosuid,dev -- "$taskLoop" "$taskMount"
 taskMounted=1
 owned_mount
 taskPhase=START_OWNED_DAEMON

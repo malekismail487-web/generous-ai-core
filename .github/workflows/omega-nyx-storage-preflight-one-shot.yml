@@ -11,7 +11,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.head_commit.message == 'infra(nyx): exercise quota-backed CI storage' ||
-      github.event.head_commit.message == 'fix(nyx): scope quota-daemon logging to runner'
+      github.event.head_commit.message == 'fix(nyx): scope quota-daemon logging to runner' ||
+      github.event.head_commit.message == 'fix(nyx): correct private quota mount and owned cleanup'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

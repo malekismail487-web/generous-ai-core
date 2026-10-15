@@ -18,10 +18,23 @@ remain owned by the ephemeral worker until VM teardown; the host receipt scopes
 cleanup to daemon, mount and loop resources, not deletion of every temporary byte.
 
 The fixture rejects non-GitHub-hosted/non-authorized invocations before mutation.
-Twenty-five ownership/negative-path tests and the unchanged 25-check storage
+Twenty-eight ownership/negative-path tests and the unchanged 25-check storage
 contract precede the real probe. Shell syntax/lint checks precede root setup.
 Only a PASS from the ORIGINAL empirical quota probe can pass preparation. The
 kernel quota proof is still pending; unit checks are not a substitute for it.
+
+The first setup attempt stopped at ShellCheck before mutation. The next reached
+XFS but the unchanged probe rejected quota support; the receipt also correctly
+reported unverified host cleanup after a `losetup --detach` argument defect.
+Both failures remain historical evidence. The fixture now passes the validated
+device as `--detach=<device>` and allows device lookup ONLY on the private,
+runner-inaccessible-to-tasks daemon metadata mount. Docker's root-owned
+`backingFsBlockDev` is required by its
+[quota controller](https://github.com/moby/moby/blob/v28.0.4/quota/projectquota.go);
+`nodev` there prevents that lookup. `nosuid` and private ownership remain. No
+container device, mount, capability, network or writable quota is relaxed.
+The daemon now requires its 64 MiB default quota at startup rather than silently
+continuing without project-quota support. A fresh empirical run is still required.
 
 No model credentials, model calls or benchmark tasks are involved. No NYX
 capability, unrestricted host authority, benchmark profile or cognitive improvement
