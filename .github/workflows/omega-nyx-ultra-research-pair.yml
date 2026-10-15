@@ -1,9 +1,6 @@
 name: Omega Ultra standalone versus current NYX closed-book pilot
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-ultra-research-pair.yml]
 permissions:
   contents: read
 concurrency:
@@ -11,9 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   paired-ultra:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): freeze Ultra standalone versus NYX closed-book pilot'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 80
     steps:

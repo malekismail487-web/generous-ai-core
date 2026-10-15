@@ -46,8 +46,8 @@ Development checks exercise both actual isolated fixture paths with explicitly
 synthetic model completions, plus malformed actions, unknown model identities,
 truncation, delivery failure, exceptions, stale leases and false result claims.
 These checks establish evaluation integrity, not live Ultra capability. The
-one-shot launch hook is exact-message gated and must be removed after terminal
-evidence capture. No additional inference campaign is launched automatically.
+one-shot launch hook was removed after terminal evidence capture; manual dispatch
+remains available. No additional inference campaign is launched automatically.
 
 Ω plan coverage: **PARTIAL / JUST-IN-TIME**. Direct: evidence over confidence,
 same-budget controls, no self-certification, capability distinct from authority.
@@ -55,6 +55,48 @@ Supporting: provenance, scoped execution, source preservation and honest failure
 classification. Deferred: tool-enabled comparisons, fresh transfer, all remaining
 benchmark families, formal/scientific capability improvements and human-reviewed
 promotion. No architectural conflict or supersession of historical results.
+
+#### Terminal paired result: incomplete coverage, no NYX advantage established
+
+At frozen `dfed49a5`, [run 38787035427](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38787035427)
+attempted all four problems in each arm. **Each arm: two graded, two correct,
+zero graded wrong, two ungraded.** The same AIME and GPQA pair passed in both.
+No full pilot/benchmark score, fresh generalization or NYX cognitive advantage
+is established. This was the closed-book session path, not all NYX research tools.
+
+The four ungraded cells comprise three HTTP-200 reasoning streams with no final
+content before their original 300-second request lifetime, and one terminal
+in-band 503 after four attempts. No explicit token-limit stop, answer-format or
+schema failure was observed. Unknown final answers are not wrong answers, and
+reasoning-delta bytes alone prove neither productive reasoning nor correctness.
+Both development preflights passed, but one needed three HTTP attempts: availability
+was demonstrated, **provider stability was not**.
+
+Benchmark cost: **8 logical / 13 HTTP calls, 7729 known tokens, nine attempts with
+unknown usage**. Including preflight: 10 logical / 17 HTTP, 8512 known tokens,
+11 unknown-usage attempts, seven retries. Epoch: 1688858 ms; pre-task waits: 180144 ms.
+Standalone benchmark totals: 3938 known tokens, four unknown attempts; NYX: 3791
+known tokens, five unknown attempts. These incomplete token totals cannot support
+an efficiency win. The only fully graded known-usage pair used 831 versus 1053
+tokens, so no graded pair had exactly matched reported compute.
+
+The [custody receipt](../../../docs/omega/evidence/nyx-ultra-research-pair-dfed49a5.json)
+preserves archive SHA256 `875ffd07ae41b76c66349be68c44a05b64fac6072c875624c0c5a4819a8e3c8b`,
+CRC, all 13 frozen source hashes, four input identities, policy-only selection
+reconstruction and artifact/log agreement (one millisecond elapsed difference).
+All ten cells verified source/cleanup, zero reads/tools and no authority delta.
+Frozen clean CI passed **120 suites / 17778 checks**, TypeScript zero, secret scan,
+build and package smoke. Historical Ultra/Super and all negative results remain.
+
+Next investigate a separately frozen **development-only native HIGH versus
+MEDIUM effort ablation**, not a deadline extension or grader relaxation. The
+hypothesis is that high reasoning and/or serving latency exhausts the existing
+lease before final content. It is not a diagnosed mathematical failure, and
+medium effort is not presumed better cognition. Keep exact Ultra, original
+resource bounds, strict acceptance and honest compute; separate transient 503s
+from deadline-limited generation. Useful development evidence must precede fresh
+transfer and full tool-enabled architecture comparisons. No default or promotion
+change is authorized by these incomplete outcomes.
 
 ### Frontier mathematics/science directive: acquisition and baseline audit
 
