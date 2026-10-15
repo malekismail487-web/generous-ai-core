@@ -7,9 +7,6 @@ on:
         type: choice
         options: [FROZEN_BENCHMARK, FROZEN_STREAM_BENCHMARK, DEVELOPMENT_CONTRACT_DIAGNOSIS, DEVELOPMENT_STREAM_DIAGNOSIS]
         default: FROZEN_BENCHMARK
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-aime26-one-shot.yml]
 
 permissions:
   contents: read
@@ -20,9 +17,7 @@ concurrency:
 
 jobs:
   full-aime26:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): freeze full AIME streaming recovery epoch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 215
     env:

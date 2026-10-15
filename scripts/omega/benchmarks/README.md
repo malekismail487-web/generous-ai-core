@@ -1,8 +1,35 @@
 # NYX benchmark capability program
 
-### Full AIME streaming recovery epoch (frozen before execution)
+### Full AIME streaming recovery epoch (terminal; no promotion)
 
-The next full 30-question epoch uses explicit FROZEN_STREAM_BENCHMARK / profile
+Frozen `4ded77ea`, [run 38741717845](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38741717845):
+**30 attempted, 12 graded/correct, zero graded wrong, 18 ungraded; no full score.**
+Six ungraded answers ended in explicit in-band 503s, nine streamed reasoning
+deltas until abort without final content, two ended without stream termination,
+and one could not dispatch its answer after the read consumed the shared HTTP
+budget. Reasoning-channel bytes do not establish reasoning correctness. Unknown
+terminal output is not evidence that token-limit truncation never occurred.
+
+Benchmark inference used 59 logical / 89 HTTP calls, 60376 known tokens and 47
+unknown-usage attempts. Separate development preflight: four logical / five HTTP
+calls, 2030 known tokens, one unknown attempt. Total: 63 logical / 94 HTTP calls,
+62406 known tokens, 48 unknown attempts; summed task wall 6300449 ms. Epoch wall
+7142103 ms and pre-task capacity waits 841016 ms are separate measurements.
+Source/cleanup checks passed. All delivered stream completions reported usage,
+but failed attempts remain unknown. The previous nonstreaming epoch had 20
+graded/correct and ten ungraded: **streaming did not demonstrate better delivery
+coverage, cognitive gain or matched-compute advantage**. No old successes merge.
+
+The [terminal custody receipt](../../../docs/omega/evidence/aime2026-ultra-streaming-4ded77ea.json)
+binds eleven frozen source files, all thirty previously exposed input identities,
+CRC, log agreement and artifact SHA256
+`cbd5833033a3c409b54daaf437eeb97824f87a9c3781e68490f72ab64e5bd646`.
+The temporary push launcher is removed; manual modes remain. Defaults and
+historical results are preserved. The new mathematics/science directive now
+prioritizes standalone Ultra versus NYX + Ultra across families; this incomplete
+epoch will not stall source acquisition or independent development experiments.
+
+This full 30-question epoch used explicit FROZEN_STREAM_BENCHMARK / profile
 4-stream. Only delivery changes to the development-exercised bounded SSE path
 with terminal usage requested. Ultra/high, 16384-token ceilings, two logical/four
 shared HTTP calls per task, 300-second request/360-second task lifetimes, the
@@ -16,8 +43,8 @@ merged, no hidden-reference feedback is provided, and no provider unlearning or
 fresh-generalization claim is made. Success requires all thirty graded in this
 single epoch. Delivered correct answers, wrong valid integers, truncation, format,
 schema, service, authorization and infrastructure outcomes remain separate.
-The one exact-message push trigger starts only this bounded full epoch; the
-development triggers are removed. Result pending; no next benchmark is launched.
+The one exact-message push trigger launched only this bounded full epoch and is
+now removed. No automatic benchmark or model-call launch remains in this workflow.
 
 ### Public formal-mathematics source acquisition (not execution)
 
