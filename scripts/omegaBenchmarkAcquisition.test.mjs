@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {mkdtemp, readFile, rm, lstat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve, relative, isAbsolute} from 'node:path';
-import {PUBLIC_DATASETS, publicDatasetPath, acquirePublicDatasets} from './omega/benchmarks/acquire-public-data.mjs';
+import {PUBLIC_DATASETS, publicDatasetPath, publicDatasetReceiptPath, acquirePublicDatasets} from './omega/benchmarks/acquire-public-data.mjs';
 
 let passed = 0, failed = 0;
 function check(name, action) {
@@ -16,7 +16,16 @@ check('public catalog preserves canonical SWE variants without duplicate identit
   for (const name of ['SWE-bench', 'SWE-bench_Lite', 'SWE-bench_Verified', 'SWE-bench_Multilingual', 'SWE-bench_Multimodal'])
     assert(PUBLIC_DATASETS.some(([, dataset]) => dataset === `SWE-bench/${name}`));
   assert(!PUBLIC_DATASETS.some(([, dataset]) => /(?:_outputs|model[-_]trajectories)/i.test(dataset)));
+  for (const dataset of ['KbsdJames/Omni-MATH', 'allenai/discoverybench', 'osunlp/ScienceAgentBench',
+    'EdisonScientific/BixBench3', 'xw27/scibench', 'OpenDFM/BAI-SciEval', 'TsinghuaC3I/MedXpertQA'])
+    assert(PUBLIC_DATASETS.some(([, value]) => value === dataset));
 });
+for (const filename of ['../escape.json', '/escape.json', 'dir/file.json', 'x\\file.json',
+  'CON.json', 'COM1.report.json', 'x:stream.json', 'x?token.json', '', '.hidden.json', null])
+  check('unsafe acquisition receipt filename rejected', () =>
+    assert.throws(() => publicDatasetReceiptPath(root, filename)));
+check('separate acquisition receipts remain inside their cache root', () =>
+  assert.equal(publicDatasetReceiptPath(root, 'new-campaign.json'), resolve(root, 'new-campaign.json')));
 check('public data path remains below the dedicated immutable revision', () =>
   assert.equal(publicDatasetPath(root, 'author/data', revision, 'data/test.jsonl'),
     resolve(root, 'public-datasets', 'author--data', revision, 'data/test.jsonl')));
@@ -81,6 +90,15 @@ try {
   const receipt = JSON.parse(await readFile(resolve(temporary, 'public-data-acquisition-2026-10-15.json'), 'utf8'));
   check('saved receipt records metadata only and does not contain synthetic file content', () => {
     assert.equal(receipt.rawExamplesPrinted, false); assert(!JSON.stringify(receipt).includes('syntheticDevelopmentOnly'));
+  });
+  const originalReceipt = await readFile(resolve(temporary, 'public-data-acquisition-2026-10-15.json'));
+  await acquirePublicDatasets(temporary, {datasets: [['NEW-DEVELOPMENT', 'author/new']],
+    receiptFilename: 'new-campaign.json', fetcher: async () => Response.json({sha: revision, gated: false, siblings: []})});
+  const preservedReceipt = await readFile(resolve(temporary, 'public-data-acquisition-2026-10-15.json'));
+  const newReceipt = JSON.parse(await readFile(resolve(temporary, 'new-campaign.json'), 'utf8'));
+  check('new campaign acquisition does not overwrite a preceding campaign receipt', () => {
+    assert(originalReceipt.equals(preservedReceipt));
+    assert.equal(newReceipt.sources[0].benchmark, 'NEW-DEVELOPMENT');
   });
 } finally {
   const relationship = relative(resolve(tmpdir()), temporary), entry = await lstat(temporary);

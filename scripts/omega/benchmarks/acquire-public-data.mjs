@@ -35,7 +35,22 @@ export const PUBLIC_DATASETS = Object.freeze([
   ['SWE-bench-Verified', 'SWE-bench/SWE-bench_Verified'],
   ['SWE-bench-Multilingual', 'SWE-bench/SWE-bench_Multilingual'],
   ['SWE-bench-Multimodal', 'SWE-bench/SWE-bench_Multimodal'],
+  ['Omni-MATH', 'KbsdJames/Omni-MATH'],
+  ['DiscoveryBench', 'allenai/discoverybench'],
+  ['ScienceAgentBench', 'osunlp/ScienceAgentBench'],
+  ['BixBench3', 'EdisonScientific/BixBench3'],
+  ['SciBench', 'xw27/scibench'],
+  ['SciEval', 'OpenDFM/BAI-SciEval'],
+  ['MedXpertQA', 'TsinghuaC3I/MedXpertQA'],
 ]);
+
+export function publicDatasetReceiptPath(root, filename = 'public-data-acquisition-2026-10-15.json') {
+  if (!isAbsolute(root) || typeof filename !== 'string' || filename.length > 128
+    || !/^[A-Za-z0-9][A-Za-z0-9_.-]*\.json$/.test(filename) || filename.includes('..')
+    || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(filename))
+    throw Error('public_dataset_receipt_name_rejected');
+  return join(root, filename);
+}
 
 export function publicDatasetPath(root, dataset, revision, filename) {
   if (!isAbsolute(root) || !/^[A-Za-z0-9_][\w.-]*\/[A-Za-z0-9_][\w.-]*$/.test(dataset)
@@ -74,6 +89,7 @@ async function regularParents(root, target) {
 
 export async function acquirePublicDatasets(root, options = {}) {
   root = resolve(root);
+  const receipt = publicDatasetReceiptPath(root, options.receiptFilename);
   const maxFileBytes = options.maxFileBytes ?? 256 * 1024 * 1024;
   const maxTotalBytes = options.maxTotalBytes ?? 4 * 1024 * 1024 * 1024;
   const downloadTimeoutMs = options.downloadTimeoutMs ?? 900_000;
@@ -147,7 +163,6 @@ export async function acquirePublicDatasets(root, options = {}) {
       source.state = 'ACQUISITION_ERROR'; source.error = /^[a-z_]+$/.test(error.message) ? error.message : 'public_dataset_transport_or_io_failure';
       source.errorClass = ['Error', 'TypeError', 'AbortError', 'TimeoutError'].includes(error.name) ? error.name : 'Other';
     } finally {
-      const receipt = join(root, 'public-data-acquisition-2026-10-15.json');
       await regularParents(root, receipt);
       try { const entry = await lstat(receipt); if (!entry.isFile() || entry.isSymbolicLink()) throw Error('public_dataset_receipt_target_rejected'); }
       catch (error) { if (error.code !== 'ENOENT') throw error; }

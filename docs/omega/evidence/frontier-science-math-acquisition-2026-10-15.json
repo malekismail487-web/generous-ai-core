@@ -1,0 +1,941 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-FRONTIER-SCIENCE-MATH-ACQUISITION-001",
+  "baseCandidate": "34cd69fcc6c199ab812a7bd38bb934c4fb4913ce",
+  "directive": {
+    "attachment": "c7202e03-8847-475a-b082-f5790c8fc716/goal-objective.md",
+    "sha256": "f5018c7168f6d4e6abe5017ccdbfbac5452ccb6284173f4b6474e21e638f6cf5",
+    "scope": "FRONTIER_SCIENTIFIC_AND_MATHEMATICAL_INTELLIGENCE",
+    "previousSingleBenchmarkPerfectScoreBlockingPolicySuperseded": true
+  },
+  "evidenceScope": "SOURCE_AND_DATA_ACQUISITION_AND_RECEIPT_PRESERVATION_NOT_COGNITIVE_IMPROVEMENT",
+  "cacheScope": "OUTSIDE_GIT_AND_NYX_TASK_NAMESPACE",
+  "sourceArchives": [
+    {
+      "repo": "KbsdJames/Omni-MATH",
+      "revision": "23be225c8e268df51990f6c5c1448f34d3b56911",
+      "tree": "26446b6a1616a0b106cef0cd97b19f2bd1b95eb8",
+      "defaultBranch": "main",
+      "license": null,
+      "sizeKiB": 14963,
+      "archived": false,
+      "filename": "KbsdJames--Omni-MATH-23be225c8e268df51990f6c5c1448f34d3b56911.zip",
+      "bytes": 13359790,
+      "sha256": "da9033f3a6e344286ab2e6acf7b04309108ddbaa74d881da3ab514490415b0f6",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 22,
+      "uncompressedBytes": 47136792,
+      "rootMetadataBindings": [
+        {
+          "path": "README.md",
+          "bytes": 6313,
+          "sha256": "fefae872e14c9545a10afd1a60a60e069878258d3ded4683547f485e128ee4b5",
+          "gitBlobSha1": "5aaab32156c6f4d6bf707ce0cb45fc116231f763"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "allenai/discoverybench",
+      "revision": "c31fcf011e070f021a5f5b906896d0821f6880e8",
+      "tree": "0a928c30a6a2bc64ba0f9f6105d0d9e376647941",
+      "defaultBranch": "main",
+      "license": "NOASSERTION",
+      "sizeKiB": 15778,
+      "archived": false,
+      "filename": "allenai--discoverybench-c31fcf011e070f021a5f5b906896d0821f6880e8.zip",
+      "bytes": 16413105,
+      "sha256": "1c5951fee6142231ba6ee65289ac6d56727dfe37d2da12052b03216a738fc1a1",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 1499,
+      "uncompressedBytes": 54085184,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 19977,
+          "sha256": "11a6d83734845ad09d809667aa219857a5b985b28c258a2eebf5677668a6bd3b",
+          "gitBlobSha1": "a12f30e302933f0f2db88e7ce93186a34b9535fd"
+        },
+        {
+          "path": "README.md",
+          "bytes": 4227,
+          "sha256": "2ba42912b4b568f7b78be1049eae95fc45b9c39e74b0886c5782b82065c3842a",
+          "gitBlobSha1": "67bc556c8b83177a815bd6635b09bac5b68f11ab"
+        },
+        {
+          "path": "requirements.txt",
+          "bytes": 347,
+          "sha256": "dbcaad5519f58509cd1403e59472b1b3a5c2b7ba52e348e6380aaa4fbd36aaa4",
+          "gitBlobSha1": "158bfa20b0904b907ca3dd22d8129801c22d9917"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "OSU-NLP-Group/ScienceAgentBench",
+      "revision": "c26e151ed601ba109dc4d35e057ff8e73fec469d",
+      "tree": "7c70f7f9a0416dc03ebd1641a51089ee7d04e7b7",
+      "defaultBranch": "main",
+      "license": "MIT",
+      "sizeKiB": 180224,
+      "archived": false,
+      "filename": "OSU-NLP-Group--ScienceAgentBench-c26e151ed601ba109dc4d35e057ff8e73fec469d.zip",
+      "bytes": 67706,
+      "sha256": "9749795e04cbafcb6a19e0161a64769949803862b9e873d2fed09127dc2f23cf",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 31,
+      "uncompressedBytes": 210191,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1088,
+          "sha256": "93b43d692b033b76129504448695bfe76ef22d18b11e51352bfab4b5622e5aaa",
+          "gitBlobSha1": "281b68077e52aa0edc708b0daeeab60d4601c1d1"
+        },
+        {
+          "path": "README.md",
+          "bytes": 12039,
+          "sha256": "0696fe4ffa234ea30346901d9d61263d20d548e58810049c873b2049ac1a04b1",
+          "gitBlobSha1": "d1eb0900de1820ec40bd1f35c63bc25ff050b26a"
+        },
+        {
+          "path": "requirements.txt",
+          "bytes": 203,
+          "sha256": "6ae1c5bc9b6cfd772093f01fc4d47bbe2cf88fee0bc7dadaae45966f5c8b39ca",
+          "gitBlobSha1": "315a1d8b71f5123660396551f2d91fc36bef14cc"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "EdisonScientific/BixBench3",
+      "revision": "d0e0bbb41222335b1b8878f533a58466a3a782dc",
+      "tree": "bf0f4dbff2bab469b625db94bb8dfd3502134896",
+      "defaultBranch": "main",
+      "license": "CC-BY-SA-4.0",
+      "sizeKiB": 323,
+      "archived": false,
+      "filename": "EdisonScientific--BixBench3-d0e0bbb41222335b1b8878f533a58466a3a782dc.zip",
+      "bytes": 349749,
+      "sha256": "bc86d458540cd7f6e57e7aa5a32b0c1ab99bbb43e0d9bd7f7f71062492e1e40e",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 71,
+      "uncompressedBytes": 1123269,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 20137,
+          "sha256": "23ee78c8bae49cf08ea2f0c84945c66b987ebe4520881fb51b3dad4fb43d07c2",
+          "gitBlobSha1": "7d4f96c54aa155a17387e64501c50b6a0469932c"
+        },
+        {
+          "path": "README.md",
+          "bytes": 15468,
+          "sha256": "105c00cbbc10ab41e1bdabff9c0f5c920af432fba92f5c2fc54def5b7ca7c87b",
+          "gitBlobSha1": "e189e1da54a53ef89c7b68f7489571eeab8e76bf"
+        },
+        {
+          "path": "pyproject.toml",
+          "bytes": 1498,
+          "sha256": "cb01e0b9155bde5436d78390839b7af169bebc7ce3aecca8bf95357a173dcc59",
+          "gitBlobSha1": "4ac79b6bc455fa1e7dd449d93f2f7622f26c1c4a"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "openai/frontier-evals",
+      "revision": "b78dab1da774a6456b1ed9c48c9ff194ee3ff36d",
+      "tree": "cb18e89b813d6db42f33aa4e512bb4a7f8f0804d",
+      "defaultBranch": "main",
+      "license": "MIT",
+      "sizeKiB": 35822,
+      "archived": false,
+      "filename": "openai--frontier-evals-b78dab1da774a6456b1ed9c48c9ff194ee3ff36d.zip",
+      "bytes": 31622454,
+      "sha256": "a36ad41dacb03d862f8a94f36a0054e309256dbe096cc218bacfe9a11c3b1406",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 3274,
+      "uncompressedBytes": 114666967,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE.md",
+          "bytes": 1057,
+          "sha256": "2c31cbfc07eff294f2a6ec1efcb4ddac1c78759201af7cdad1a4bc3802e1768f",
+          "gitBlobSha1": "d30e5fbd07a0bbe7b0dc5906f5e5b3d550401695"
+        },
+        {
+          "path": "README.md",
+          "bytes": 2323,
+          "sha256": "5fce136159ab96a7a0e22bac8c9a56b9e6525d0e8013d93feb7f5e4daa0aa47d",
+          "gitBlobSha1": "9bbd97a43dc702b109154e8705ba0f88cc36d4f1"
+        },
+        {
+          "path": "pyproject.toml",
+          "bytes": 7346,
+          "sha256": "04e556cc91e4c52b0973ae646c4b92b55957f31eb9b17e9581e7afd408523812",
+          "gitBlobSha1": "239e1370991ee6a45a0472f0139283e89ef7d3ea"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "OpenDFM/SciEval",
+      "revision": "aa61a9dfe75f55145492517fac0b7f05220b0d72",
+      "tree": "378a2cd186690af561a9e65cec6e7c64740a19fd",
+      "defaultBranch": "main",
+      "license": null,
+      "sizeKiB": 5660,
+      "archived": false,
+      "filename": "OpenDFM--SciEval-aa61a9dfe75f55145492517fac0b7f05220b0d72.zip",
+      "bytes": 4971135,
+      "sha256": "9c907ba43ef68d0388b42ed774ec4c584706d78cfd4ec8bd31b2f4ea8fdb66ab",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 12,
+      "uncompressedBytes": 31767263,
+      "rootMetadataBindings": [
+        {
+          "path": "README.md",
+          "bytes": 2403,
+          "sha256": "f1f2a29202e8cbba9d947722fe29ce7302572aee217beb16fa5c62b55287cd0b",
+          "gitBlobSha1": "ac567d6211b7dc2742cd1e6908c33a422bb76997"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "TsinghuaC3I/MedXpertQA",
+      "revision": "5f1db162d0d2b03d62da2d4fe086076a36105e18",
+      "tree": "e927ee9b32db16b3808f7aa980e4f0bf4aa7dacd",
+      "defaultBranch": "main",
+      "license": "MIT",
+      "sizeKiB": 10153,
+      "archived": false,
+      "filename": "TsinghuaC3I--MedXpertQA-5f1db162d0d2b03d62da2d4fe086076a36105e18.zip",
+      "bytes": 8092609,
+      "sha256": "d842d1c2ecc0b39b156c4cc8b5841c9783352b2e343c2dbd53722e2f2b7b808c",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 32,
+      "uncompressedBytes": 17098045,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1068,
+          "sha256": "381f24d4c372f6cd7d1f730ba8d877f9217cf9ac0cb32a97211327c22b2da8aa",
+          "gitBlobSha1": "04185c8b4837b47a16e8192c46060042cf2328f2"
+        },
+        {
+          "path": "README.md",
+          "bytes": 9181,
+          "sha256": "63b725f43345e9f7c69468d6efd93371d73fbfc72302097d7c8ab6e7882d3745",
+          "gitBlobSha1": "98f618b2903639f64937b30834818afac6de0c72"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "lamalab-org/chembench",
+      "revision": "45f8bad062fe552810c52be3a328d5da8597ed30",
+      "tree": "57cc161258f0d28169814d7fceb374c5525a6153",
+      "defaultBranch": "dev",
+      "license": "MIT",
+      "sizeKiB": 273346,
+      "archived": false,
+      "filename": "lamalab-org--chembench-45f8bad062fe552810c52be3a328d5da8597ed30.zip",
+      "bytes": 212845980,
+      "sha256": "89817ccb9ff8adefba0a5f689d0968941f2a7593a79c71696c60805982cd009b",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 116935,
+      "uncompressedBytes": 1348365169,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1078,
+          "sha256": "027ff98bb0102effddd422dcb975cad00a0c6d60c976080683a6a9ded57bafca",
+          "gitBlobSha1": "1ddfbc9ebc115229b4c1900173a77123cde92c28"
+        },
+        {
+          "path": "README.md",
+          "bytes": 5683,
+          "sha256": "6480f42cba5919755822f3cee3c010a0ef6374cda60e3afe2ccb32713e7fdc63",
+          "gitBlobSha1": "6ecfeadd2f20a4c5515f0cde0a289b079ab552cc"
+        },
+        {
+          "path": "pyproject.toml",
+          "bytes": 2933,
+          "sha256": "a5345dfe7284a0ee8e4c1a6d71834943cb95f2e0e56bd9227ea6801a505bbf5b",
+          "gitBlobSha1": "be9651fe1d09cb6209ede2892c0aa87d88bcc7cf"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false,
+      "crcMethod": "BOUNDED_SEQUENTIAL_RANGES_WITH_LIBRARY_PRE_CONVERSION_CRC_WORKER_FOR_REPRESENTATION_EDGE_CASE",
+      "crcProfile": {
+        "maxEntries": 150000,
+        "maxTotalUncompressedBytes": 2147483648,
+        "maxEntryBytes": 134217728
+      }
+    },
+    {
+      "repo": "mandyyyyii/scibench",
+      "revision": "e14e0ca3d3db0f02928a18d435b9c3d15656a7c5",
+      "tree": "acc2bb6c3dd8bfac2cc9215592a9cc4c2295ab3d",
+      "defaultBranch": "main",
+      "license": "MIT",
+      "sizeKiB": 6528,
+      "archived": false,
+      "filename": "mandyyyyii--scibench-e14e0ca3d3db0f02928a18d435b9c3d15656a7c5.zip",
+      "bytes": 6268150,
+      "sha256": "2ddff284e5bafb8449fefcd9f3549a856490277e54f5f0aec7db4a43ea313829",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 487,
+      "uncompressedBytes": 7129764,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1070,
+          "sha256": "6a901539e7835b316f250b6f0fbd3142f44a4f1b054c9d2f5a1d31937a77f27b",
+          "gitBlobSha1": "0c93599f743d6e8b62b3fd8c6503b23ac7520d04"
+        },
+        {
+          "path": "README.md",
+          "bytes": 3012,
+          "sha256": "f4dc6dd544d365f4042f9e9e0b94da608d5de3de945f8f5a9c4cdc348b74cd6c",
+          "gitBlobSha1": "0c911437d4a28d4159335966747d2aaa653e8209"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    },
+    {
+      "repo": "METR/RE-Bench",
+      "revision": "93b98062e55f6945d4a7e213a3226dd419896170",
+      "tree": "621798e32f57b302ffb87c2aa4081187ce34c49b",
+      "defaultBranch": "main",
+      "license": "NOASSERTION",
+      "sizeKiB": 5258,
+      "archived": false,
+      "formerRepository": "METR/ai-rd-tasks",
+      "filename": "METR--RE-Bench-93b98062e55f6945d4a7e213a3226dd419896170.zip",
+      "bytes": 1066225,
+      "sha256": "384a8d727b8d9eafd1295e9005e24156318f13edcb2d27d7ae01149c610c9ba7",
+      "state": "SOURCE_ARCHIVE_ACQUIRED_NOT_FULL_RUNTIME_OR_DATASET_CERTIFICATION",
+      "zipCrcChecked": true,
+      "zipRootBoundToRevision": true,
+      "entries": 82,
+      "uncompressedBytes": 2078721,
+      "rootMetadataBindings": [
+        {
+          "path": "LICENSE",
+          "bytes": 1917,
+          "sha256": "0651c2b4111fb02dcf9dee40b78f51a44d72f1ed53129d914a18ba6b0fe07312",
+          "gitBlobSha1": "d2e4879cb5e06d576b4aded7ef91f2947b62d383"
+        },
+        {
+          "path": "README.md",
+          "bytes": 6662,
+          "sha256": "7f279f6fcbfa8d6e7309764cd7620f682ffbeaedc5f9af09b8746b9c10bbb2dd",
+          "gitBlobSha1": "275bdc895fdb26790534b8d2c9d442e918aa19e1"
+        }
+      ],
+      "extracted": false,
+      "sourceExecuted": false
+    }
+  ],
+  "gitSources": [
+    {
+      "repo": "openai/mle-bench",
+      "revision": "507f92e1138bb6e40dac5c6ee7a6758e6424bf97",
+      "tree": "96aa22a68b801cc9f542eafff7542bdb8d23fcf7",
+      "state": "PINNED_NO_CHECKOUT_GIT_SOURCE_ACQUIRED_ASSETS_NOT_CERTIFIED",
+      "path": "mle-bench-author",
+      "gitFsckStrictPassed": true,
+      "sourceExecuted": false,
+      "checkout": false,
+      "lfsSmudge": false,
+      "gitObjects": 1253,
+      "packKiB": 771,
+      "archiveExport": "NOT_COMPLETED_TOOL_TIMEOUT",
+      "codeload": "BOUNDED_DOWNLOAD_TIMEOUT_PRESERVED"
+    }
+  ],
+  "sourceGitMetadataBindings": [
+    {
+      "repo": "KbsdJames/Omni-MATH",
+      "selectedRootBlobsVerified": 1,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "allenai/discoverybench",
+      "selectedRootBlobsVerified": 3,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "OSU-NLP-Group/ScienceAgentBench",
+      "selectedRootBlobsVerified": 3,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "EdisonScientific/BixBench3",
+      "selectedRootBlobsVerified": 3,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "openai/frontier-evals",
+      "selectedRootBlobsVerified": 3,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "OpenDFM/SciEval",
+      "selectedRootBlobsVerified": 1,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "TsinghuaC3I/MedXpertQA",
+      "selectedRootBlobsVerified": 2,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "lamalab-org/chembench",
+      "selectedRootBlobsVerified": 3,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "mandyyyyii/scibench",
+      "selectedRootBlobsVerified": 2,
+      "allSourceBlobsIndependentlyVerified": false
+    },
+    {
+      "repo": "METR/RE-Bench",
+      "selectedRootBlobsVerified": 2,
+      "allSourceBlobsIndependentlyVerified": false
+    }
+  ],
+  "summary": {
+    "newOfficialSourceSnapshots": 11,
+    "zipArchives": 10,
+    "archiveBytes": 295056903,
+    "gitSnapshots": 1,
+    "newPublicDataFiles": 815,
+    "newPublicDataBytes": 80993109,
+    "publicDataFamiliesAcquired": 6,
+    "gatedPublicDataFamilies": 1,
+    "omniMathRows": 4428,
+    "modelCalls": 0,
+    "downloadedCodeExecuted": false,
+    "protectedSolutionsDecrypted": false,
+    "credentialsUsed": false,
+    "fullBenchmarkUniverseAcquired": false,
+    "fullOfficialEvaluationsCompleted": false,
+    "architecturePromotion": false,
+    "authorityDelta": "NONE"
+  },
+  "publicDataReceipts": [
+    {
+      "filename": "frontier-science-omni-math-acquisition-2026-10-15.json",
+      "receiptBytes": 1033,
+      "receiptSha256": "43f66fa331886b5fb72231239c6bd73c68de4d629c897533635c53c2ed84b118",
+      "dataset": "KbsdJames/Omni-MATH",
+      "revision": "40ba231d8f16e29ecd40e6407e2c8640145a8f62",
+      "gated": false,
+      "license": "apache-2.0",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 1,
+      "verifiedBytes": 7504961,
+      "authorLfsVerified": 0,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-discoverybench-acquisition-2026-10-15.json",
+      "receiptBytes": 228750,
+      "receiptSha256": "7eab96083394c915319e73e7c1c59010eb797b20a7048908eff96ee4dd6b8190",
+      "dataset": "allenai/discoverybench",
+      "revision": "e54ec033049d3a0fd95d3c746919cc8c01c25781",
+      "gated": false,
+      "license": "odc-by",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 782,
+      "verifiedBytes": 35160982,
+      "authorLfsVerified": 0,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-scienceagentbench-acquisition-2026-10-15.json",
+      "receiptBytes": 1321,
+      "receiptSha256": "6838449fa78d53a9cc8e94e7193fcdd1fa438fdfb74318adb14b366110d41873",
+      "dataset": "osunlp/ScienceAgentBench",
+      "revision": "9c6e96c9e74572e979b0930ee735041cef528cb7",
+      "gated": false,
+      "license": "cc-by-4.0",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 2,
+      "verifiedBytes": 407712,
+      "authorLfsVerified": 1,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-bixbench3-acquisition-2026-10-15.json",
+      "receiptBytes": 763,
+      "receiptSha256": "b581e101823fb0bbb151413098950a173880971fb9fedb0a6bd0c04c7c8aa198",
+      "dataset": "EdisonScientific/BixBench3",
+      "revision": "3be006a68327e1fd04cd2c5fc87a703e53ca67cd",
+      "gated": "auto",
+      "license": "cc-by-sa-4.0",
+      "state": "BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+      "artifacts": 0,
+      "verifiedBytes": 0,
+      "authorLfsVerified": 0,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-scibench-acquisition-2026-10-15.json",
+      "receiptBytes": 5637,
+      "receiptSha256": "4d6bff753c9aeb6f2fb9e04506d772f70728e7f3161c0394125e778a313cebec",
+      "dataset": "xw27/scibench",
+      "revision": "93931252bc1b71d495e67390235940643d926958",
+      "gated": false,
+      "license": null,
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 20,
+      "verifiedBytes": 444491,
+      "authorLfsVerified": 0,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-scieval-acquisition-2026-10-15.json",
+      "receiptBytes": 2282,
+      "receiptSha256": "7c5be0b4a9bba8fe4c2fd4b47913733c390b0d03ebcbb5a0ce5eb7485c5dcf3f",
+      "dataset": "OpenDFM/BAI-SciEval",
+      "revision": "454f5f055affabef59f46d36f4cdab69ea400740",
+      "gated": false,
+      "license": null,
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 6,
+      "verifiedBytes": 31272962,
+      "authorLfsVerified": 2,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    },
+    {
+      "filename": "frontier-science-medxpertqa-acquisition-2026-10-15.json",
+      "receiptBytes": 1768,
+      "receiptSha256": "3871f5c85f6f6f20db226a387ad953e42a33cd28b11a6e47cf491796c5b8c1b6",
+      "dataset": "TsinghuaC3I/MedXpertQA",
+      "revision": "7e7c465a68eb2b866926bfa59c8c9d17a8daba65",
+      "gated": false,
+      "license": "mit",
+      "state": "PUBLIC_TABLES_ACQUIRED_ASSETS_AND_EVALUATOR_NOT_CERTIFIED",
+      "artifacts": 4,
+      "verifiedBytes": 6202001,
+      "authorLfsVerified": 0,
+      "deferred": 0,
+      "rawExamplesPrinted": false,
+      "credentialsUsed": false,
+      "sourceCodeExecuted": false
+    }
+  ],
+  "acquisitionToolSourceBindings": {
+    "scripts/omega/benchmarks/acquire-public-data.mjs": "870d62ab98ae49a702e715a784531c2673c9e0f7cdbf949d12043c31e9886d91",
+    "scripts/omegaBenchmarkAcquisition.test.mjs": "a17c58e9afc955cbf594d72d32418462d6620ddf53e4021260e7b11c72e06c6d"
+  },
+  "acquisitionCorrection": {
+    "problem": "FIXED_DEFAULT_RECEIPT_FILENAME_OVERWROTE_PRECEDING_LOCAL_ACQUISITION_RECORDS",
+    "generalCorrection": "VALIDATED_PER_CAMPAIGN_RECEIPT_BASENAME_WITH_DEFAULT_COMPATIBILITY",
+    "unitChecks": 41,
+    "priorReceiptPreservationTestPassed": true,
+    "unsafePathAndWindowsDeviceRejectionsPreserved": true,
+    "modelOrBenchmarkAcceptanceChanged": false
+  },
+  "largeArchiveVerification": {
+    "repo": "lamalab-org/chembench",
+    "initialSmallArchiveProfileRejected": true,
+    "declaredEntries": 116935,
+    "declaredUncompressedBytes": 1348365169,
+    "rangeCoverage": [
+      {
+        "begin": 0,
+        "end": 15000,
+        "files": 15000,
+        "uncompressedBytes": 171652202,
+        "rangeCrcDigest": "8eedf8da7bb4ed34b74d370ec6a36cd6f603382ce42c2c6ad292deea8eb731f1",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 15000,
+        "end": 30000,
+        "files": 15000,
+        "uncompressedBytes": 172347113,
+        "rangeCrcDigest": "33da0064436e06edde8fa2d9db8c9dc1b820b431d1bc038f2ccf33669dd8ea69",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 30000,
+        "end": 45000,
+        "files": 15000,
+        "uncompressedBytes": 256245146,
+        "rangeCrcDigest": "0e95713f531cea331c9edbbf9ef69d09534edda0c8a77df46fdbf08aeb81c6e5",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 45000,
+        "end": 60000,
+        "files": 15000,
+        "uncompressedBytes": 91314555,
+        "rangeCrcDigest": "7858368d750e90629716f3f4e95a9f5e26467ba5d4fdea3bbaa776db1c3cb70a",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 60000,
+        "end": 75000,
+        "files": 15000,
+        "uncompressedBytes": 327618208,
+        "rangeCrcDigest": "547608711b5e29c3de9bd5dd865c21397aa923beec4494cb33b182d6c21d3ba6",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 75000,
+        "end": 90000,
+        "files": 15000,
+        "uncompressedBytes": 203198049,
+        "rangeCrcDigest": "aa7d06610dd6d9f6a23e26d4fa49469b2f0948be411bdef79f1b61f29aa67933",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 90000,
+        "end": 105000,
+        "files": 15000,
+        "uncompressedBytes": 77440752,
+        "rangeCrcDigest": "f9bbb9715d9cb64a6c25904b9293be9ac53dc3cbb37b7ef4b53f9664e17bbfcd",
+        "allMatched": true,
+        "emptyChunksDoNotResetAccumulator": true
+      },
+      {
+        "begin": 105000,
+        "end": 116935,
+        "files": 11935,
+        "uncompressedBytes": 48549144,
+        "rangeCrcDigest": "51c1a8d57b7ac0737289d324406be845481265f71bb5a3ad59ad2d0326b4aa7d",
+        "allMatched": true,
+        "usesLibraryPreConversionMetadata": true
+      }
+    ],
+    "libraryCrcWorkerControl": {
+      "emptyAndNonemptyAccepted": true,
+      "plantedCrcCorruptionRejected": true
+    },
+    "checkerDiagnostic": "PUBLIC_JSZIP_OBJECT_DID_NOT_RETAIN_COMPRESSED_METADATA_FOR_ONE_ENTRY_USE_LIBRARY_PRE_CONVERSION_ENTRY_METADATA",
+    "benchmarkOrArchiveCorruptionClaim": false,
+    "contentsExtractedToFilesystem": false,
+    "sourceExecuted": false
+  },
+  "executionDiagnostics": {
+    "bulkToolWindowTimeoutPreserved": true,
+    "completedDownloadsReusedAndRehashed": true,
+    "nodeReplCannotImportProcessDependentAcquisitionModule": true,
+    "acquisitionRunThroughNormalNodeCli": true,
+    "mleBoundedCodeloadAndOptionalArchiveExportTimeoutsPreserved": true,
+    "mleAlternativePublicGitSourcePinnedAndFsckVerified": true
+  },
+  "modelAudit": {
+    "auditedProvider": "src/lib/codelab/model/nvidiaNimProvider.ts",
+    "auditedSelector": "scripts/omega/benchmarks/nyxTextBenchmark.ts",
+    "canonicalModel": "nvidia/nemotron-3-ultra-550b-a55b",
+    "automaticModelFallbackFoundInAuditedProvider": false,
+    "historicalExplicitSuperSelectorsRemain": true,
+    "historicalSuperResultsPreserved": true,
+    "newUltraOnlyPairedCampaignRunner": "NOT_YET_IMPLEMENTED",
+    "newCampaignMustRejectSuperAndModelFallback": true,
+    "mostRecentUltraLiveEvidence": "aime2026-ultra-streaming-4ded77ea.json",
+    "ultraServingStability": "NOT_ESTABLISHED",
+    "freshAvailabilityPreflightRequiredBeforeNewExpensiveEvaluation": true
+  },
+  "benchmarkInventory": [
+    {
+      "benchmark": "FrontierMath publicly released problems",
+      "evidence": "frontiermath-erdos-public-acquisition-2026-10-05.json",
+      "status": "PARTIAL_PUBLIC_ERDOS_FORMAL_SOURCE_NOT_ALL_RELEASED_TIER_PROBLEMS",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "FrontierMath Open Problems",
+      "evidence": "frontiermath-erdos-public-acquisition-2026-10-05.json",
+      "status": "PUBLIC_MATERIAL_PARTIAL_VERIFIER_ACCESS_NOT_ACQUIRED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "MATH-500",
+      "evidence": "benchmark-acquisition-followup-2026-10-15.json",
+      "status": "PUBLIC_TABLE_ACQUIRED_GRADER_ADMISSION_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "AIME 2026",
+      "evidence": "aime2026-ultra-streaming-4ded77ea.json",
+      "status": "FULL_POPULATION_ATTEMPTED_INCOMPLETE_ULTRA_GRADING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "Other AIME editions",
+      "evidence": "nyx-super-full-aime-phase-7d69a2ce.json",
+      "status": "AIME_2025_HISTORICAL_SUPER_RESULT_NOT_ULTRA_BASELINE",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "MathArena",
+      "evidence": "benchmark-acquisition-followup-2026-10-15.json",
+      "status": "AUTHOR_HARNESS_ACQUIRED_NOT_EVERY_COMPETITION_ENVIRONMENT",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "Omni-MATH",
+      "evidence": "KbsdJames/Omni-MATH",
+      "status": "SOURCE_AND_4428_PUBLIC_ROWS_ACQUIRED_GRADER_NOT_ADMITTED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "miniF2F",
+      "evidence": "formal-math-source-acquisition-2026-10-15.json",
+      "status": "V1_SOURCE_ACQUIRED_FORMAL_CHECKER_NOT_ADMITTED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "ProofNet",
+      "evidence": "formal-math-lean4-port-acquisition-2026-10-15.json",
+      "status": "LEAN3_AND_AUTHOR_RECOMMENDED_LEAN4_PORT_ACQUIRED_RUNTIME_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "PutnamBench",
+      "evidence": "formal-math-source-acquisition-2026-10-15.json",
+      "status": "AUTHOR_SOURCE_ACQUIRED_PINNED_FORMAL_RUNTIME_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "FrontierScience",
+      "evidence": "benchmark-acquisition-followup-2026-10-15.json",
+      "status": "PUBLIC_TABLE_ACQUIRED_NOT_PROTECTED_COMPLETE_POPULATION",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "SciCode",
+      "evidence": "benchmark-acquisition-2026-10-15.json",
+      "status": "AUTHOR_SOURCE_ACQUIRED_DATA_AND_EXECUTOR_REVIEW_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "DiscoveryBench",
+      "evidence": "allenai/discoverybench",
+      "status": "SOURCE_AND_PUBLIC_TABLE_FILES_ACQUIRED_EXECUTION_AND_GRADING_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "ScienceAgentBench",
+      "evidence": "OSU-NLP-Group/ScienceAgentBench",
+      "status": "SOURCE_AND_PUBLIC_TABLES_ACQUIRED_VERIFIED_RUNTIME_ARCHIVE_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "GPQA Diamond",
+      "evidence": "nyx-public-benchmark-acquisition-2026-10-07.json",
+      "status": "198_PUBLIC_TASKS_ACQUIRED_HISTORICAL_SUPER_RESULTS_NOT_ULTRA_BASELINE",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "BixBench",
+      "evidence": "benchmark-acquisition-followup-2026-10-15.json",
+      "status": "PUBLIC_TABLE_AND_AUTHOR_SOURCE_ACQUIRED_CAPSULE_ENVIRONMENT_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "BixBench3",
+      "evidence": "EdisonScientific/BixBench3",
+      "status": "PUBLIC_SOURCE_ACQUIRED_DATASET_BLOCKED_AUTHOR_ACCESS_CONDITIONS",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "PaperBench",
+      "evidence": "openai/frontier-evals",
+      "status": "PUBLIC_SOURCE_ACQUIRED_LFS_PAPERS_RUNTIME_AND_INDEPENDENT_GRADER_NOT_CERTIFIED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "RE-Bench",
+      "evidence": "METR/RE-Bench",
+      "status": "PUBLIC_SOURCE_ACQUIRED_PROTECTED_SOLUTIONS_NOT_DECRYPTED_EXECUTION_NOT_ADMITTED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "MLE-bench",
+      "evidence": "openai/mle-bench",
+      "status": "PINNED_GIT_SOURCE_ACQUIRED_KAGGLE_ASSETS_AND_GPU_ENVIRONMENT_NOT_ACQUIRED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "SciBench",
+      "evidence": "mandyyyyii/scibench",
+      "status": "SOURCE_AND_20_PUBLIC_TABLE_FILES_ACQUIRED_NUMERIC_GRADER_REVIEW_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "SciEval",
+      "evidence": "OpenDFM/SciEval",
+      "status": "SOURCE_AND_PUBLIC_TABLES_ACQUIRED_GRADING_REVIEW_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "ChemBench",
+      "evidence": "lamalab-org/chembench",
+      "status": "LARGE_AUTHOR_SOURCE_ARCHIVE_ACQUIRED_DATASET_AND_GRADER_POPULATION_RECONCILIATION_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "MedXpertQA",
+      "evidence": "TsinghuaC3I/MedXpertQA",
+      "status": "SOURCE_AND_PUBLIC_TABLES_ACQUIRED_TEXT_MM_COVERAGE_AND_GRADER_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "CritPt",
+      "evidence": "benchmark-acquisition-2026-10-15.json",
+      "status": "AUTHOR_SOURCE_ACQUIRED_ADMITTED_EXECUTION_AND_GRADING_PENDING",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    },
+    {
+      "benchmark": "Humanitys Last Exam",
+      "evidence": "benchmark-acquisition-followup-2026-10-15.json",
+      "status": "AUTHOR_HARNESS_ACQUIRED_DATASET_ACCESS_CONDITIONS_REMAIN_UNRESOLVED",
+      "standaloneUltraBaseline": "NOT_ESTABLISHED",
+      "pairedNyxUltraComparison": "NOT_ESTABLISHED"
+    }
+  ],
+  "externalAndRuntimeRequirements": [
+    "BixBench3 requires legitimate Hugging Face dataset access; no gate acceptance or credential discovery was attempted.",
+    "Protected FrontierMath verifier/data access remains separate from public statements or samples.",
+    "MLE-bench competition data requires authorized Kaggle access/conditions and substantial declared hardware/storage; none is inferred.",
+    "RE-Bench protected solutions remain encrypted. Respect author non-training/anti-overfitting conditions and establish appropriate API data-handling terms before evaluation.",
+    "ScienceAgentBench verified runtime assets, BixBench capsules, multimodal images, compiled formal libraries and independent graders are not certified by table/source acquisition.",
+    "Null or NOASSERTION license metadata is not blanket redistribution or production clearance."
+  ],
+  "verification": {
+    "localRegression": {
+      "discoveredSuites": 119,
+      "executedSuites": 119,
+      "passedSuites": 119,
+      "failedSuites": 0,
+      "passedChecks": 17749,
+      "failedChecks": 0,
+      "semanticTestDefinitions": 5632
+    },
+    "localUiAdditionalChecks": 7,
+    "expectedCleanCiChecks": 17742,
+    "typeScriptCompiler": "5.8.3",
+    "fullTypeScriptRatchet": "PASS_BASELINE_0_CURRENT_0_NEW_0",
+    "workingPackageVerification": "PASS_7_FILES_326473_BYTES_WITH_UNRELATED_UI_PRESERVED",
+    "packageSmoke": "PASS"
+  },
+  "nextResearchCycle": {
+    "priority": "STANDALONE_ULTRA_VS_NYX_PLUS_ULTRA_BOUNDED_COMPARISON",
+    "doNotRepeatAimeOrPromoteStreamingBasedOnGradedSubset": true,
+    "baselineAndCandidateUseSamePinnedModelAndGrader": true,
+    "preserveFirstAttemptAndRepairSeparately": true,
+    "knownUnknownComputeMustStaySeparate": true,
+    "architecturePromotionRequiresHumanApproval": true
+  },
+  "planCoverage": {
+    "directlyImplemented": [
+      "AUTHOR_SOURCE_AND_DATA_PROVENANCE",
+      "BENCHMARKS_AS_MEASURING_INSTRUMENTS",
+      "NO_REFERENCE_ANSWERS_IN_COGNITION",
+      "PRESERVE_NEGATIVE_RESULTS",
+      "BOUND_RESOURCE_AND_ACCESS_SCOPE"
+    ],
+    "supporting": [
+      "EVIDENCE_OVER_CONFIDENCE",
+      "CAPABILITY_NOT_AUTHORITY",
+      "GENERATOR_REQUIRES_INDEPENDENT_DETECTOR"
+    ],
+    "deferred": [
+      "COMPREHENSIVE_PAIRED_ULTRA_BASELINES",
+      "GENERAL_COGNITIVE_CORRECTIONS",
+      "FRESH_CROSS_DOMAIN_TRANSFER",
+      "FORMAL_KERNEL_REPLAY"
+    ],
+    "conflicts": [
+      "ACQUISITION_AND_RELIABILITY_WORK_MUST_NOT_BE_PROMOTED_AS_INTELLIGENCE"
+    ],
+    "status": "PARTIAL / JUST-IN-TIME"
+  }
+}

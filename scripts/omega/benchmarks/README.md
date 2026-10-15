@@ -1,5 +1,44 @@
 # NYX benchmark capability program
 
+### Frontier mathematics/science directive: acquisition and baseline audit
+
+The new research directive prioritizes **standalone Nemotron 3 Ultra versus
+NYX + Ultra**, general corrections and independent cross-domain validation. An
+incomplete benchmark no longer blocks unrelated productive campaign work.
+No architecture promotion follows from downloading sources or passing tool tests.
+
+Eleven additional official source snapshots are acquired: ten inert ZIP archives
+(295056903 bytes) and one pinned, no-checkout MLE-bench Git snapshot with strict
+object verification. These cover Omni-MATH, DiscoveryBench, ScienceAgentBench,
+BixBench3, PaperBench, RE-Bench, MLE-bench, SciBench, SciEval, ChemBench and
+MedXpertQA. RE-Bench's former repository redirects to `METR/RE-Bench`; protected
+solutions remain encrypted. No downloaded source, build hook or harness executed.
+
+Seven author-linked dataset acquisitions produced **815 public data files /
+80993109 bytes** across six families. BixBench3 stopped at author access conditions
+without credentials or gate bypass. The actual Omni-MATH table contains 4428
+JSONL rows; archive/file counts elsewhere are NOT task population counts. Task
+assets, formal kernels, isolated executors and independent graders remain subject
+to separate admission. MLE-bench Kaggle data, protected FrontierMath resources,
+and gated HLE/BixBench3 material are not silently treated as acquired.
+
+The acquisition helper now accepts a validated per-campaign receipt basename so
+new acquisitions do not overwrite preceding local receipts. Forty-one checks
+preserve immutable-byte verification, access gates, metadata privacy, path/device
+rejection and receipt retention. The large ChemBench archive was CRC-verified in
+bounded sequential ranges, without filesystem extraction; an independent planted
+CRC corruption was rejected. The initial resource rejection and host-tool errors
+are retained as acquisition diagnostics, not model or benchmark failures.
+
+The [inventory/custody receipt](../../../docs/omega/evidence/frontier-science-math-acquisition-2026-10-15.json)
+maps all requested families to available evidence and outstanding runtime/data
+requirements. Ultra is the canonical text-evaluation default, and the audited
+provider has no automatic model fallback. Historical explicit Super selectors
+and evidence remain; the new Ultra-only paired runner and full baselines are
+**not yet implemented or established**. A fresh availability preflight must precede
+new expensive evaluations. No cognitive improvement or frontier superiority is
+claimed from this milestone. Coverage remains PARTIAL / JUST-IN-TIME.
+
 ### Full AIME streaming recovery epoch (terminal; no promotion)
 
 Frozen `4ded77ea`, [run 38741717845](https://github.com/malekismail487-web/generous-ai-core/actions/runs/38741717845):
