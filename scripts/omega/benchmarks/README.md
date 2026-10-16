@@ -12,6 +12,10 @@ The development goal remains paused. Full acquisition is still blocked where
 HF/Kaggle authorization, publisher quota, private/paid verifiers, sufficient
 BixBench3 storage or an approved compatible execution environment is missing.
 See the report's precise human-action checklist; no access condition was bypassed.
+The focused [download-feasibility recheck](../../../docs/omega/evidence/benchmark-download-feasibility-2026-10-16.json)
+separates small gated downloads (HLE/BixBench3), fitting MLE-bench Lite, publisher
+quota, private/remote graders, and genuinely over-capacity full releases.
+No new benchmark payload or model evaluation was claimed by that recheck.
 
 ### Native Ultra HIGH versus MEDIUM: separate development ablation
 

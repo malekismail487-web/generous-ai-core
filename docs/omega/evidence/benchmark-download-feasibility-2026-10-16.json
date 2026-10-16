@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-BENCHMARK-DOWNLOAD-FEASIBILITY-2026-10-16",
+  "observedAt": "2026-10-16T00:27:10Z",
+  "baselineCandidate": "00b296b033067cb596054d559311a317fdfbd7e3",
+  "baselineReceipt": {
+    "path": "docs/omega/evidence/global-benchmark-acquisition-2026-10-16.json",
+    "sha256": "94a205fda111b2462e2356c573505992a1ba9b8ef3d5ef6d0dbd37705b3e5d44"
+  },
+  "cacheRecheck": {
+    "path": "acquisition-access-recheck-2026-10-16.json",
+    "sha256": "2219ae4bbecad7c4ec378e758d5c7a7fcbba916e6c11cb4b80b024b0674d4d67",
+    "scriptPath": "acquisition-access-recheck.py",
+    "scriptSha256": "50d5cd54e0e13353d62be844ea9b169d87ce7116a92e94b29e066982da85779c"
+  },
+  "alreadyAcquiredPublicScopeFamilyIds": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 21, 22, 23, 24, 25, 27],
+  "sourceAssetsAcquiredButReproductionResourcesConditionalFamilyIds": [18, 19],
+  "existingPublicAssetsReacquired": false,
+  "newBenchmarkPayloadsAcquiredInThisRecheck": 0,
+  "supportedHuggingFaceSessionConfigured": false,
+  "supportedKaggleSessionConfigured": false,
+  "storage": {
+    "availableBytesAtRecheck": 695775121408,
+    "bixbench3RawInputBytes": 1397767614312,
+    "remoteDigestCandidateDeduplicatedBytes": 1395925654597,
+    "candidateDeduplicationIsCryptographicProofOfDownload": false,
+    "alreadyGzipBytes": 1259021518101,
+    "bixbench3InputObjects": 5324,
+    "bixbench3TaskCount": 20,
+    "smallestCompleteBixbench3InputTaskBytes": 7910908665,
+    "otherUsableDataVolumeFound": false,
+    "systemRecoveryPartitionsAreAcquisitionDestinations": false
+  },
+  "missingResources": [
+    {
+      "familyId": 26,
+      "resource": "HLE gated public dataset",
+      "classification": "DOWNLOADABLE_AFTER_OPERATOR_AUTHORIZATION",
+      "source": "https://huggingface.co/datasets/cais/hle",
+      "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
+      "authorListedRepositoryBytes": 274282300,
+      "fitsAvailableStorage": true,
+      "requiredChange": "Operator reviews conditions, obtains access and configures supported HF authentication."
+    },
+    {
+      "familyId": 17,
+      "resource": "BixBench3 gated prompts/configuration",
+      "classification": "DOWNLOADABLE_AFTER_OPERATOR_AUTHORIZATION",
+      "source": "https://huggingface.co/datasets/EdisonScientific/BixBench3",
+      "revision": "3be006a68327e1fd04cd2c5fc87a703e53ca67cd",
+      "authorListedRepositoryBytes": 1689051,
+      "fitsAvailableStorage": true,
+      "requiredChange": "Operator reviews conditions, obtains access and configures supported HF authentication. Raw inputs are a separate resource."
+    },
+    {
+      "familyId": 20,
+      "resource": "MLE-bench Lite competition data",
+      "classification": "DOWNLOADABLE_AFTER_OPERATOR_AUTHORIZATION",
+      "source": "https://github.com/openai/mle-bench#dataset",
+      "authorApproximateBytes": 158000000000,
+      "fitsAvailableStorageAtAuthorEstimate": true,
+      "competitionCount": 22,
+      "requiredChange": "Authorized Kaggle session and individual competition consent/eligibility; allow working space in addition to the estimate."
+    },
+    {
+      "familyId": 20,
+      "resource": "MLE-bench full competition data",
+      "classification": "NOT_FEASIBLE_ON_CURRENT_STORAGE_AND_REQUIRES_AUTHORIZATION",
+      "source": "https://github.com/openai/mle-bench#dataset",
+      "authorApproximateBytes": 3300000000000,
+      "competitionCount": 75,
+      "requiredChange": "Additional durable storage plus working space, Kaggle permissions and separate authorization for prepare --all."
+    },
+    {
+      "familyId": 17,
+      "resource": "BixBench3 complete public raw input release",
+      "classification": "PUBLIC_BUT_NOT_FEASIBLE_ON_CURRENT_STORAGE",
+      "source": "gs://bixbench3-inputs/releases/v1.0.0/tasks/",
+      "requiredChange": "Provide sufficient additional durable storage, or authorize staged task acquisition; a staged subset is not the complete local release."
+    },
+    {
+      "familyId": 12,
+      "resource": "SciCode test_data.h5",
+      "classification": "TEMPORARILY_BLOCKED_AT_PUBLISHER",
+      "source": "https://drive.google.com/drive/folders/1W5GZW6_bdiDAiipuFMqdUhvUaHIj6-pR",
+      "normalAnonymousDownloadRetried": true,
+      "quotaMessageConfirmed": true,
+      "authorApprovedAlternateMirrorFound": false,
+      "requiredChange": "Publisher quota recovery or an accessible author-approved source; no alternate numeric oracle is substituted."
+    },
+    {
+      "familyId": 1,
+      "resource": "Full private FrontierMath Tiers 1-4",
+      "classification": "NO_PUBLIC_DOWNLOAD_AUTHOR_CONTROLLED",
+      "source": "https://epoch.ai/frontiermath/tiers-1-4/about",
+      "publicExamplesAlreadyAcquired": 12,
+      "requiredChange": "Epoch authorizes an evaluation or dataset access; public examples cannot substitute for the private population."
+    },
+    {
+      "familyId": 2,
+      "resource": "FrontierMath Open Problems independent verifiers",
+      "classification": "NO_PUBLIC_DOWNLOAD_PAID_AUTHOR_CONTROLLED_ACCESS",
+      "source": "https://epoch.ai/frontiermath/open-problems/about/faq",
+      "publicProblemsAlreadyAcquired": true,
+      "requiredChange": "Separately approved author agreement/purchase if desired; public problems are already present."
+    },
+    {
+      "familyId": 25,
+      "resource": "CritPt official private grading service",
+      "classification": "REMOTE_SERVICE_NOT_PUBLIC_DOWNLOAD",
+      "source": "https://artificialanalysis.ai/api-reference/",
+      "authorCurrentlyStatesFreeAccess": true,
+      "approvalRequired": true,
+      "defaultRequestsPer24Hours": 10,
+      "requiredChange": "Request approval through critpt@artificialanalysis.ai from an institutional address and configure the approved account API key privately. No request was sent."
+    }
+  ],
+  "executionPrerequisitesAreSeparateFromDownloads": true,
+  "executionPrerequisites": [
+    "APPROVED_LINUX_OR_CONTAINER_ENVIRONMENT",
+    "FORMAL_PROJECT_MATHLIB_BUILDS_AND_CONFINED_PROOF_EXECUTION",
+    "NATIVE_CUDA_PREREQUISITES_FOR_FULL_MATHARENA_INFERENCE_STACK",
+    "TASK_SPECIFIC_LICENSED_DATA_MODELS_AND_HARDWARE_FOR_REPRODUCTION"
+  ],
+  "permanentlyImpossibleDownloadProven": false,
+  "fullAcquisitionComplete": false,
+  "goalRemainsPaused": true,
+  "modelCalls": 0,
+  "benchmarkCampaignsLaunched": 0,
+  "termsAccepted": false,
+  "messagesSent": 0,
+  "paidResourcesProvisioned": false,
+  "securityControlsDisabled": false,
+  "benchmarkAcceptanceChanged": false
+}

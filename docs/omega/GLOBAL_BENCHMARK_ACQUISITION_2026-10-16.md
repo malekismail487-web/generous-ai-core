@@ -35,6 +35,49 @@ and `evaluation-views/oracles` directories; directory segregation itself is
 input view, never the entire cache. Protected answers, grader models, historical
 model outputs and gold programs are not training data or task context.
 
+## Follow-up: downloadable versus unavailable under current conditions
+
+The focused recheck at `2026-10-16T00:27:10Z` preserved all earlier downloads.
+Its [machine-readable classification](evidence/benchmark-download-feasibility-2026-10-16.json)
+binds the original acquisition receipt and the new local observation. **No new
+benchmark payload was acquired during this recheck:** the remaining normal
+SciCode transfer again reached the publisher quota, and supported HF/Kaggle
+sessions remain unconfigured. Current free storage is approximately **696 GB**.
+
+Twenty inventory families already have their stated public data/source scope
+acquired: Open Problems, MATH-500, AIME 2026, additional AIME, MathArena,
+Omni-MATH, miniF2F, ProofNet, PutnamBench, FrontierScience, DiscoveryBench,
+ScienceAgentBench, GPQA Diamond, BixBench, SciBench, SciEval, ChemBench,
+MedXpertQA, CritPt and FrontierMath Erdős. PaperBench's public paper/LFS assets
+and RE-Bench's sources are also retained; full reproduction resources are
+task-specific. This is not a claim that all of these evaluators are operational.
+
+| Missing resource | Download feasibility | Exact prerequisite / alternative |
+| --- | --- | --- |
+| HLE | **Fits; authorization needed** | Official repository totals 274,282,300 bytes (~274 MB). Operator must review conditions, obtain access and configure supported HF authentication. |
+| BixBench3 prompts/configuration | **Fits; authorization needed** | Official gated repository totals 1,689,051 bytes (~1.69 MB), separate from the raw input bucket. Same authorized HF procedure. |
+| MLE-bench Lite | **Fits at the author's ~158 GB estimate; authorization needed** | Authorized Kaggle session plus individual competition rules/eligibility, with additional working space. All 22 Lite identities are already inventoried. |
+| SciCode numeric HDF5 | **Temporarily unavailable from publisher** | Retried the standard anonymous download, with no stored cookies, authentication, copying workaround or mirror substitution: quota exceeded again. Current author README/FAQ/releases and issue links yielded no author-approved alternate binary source. Retry when quota changes or contact the published authors. |
+| BixBench3 complete raw inputs | **Cannot fit on current storage** | 1,397,767,614,312 bytes. Remote MD5/CRC/size-based candidate deduplication only reduces this to 1,395,925,654,597 bytes; 1,259,021,518,101 bytes are already gzip files. No plausible deduplication-only recovery fits the current disk. Use additional durable storage, or staged task acquisition. Smallest complete task input set is 7,910,908,665 bytes; a subset is not the full release. |
+| MLE-bench full release | **Cannot fit on current storage; also authorization needed** | Author estimate ~3.3 TB plus working space. Use larger durable storage or explicitly selected competitions/Lite. Full `prepare --all` is still separately gated. |
+| Full FrontierMath Tiers 1–4 | **No public full download** | Twelve public examples are already retained. Private evaluation/access requires agreement with Epoch, not another mirror search. |
+| Open Problems verifiers | **Not publicly downloadable** | Problem statements are acquired. Official FAQ offers paid verifier access; no purchase or agreement is authorized here. |
+| CritPt official grader | **Remote service, not a public grader download** | Current [official API reference](https://artificialanalysis.ai/api-reference/) says access is free but requires approval for labs/researchers, an approved API key, and normally permits 10 requests per 24 hours. Request approval from an institutional address through `critpt@artificialanalysis.ai`; no message or grading call was sent. |
+
+These are **conditional blockers, not proof of permanent impossibility**.
+BixBench3 and full MLE-bench are impossible to retain completely on the current
+available disk, not impossible with a larger disk. Their combined raw/prepared
+author estimates exceed 4.6 TB before working space. Existing recovery/system
+partitions are not alternative dataset destinations and were not modified.
+Streaming or staged acquisition can support later task-by-task evaluation but
+cannot honestly be called a complete retained local download. The old goal is
+still paused; no model calls, benchmark runs or authority changes were made.
+
+Linux/container availability, Windows Code Integrity and Mathlib/CUDA setup are
+**execution** prerequisites, not reasons to call already retained data missing.
+No host security policy was disabled. The source/runtime distinction in the
+master table below remains in force.
+
 ## Master inventory / readiness
 
 `READY` below is scoped to retained data and the existing offline text-grading
@@ -173,8 +216,11 @@ variants and public/private populations remain distinct.
    third-party answer mirror was attempted. An unsent draft is below.
 6. **External verifiers:** if desired, authorize sending the Epoch inquiries
    below and obtaining [CritPt service](https://artificialanalysis.ai/documentation#critpt-api)
-   access. Exact eligibility, quotas and any prices remain author/service
-   controlled. Do not pay or submit solutions until separately approved.
+   access. CritPt currently states that approved lab/researcher access is free,
+   with a default 10 requests per 24 hours; approval is still necessary. Epoch's
+   Open Problems verifier access is separately paid. Eligibility and current
+   service conditions remain author-controlled. Do not pay or submit solutions
+   until separately approved.
 7. **Conditional reproduction resources:** selected PaperBench/RE-Bench tasks
    may require ImageNet, Llama-family model access, compatible GPUs or other
    upstream resources. Review the selected task's own conditions first; public
