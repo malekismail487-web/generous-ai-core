@@ -1,5 +1,18 @@
 # NYX benchmark capability program
 
+### Global acquisition campaign — 2026-10-16 (no inference)
+
+The [27-family acquisition/readiness report](../../../docs/omega/GLOBAL_BENCHMARK_ACQUISITION_2026-10-16.md)
+records actual retained data, media, formal sources/toolchains, public capsules,
+LFS hydration, isolated package installations and development grader checks.
+ScienceAgentBench's verified archive, PaperBench's 441 scoped LFS files,
+MedXpertQA's 2,858 images and Omni-Judge's four weight shards are now acquired.
+No NYX score, provider improvement or authority promotion follows from this.
+The development goal remains paused. Full acquisition is still blocked where
+HF/Kaggle authorization, publisher quota, private/paid verifiers, sufficient
+BixBench3 storage or an approved compatible execution environment is missing.
+See the report's precise human-action checklist; no access condition was bypassed.
+
 ### Native Ultra HIGH versus MEDIUM: separate development ablation
 
 `nyx-ultra-native-effort-development/1` tests the specific completion-within-lease
