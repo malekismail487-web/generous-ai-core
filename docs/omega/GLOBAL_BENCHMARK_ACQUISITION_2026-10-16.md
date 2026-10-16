@@ -14,17 +14,19 @@ FrontierMath Open Problems ZIP. No model inference or benchmark campaign was
 launched. No account terms, paid access, cloud provisioning, production change,
 NYX authority expansion, or goal resumption occurred.
 
-The consolidated receipt rehashes **1,743 retained artifacts / 27,924,123,422
+The initial consolidated receipt rehashes **1,743 retained artifacts / 27,924,123,422
 bytes** and binds 51 supporting receipts plus exact package/version inventories
 for 14 isolated Python environments. This byte count includes retained archives,
 data and judge weights; it is not a unique-question count, total installation
 footprint, or claim that every requested dataset is present.
 
 **Full acquisition is not complete.** The unresolved rows are real restrictions:
-gated HF access, absent Kaggle authorization, private/paid verifiers, SciCode's
+absent Kaggle authorization, private/paid verifiers, SciCode's
 publisher-side download quota, insufficient capacity for BixBench3's full raw
 inputs, and missing approved Linux/container execution. These have not been
 relabelled as successful downloads or waived to produce green readiness labels.
+The later operator-approved HLE/BixBench3 acquisition is recorded below and
+supersedes the earlier missing-HF-access state only.
 
 Persistent cache on this machine:
 `C:/Users/loka3/Documents/Codex/2026-08-20/h/benchmark-data`.
@@ -36,6 +38,47 @@ input view, never the entire cache. Protected answers, grader models, historical
 model outputs and gold programs are not training data or task context.
 
 ## Follow-up: downloadable versus unavailable under current conditions
+
+### Current update — approved HF access and actual acquisition
+
+After the operator accepted both datasets' conditions and approved the supported
+browser/device login, the pinned HF datasets were downloaded. The
+[authorized acquisition receipt](evidence/authorized-hf-acquisition-2026-10-16.json)
+supersedes only the earlier missing-HF-access observations below; their original
+receipts remain unchanged as historical evidence.
+
+- **HLE:** all four files / 274,282,300 bytes acquired at
+  `5a81a4c7271a2a2a312b9a690f0c2fde837e4c29`; 2,500 unique records, 1,909
+  exact-match and 591 multiple-choice items. All 342 original question images,
+  342 previews and 376 rationale images decode. No question, answer, rationale
+  or credential value was printed or supplied to NYX.
+- **BixBench3 gated dataset:** all 94 files / 1,689,051 bytes acquired at
+  `3be006a68327e1fd04cd2c5fc87a703e53ca67cd`; all 20 task identities, task
+  numbers and local agent/runtime package references match the release and
+  public input inventory. **The separate 1.40 TB raw input release is still not
+  acquired.** Dataset access does not solve the storage prerequisite.
+- The author release manifest matches **92/93** listed file hashes. The sole
+  disagreement is `README.md`, independently verified against its Git blob at
+  the pinned HF revision. All listed non-documentation assets match. This
+  documentation disagreement is recorded, not hidden, repaired by editing the
+  author manifest, or treated as runtime corruption.
+- New bound assets: **98 files / 275,971,351 bytes**. Cumulative retained
+  artifact bindings now cover **1,841 files / 28,200,094,773 bytes**; overlapping
+  competition populations still must not be summed as unique questions.
+- Downloader authentication is explicit and uses the supported session only for
+  the operator-authorized invocation. Default acquisitions remain anonymous;
+  no conditions are accepted by code and no credential enters a receipt or Git.
+  Development acquisition tests pass **19/19**, including revision mismatch,
+  missing login, anonymous/default behavior and credential non-disclosure.
+
+The supported HF session is now configured. **Do not ask the operator to repeat
+the completed approval or login steps.** Remaining acquisition blockers are
+Kaggle permissions, SciCode publisher quota, large-release storage and separately
+controlled verifier access. FrontierMath follow-up is now handled by the
+operator; no contact was sent. The development goal remains paused, and no
+benchmark/model run or NYX authority promotion occurred.
+
+### Earlier observation — before operator approval
 
 The focused recheck at `2026-10-16T00:27:10Z` preserved all earlier downloads.
 Its [machine-readable classification](evidence/benchmark-download-feasibility-2026-10-16.json)
@@ -103,7 +146,7 @@ variants and public/private populations remain distinct.
 | 14 ScienceAgentBench | [Repository](https://github.com/OSU-NLP-Group/ScienceAgentBench) | [Verified split](https://huggingface.co/datasets/osunlp/ScienceAgentBench) and author's normal download link | 102 / 102; all named gold/evaluator files resolve | Verified archive recovered: 1,769,478,786 bytes compressed; 4,071,815,117 expanded; 845 files independently checked | Official evaluator/gold assets present, no benchmark programs executed | Linux/container execution still required | **DATA READY**; old access failure is superseded by this successful observation, not erased |
 | 15 GPQA Diamond | [Author](https://github.com/idavidrein/gpqa) | Existing pinned author-derived preparation; [HF](https://huggingface.co/datasets/Idavidrein/gpqa) is not silently substituted | 198 / 198 unique IDs, seed 0 and exact prepared digest unchanged | Reused and verified, no re-acquisition | Existing strict A–D grading; 238/238 text-suite checks | Existing Node path available | **READY** offline; all original Super/Ultra outcomes preserved |
 | 16 BixBench | [Repository](https://github.com/Future-House/BixBench) | [Official HF](https://huggingface.co/datasets/futurehouse/BixBench) | 205 / 205 question records; 64 published capsule ZIPs | All public repository assets acquired; all 64 ZIP CRCs pass; 5,909,709,385 compressed bytes | Author runner and grader source retained | Dedicated Python package installed; container execution not available locally | **DATA READY**; capsule count is not question count or a score |
-| 17 BixBench3 | [Repository](https://github.com/EdisonScientific/BixBench3) | [Gated HF](https://huggingface.co/datasets/EdisonScientific/BixBench3); published GCS release v1.0.0 | 20 task identities inventoried; gated prompt records not acquired | Public input metadata: 42 files; public grading objects: 158 files / 208,642,218 bytes. Complete raw inputs NOT acquired | Public deterministic grader installed; CLI help works | Google Cloud SDK 589.0.0 installed/checked without authentication or resource creation | **NEEDS AUTHORIZATION**; raw input inventory is 1,397,767,614,312 bytes, exceeding local free space; see checklist for storage, HF and optional GCP/licenses |
+| 17 BixBench3 | [Repository](https://github.com/EdisonScientific/BixBench3) | [Authorized HF](https://huggingface.co/datasets/EdisonScientific/BixBench3); published GCS release v1.0.0 | All 20 prompt records and 94 HF files acquired | HF metadata complete; public input metadata: 42 files; public grading objects: 158 files / 208,642,218 bytes. Complete raw inputs NOT acquired | Public deterministic grader installed; CLI help works; non-documentation HF release hashes match, README-only manifest disagreement recorded | Google Cloud SDK 589.0.0 installed/checked; no cloud resources created | **PARTIAL / BLOCKED_STORAGE**; raw input inventory is 1,397,767,614,312 bytes; HF approval/login are complete |
 | 18 PaperBench | [Repository / install](https://github.com/openai/frontier-evals/tree/main/project/paperbench) | `project/paperbench/data/**` Git LFS | All 20 official `all.txt` papers present, plus 3 supplementary directories | 441/441 scoped LFS files hydrated and SHA256 matched; 535,358,201 bytes; pinned RICE judge-eval reference tar also prepared | Independent grader code and judge-eval assets present; no judge inference | Package/dependencies installed; actual reproducer requires Linux/Docker; some paper-specific data/models require separate access | **PARTIAL** overall execution; public paper/rubric acquisition is complete, not every reproduction workload |
 | 19 RE-Bench | [Repository](https://github.com/METR/RE-Bench) | Frozen author task suite | Seven task families retained | Public source/protected assets retained without publishing or unprotecting solutions | Official grader source retained | GPU/container/task-specific dependencies not operational on this host | **PARTIAL**; approved compatible runtime and author usage/privacy conditions before evaluation |
 | 20 MLE-bench | [Repository](https://github.com/openai/mle-bench) | [Official acquisition documentation](https://github.com/openai/mle-bench#dataset) | 75 competitions and 22 Lite verified; competition datasets NOT downloaded | Source plus 82 required competition LFS files / 5,521,616 bytes; all checksums/graders inventoried | `mlebench` 1.0.0 installed; prepare help works | Dedicated 131-dependency environment installed | **NEEDS AUTHORIZATION**: no Kaggle session; per-competition rules/eligibility needed. No `prepare --all`, no submissions |
@@ -112,7 +155,7 @@ variants and public/private populations remain distinct.
 | 23 ChemBench | [Repository/docs](https://lamalab-org.github.io/chembench/) | [Official HF](https://huggingface.co/datasets/jablonkagroup/ChemBench) | 2,785 records / nine categories | Complete public HF snapshot and full pinned author source; not MaCBench | Author metrics tests 5/5 | `chembench` 0.3.0 installed in its own environment; live NYX adapter not exercised | **DATA READY**; separate dataset/package identity and end-to-end adapter admission |
 | 24 MedXpertQA | [Repository](https://github.com/TsinghuaC3I/MedXpertQA) | [Official HF](https://huggingface.co/datasets/TsinghuaC3I/MedXpertQA) | Text 2,450 test + 5 dev; MM 2,000 test + 5 dev | All 2,858 referenced images extracted and decoded successfully | Author MCQ parser checked on valid/malformed development outputs | Published dependencies and NLTK assets installed; NYX multimodal path not demonstrated | **DATA READY** overall; do not label a text-only run multimodal |
 | 25 CritPt | [Repository/site](https://critpt.com/) | [Official HF](https://huggingface.co/datasets/CritPt-Benchmark/CritPt) | 70 / 70 public records | Complete public questions/source | Official submission classes round-trip 70 synthetic items offline; no grading quota consumed | Dependencies installed; interpreter declaration handled separately from pip packages | **DATA READY**; full grading needs authorized [remote service](https://artificialanalysis.ai/documentation#critpt-api), complete 70-item batches and its current quota/pricing |
-| 26 HLE | [Repository](https://github.com/centerforaisafety/hle) | [Gated official dataset](https://huggingface.co/datasets/cais/hle) | 2,500 expected; gated population/media not acquired | Gate respected; source/harness retained | Published judging dependencies installed | Dedicated environment installed, no judge called | **NEEDS AUTHORIZATION**; approved HF account/session required, evaluation-only/no redistribution constraints retained |
+| 26 HLE | [Repository](https://github.com/centerforaisafety/hle) | [Authorized official dataset](https://huggingface.co/datasets/cais/hle) | 2,500 / 2,500 unique IDs; all four HF files present | 342 original question images, 342 previews and 376 rationale images decode | Published judging dependencies installed, no benchmark/judge run | Dedicated environment installed; NYX multimodal evaluation path not certified | **DATA READY**; operator approval and supported browser login complete; reference isolation and evaluation-only constraints retained |
 | 27 FrontierMath Erdős | [Project](https://epoch.ai/benchmarks/frontiermath-erdos), [author scaffold](https://github.com/epoch-research/LeanOpenProblems) | Pinned source, both required FormalConjectures revisions, Comparator, lean4export and Landrun sources | Canonical Bloom selection 50 + 18 = 68; unfiltered 147-record source is NOT substituted for it | Required public formal sources/scaffold acquired separately from other FrontierMath families | Independent comparator/exporter source pins retained; no benchmark proofs run | Python 3.13.15 / `apn` environment installed; Linux/Landlock/container checker not built | **DATA READY**; approved compatible isolated formal runtime needed |
 
 ## Verified retained assets and failures repaired during preparation
@@ -168,15 +211,11 @@ variants and public/private populations remain distinct.
 
 ## Human action checklist — only actions Codex cannot legitimately perform
 
-1. **HF gates:** visit [HLE](https://huggingface.co/datasets/cais/hle) and
-   [BixBench3](https://huggingface.co/datasets/EdisonScientific/BixBench3), review
-   their conditions and obtain access using an eligible authorized account.
-   Then configure the supported `hf auth login` session locally; do not paste
-   tokens into chat. No authorized HF session was configured here. The gate
-   pages did not publish a purchase price; do not assume payment grants access.
-   HF's [account terms](https://huggingface.co/terms-of-service) specify a natural
-   person age 13+ or an authorized registered legal entity. Dataset-specific
-   conditions remain additional requirements.
+1. **HF gates — COMPLETE on this machine:** the operator reviewed/accepted HLE
+   and BixBench3 access conditions, approved supported browser/device login, and
+   both pinned datasets were actually acquired. No token was pasted into chat,
+   logged or committed. Do not repeat this completed prerequisite. A different
+   machine would still need its own legitimate authorized session.
 2. **Kaggle:** configure an authorized account/API credential using the
    [official API instructions](https://github.com/Kaggle/kaggle-api#api-credentials),
    and individually review/accept only the competitions you intend to acquire.
@@ -323,13 +362,14 @@ Utilities in `scripts/omega/benchmarks/`:
 
 No full-project TypeScript baseline was raised. TypeScript remains 5.8.3 with
 baseline/current/new diagnostics `0/0/0`. Existing NYX text checks pass 238/238;
-acquisition tests pass 15/15. No benchmark threshold or acceptance oracle was
+acquisition tests originally passed 15/15 and now pass 19/19 after the authorized
+download addition. No benchmark threshold or acceptance oracle was
 weakened. Unrelated eight-file UI work is preserved and excluded from this change.
 
 ## Remaining work / plan coverage
 
 Codex can continue the blocked acquisitions after the exact prerequisite changes:
-approved HF/Kaggle sessions, an accessible author SciCode asset, sufficient storage,
+an authorized Kaggle session, an accessible author SciCode asset, sufficient storage,
 and an approved compatible execution environment. It cannot obtain a private
 benchmark, accept account/license terms, invent eligibility, purchase verifier
 access, disable host security or provision billable resources on its own.

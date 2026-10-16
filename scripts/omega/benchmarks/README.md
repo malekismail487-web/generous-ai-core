@@ -1,5 +1,16 @@
 # NYX benchmark capability program
 
+### Authorized HLE / BixBench3 acquisition — 2026-10-16
+
+After operator approval and supported browser login, acquired all four HLE files
+(2,500 records and verified embedded images) and all 94 BixBench3 HF files
+(20 tasks). The [new receipt](../../../docs/omega/evidence/authorized-hf-acquisition-2026-10-16.json)
+records 98 new bound assets / 275,971,351 bytes and the README-only BixBench3
+author-manifest disagreement; all listed non-documentation hashes match.
+BixBench3's separate 1.40 TB raw inputs are still storage-blocked. No model run
+or goal resumption occurred. Earlier missing-HF-access receipts remain historical.
+Explicit authorized-session acquisition is opt-in; anonymous behavior is preserved.
+
 ### Global acquisition campaign — 2026-10-16 (no inference)
 
 The [27-family acquisition/readiness report](../../../docs/omega/GLOBAL_BENCHMARK_ACQUISITION_2026-10-16.md)
@@ -9,13 +20,14 @@ ScienceAgentBench's verified archive, PaperBench's 441 scoped LFS files,
 MedXpertQA's 2,858 images and Omni-Judge's four weight shards are now acquired.
 No NYX score, provider improvement or authority promotion follows from this.
 The development goal remains paused. Full acquisition is still blocked where
-HF/Kaggle authorization, publisher quota, private/paid verifiers, sufficient
+Kaggle authorization, publisher quota, private/paid verifiers, sufficient
 BixBench3 storage or an approved compatible execution environment is missing.
 See the report's precise human-action checklist; no access condition was bypassed.
 The focused [download-feasibility recheck](../../../docs/omega/evidence/benchmark-download-feasibility-2026-10-16.json)
 separates small gated downloads (HLE/BixBench3), fitting MLE-bench Lite, publisher
 quota, private/remote graders, and genuinely over-capacity full releases.
 No new benchmark payload or model evaluation was claimed by that recheck.
+Its HLE/BixBench3 access classification is superseded by the authorized acquisition above.
 
 ### Native Ultra HIGH versus MEDIUM: separate development ablation
 

@@ -1,0 +1,815 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-AUTHORIZED-HF-ACQUISITION-2026-10-16",
+  "observedAt": "2026-10-16T00:55:58Z",
+  "baseCandidate": "285f98c973b03ee846d9c2fa750c1eee50d5b01a",
+  "goalRemainsPaused": true,
+  "authorityDelta": "NONE",
+  "modelCalls": 0,
+  "benchmarkCampaignsLaunched": 0,
+  "userReportedConditionsAcceptedFor": [
+    "cais/hle",
+    "EdisonScientific/BixBench3"
+  ],
+  "supportedBrowserLoginCompleted": true,
+  "credentialValuesRecorded": false,
+  "conditionsAcceptedByDownloader": false,
+  "sources": [
+    {
+      "dataset": "cais/hle",
+      "files": [
+        {
+          "path": "public-datasets/cais--hle/5a81a4c7271a2a2a312b9a690f0c2fde837e4c29/.gitattributes",
+          "bytes": 2461,
+          "sha256": "e7a120ab07b1bc5b486be249e9fc6c83d59448d0093e1dfebe95d1566d9cafc0",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/cais--hle/5a81a4c7271a2a2a312b9a690f0c2fde837e4c29/README.md",
+          "bytes": 2574,
+          "sha256": "f16f96e69791f83bb835120613fe419233b0345beae7296cce543593c5c57b5a",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/cais--hle/5a81a4c7271a2a2a312b9a690f0c2fde837e4c29/data/test-00000-of-00001.parquet",
+          "bytes": 274276147,
+          "sha256": "6d0ee0602e8aea6b159509577e884f48ecac7b8e3f6822a35f51335a446c726a",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": true
+        },
+        {
+          "path": "public-datasets/cais--hle/5a81a4c7271a2a2a312b9a690f0c2fde837e4c29/eval.yaml",
+          "bytes": 1118,
+          "sha256": "c8190840d6aa605a13197215da46556cd47f14c81665e929151631293365bf32",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        }
+      ],
+      "deferred": [],
+      "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
+      "gated": "auto",
+      "license": "mit",
+      "state": "AUTHORIZED_FILES_ACQUIRED"
+    },
+    {
+      "dataset": "EdisonScientific/BixBench3",
+      "files": [
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/.gitattributes",
+          "bytes": 2504,
+          "sha256": "9e75dd981de037ec3769f24f790e126bc5a160b6871f510214e68dc70649aeeb",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/README.md",
+          "bytes": 4307,
+          "sha256": "755abc9ba149087dab1afd4e2d10bed40b2a10f1d9e8f160729291c0fe671f1d",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1016_j.crtox.2021.01.003_v1/agent/inputs_metadata.json",
+          "bytes": 4351,
+          "sha256": "e3cb8fa740d278401bc276aedff0225f8b92296648bd78d2f90c849de41e1eca",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1016_j.crtox.2021.01.003_v1/agent/prompt.md",
+          "bytes": 16558,
+          "sha256": "0c346d124895fcbb1a01ac90349ebf5492874cb50f436ba8f29fe356a7ba74ea",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1016_j.crtox.2021.01.003_v1/agent/task_body.json",
+          "bytes": 3638,
+          "sha256": "dfe32457b444965a3356ab0f6a9f1334b5ab3675b8eed66030b160283a053d62",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1016_j.crtox.2021.01.003_v1/runtime/runtime.json",
+          "bytes": 8624,
+          "sha256": "1007d1f4f347ad883d3f5dd6ae9b0781a5c2c14a21f1f2f4f3c0f5958bdcae0c",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s41467-023-44243-6_v1/agent/inputs_metadata.json",
+          "bytes": 4448,
+          "sha256": "93a229e15d333de035d6ccffb3367fe06987e0f89796b4865ecd80852e6ad2ab",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s41467-023-44243-6_v1/agent/prompt.md",
+          "bytes": 12841,
+          "sha256": "6f5fc012b993a93c9af29e4fa8c511edb316ee1940177f5a30328caab5bedf25",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s41467-023-44243-6_v1/agent/task_body.json",
+          "bytes": 2768,
+          "sha256": "99e06b55234dc5b952a26e752ed0178dc0a92498da335416df5d7512138cf493",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s41467-023-44243-6_v1/runtime/runtime.json",
+          "bytes": 7822,
+          "sha256": "4a24cb647d7c25146f3d6e80dc5ed711348b562e39dc87504036144c1418a74d",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s42003-022-03654-9_v1/agent/inputs_metadata.json",
+          "bytes": 7606,
+          "sha256": "4b659feae1c853ce48fb7ea44b1016dc5f1ea17c5fa42f53bf8e7291cc05a1d1",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s42003-022-03654-9_v1/agent/prompt.md",
+          "bytes": 23736,
+          "sha256": "d4ded016ecfc4484d2d71331eab3f71a4c0ba44cd427d291f043835ace1ef53c",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s42003-022-03654-9_v1/agent/task_body.json",
+          "bytes": 3811,
+          "sha256": "50eee5e646d963dd651ccdea0a131924457513c549361ec4222ae4820bfd96d2",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1038_s42003-022-03654-9_v1/runtime/runtime.json",
+          "bytes": 15126,
+          "sha256": "5d37b18e670a6352932e79487595327c0b1b1c7433288d04d870f4806b7fd53f",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.02.657493_v1/agent/inputs_metadata.json",
+          "bytes": 7388,
+          "sha256": "3e5f4bdec23b44bd9c86fe3aa143f4ee562d5f98a10162f068da6016259657cc",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.02.657493_v1/agent/prompt.md",
+          "bytes": 15358,
+          "sha256": "2bb4df4f084176addc7fea5d6dd81f49b1f9f7f1eb6edd664b3527f597b83bfe",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.02.657493_v1/agent/task_body.json",
+          "bytes": 3878,
+          "sha256": "8e750ad1072d93e4ed1925fb1bdb3cc6da119be2785be7bffb57b9ad53e416b9",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.02.657493_v1/runtime/runtime.json",
+          "bytes": 8225,
+          "sha256": "6998902dbf2c8fce1fa9ee96c050016103053c80bfa72595f6a74f22c2a4e883",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.17.659900_v1/agent/inputs_metadata.json",
+          "bytes": 8303,
+          "sha256": "c2ece89f74a22288fd4d4bdece83a8a6f73e84ac0bf9ce73bbcc5227e71fd9fb",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.17.659900_v1/agent/prompt.md",
+          "bytes": 20496,
+          "sha256": "ce9fc2f8933d2b62d254f7082531d77df0b1802271e0e36b66c82c41383c3a35",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.17.659900_v1/agent/task_body.json",
+          "bytes": 5389,
+          "sha256": "41b0bf23a7125da42d90927405aa8344f3be4cf50b3b10618416f16e9033c186",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.06.17.659900_v1/runtime/runtime.json",
+          "bytes": 16646,
+          "sha256": "d80cff03fdc270ac6547453109ee66e9c5a637169c9c01ace15a407792fab9b9",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.08.663208_v1/agent/inputs_metadata.json",
+          "bytes": 9745,
+          "sha256": "a01c474a790547cbb9a12c0688dbb8b3edd77c5ef9012b368125c0a543fca6b6",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.08.663208_v1/agent/prompt.md",
+          "bytes": 18008,
+          "sha256": "efbb4324bd8df941fd6b36f88d0f511ea834f220b66ae5dd6627371f5dd0638b",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.08.663208_v1/agent/task_body.json",
+          "bytes": 6764,
+          "sha256": "a68e174825911c858dc7810407cdc0fcd362c174b9b42c656e977f7effcc73be",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.08.663208_v1/runtime/runtime.json",
+          "bytes": 19412,
+          "sha256": "c9244f8dcd745d3897fc436d3a763ada79a0861e641c7dc3feb97c6bc503395b",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.18.664654_v1/agent/inputs_metadata.json",
+          "bytes": 8603,
+          "sha256": "3b1fd714ffd1bd015ee9d4ec74441c234f0829ab28744aeb97027e125e8514d5",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.18.664654_v1/agent/prompt.md",
+          "bytes": 17635,
+          "sha256": "4ce586412d7499ffb226aecaf01fd57342de394b8f724bd25c1a41098a04fde4",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.18.664654_v1/agent/task_body.json",
+          "bytes": 6860,
+          "sha256": "ac92dcaec68ace8ed2edb95fdce7ea9e81ebc7460f88468cf09dc30e0287ebee",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.18.664654_v1/runtime/runtime.json",
+          "bytes": 8868,
+          "sha256": "1438eb4d215f2da5f89f6219b798819f984275f58f05ec7c72c680387b02ce73",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.20.665670_v1/agent/inputs_metadata.json",
+          "bytes": 6164,
+          "sha256": "b1efde6df6083f93cbc284f09b22d4ec6991ec3d7d93e831f7797c8367d87079",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.20.665670_v1/agent/prompt.md",
+          "bytes": 23363,
+          "sha256": "7063b28f60c89c71f904185f9e2828996a76af1a03a018509ba4fd82b5f922cd",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.20.665670_v1/agent/task_body.json",
+          "bytes": 6380,
+          "sha256": "93b89239c1f6ec07f3aff2157cada3e119f99e34e9f7bca36d99fac390b0da31",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.20.665670_v1/runtime/runtime.json",
+          "bytes": 17391,
+          "sha256": "21be07f5bf7449e18e83b8005f5cb458d9bcffcbec481ad7d63ee5a5d9926d69",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.21.665972_v1/agent/inputs_metadata.json",
+          "bytes": 4027,
+          "sha256": "0c162725e5f2f5589fd6d35d359403a8d5bf735d0ff914236906119f81663535",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.21.665972_v1/agent/prompt.md",
+          "bytes": 15423,
+          "sha256": "0e8ac250987d1b1b9b478e3961d3071be04821f7f46a454c66b0d841c18e5b78",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.21.665972_v1/agent/task_body.json",
+          "bytes": 5388,
+          "sha256": "46d01784e110481ec4a1ba16b2ed954974a3fa1a97e52cafb545d0a16462ee3e",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.21.665972_v1/runtime/runtime.json",
+          "bytes": 13164,
+          "sha256": "40067efc0717e2daed0e76a5ccfeeb07ce9acd18662e6f3865066f58eebc312b",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.28.666515_v1/agent/inputs_metadata.json",
+          "bytes": 6708,
+          "sha256": "493df7ab5dd06d83410d13195a7f2c26db3f9df4a5e6de82e84fd83164efa7a4",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.28.666515_v1/agent/prompt.md",
+          "bytes": 17930,
+          "sha256": "2526ffd4f8ffd3f2d583895a0b630a55d56e42c79775d6b052fb95d8a0f3020f",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.28.666515_v1/agent/task_body.json",
+          "bytes": 6784,
+          "sha256": "63d0c13d15ff359375d1ef4a273bcd34d6f456f6504a9edb0d72635dea38f3c4",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.28.666515_v1/runtime/runtime.json",
+          "bytes": 9361,
+          "sha256": "f3731e64b7ea3f267cacc08ead487e51cf7c3d776921bb39b4c6de86eca1c52f",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.31.667834_v1/agent/inputs_metadata.json",
+          "bytes": 8198,
+          "sha256": "ef5c1be28f6937aba865de7cc9baf3940b900803070a6960dbdb646fd05103c3",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.31.667834_v1/agent/prompt.md",
+          "bytes": 18169,
+          "sha256": "f4dff12feaaf1b917e7a2d75360658646d9d2189201ba42296dca2af2631c435",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.31.667834_v1/agent/task_body.json",
+          "bytes": 5162,
+          "sha256": "e39a06676161882ed573d8fe47de5f6eeeeee2efa35d6d94f508ade69ed1b003",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.07.31.667834_v1/runtime/runtime.json",
+          "bytes": 12772,
+          "sha256": "da344c8d6bfdfd2586a72d752d8c9174845876a996c74bf8876e1c6987d89e89",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.08.16.670679_v1/agent/inputs_metadata.json",
+          "bytes": 6008,
+          "sha256": "7491585817dc2100d70ff1929eb3622009dcf260541c269b30126860805b72b2",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.08.16.670679_v1/agent/prompt.md",
+          "bytes": 16978,
+          "sha256": "cf801263a0eeed556cedd29e613ebaf0ac9a4e82c44458fd66352dc2f14b2145",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.08.16.670679_v1/agent/task_body.json",
+          "bytes": 7123,
+          "sha256": "c673d4630642875b197581297098cfb9b615313878d5a99a33551e1627909db2",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.1101_2025.08.16.670679_v1/runtime/runtime.json",
+          "bytes": 11845,
+          "sha256": "c87e591eaf50829054a033844cb55f28531135e32c68d8c1125c82e66474b4d7",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.02.697332_v1/agent/inputs_metadata.json",
+          "bytes": 8917,
+          "sha256": "b9a5f29a518a8cd288310e2b489479de102678cee80c0020e8e7cf5d8e50f924",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.02.697332_v1/agent/prompt.md",
+          "bytes": 18861,
+          "sha256": "fbf18ff02e3cd5fedd900799803725d6f4c8de13b969592496c06ccdd2312902",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.02.697332_v1/agent/task_body.json",
+          "bytes": 4660,
+          "sha256": "ae7be29b02e4c7049f07aa2047e9eda5003d32ca386f383a2cc59432bbbd7d4b",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.02.697332_v1/runtime/runtime.json",
+          "bytes": 7584,
+          "sha256": "5d693404ad6ed4e557b14bb0aeb4813a548fc0c4d1a924c3249fc37004e0855a",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.09.698641_v1/agent/inputs_metadata.json",
+          "bytes": 6009,
+          "sha256": "7ea2064e4a1d1918ec068b7192b52c3f20c9ae67ed76041c4a25b6876685450e",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.09.698641_v1/agent/prompt.md",
+          "bytes": 21519,
+          "sha256": "be60095f851be18d15e69695625d723cb85da558dda67ad6a18026b8bc2ed243",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.09.698641_v1/agent/task_body.json",
+          "bytes": 5068,
+          "sha256": "6a2be5ef4b5c41d632a2294e7e4629639c709510180340760ca290f5d02cfe63",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.09.698641_v1/runtime/runtime.json",
+          "bytes": 12535,
+          "sha256": "825dd98b53120392d06b896f9e46d25cbcc7270f2430a08a802416b9f721df97",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.31.702960_v1/agent/inputs_metadata.json",
+          "bytes": 8690,
+          "sha256": "4192c860ed399e373dad1f5dfc227062704c8c4b867d065a3bdc528912242a05",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.31.702960_v1/agent/prompt.md",
+          "bytes": 28491,
+          "sha256": "54b92eb966e21af506024bf45e002084c5bfc80ce4a671566eb57e5d28593a74",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.31.702960_v1/agent/task_body.json",
+          "bytes": 5172,
+          "sha256": "8b67abbad80fa9d5500985c40abf11c2f481c972692eae82b7a60734d09c4d3c",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.01.31.702960_v1/runtime/runtime.json",
+          "bytes": 16492,
+          "sha256": "9f71e86d255a4331ba8170da5c2ce549630f71aa28961d0d178b8498fc36ced2",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.03.703548_v1/agent/inputs_metadata.json",
+          "bytes": 6663,
+          "sha256": "2c6886dacaf1e8a51cd8c3733c6df5160b2219dad01c47d8d7fb614a019c0b1c",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.03.703548_v1/agent/prompt.md",
+          "bytes": 17861,
+          "sha256": "3fe98770f33c4bda2ebcc52c23157f67a0f535d32909984935ba1a3f7c4bf085",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.03.703548_v1/agent/task_body.json",
+          "bytes": 7371,
+          "sha256": "8ff5d6830ab6c1d7eabbd0b69f3e6d7c53fa8ec9a9c74a05eade3b6bfa2a7095",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.03.703548_v1/runtime/runtime.json",
+          "bytes": 10256,
+          "sha256": "346b006145d8f1abdd8d7cb42062b2dac5a068a760764936b66bc09c9bad9c49",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.04.703711_v1/agent/inputs_metadata.json",
+          "bytes": 8909,
+          "sha256": "9645797ca8705bb2fb6760de57fdfffb185ccedf83fc2ced30f19d7d8cf37ddd",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.04.703711_v1/agent/prompt.md",
+          "bytes": 16050,
+          "sha256": "ca56e5ddda0c91ca657d199e2bfe2a4ecebfec2d4d35b429aea90a94516c0e42",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.04.703711_v1/agent/task_body.json",
+          "bytes": 6293,
+          "sha256": "3a1819ab13b37f3e3ff56a4458c14de7c9d03c922dafb70c2e1fea6084a1c2ba",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.04.703711_v1/runtime/runtime.json",
+          "bytes": 5587,
+          "sha256": "12814cc8aa888cc0c86eba24db34a7c69459a983c67626f97af3216d0531edce",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.11.704850_v1/agent/inputs_metadata.json",
+          "bytes": 12975,
+          "sha256": "94eaa43216a6d869a3fa1b7b3ef602a5f299ff1514d07a6825468cdc59b3f277",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.11.704850_v1/agent/prompt.md",
+          "bytes": 22792,
+          "sha256": "05ee38e221dae85d96be776dcfe6e17f5407f2f6d559ee35901fe2ee52308a81",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.11.704850_v1/agent/task_body.json",
+          "bytes": 5974,
+          "sha256": "86990ba7b8832cc76ac97b3ac2a138f9e467f3505c5f68916fac56bd3464de01",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.02.11.704850_v1/runtime/runtime.json",
+          "bytes": 14864,
+          "sha256": "da45065713454336058f48d4aac3df6ebaf6deb05303dd423fcc28c1140887f7",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.03.10.709901_v1/agent/inputs_metadata.json",
+          "bytes": 4836,
+          "sha256": "e59fc46d274d4728c441474b7b91eebe131f531188b45f28dea4ecb4bda9c8fc",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.03.10.709901_v1/agent/prompt.md",
+          "bytes": 17190,
+          "sha256": "502850a53b58bbb2be08e24c4dc4d6f163b651eb4794b399dcec1d79933cbbfe",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.03.10.709901_v1/agent/task_body.json",
+          "bytes": 4718,
+          "sha256": "b4a4a0a592f9f808b95b15f63ec9a4edfe9a678e72ff05f48f3b01f76b63f7b0",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10.64898_2026.03.10.709901_v1/runtime/runtime.json",
+          "bytes": 10682,
+          "sha256": "330ff191bf130ce942328a3ab160fd07aaef0e7620ebe750e01b4d717edb2117",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10_1186_s12915_024_01879_0_v1/agent/inputs_metadata.json",
+          "bytes": 7350,
+          "sha256": "50a5edf0f1fd9744ddef9f77219f87f25f25a6cca574ab91ace1c1278c12beb7",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10_1186_s12915_024_01879_0_v1/agent/prompt.md",
+          "bytes": 24466,
+          "sha256": "1c4226ca86e9e2a69a4ab7ae06275d63af875dd64e7524610e4d5732cc16e667",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10_1186_s12915_024_01879_0_v1/agent/task_body.json",
+          "bytes": 4422,
+          "sha256": "834af9eee3188c2f6b42da5d2884b7cb4ea35049c9f5fe3192a2432da088c733",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/cases/10_1186_s12915_024_01879_0_v1/runtime/runtime.json",
+          "bytes": 12575,
+          "sha256": "1b9d23c8a9c27d4cf2ccf5996694948919bce832da0a7dc4e53de8e3d16ffd28",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/data/tasks.parquet",
+          "bytes": 753038,
+          "sha256": "afcdb4367085914123c6175237b8e09eff78790188d64acc44d5dcee3d2504c8",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": true
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/manifests/cases.jsonl",
+          "bytes": 11469,
+          "sha256": "67a269b26eb5e2883cbf7129d96e184024bc843412f9c31131362d46dfea1965",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/manifests/task-number-map.json",
+          "bytes": 806,
+          "sha256": "7f01cafebb89c88695a8dc83782bb1e2bf38bad50ddd5b29ca2379f6eea90929",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/release.json",
+          "bytes": 14257,
+          "sha256": "d328bdd3752eb0f1c977acba4fd4041554b2bb07e746cb090adeab992a3c0f2b",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/case.schema.json",
+          "bytes": 1301,
+          "sha256": "b87c8c6f34eb8812b42e49a1b6e859060d9e9690267f67367f915b8df041949d",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/gcs-release-manifest.schema.json",
+          "bytes": 2503,
+          "sha256": "97cf7f52d27cd54e0eba9c50e0770a11ea1e7c00c52734e65312ae29acc967e8",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/gcs-task-manifest.schema.json",
+          "bytes": 2919,
+          "sha256": "0439a0edac12aca3a11cc6474000bc28e21538085a796b8bb77bf20ce3157717",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/hf-task-row.schema.json",
+          "bytes": 3158,
+          "sha256": "3be63e662248437cf4fd6757e59e6a13b1170a0703e54d5a095ba9d145e5ccfa",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/latest-release-pointer.schema.json",
+          "bytes": 771,
+          "sha256": "b1f268fefa521509f4414f77c2c1fc7cf479ab5a99f55765af29f2bc1272d9a0",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/release.schema.json",
+          "bytes": 4733,
+          "sha256": "e703ee170b6739d8a0d67a62aa86370db6db8cea6a505566ca02b8f909dced67",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/run-manifest.schema.json",
+          "bytes": 10030,
+          "sha256": "c4f53bff7c32007cca9019656ec52dae8372a554f14cfa9fe8c4886c52933553",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        },
+        {
+          "path": "public-datasets/EdisonScientific--BixBench3/3be006a68327e1fd04cd2c5fc87a703e53ca67cd/schemas/task-number-map.schema.json",
+          "bytes": 178,
+          "sha256": "60cfc496da1c1d44db4a996f82b5e98660e5bd2027a411f30ab7eac6bf32d33f",
+          "state": "DOWNLOADED",
+          "authorSha256Verified": false
+        }
+      ],
+      "deferred": [],
+      "revision": "3be006a68327e1fd04cd2c5fc87a703e53ca67cd",
+      "gated": "auto",
+      "license": "cc-by-sa-4.0",
+      "state": "AUTHORIZED_FILES_ACQUIRED"
+    }
+  ],
+  "integrity": {
+    "hle": {
+      "identity": "AUTHORIZED-HLE-INTEGRITY-2026-10-16",
+      "rows": 2500,
+      "uniqueIds": 2500,
+      "requiredFieldsPresent": true,
+      "mediaChecks": {
+        "answerType:exactMatch": 1909,
+        "originalQuestionImagesDecoded": 342,
+        "image_previewDecoded": 342,
+        "answerType:multipleChoice": 591,
+        "rationale_imageDecoded": 376
+      },
+      "dataset": {
+        "path": "public-datasets/cais--hle/5a81a4c7271a2a2a312b9a690f0c2fde837e4c29/data/test-00000-of-00001.parquet",
+        "bytes": 274276147,
+        "sha256": "6d0ee0602e8aea6b159509577e884f48ecac7b8e3f6822a35f51335a446c726a"
+      },
+      "rawQuestionsAndAnswersPrinted": false,
+      "nyxModelCalls": 0,
+      "allBenchmarkRuntimeReady": false
+    },
+    "bixbench3": {
+      "identity": "AUTHORIZED-BIXBENCH3-METADATA-INTEGRITY-2026-10-16",
+      "rows": 20,
+      "uniquePaperIds": 20,
+      "cases": 20,
+      "authorReleaseSha256FilesVerified": 92,
+      "authorReleaseHashDisagreements": [
+        {
+          "path": "README.md",
+          "expectedSha256": "5536de30082973ebb062b12db4cd82299720b7b65dab645449fb99df58c930d9",
+          "actualSha256": "755abc9ba149087dab1afd4e2d10bed40b2a10f1d9e8f160729291c0fe671f1d"
+        }
+      ],
+      "pinnedHfReadmeGitBlobVerified": true,
+      "nonDocumentationAuthorHashDisagreements": 0,
+      "canonicalTaskNumbers": true,
+      "localAgentAndRuntimePackageReferencesResolve": true,
+      "inputInventoryIdentitiesMatch": true,
+      "rawInputBytes": 1397767614312,
+      "fullRawInputsAcquired": false,
+      "modelCalls": 0,
+      "protectedContentsPrinted": false
+    }
+  },
+  "cacheReceiptBindings": [
+    {
+      "path": "authorized-hf-acquisition-2026-10-16.json",
+      "bytes": 37163,
+      "sha256": "9a8eccba5ca76a6223849e3fd7875238af9505fbffc1b4926b457ca8830efd81"
+    },
+    {
+      "path": "authorized-hle-integrity-2026-10-16.json",
+      "bytes": 692,
+      "sha256": "9b049113912919e128489835ed3dae6ff6bbaae8b82e30260ee6c6b1a2c97ae4"
+    },
+    {
+      "path": "authorized-bixbench3-integrity-2026-10-16.json",
+      "bytes": 792,
+      "sha256": "b8af3a2873f18d08bb15c0f5bf410d0c4b280841bb36cf5eede3f382baf80fcd"
+    }
+  ],
+  "implementationBindings": [
+    {
+      "path": "scripts/omega/benchmarks/acquire-global-assets.py",
+      "bytes": 17291,
+      "sha256": "94dbb22ce5cc48b0eeda2acd53078b51010f08eedaefc0f6bb92fa50c01847e3"
+    },
+    {
+      "path": "scripts/omega/benchmarks/test_global_acquisition.py",
+      "bytes": 13314,
+      "sha256": "632e6a57a2b608fa007e7f483b3dcca36a16f70399bfea0e84000a9bef0d9972"
+    }
+  ],
+  "newlyBoundArtifactCount": 98,
+  "newlyBoundArtifactBytes": 275971351,
+  "cumulativeBoundArtifactCount": 1841,
+  "cumulativeBoundArtifactBytes": 28200094773,
+  "supersedesOnlyMissingHfDatasetAccessIn": "docs/omega/evidence/benchmark-download-feasibility-2026-10-16.json",
+  "remaining": [
+    "BIXBENCH3_1_40_TB_RAW_INPUT_STORAGE",
+    "MLE_BENCH_KAGGLE_PERMISSIONS_AND_FULL_STORAGE",
+    "SCICODE_PUBLISHER_QUOTA",
+    "FRONTIERMATH_HANDLED_BY_OPERATOR",
+    "CONFINED_RUNTIME_AND_REMOTE_GRADER_PREREQUISITES"
+  ],
+  "fullAcquisitionComplete": false,
+  "allBenchmarksOperational": false,
+  "unrelatedUiFilesPreserved": 8
+}

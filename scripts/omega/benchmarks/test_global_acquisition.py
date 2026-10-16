@@ -6,11 +6,74 @@ import unittest
 import zipfile
 from unittest.mock import patch
 from pathlib import Path
+from types import SimpleNamespace
 
 UTIL = runpy.run_path(str(Path(__file__).with_name("acquire-global-assets.py")))
 
 
 class AcquisitionTests(unittest.TestCase):
+    def gated_source(self):
+        return SimpleNamespace(sha="a" * 40, gated="auto", card_data=None,
+                               siblings=[SimpleNamespace(rfilename="data/task.json", size=2, lfs=None)])
+
+    def test_default_hf_run_never_reads_login_or_downloads_gated_data(self):
+        with tempfile.TemporaryDirectory() as directory, patch("huggingface_hub.get_token") as token, \
+                patch("huggingface_hub.HfApi") as api, patch("huggingface_hub.hf_hub_download") as download, \
+                patch("builtins.print"):
+            api.return_value.dataset_info.return_value = self.gated_source()
+            report = UTIL["hf_acquire"](Path(directory), ["development/gated"], 100, 100)
+            token.assert_not_called()
+            api.assert_called_once_with(token=False)
+            download.assert_not_called()
+            self.assertEqual(report["sources"][0]["state"], "NEEDS_AUTHORIZATION")
+            self.assertFalse(report["credentialsUsed"])
+
+    def test_explicit_hf_session_requires_configured_login(self):
+        with tempfile.TemporaryDirectory() as directory, patch("huggingface_hub.get_token", return_value=None), \
+                patch("huggingface_hub.HfApi") as api:
+            with self.assertRaisesRegex(ValueError, "authorized_hf_session_not_configured"):
+                UTIL["hf_acquire"](Path(directory), ["development/gated"], 100, 100,
+                                   authorized_session=True)
+            api.assert_not_called()
+
+    def test_explicit_hf_session_rejects_revision_mismatch_before_download(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("huggingface_hub.get_token", return_value="development-opaque-session"), \
+                patch("huggingface_hub.HfApi") as api, \
+                patch("huggingface_hub.hf_hub_download") as fetch, patch("builtins.print"):
+            api.return_value.dataset_info.return_value = self.gated_source()
+            report = UTIL["hf_acquire"](Path(directory), ["development/gated"], 100, 100,
+                                       authorized_session=True,
+                                       expected_revisions={"development/gated": "b" * 40})
+            fetch.assert_not_called()
+            self.assertEqual(report["sources"][0]["state"], "ACQUISITION_FAILED")
+            self.assertEqual(report["sources"][0]["files"], [])
+
+    def test_explicit_hf_session_downloads_pinned_files_without_recording_credential(self):
+        import json
+        def download(_dataset, name, **kwargs):
+            path = Path(kwargs["local_dir"]) / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"{}")
+            return str(path)
+        with tempfile.TemporaryDirectory() as directory, \
+                patch("huggingface_hub.get_token", return_value="development-opaque-session"), \
+                patch("huggingface_hub.HfApi") as api, \
+                patch("huggingface_hub.hf_hub_download", side_effect=download) as fetch, \
+                patch("builtins.print"):
+            api.return_value.dataset_info.return_value = self.gated_source()
+            report = UTIL["hf_acquire"](Path(directory), ["development/gated"], 100, 100,
+                                       authorized_session=True,
+                                       expected_revisions={"development/gated": "a" * 40})
+            api.return_value.dataset_info.assert_called_once_with(
+                "development/gated", files_metadata=True, revision="a" * 40)
+            self.assertEqual(fetch.call_args.kwargs["revision"], "a" * 40)
+            self.assertEqual(report["sources"][0]["state"], "AUTHORIZED_FILES_ACQUIRED")
+            self.assertEqual(len(report["sources"][0]["files"]), 1)
+            self.assertTrue(report["credentialsUsed"])
+            self.assertFalse(report["conditionsAcceptedByDownloader"])
+            self.assertNotIn("development-opaque-session", json.dumps(report))
+
     def response(self, chunks, headers, status=200):
         class Response:
             status_code = status

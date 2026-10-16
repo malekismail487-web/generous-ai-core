@@ -252,22 +252,32 @@ def download_url(url, path, max_bytes=12 * 1024**3, expected_sha256=None):
             "transportEncoding": transport_encoding}
 
 
-def hf_acquire(root, datasets, max_file_bytes, max_total_bytes, receipt_name="global-acquisition-2026-10-16.json"):
-    from huggingface_hub import HfApi, hf_hub_download
-    api = HfApi(token=False)
+def hf_acquire(root, datasets, max_file_bytes, max_total_bytes, receipt_name="global-acquisition-2026-10-16.json",
+               authorized_session=False, expected_revisions=None):
+    from huggingface_hub import HfApi, hf_hub_download, get_token
+    # An explicit operator-authorized invocation may reuse the supported login.
+    # Anonymous/default runs never acquire a credential or accept gate terms.
+    token = get_token() if authorized_session else False
+    if authorized_session and not token:
+        raise ValueError("authorized_hf_session_not_configured")
+    api = HfApi(token=token)
     receipt = {"schemaVersion": 1, "identity": "NYX-GLOBAL-ASSET-ACQUISITION-001",
                "observedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-               "credentialsUsed": False, "modelCalls": 0,
+               "credentialsUsed": bool(authorized_session), "credentialValuesRecorded": False,
+               "conditionsAcceptedByDownloader": False, "modelCalls": 0,
                "downloadedCodeExecuted": False, "sources": []}
     total = 0
     for dataset in datasets:
         entry = {"dataset": dataset, "files": [], "deferred": []}
         receipt["sources"].append(entry)
         try:
-            info = api.dataset_info(dataset, files_metadata=True)
+            expected_revision = (expected_revisions or {}).get(dataset)
+            info = api.dataset_info(dataset, files_metadata=True, revision=expected_revision)
+            if expected_revision and info.sha != expected_revision:
+                raise ValueError("dataset_revision_mismatch")
             entry.update(revision=info.sha, gated=info.gated,
                          license=(info.card_data.to_dict() if info.card_data else {}).get("license"))
-            if info.gated:
+            if info.gated and not authorized_session:
                 entry["state"] = "NEEDS_AUTHORIZATION"
                 # A public card is useful, but no gate is accepted here.
                 names = {"README.md", ".gitattributes"}
@@ -290,7 +300,7 @@ def hf_acquire(root, datasets, max_file_bytes, max_total_bytes, receipt_name="gl
                     state = "EXISTING_REHASHED"
                 else:
                     hf_hub_download(dataset, item.rfilename, repo_type="dataset",
-                                    revision=info.sha, local_dir=str(base), token=False)
+                                    revision=info.sha, local_dir=str(base), token=token)
                     state = "DOWNLOADED"
                     total += target.stat().st_size
                 data = record(target, root)
@@ -298,7 +308,8 @@ def hf_acquire(root, datasets, max_file_bytes, max_total_bytes, receipt_name="gl
                     raise ValueError("author_sha256_mismatch")
                 data.update(state=state, authorSha256Verified=bool(expected))
                 entry["files"].append(data)
-            entry.setdefault("state", "PARTIAL" if entry["deferred"] else "PUBLIC_FILES_ACQUIRED")
+            entry.setdefault("state", "PARTIAL" if entry["deferred"] else
+                             "AUTHORIZED_FILES_ACQUIRED" if info.gated else "PUBLIC_FILES_ACQUIRED")
         except Exception as error:
             # Do not emit exception messages: transport errors may include signed URLs.
             entry["state"] = "NEEDS_AUTHORIZATION" if entry.get("gated") or type(error).__name__ == "GatedRepoError" else "ACQUISITION_FAILED"
@@ -317,6 +328,8 @@ if __name__ == "__main__":
     parser.add_argument("--max-file-gib", type=int, default=12)
     parser.add_argument("--max-total-gib", type=int, default=40)
     parser.add_argument("--receipt-name", default="global-acquisition-2026-10-16.json")
+    parser.add_argument("--authorized-session", action="store_true",
+                        help="Reuse an operator-authorized HF login; never accepts dataset conditions.")
     parser.add_argument("--extract-archive", type=Path)
     parser.add_argument("--extract-directory", type=Path)
     args = parser.parse_args()
@@ -329,4 +342,5 @@ if __name__ == "__main__":
         save(args.extract_directory / "acquisition-extracted-files.json", records)
         print(json.dumps({"files": len(records), "bytes": sum(r["bytes"] for r in records)}))
     elif args.dataset:
-        hf_acquire(args.root, args.dataset, args.max_file_gib * 1024**3, args.max_total_gib * 1024**3, args.receipt_name)
+        hf_acquire(args.root, args.dataset, args.max_file_gib * 1024**3, args.max_total_gib * 1024**3,
+                   args.receipt_name, authorized_session=args.authorized_session)
