@@ -11,7 +11,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   serving-diagnostic:
-    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'test(nyx): check candidate NVIDIA key with two Ultra requests'
+    if: >-
+      github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'test(nyx): check candidate NVIDIA key with two Ultra requests'
     name: Ultra-only candidate-key serving diagnostic
     runs-on: ubuntu-latest
     timeout-minutes: 12
