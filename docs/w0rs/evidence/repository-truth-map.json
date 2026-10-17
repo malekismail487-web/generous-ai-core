@@ -2066,6 +2066,7 @@
         "scripts/omega/nyx-quantitative-transfer-live-eval.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-ultra-research-pair.ts",
+        "scripts/omega/nyx-ultra-serving-diagnostic.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2101,6 +2102,7 @@
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-ultra-research-pair.ts",
+        "scripts/omega/nyx-ultra-serving-diagnostic.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
     },
@@ -2252,6 +2254,7 @@
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-ultra-research-pair.ts",
+        "scripts/omega/nyx-ultra-serving-diagnostic.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2748,6 +2751,7 @@
         "scripts/omega/nyx-structured-array-diagnostic.ts",
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-ultra-research-pair.ts",
+        "scripts/omega/nyx-ultra-serving-diagnostic.ts",
         "scripts/omega/nyx-web-live-eval.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts"
       ]
@@ -2917,6 +2921,7 @@
         "scripts/omega/nyx-text-benchmark-epoch.ts",
         "scripts/omega/nyx-transfer-epoch-compare.ts",
         "scripts/omega/nyx-ultra-research-pair.ts",
+        "scripts/omega/nyx-ultra-serving-diagnostic.ts",
         "scripts/omega/nyx-workbench-transfer-live-eval.ts",
         "scripts/omegaNyxWorkbenchTransfer.test.ts"
       ]

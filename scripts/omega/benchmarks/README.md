@@ -1,5 +1,30 @@
 # NYX benchmark capability program
 
+### Authorized two-request Ultra serving diagnosis — 2026-10-17
+
+The operator authorized one minimal API request versus the existing NYX session,
+not another benchmark. `nyx-ultra-serving-diagnostic.ts` sends only synthetic
+counter arithmetic: exact Ultra, native HIGH, 16,384-token ceiling, bounded SSE,
+120 seconds per request, 330 seconds overall, one HTTP attempt per arm and two
+globally. Both requests share the fixed endpoint and capacity gate; redirects,
+model/effort changes and extra attempts are rejected. The key stays in the existing
+GitHub secret path. No benchmark data, raw output, private reasoning or key is
+persisted. The NYX arm reuses `runUltraResearchArm` and its REPLY-only session,
+strict local parser, disposable fixture and cleanup, not a parallel executor.
+
+The minimal arm deliberately has no NYX prompt, session or hosted grammar. The
+NYX arm retains its actual prompt/protocol. Sequential timing and prompt/format
+differences mean a mixed result is a localization lead, not proof of causality.
+Both returning 503 would reproduce failure outside NYX, not prove a global outage.
+Both delivering once would not prove stable service or reasoning improvement.
+No benchmark is automatically dispatched afterward. The exact-message launch
+trigger is temporary and will be removed after this single diagnosis.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: isolate delivery from cognition,
+exact model identity and bounded diagnostic cost. Supporting: reused confinement,
+strict admission, independent parser and sanitized provenance. Deferred: full
+Ultra scoring, same-model provider migration and general cognitive improvement.
+
 ### AIME 2026 Ultra repeat terminal: blocked before benchmark execution — 2026-10-17
 
 The [attempt-2 receipt](../../../docs/omega/evidence/aime2026-ultra-streaming-4ded77ea-attempt2.json)

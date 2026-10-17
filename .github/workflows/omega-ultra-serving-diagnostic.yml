@@ -1,0 +1,51 @@
+name: Omega Ultra two-request serving diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-ultra-serving-diagnostic.yml]
+permissions:
+  contents: read
+concurrency:
+  group: omega-real-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  serving-diagnostic:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.head_commit.message == 'test(nyx): run authorized two-request Ultra serving diagnostic'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install frozen dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify diagnosis limits and existing parser without model calls
+        run: |
+          npm run typecheck:ratchet
+          node node_modules/typescript/bin/tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --types node --skipLibCheck scripts/omega/nyx-ultra-serving-diagnostic.ts scripts/omegaUltraResearchPair.test.ts
+          npm run security:secrets
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaUltraResearchPair.test.ts
+          node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omegaNvidiaEventStream.test.ts
+      - name: Execute only the authorized two synthetic requests
+        env:
+          OMEGA_ALLOW_NVIDIA_NETWORK: '1'
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+          NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-ultra-550b-a55b
+        run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-ultra-serving-diagnostic.ts
+      - name: Preserve sanitized diagnosis even when incomplete
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ultra-serving-${{ github.sha }}
+          path: ${{ runner.temp }}/ultra-serving-*.json
+          if-no-files-found: error

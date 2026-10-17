@@ -6,6 +6,8 @@ import {ULTRA_RESEARCH_PAIR_POLICY as P, ultraResearchModel, ultraResearchSelect
 import type {NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence} from "../src/lib/codelab/model/nvidiaNimProvider";
 import type {PrivateTextTask} from "./omega/benchmarks/nyxTextBenchmark";
 import {theoryDigest} from "../src/lib/codelab/research/theoryContracts";
+import {ULTRA_SERVING_DIAGNOSTIC as S, minimalUltraServingPayload, ultraServingTransport,
+  summarizeUltraServing, type UltraServingProbe} from "./omega/nyx-ultra-serving-diagnostic";
 
 let passed = 0, failed = 0;
 async function check(name: string, run: () => unknown | Promise<unknown>) {
@@ -198,6 +200,75 @@ await check("inconsistent result truth bits cannot manufacture a paired acceptan
   assert.throws(() => summarizeUltraResearchPairs([task.taskId], [{...direct, correct: null}]));
   assert.throws(() => summarizeUltraResearchPairs([task.taskId], [{...direct, correct: false}]));
   assert.throws(() => summarizeUltraResearchPairs([task.taskId], [{...direct, state: "TRUNCATION"}]));
+});
+await check("serving control is exact Ultra HIGH without hosted grammar or benchmark data", () => {
+  const payload = minimalUltraServingPayload();
+  assert.equal(payload.model, P.model); assert.equal(payload.reasoning_effort, "high");
+  assert.equal(payload.max_tokens, 16384); assert.equal(payload.temperature, P.temperature);
+  assert.equal(payload.stream, true); assert.equal("response_format" in payload, false);
+  assert.equal("reasoning_budget" in payload, false); assert.equal(payload.messages.length, 1);
+  assert.equal(S.maxHttpAttempts, 2); assert.equal(S.maxRequestMs, 120000);
+});
+const servingInit = () => ({method: "POST", body: JSON.stringify(minimalUltraServingPayload()), signal: new AbortController().signal});
+const servingEndpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
+await check("shared serving dispatch limit forbids a third physical call and redirects", async () => {
+  let calls = 0;
+  const limited = ultraServingTransport(async (_url, init) => {calls++; assert.equal(init?.redirect, "error"); return new Response("synthetic");});
+  await limited.send(servingEndpoint, servingInit()); await limited.send(servingEndpoint, servingInit());
+  await assert.rejects(() => limited.send(servingEndpoint, servingInit()), /attempt_limit/);
+  assert.equal(calls, 2); assert.equal(limited.count(), 2);
+});
+await check("failed serving dispatch still consumes the shared physical allowance", async () => {
+  const limited = ultraServingTransport(async () => {throw Error("synthetic_transport_failure");});
+  for (let i = 0; i < 2; i++) await assert.rejects(() => limited.send(servingEndpoint, servingInit()));
+  await assert.rejects(() => limited.send(servingEndpoint, servingInit()), /attempt_limit/);
+  assert.equal(limited.count(), 2);
+});
+await check("serving probe forbids a different endpoint or missing cancellation domain before dispatch", async () => {
+  const limited = ultraServingTransport(async () => {throw Error("must_not_dispatch");});
+  await assert.rejects(() => limited.send("https://example.invalid/v1/chat/completions", servingInit()), /endpoint_rejected/);
+  await assert.rejects(() => limited.send(servingEndpoint, {...servingInit(), signal: undefined}), /endpoint_rejected/);
+  assert.equal(limited.count(), 0);
+});
+for (const change of [{model: "nvidia/nemotron-3-super-120b-a12b"}, {reasoning_effort: "medium"}, {stream: false}, {max_tokens: 32768}]) {
+  await check("serving wire profile cannot silently change model effort delivery or budget", async () => {
+    const limited = ultraServingTransport(async () => {throw Error("must_not_dispatch");});
+    await assert.rejects(() => limited.send(servingEndpoint,
+      {...servingInit(), body: JSON.stringify({...minimalUltraServingPayload(), ...change})}), /profile_rejected/);
+    assert.equal(limited.count(), 0);
+  });
+}
+const servingProbe = (arm: UltraServingProbe["arm"], overrides: Partial<UltraServingProbe> = {}): UltraServingProbe =>
+  ({arm, state: "SYNTHETIC_RESPONSE_ACCEPTED", delivered: true, syntheticResponseAccepted: true,
+    httpStatus: 200, providerStatus: null, finishReason: "stop", httpAttempts: 1,
+    reportedTokens: 20, elapsedMs: 2, stream: null, cleanupVerified: null, ...overrides});
+await check("two observed 503s support serving diagnosis but not a cognitive or global outage claim", () => {
+  const rows = S.arms.map(arm => servingProbe(arm, {state: "PROVIDER_ERROR", delivered: false,
+    syntheticResponseAccepted: null, providerStatus: 503, finishReason: null, reportedTokens: null}));
+  const summary = summarizeUltraServing(rows);
+  assert.equal(summary.finding, "503_REPRODUCED_OUTSIDE_NYX_AND_IN_NYX");
+  assert.equal(summary.reportedTokens, 0); assert.equal(summary.unknownUsageCalls, 2);
+  assert.equal(summary.benchmarkScore, null); assert.equal(summary.cognitiveGain, false);
+  assert.equal(summary.causalFormatDefectEstablished, false);
+});
+await check("delivered serving probes do not certify stability or task capability", () => {
+  const summary = summarizeUltraServing(S.arms.map(arm => servingProbe(arm)));
+  assert.equal(summary.finding, "BOTH_DELIVERED_AT_THIS_TIME_NOT_PROOF_OF_STABILITY");
+  assert.equal(summary.reportedTokens, 40); assert.equal(summary.unknownUsageCalls, 0);
+  assert.equal(summary.benchmarkScore, null);
+});
+await check("mixed or incomplete serving outcomes remain inconclusive", () => {
+  assert.equal(summarizeUltraServing([]).finding, "INCOMPLETE_DIAGNOSIS");
+  const mixed = [servingProbe(S.arms[0]), servingProbe(S.arms[1], {delivered: false,
+    syntheticResponseAccepted: null, finishReason: null, state: "TIMEOUT", reportedTokens: null})];
+  assert.equal(summarizeUltraServing(mixed).finding, "DIFFERENT_OR_INCONCLUSIVE_OUTCOMES_REQUIRE_TARGETED_INVESTIGATION");
+});
+await check("serving report rejects duplicate identities fake successful errors and invalid usage", () => {
+  const row = servingProbe(S.arms[0]);
+  assert.throws(() => summarizeUltraServing([row, row]));
+  assert.throws(() => summarizeUltraServing([{...row, providerStatus: 503}]));
+  assert.throws(() => summarizeUltraServing([{...row, reportedTokens: -1}]));
+  assert.throws(() => summarizeUltraServing([{...row, httpAttempts: 3}]));
 });
 console.log(`OMEGA_ULTRA_RESEARCH_PAIR_TEST_SUMMARY passed: ${passed}, failed: ${failed}`);
 if (failed) process.exitCode = 1;
