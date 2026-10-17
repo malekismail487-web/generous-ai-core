@@ -1,6 +1,9 @@
 name: Omega Ultra two-request serving diagnostic
 on:
   workflow_dispatch:
+  push:
+    branches: [sol/omega-institutional-spine]
+    paths: [.github/workflows/omega-ultra-serving-diagnostic.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,7 +11,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   serving-diagnostic:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message == 'test(nyx): check candidate NVIDIA key with two Ultra requests'
+    name: Ultra-only candidate-key serving diagnostic
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -33,7 +37,7 @@ jobs:
       - name: Execute only the authorized two synthetic requests
         env:
           OMEGA_ALLOW_NVIDIA_NETWORK: '1'
-          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NYX_ULTRA_CANDIDATE_API_KEY }}
           NVIDIA_NIM_MODEL: nvidia/nemotron-3-ultra-550b-a55b
           NYX_TEXT_EVALUATION_MODEL: nvidia/nemotron-3-ultra-550b-a55b
         run: node --experimental-strip-types --import ./scripts/w0rs/register-typescript-loader.mjs scripts/omega/nyx-ultra-serving-diagnostic.ts
