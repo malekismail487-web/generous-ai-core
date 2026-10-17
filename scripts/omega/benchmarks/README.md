@@ -1,5 +1,15 @@
 # NYX benchmark capability program
 
+### SciCode numeric data acquired — 2026-10-17
+
+The normal author-provided anonymous download succeeded: complete `test_data.h5`,
+1,049,345,865 bytes. The [receipt](../../../docs/omega/evidence/scicode-numeric-acquisition-2026-10-17.json)
+records whole-file fixity, 338 substep groups, and all required 167 development /
+915 test numeric-group references resolving against the frozen dataset. No
+reference values or benchmark code were executed; no NYX score or goal resumption
+is claimed. The former publisher-quota blocker is resolved; its failure receipts
+remain historical. Confined generated-code execution remains a separate requirement.
+
 ### Authorized HLE / BixBench3 acquisition — 2026-10-16
 
 After operator approval and supported browser login, acquired all four HLE files

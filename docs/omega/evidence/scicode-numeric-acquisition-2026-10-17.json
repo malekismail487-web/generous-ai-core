@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "identity": "SCICODE-NUMERIC-ASSET-ACQUISITION-2026-10-17",
+  "observedAt": "2026-10-17T08:34:58Z",
+  "baseCandidate": "73ff68cea007bfff32c59ab01d5be6daafec46f4",
+  "source": "AUTHOR_README_LINKED_GOOGLE_DRIVE_STANDARD_ANONYMOUS_FLOW",
+  "authorSource": "https://github.com/scicode-bench/SciCode",
+  "asset": {
+    "path": "scicode-assets/test_data.h5",
+    "bytes": 1049345865,
+    "sha256": "48b0272a88b17dbd29777c217e1b4fb2b019b92e11cc2add847409db9541b890"
+  },
+  "datasetRevision": "4510f6a6aa27c43fad7b43da2c59602a86e88480",
+  "populationBindings": [
+    {
+      "path": "public-datasets/SciCode1--SciCode/4510f6a6aa27c43fad7b43da2c59602a86e88480/problems_dev.jsonl",
+      "bytes": 279558,
+      "sha256": "193968aff23b7ed931c8f6d196b611e2f6694adb49e6cc085444a60ad2fc4f7b"
+    },
+    {
+      "path": "public-datasets/SciCode1--SciCode/4510f6a6aa27c43fad7b43da2c59602a86e88480/problems_test.jsonl",
+      "bytes": 933500,
+      "sha256": "38797fef78f434720be6d053b4f3a86839d6f8ea5fb9115450677cd3a6edf81d"
+    }
+  ],
+  "topLevelSubstepGroups": 338,
+  "metadataTraversal": {
+    "groups": 1444,
+    "datasets": 1608,
+    "externalLinks": 0,
+    "softLinks": 0,
+    "externalStorageDatasets": 0,
+    "virtualDatasets": 0
+  },
+  "splits": {
+    "development": {
+      "mainProblems": 15,
+      "gradedSubsteps": 50,
+      "suppliedContextSubsteps": 0,
+      "testGroupsRequired": 167,
+      "missingGroups": 0
+    },
+    "test": {
+      "mainProblems": 65,
+      "gradedSubsteps": 288,
+      "suppliedContextSubsteps": 3,
+      "testGroupsRequired": 915,
+      "missingGroups": 0
+    }
+  },
+  "referenceValuesRead": false,
+  "benchmarkCodeExecuted": false,
+  "benchmarkScoreClaim": false,
+  "modelCalls": 0,
+  "historicalQuotaFailuresPreserved": true,
+  "authenticatedGoogleSessionUsed": false,
+  "authorPublishedChecksumAvailable": false,
+  "hdf5Version": "2.0.0",
+  "h5pyVersion": "3.16.0",
+  "downloadReceipt": {
+    "path": "scicode-assets/public-retry-2026-10-17.json",
+    "bytes": 373,
+    "sha256": "df243d50370bead0d7be202c16bc46c4ee2efefea8c19888f089e9e591e30497"
+  },
+  "goalRemainsPaused": true,
+  "authorityDelta": "NONE",
+  "remainingBlockers": [
+    "KAGGLE_ACCESS_AND_COMPETITION_PERMISSIONS",
+    "BIXBENCH3_AND_FULL_MLE_STORAGE",
+    "FRONTIERMATH_OPERATOR_HANDLED",
+    "APPROVED_EXECUTION_AND_GRADER_ENVIRONMENTS"
+  ]
+}

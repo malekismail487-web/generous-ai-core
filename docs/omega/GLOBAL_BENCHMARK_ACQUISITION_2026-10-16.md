@@ -21,12 +21,13 @@ data and judge weights; it is not a unique-question count, total installation
 footprint, or claim that every requested dataset is present.
 
 **Full acquisition is not complete.** The unresolved rows are real restrictions:
-absent Kaggle authorization, private/paid verifiers, SciCode's
-publisher-side download quota, insufficient capacity for BixBench3's full raw
+absent Kaggle authorization, private/paid verifiers, insufficient capacity for BixBench3's full raw
 inputs, and missing approved Linux/container execution. These have not been
 relabelled as successful downloads or waived to produce green readiness labels.
 The later operator-approved HLE/BixBench3 acquisition is recorded below and
 supersedes the earlier missing-HF-access state only.
+The October 17 SciCode numeric-asset acquisition also supersedes its earlier
+publisher-quota blocker; original failure receipts remain preserved.
 
 Persistent cache on this machine:
 `C:/Users/loka3/Documents/Codex/2026-08-20/h/benchmark-data`.
@@ -39,7 +40,33 @@ model outputs and gold programs are not training data or task context.
 
 ## Follow-up: downloadable versus unavailable under current conditions
 
-### Current update — approved HF access and actual acquisition
+### Current update — SciCode numeric assets acquired, October 17
+
+The author's normal anonymous Google Drive download now succeeded. The full
+`test_data.h5` is retained locally: **1,049,345,865 bytes**, SHA256
+`48b0272a88b17dbd29777c217e1b4fb2b019b92e11cc2add847409db9541b890`.
+The [numeric acquisition receipt](evidence/scicode-numeric-acquisition-2026-10-17.json)
+binds the asset and the existing pinned dataset; no alternate source, account
+copy, cookie session or substituted numeric oracle was used.
+
+HDF5 metadata traversal found 338 substep groups and 1,608 numeric/reference
+datasets, with no external or soft links. Every required numeric test-group
+reference resolves: **167 for 15 development problems / 50 graded substeps**,
+and **915 for 65 test problems / 288 graded substeps**. The author's three
+supplied-context test substeps remain separate and were not reclassified.
+No target values were read, printed or supplied to NYX, and no benchmark code,
+model run or scoring campaign was executed. Source/data readiness does not
+certify confined code execution or a NYX score. The author did not publish an
+independent checksum; the whole-file SHA256 records retained-byte fixity.
+
+Kaggle still requires operator authorization and competition permissions.
+A separate official Kaggle client 2.2.4 / SDK 0.1.37 was installed in the cache
+without changing MLE-bench's pinned environment. Its browser login requests
+only competition metadata/read and data-download scopes; no joins, submissions,
+terms acceptance or paid resource creation are authorized. The development goal
+remains paused, and FrontierMath contact remains with the operator.
+
+### Approved HF access and actual acquisition — October 16
 
 After the operator accepted both datasets' conditions and approved the supported
 browser/device login, the pinned HF datasets were downloaded. The
@@ -141,7 +168,7 @@ variants and public/private populations remain distinct.
 | 09 ProofNet | [Original](https://github.com/zhangir-azerbayev/ProofNet), [Lean 4](https://github.com/rahul3613/ProofNet-lean4), [audited variant](https://github.com/marcusm117/ProofNet-Verified) | [Original HF](https://huggingface.co/datasets/hoskinson-center/proofnet) plus distinct source ports | Original 185 valid + 186 test / all 371; port source inventories retained separately | Complete original data and requested port sources | Lean 3.50.3 development kernel checks pass; not a proof score | Lean 4.20.0 loader blocked by Code Integrity; later new binaries deferred pending host policy review | **DATA READY**; approved Linux/formal environment; variant equivalence not assumed |
 | 10 PutnamBench | [Repository](https://github.com/trishullab/PutnamBench) | Frozen author source | Lean 672, Isabelle 640, Coq 412 / file counts match the author's respective populations | All public source formats acquired | Independent benchmark proof checking not yet admitted | Lean 4.33.1 and dependency sources downloaded; full project runtime unverified | **DATA READY**; prioritize confined Lean path; Coq/Isabelle remain separate configurations |
 | 11 FrontierScience | [Official data](https://huggingface.co/datasets/openai/frontierscience) | Same | 160 / 100 Olympiad + 60 research | Complete public release; groups and references separated | Official methodology retained; full independent answer-judging path not exercised | Data/scientific libraries available | **DATA READY**, not the unreleased private evaluation |
-| 12 SciCode | [Repository](https://github.com/scicode-bench/SciCode) | [Dataset](https://huggingface.co/datasets/SciCode1/SciCode), [author numeric assets](https://drive.google.com/drive/folders/1W5GZW6_bdiDAiipuFMqdUhvUaHIj6-pR) | 15 dev + 65 test main problems present; subproblems remain nested, not conflated | Public question files complete; `test_data.h5` NOT acquired | Author package installed | Numerical dependencies installed; full code execution needs confinement | **PARTIAL**: normal public download reaches Google Drive quota-exceeded page; wait for quota reset or obtain an author-approved mirror |
+| 12 SciCode | [Repository](https://github.com/scicode-bench/SciCode) | [Dataset](https://huggingface.co/datasets/SciCode1/SciCode), [author numeric assets](https://drive.google.com/drive/folders/1W5GZW6_bdiDAiipuFMqdUhvUaHIj6-pR) | 15 dev + 65 test main problems; 50 + 288 graded substeps, supplied-context steps separate | Public questions and complete 1,049,345,865-byte HDF5 numeric asset acquired; all 1,082 required test-group references resolve | Author package installed; no benchmark score claimed | Numerical dependencies installed; full generated-code execution still needs confinement | **DATA READY** as of October 17; previous quota blocker resolved through the normal author-provided download |
 | 13 DiscoveryBench | [Repository](https://github.com/allenai/discoverybench) | [Author HF](https://huggingface.co/datasets/allenai/discoverybench) plus full source tree | Real: 239 test + 25 train questions; synthetic: 200 test + 153 dev + 550 train | All actual task-relative dataset paths resolve; one editor-checkpoint reference separately excluded | Official evaluation tools retained; no model judge invoked | Author-pinned Python dependencies installed; agent code execution requires confinement | **DATA READY**; 80 non-UTF8 source metadata files explicitly decoded losslessly as CP1252, raw bytes preserved |
 | 14 ScienceAgentBench | [Repository](https://github.com/OSU-NLP-Group/ScienceAgentBench) | [Verified split](https://huggingface.co/datasets/osunlp/ScienceAgentBench) and author's normal download link | 102 / 102; all named gold/evaluator files resolve | Verified archive recovered: 1,769,478,786 bytes compressed; 4,071,815,117 expanded; 845 files independently checked | Official evaluator/gold assets present, no benchmark programs executed | Linux/container execution still required | **DATA READY**; old access failure is superseded by this successful observation, not erased |
 | 15 GPQA Diamond | [Author](https://github.com/idavidrein/gpqa) | Existing pinned author-derived preparation; [HF](https://huggingface.co/datasets/Idavidrein/gpqa) is not silently substituted | 198 / 198 unique IDs, seed 0 and exact prepared digest unchanged | Reused and verified, no re-acquisition | Existing strict A–D grading; 238/238 text-suite checks | Existing Node path available | **READY** offline; all original Super/Ultra outcomes preserved |
@@ -248,11 +275,10 @@ variants and public/private populations remain distinct.
    and [Cell Ranger ARC](https://www.10xgenomics.com/support/software/cell-ranger-arc/downloads/previous-versions)
    licenses. [GCP terms](https://cloud.google.com/terms) and current regional
    usage prices apply; no fixed execution price is established by this receipt.
-5. **SciCode numeric assets:** wait for the author's Google Drive quota to reset,
-   or authorize contacting the maintainers for an accessible official mirror of
-   `test_data.h5`. The normal public confirmation flow was followed and reported
-   quota exceeded. No permission bypass, account-copy workaround or unreviewed
-   third-party answer mirror was attempted. An unsent draft is below.
+5. **SciCode numeric assets — COMPLETE:** the October 17 normal anonymous
+   download succeeded; complete HDF5 bytes and required test-group references
+   were verified. No mirror, account copy or permission bypass was used. Do not
+   retry the former quota failure or send the now-obsolete inquiry below.
 6. **External verifiers:** if desired, authorize sending the Epoch inquiries
    below and obtaining [CritPt service](https://artificialanalysis.ai/documentation#critpt-api)
    access. CritPt currently states that approved lab/researcher access is free,
@@ -307,6 +333,9 @@ Regards,
 Malek / NYX project
 
 ### SciCode — temporary public numeric-asset quota
+
+**OBSOLETE / DO NOT SEND:** retained only as historical provenance. The October
+17 author-provided download succeeded and the numeric assets are verified.
 
 To: SciCode maintainers, via the contact route they choose on the
 [official project](https://github.com/scicode-bench/SciCode) (no unverified email
@@ -369,7 +398,7 @@ weakened. Unrelated eight-file UI work is preserved and excluded from this chang
 ## Remaining work / plan coverage
 
 Codex can continue the blocked acquisitions after the exact prerequisite changes:
-an authorized Kaggle session, an accessible author SciCode asset, sufficient storage,
+an authorized Kaggle session with competition permissions, sufficient storage,
 and an approved compatible execution environment. It cannot obtain a private
 benchmark, accept account/license terms, invent eligibility, purchase verifier
 access, disable host security or provision billable resources on its own.
