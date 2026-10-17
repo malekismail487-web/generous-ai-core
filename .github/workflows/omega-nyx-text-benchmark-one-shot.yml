@@ -13,6 +13,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   full-aime:
+    # Historical Super campaign; retained for provenance, not current permission.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 110
     outputs:
@@ -86,7 +88,7 @@ jobs:
           if-no-files-found: error
   full-bbeh:
     needs: full-aime
-    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.run_bbeh && needs.full-aime.outputs.continue_bbeh == 'true' }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
     steps:

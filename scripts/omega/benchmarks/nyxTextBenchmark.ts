@@ -24,6 +24,14 @@ export function textEvaluationModel(model?: string) {
   return model;
 }
 
+/** Current live campaign permission, distinct from historical compatibility.
+ * Reject other models instead of silently substituting Ultra or falling back. */
+export function ultraOnlyTextEvaluationModel(model?: string) {
+  if (model !== undefined && model !== TEXT_BENCHMARK_POLICY.model)
+    throw Error("text_live_campaign_requires_ultra");
+  return TEXT_BENCHMARK_POLICY.model;
+}
+
 export type TextTaskFamily = "AIME_2025" | "AIME_2026" | "BBEH_MINI" | "GPQA_DIAMOND" | "DEVELOPMENT_DIAGNOSTIC";
 export interface PrivateTextTask { family: TextTaskFamily; taskId: string; question: string; answer: string }
 

@@ -10,6 +10,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   gpqa-diamond:
+    # Historical Super campaign; retained for provenance, not current permission.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:

@@ -1,5 +1,36 @@
 # NYX benchmark capability program
 
+### Ultra-only live campaign permission — 2026-10-17
+
+The operator reaffirmed **Ultra only**, continuous bounded benchmark-driven
+development, general corrections rather than answer-specific tuning, and the
+highest defensible performance without weakening acceptance. No 100% outcome is
+presumed. A newly authorized bounded HIGH recheck reuses frozen candidate
+`dfed49a5`, run `38787035427` attempt 2 / job `117363879390`; it must remain
+separate from the original first-attempt evidence. At launch, seven cognition,
+provider and data-preparation bindings still matched the current checkout.
+
+Closed a policy gap: the generic live text entrypoint now rejects either model
+override when it is not exact Ultra, before repository or dataset access, and
+rejects historical Super phase contracts. Three legacy Super workflow files
+(four jobs, including chained BBEH) are explicitly disabled. They were manual
+historical experiments, not fallback routes in the current Ultra study. Their
+source, pure compatibility helpers and all historical results are preserved;
+they must not be silently relabelled as Ultra or used as current permission.
+This does not change model weights, graders, budgets, repair logic or authority.
+
+Verification: text suite **246/246**, Ultra pair **41/41**, scoped compilation,
+TypeScript zero and secret scan. Two subprocess tests prove both model-variable
+override paths reject Super before loading private data or attempting inference.
+The first scoped compilation exposed an unreachable legacy Super comparison;
+it was replaced with an explicit forbidden-configuration rejection and rerun.
+This is model-policy hardening, **not a measured cognitive improvement**.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: explicit model identity, no
+fallback, source preservation and honest attribution. Supporting: independent
+acceptance, scope and finite resources. Deferred: current Ultra benchmark scores,
+general cognitive gains and held-out transfer. No architecture or authority delta.
+
 ### MEDIUM pair terminal: provider-blocked, no benchmark questions sent — 2026-10-17
 
 The [terminal receipt](../../../docs/omega/evidence/nyx-ultra-medium-pair-e47d672c.json)

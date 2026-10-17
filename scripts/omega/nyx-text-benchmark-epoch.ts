@@ -7,7 +7,7 @@ import { NvidiaNimProvider, nvidiaNimCredentialFromEnvironment, type NvidiaNimEv
 import { liveNvidiaCapacity, type NvidiaCapacityReadiness } from "../../src/lib/codelab/model/nvidiaCapacity";
 import { ReadOnlyRepositoryExecutor } from "../../src/lib/codelab/executor/readOnlyExecutor";
 import { theoryDigest } from "../../src/lib/codelab/research/theoryContracts";
-import { TEXT_BENCHMARK_POLICY, textEvaluationModel, gradeAime, gradeGpqa, parsePinnedGpqaData,
+import { TEXT_BENCHMARK_POLICY, ultraOnlyTextEvaluationModel, gradeAime, gradeGpqa, parsePinnedGpqaData,
   textGpqaPopulation, GPQA_DIAMOND_SOURCE, invokeExistingNyxText, sanitizedTextResult,
   textFailureRecoverySelection, textFailureRecoverySummary, type TextFailureBaseline,
   TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS, TEXT_INFERENCE_CONFIGURATIONS, TEXT_DIAGNOSTIC_CONFIGURATIONS, textConfiguredRequest,
@@ -24,6 +24,8 @@ import { compareGeneralReasoningPair } from "./benchmarks/nyxTextBenchmark";
 export async function runTextBenchmarkEpoch() {
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("text_epoch_requires_explicit_network_and_injected_secret");
+  const evaluationModel = ultraOnlyTextEvaluationModel(process.env.NYX_TEXT_EVALUATION_MODEL);
+  ultraOnlyTextEvaluationModel(process.env.NVIDIA_NIM_MODEL);
   const git = (...args: string[]) => execFileSync("git", args, {encoding: "utf8"}).trim();
   const candidate = process.env.GITHUB_SHA || git("rev-parse", "HEAD");
   if (!/^[a-f0-9]{40}$/.test(candidate) || candidate !== git("rev-parse", "HEAD") || git("status", "--porcelain"))
@@ -41,7 +43,6 @@ export async function runTextBenchmarkEpoch() {
     : mode === "GENERAL_REPAIR_TRANSFER" ? "TRANSFER" : mode === "GENERAL_REPAIR_CHALLENGE" ? "CHALLENGE" : null;
   const configuration = process.env.NYX_TEXT_CONFIGURATION || "EXISTING_DEFAULT";
   if (!TEXT_INFERENCE_CONFIGURATIONS.includes(configuration as TextInferenceConfiguration)) throw Error("text_epoch_configuration_invalid");
-  const evaluationModel = textEvaluationModel(process.env.NYX_TEXT_EVALUATION_MODEL);
   const delivery = process.env.NYX_TEXT_DELIVERY || "DIRECT";
   if (!["DIRECT", "SCOPED_FILE"].includes(delivery)) throw Error("text_epoch_delivery_invalid");
   const capacityScheduling = process.env.NYX_TEXT_CAPACITY_SCHEDULING;
@@ -53,8 +54,8 @@ export async function runTextBenchmarkEpoch() {
     ? configuration : "SESSION_ACTION_CONTRACT";
   if (contractDiagnostic && !["SESSION_ACTION_CONTRACT", "SESSION_NATIVE_PHASE_CONTRACT", "SESSION_SUPER_PHASE_CONTRACT"].includes(configuration))
     throw Error("text_contract_diagnostic_candidate_invalid");
-  if (["SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"].includes(configuration) && evaluationModel !== "nvidia/nemotron-3-super-120b-a12b")
-    throw Error("text_super_configuration_requires_explicit_super_model");
+  if (["SESSION_SUPER_PHASE_CONTRACT", "SESSION_SUPER_COUNTERCHECK"].includes(configuration))
+    throw Error("text_live_campaign_rejects_historical_super_configuration");
   if (generalStage && (configuration !== "SESSION_SUPER_PHASE_CONTRACT" || delivery !== "SCOPED_FILE"))
     throw Error("general_repair_requires_frozen_super_scoped_control");
   const transientRecovery = process.env.NYX_TEXT_TRANSIENT_RECOVERY;

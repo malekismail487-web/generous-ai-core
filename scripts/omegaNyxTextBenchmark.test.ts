@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {spawnSync} from "node:child_process";
 import { resolve } from "node:path";
 import { NvidiaNimProvider, type NvidiaNimEvidence } from "../src/lib/codelab/model/nvidiaNimProvider";
 import { NvidiaCapacityCoordinator } from "../src/lib/codelab/model/nvidiaCapacity";
@@ -8,7 +9,7 @@ import { R3BenchmarkRepositorySession } from "./omega/benchmarks/r3RepositorySes
 import { gradeAime, gradeGpqa, gpqaFinalChoice, parsePinnedGpqaData, textGpqaPopulation,
   textFailureRecoverySelection,textFailureRecoverySummary,type TextFailureBaseline,type PrivateTextTask,
   invokeExistingNyxText, sanitizedTextResult, textInferenceUsage, textOutcome, textTaskPrompt,
-  TEXT_BENCHMARK_POLICY, textEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
+  TEXT_BENCHMARK_POLICY, textEvaluationModel, ultraOnlyTextEvaluationModel, textConfiguredRequest, TEXT_DELIVERY_DIAGNOSTICS, TEXT_COMPATIBILITY_DIAGNOSTICS, TEXT_ACTION_SCHEMA_DIAGNOSTICS, TEXT_HOSTED_DIAGNOSTICS,
   textDiagnosticTransport, textRejectionHint, textCapabilityGap, compareTextPair, textTransferSelection,
   textWholePopulation, textPopulationIsFullyGraded, textFullRunIncomplete, textFamilyExecutionExhausted, textDeliveryBlocked, textTimeoutTransferSelection,
   compareTextTimeoutPair, textBoundedTaskRequest, textFullFamilySelection,
@@ -34,10 +35,33 @@ check("evaluation selection leaves the existing Ultra default unchanged", () => 
   assert.equal(textEvaluationModel(TEXT_BENCHMARK_POLICY.model), TEXT_BENCHMARK_POLICY.model);
   assert(Object.isFrozen(TEXT_BENCHMARK_POLICY));
 });
-check("authorized Super is selected explicitly without changing production policy", () => {
+check("historical Super compatibility is preserved separately from current live permission", () => {
   assert.equal(textEvaluationModel("nvidia/nemotron-3-super-120b-a12b"), "nvidia/nemotron-3-super-120b-a12b");
   assert.equal(TEXT_BENCHMARK_POLICY.model, "nvidia/nemotron-3-ultra-550b-a55b");
 });
+check("current live campaign admits only omitted or exact Ultra selection", () => {
+  assert.equal(ultraOnlyTextEvaluationModel(), TEXT_BENCHMARK_POLICY.model);
+  assert.equal(ultraOnlyTextEvaluationModel(TEXT_BENCHMARK_POLICY.model), TEXT_BENCHMARK_POLICY.model);
+});
+for (const model of ["nvidia/nemotron-3-super-120b-a12b", "AUTO", "", " nvidia/nemotron-3-ultra-550b-a55b", "other"])
+  check("current live campaign rejects non-Ultra without fallback", () =>
+    assert.throws(() => ultraOnlyTextEvaluationModel(model), /text_live_campaign_requires_ultra/));
+for (const variable of ["NYX_TEXT_EVALUATION_MODEL", "NVIDIA_NIM_MODEL"])
+  check(`live entrypoint rejects ${variable} Super before repository or dataset access`, () => {
+    const source = 'import {runTextBenchmarkEpoch} from "./scripts/omega/nyx-text-benchmark-epoch.ts"; '
+      + 'try {await runTextBenchmarkEpoch(); process.exitCode=1;} catch(e) {'
+      + 'if(e.message!=="text_live_campaign_requires_ultra") process.exitCode=1; '
+      + 'else console.log("ULTRA_ONLY_REJECTION_BEFORE_DATA_OR_INFERENCE");}';
+    const result = spawnSync(process.execPath, ["--experimental-strip-types", "--import",
+      "./scripts/w0rs/register-typescript-loader.mjs", "--input-type=module", "-e", source], {
+      encoding: "utf8", timeout: 5000, env: {...process.env, OMEGA_ALLOW_NVIDIA_NETWORK: "1",
+        NVIDIA_API_KEY: "SYNTHETIC_DEVELOPMENT_NOT_A_CREDENTIAL", NVIDIA_NIM_MODEL: TEXT_BENCHMARK_POLICY.model,
+        NYX_TEXT_EVALUATION_MODEL: TEXT_BENCHMARK_POLICY.model,
+        [variable]: "nvidia/nemotron-3-super-120b-a12b"},
+    });
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), "ULTRA_ONLY_REJECTION_BEFORE_DATA_OR_INFERENCE");
+  });
 for (const unauthorized of ["", " ", " nvidia/nemotron-3-super-120b-a12b", "NVIDIA/nemotron-3-super-120b-a12b",
   "https://example.invalid/model", "nvidia/unknown", "nvidia/nemotron-3-super-120b-a12b/fallback", null, 123, {}]) {
   check(`unsupported evaluation model fails closed: ${JSON.stringify(unauthorized)}`, () =>
