@@ -1,5 +1,42 @@
 # NYX benchmark capability program
 
+### Ultra HIGH recheck terminal: serving unavailable — 2026-10-17
+
+The [attempt-2 receipt](../../../docs/omega/evidence/nyx-ultra-research-pair-dfed49a5-attempt2.json)
+preserves the explicitly authorized recheck of frozen `dfed49a5`, run
+`38787035427` attempt 2 / job `117363879390`. Both exact-Ultra HIGH availability
+arms exhausted four HTTP attempts with terminal in-band **503** errors; no 429
+or timeout was observed. **Zero benchmark questions were sent or graded**;
+all eight selected task-arm cells remain unexecuted. This is no benchmark score
+and no demonstrated reasoning defect. Eight attempts have unknown token usage;
+zero reported tokens do not mean zero actual compute. Epoch wall time was
+422,767 ms, including capacity waits.
+
+ZIP SHA256/CRC, all 13 frozen source bindings, exact original policy/data/order,
+full 30/198 input populations, four selected identities/input digests, source
+preservation, cleanup and exact report/log agreement passed. Before inference,
+the frozen candidate passed **120 suites / 17,778 checks**, TypeScript zero and
+secret scan. The original attempt's two graded correct answers per arm remain
+separate; no best-of accumulation, fresh-transfer or cognitive-improvement claim.
+
+Ultra-only policy commit `8a119d8` is separate from this old evaluated candidate.
+No Super fallback, acceptance/budget/lease relaxation or further inference is
+scheduled. Live scoring needs restored reliable serving of the same Ultra model
+at the authorized NVIDIA endpoint. These repeated 503s do not establish a key
+problem or justify answer-specific changes, another reasoning layer or silently
+advancing to a different benchmark/model. The broad objective remains unfulfilled.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: explicit model identity,
+negative-evidence preservation and delivery/reasoning separation. Supporting:
+independent custody, deterministic acceptance and unchanged finite authority.
+Deferred: complete Ultra baselines, general correction and fresh matched transfer.
+
+Policy CI `39022074099` passed **121 suites / 17,807 checks**, TypeScript zero,
+independent arithmetic replay, production build and package smoke, then detected
+one missing generated environment-reference entry in `repository-truth-map.json`.
+The existing generator refreshed that entry for the new `NVIDIA_NIM_MODEL` check;
+no inventory check was weakened and unrelated local UI edits were excluded.
+
 ### Ultra-only live campaign permission — 2026-10-17
 
 The operator reaffirmed **Ultra only**, continuous bounded benchmark-driven

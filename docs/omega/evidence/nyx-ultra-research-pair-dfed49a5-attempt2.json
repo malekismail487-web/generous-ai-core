@@ -1,0 +1,613 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ULTRA-STANDALONE-CLOSED-BOOK-PAIR-dfed49a5-ATTEMPT-2",
+  "candidate": "dfed49a5fb2469c6f590dbffe033a2cedb5b096c",
+  "run": {
+    "id": 38787035427,
+    "attempt": 2,
+    "jobId": 117363879390,
+    "conclusion": "failure",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/38787035427/attempts/2",
+    "explicitHumanRecheckAuthorization": "2026-10-17T09:30:21Z",
+    "startedAt": "2026-10-17T09:31:08Z",
+    "completedAt": "2026-10-17T09:42:10Z"
+  },
+  "artifact": {
+    "id": 12097321809,
+    "bytes": 4632,
+    "sha256": "bb21234c17a70a43a6937e71f0baa82645bd72935cc4a5a1290396932ed86860",
+    "member": "nyx-ultra-pair-dfed49a5fb2469c6f590dbffe033a2cedb5b096c.json",
+    "reportSha256": "869912815402698a55860eb664fb6ca7f77f186e0d64e372a8b0e4e44a012fe0"
+  },
+  "custody": {
+    "archiveCrcChecked": true,
+    "allThirteenSourceBindingsMatchFrozenGit": true,
+    "policySourcesSelectionAndOrderExactlyMatchOriginalAttempt": true,
+    "fullPopulationsVerified": [
+      30,
+      198
+    ],
+    "selectedIdentitiesAndInputDigestsVerified": 4,
+    "preparedAimeDigestVerified": true,
+    "gpqaPreparedDigestVerified": true,
+    "reportLogAgreement": true,
+    "artifactElapsedMs": 422767,
+    "logElapsedMs": 422767,
+    "sourceScopeCleanupPrivacyAndFiniteBudgetVerified": true,
+    "referenceValuesPrinted": false,
+    "modelCallsByCustodyVerification": 0,
+    "artifactFixityIsNotCryptographicAuthentication": true
+  },
+  "preInferenceVerification": {
+    "candidate": "dfed49a5fb2469c6f590dbffe033a2cedb5b096c",
+    "jobId": 117363879390,
+    "suites": 120,
+    "passedChecks": 17778,
+    "failedSuites": 0,
+    "typeScript": "5.8.3 baseline=0 current=0 new=0",
+    "secretScan": "1442_TEXT_FILES_ZERO_FINDINGS",
+    "scope": "FROZEN_CANDIDATE_PRE_INFERENCE_CHECKS_NOT_A_COGNITIVE_RESULT_OR_NEW_POLICY_CI"
+  },
+  "interpretation": {
+    "liveEvaluationState": "BLOCKED_PROVIDER",
+    "selectedQuestions": 4,
+    "selectedTaskArms": 8,
+    "benchmarkQuestionsSent": 0,
+    "attemptedTaskArms": 0,
+    "gradedTaskArms": 0,
+    "unexecutedTaskArms": 8,
+    "availabilityLogicalCalls": 2,
+    "availabilityHttpAttempts": 8,
+    "providerUnavailableResponses": 8,
+    "rateLimitResponses": 0,
+    "providerTimeouts": 0,
+    "reportedTokens": 0,
+    "unknownUsageHttpAttempts": 8,
+    "actualTokenUsage": "UNKNOWN_NOT_ZERO",
+    "providerFailureShape": "HTTP_200_SSE_ENVELOPE_WITH_IN_BAND_503_TERMINAL_ERROR",
+    "nativeEffort": "HIGH_BY_REVIEWED_ADAPTER_DEFAULT_IN_BOTH_ARMS",
+    "benchmarkAccuracy": null,
+    "reasoningFailureObserved": false,
+    "cognitiveImprovementDemonstrated": false,
+    "matchedRealizedComputeConclusion": null,
+    "originalAttemptPreserved": "nyx-ultra-research-pair-dfed49a5.json",
+    "originalAttemptTwoGradedCorrectPerArmNotMerged": true,
+    "noHistoricalSuccessesOrFailuresRelabelled": true,
+    "noSuperFallback": true,
+    "noBudgetLeaseGraderOrAuthorityChange": true,
+    "defaultUltraChanged": false,
+    "authorityDelta": "NONE",
+    "policyMilestone": "8a119d87c283d935f5b44d5ced3e82e31b5db276_ENFORCES_ULTRA_ONLY_FUTURE_LIVE_TEXT_CAMPAIGNS_NOT_PART_OF_FROZEN_EVALUATED_CANDIDATE",
+    "latencyScope": "EPOCH_AND_TASK_WALL_INCLUDE_CAPACITY_WAITS_NOT_PURE_INFERENCE",
+    "generalCodeCorrectionNotSupportedByThisFailure": true,
+    "minimumExternalAction": "Restore reliable authorized serving of nvidia/nemotron-3-ultra-550b-a55b at the configured NVIDIA endpoint; use NVIDIA operator/support rather than changing models or weakening checks. A replacement key is not an established remedy for 503.",
+    "noAdditionalInferenceScheduled": true
+  },
+  "report": {
+    "schemaVersion": 1,
+    "identity": "NYX-ULTRA-STANDALONE-CLOSED-BOOK-PAIR-001",
+    "candidate": "dfed49a5fb2469c6f590dbffe033a2cedb5b096c",
+    "executionIdentity": "github-actions-38787035427",
+    "environment": "linux-x64-node-v24.21.0",
+    "policy": {
+      "version": "nyx-ultra-closed-book-pair/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "arms": [
+        "STANDALONE_ULTRA",
+        "CURRENT_NYX_CLOSED_BOOK"
+      ],
+      "samplePerFamily": 2,
+      "maxOutputTokens": 16384,
+      "temperature": 0.2,
+      "maxLogicalCallsPerTaskArm": 1,
+      "maxPhysicalCallsPerTaskArm": 4,
+      "maxTaskMs": 360000,
+      "maxRequestLifetimeMs": 300000,
+      "maxEpochMs": 3900000,
+      "maxEpochLogicalCalls": 10,
+      "maxEpochPhysicalCalls": 40,
+      "responseMode": "BOUNDED_SSE",
+      "reasoningControl": "ULTRA_HOSTED_NATIVE",
+      "reasoningEffort": "HIGH_BY_REVIEWED_ADAPTER_DEFAULT",
+      "explicitReasoningBudget": null,
+      "inputDelivery": "DIRECT_FROZEN_TEXT_NOT_A_REPOSITORY_OBSERVATION",
+      "tools": [],
+      "firstSubmittedAnswerOnly": true,
+      "repairIterations": 0,
+      "productionDefaultsChanged": false,
+      "grantsAuthority": false
+    },
+    "modelIdentifierScope": "EXACT_REQUESTED_IDENTIFIER_NOT_WEIGHT_DIGEST_OR_IMMUTABLE_SERVING_BUILD",
+    "sourceBindings": {
+      "scripts/omega/nyx-ultra-research-pair.ts": "b439bca272c3d7787cc4965c14b803fc52b04b2509ab3951a65c524771d04b48",
+      "scripts/omega/benchmarks/ultraResearchPair.ts": "06f74c43d6a55953c85c3c67dec68213ebb42f212a4ca807a6c66b3c843925dd",
+      "scripts/omega/nyx-aime26-live-eval.ts": "03e961bde512b6da72cf93c1d85d6a39e4bf0eb6ff3ce1b717f13352770ec4ef",
+      "scripts/omega/benchmarks/nyxTextBenchmark.ts": "6542b696678afea33c09a019ea17f8794e15e4a22f6d270b1ce84110f1c13d1b",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "scripts/omega/benchmarks/prepare-text-benchmarks.py": "bf16e4b45ad67ec414581b0ae29e7de1e5b5db1ed1623a32cc3fa6a8b5ca0add",
+      "src/lib/codelab/cli/nyxChatSession.ts": "8fac7ca3d54df9e1d2a061099dc5b763673c0a7af08f1b3d8ea7d012984cc0f0",
+      "src/lib/codelab/cli/nyxChatProtocol.ts": "7895e0e39a7d65ba7d678c89ddeb435b41b90edda2b50ac605e83cbb0daafd2d",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "dcae17a73232c37b3f93d8afc78ef29c0a6a7c76bbcbc4a080b2d270df310604",
+      "src/lib/codelab/model/nvidiaEventStream.ts": "4498aaf108465f68f1db8fbdf5c89a438d0e20fe960ce7568b828b14d1a513b4",
+      "src/lib/codelab/model/nvidiaCapacity.ts": "6bc1154b98db896c2f4a0bae53bef7cec4cd39792cae0804ac87dbe0d9771d4a",
+      "src/lib/codelab/executor/readOnlyExecutor.ts": "fde4893c4e663c1eeebafba8f7c3194e7d429883993bb933c624a23637bb9bef",
+      ".github/workflows/omega-nyx-ultra-research-pair.yml": "4e35c17e9ad513c124783228e386cc9f5f5c0fc78e9b727f76140a6d75fc4a3f"
+    },
+    "sources": {
+      "aime": {
+        "dataset": "MathArena/aime_2026",
+        "revision": "d2de22f3c656b4f56cf8981212186377d1e23bc3",
+        "sourceSha256": "d91db799651b4cc1f0734f52792a695c9cc60dac342524b3d8e5b2ff31c3e957",
+        "license": "cc-by-nc-sa-4.0",
+        "population": 30,
+        "grading": "EXACT_FINAL_INTEGER_EXISTING_NYX_ADAPTER_NOT_MATHARENA_INFERENCE_HARNESS"
+      },
+      "gpqa": {
+        "revision": "56686c06f5e19865c153de0fdb11be3890014df7",
+        "archiveDigest": "461ae7329f15a3e35f8184d2dac24b990f34fdf12f366ca4062d8e6638cd08dc",
+        "csvDigest": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+        "preparedDigest": "760b5a1eab8abb403b644dbc84edd55af3ff50066d4eda1299c220db7f224942",
+        "shuffleSeed": 0,
+        "population": 198
+      }
+    },
+    "preparedAimeSha256": "de61625fe768eee2e49732c6b3fda5976ee5a9825ea2e622d210604b35315a1f",
+    "selectedTasks": [
+      {
+        "taskId": "AIME-2026-19",
+        "family": "AIME_2026",
+        "inputDigest": "90dc9f6a619aed48ba74047179c6e047fca43afd5892be2a702ed3b65b658b81"
+      },
+      {
+        "taskId": "GPQA-DIAMOND-070",
+        "family": "GPQA_DIAMOND",
+        "inputDigest": "da55bbdb185571596671027a3a7406216453735539dcd87d50cd80f8e460cd90"
+      },
+      {
+        "taskId": "AIME-2026-15",
+        "family": "AIME_2026",
+        "inputDigest": "4cff8fe74f770fa978406c7ffd90b89114a75e32e9d4f0c20d45d3d8c64acac1"
+      },
+      {
+        "taskId": "GPQA-DIAMOND-145",
+        "family": "GPQA_DIAMOND",
+        "inputDigest": "713525a4b25e3d8551e70cf817c7f5c846328f5dcfae4d15da314a360f984104"
+      }
+    ],
+    "selection": "FIXED_ID_HASH_RANK_TWO_PER_FAMILY_WITHOUT_REFERENCE_OR_PRIOR_OUTCOME_SELECTION",
+    "exposure": "EXPOSED_PUBLIC_PROGRAM_CORPORA_NOT_FRESH_GENERALIZATION_PROVIDER_PRETRAINING_UNKNOWN",
+    "armOrder": [
+      {
+        "taskId": "AIME-2026-19",
+        "arms": [
+          "STANDALONE_ULTRA",
+          "CURRENT_NYX_CLOSED_BOOK"
+        ]
+      },
+      {
+        "taskId": "GPQA-DIAMOND-070",
+        "arms": [
+          "STANDALONE_ULTRA",
+          "CURRENT_NYX_CLOSED_BOOK"
+        ]
+      },
+      {
+        "taskId": "AIME-2026-15",
+        "arms": [
+          "CURRENT_NYX_CLOSED_BOOK",
+          "STANDALONE_ULTRA"
+        ]
+      },
+      {
+        "taskId": "GPQA-DIAMOND-145",
+        "arms": [
+          "CURRENT_NYX_CLOSED_BOOK",
+          "STANDALONE_ULTRA"
+        ]
+      }
+    ],
+    "preflight": [
+      {
+        "taskId": "ULTRA-AVAILABILITY-DEVELOPMENT",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "a9f4681c4c8a6b600459696bd9d334cdc90e9d3cde7f4584b734c22405263db9",
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 4,
+          "httpAttempts": 4,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 4,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 181349,
+          "providerFailures": 4,
+          "retries": 3
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "47e0bb4a5611c11509b6ebefd39fc0c5bf3dd13f88d6738e8d466b67799621a2",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_UNAVAILABLE",
+            "reasoningOutputBytes": null,
+            "contentShape": null,
+            "streamDelivery": {
+              "mode": "BOUNDED_SSE",
+              "scope": "LAST_HTTP_ATTEMPT_ONLY",
+              "timingOrigin": "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
+              "wireBytes": 116,
+              "chunks": 1,
+              "events": 1,
+              "reasoningDeltaBytes": 0,
+              "contentDeltaBytes": 0,
+              "firstEventAfterMs": 40,
+              "firstReasoningAfterMs": null,
+              "firstContentAfterMs": null,
+              "lastEventAfterMs": 40,
+              "usageReceived": false,
+              "reportedUsage": {
+                "promptTokens": null,
+                "completionTokens": null,
+                "totalTokens": null
+              },
+              "failureCode": "nvidia_stream_provider_error",
+              "providerErrorStatusCode": 503,
+              "terminal": "PROVIDER_ERROR"
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 4,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 4,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 180003,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1792230064203,
+                "finalAttemptUsed": true,
+                "selection": "REMAINING_REQUEST_WINDOW",
+                "allocatedAttemptMs": [
+                  300000,
+                  239618,
+                  179279,
+                  118983
+                ],
+                "requestLifetimeMs": 300000,
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 4,
+                "remainingAttempts": 0,
+                "exhausted": true,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventOutcomes": [],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "arm": "STANDALONE_ULTRA",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "implementation": "PROVIDER_PLUS_MINIMAL_SHARED_REPLY_IO_NO_NYX_SESSION",
+        "scope": "CLOSED_BOOK_PATH_NOT_FULL_TOOL_ENABLED_RESEARCH_ARCHITECTURE",
+        "authorization": {
+          "allowedActions": [
+            "REPLY"
+          ],
+          "repositoryReadsExecuted": 0,
+          "toolsExecuted": 0,
+          "authorityDelta": "NONE"
+        },
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 0,
+          "provisionedLifecycles": 0
+        },
+        "logicalRequests": 1,
+        "uncertainty": "NOT_MEASURED_NOT_INFERRED_FROM_CORRECTNESS"
+      },
+      {
+        "taskId": "ULTRA-AVAILABILITY-DEVELOPMENT",
+        "family": "DEVELOPMENT_DIAGNOSTIC",
+        "inputDigest": "a9f4681c4c8a6b600459696bd9d334cdc90e9d3cde7f4584b734c22405263db9",
+        "state": "PROVIDER_FAILURE",
+        "correct": null,
+        "usage": {
+          "logicalCalls": 1,
+          "physicalCalls": 4,
+          "httpAttempts": 4,
+          "reportedTokens": 0,
+          "unknownUsageCalls": 4,
+          "toolCalls": 0,
+          "toolWorkUnits": 0,
+          "wallClockMs": 181341,
+          "providerFailures": 4,
+          "retries": 3
+        },
+        "localRejectedCalls": 0,
+        "modelEvidence": [
+          {
+            "requestDigest": "67e7c7e579c7d262645b28960c30758e1a49e978f015891e95a836fe99092768",
+            "responseDigest": null,
+            "providerRequestId": null,
+            "statusCode": 200,
+            "finishReason": null,
+            "failureCategory": "PROVIDER_UNAVAILABLE",
+            "reasoningOutputBytes": null,
+            "contentShape": null,
+            "streamDelivery": {
+              "mode": "BOUNDED_SSE",
+              "scope": "LAST_HTTP_ATTEMPT_ONLY",
+              "timingOrigin": "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
+              "wireBytes": 116,
+              "chunks": 1,
+              "events": 1,
+              "reasoningDeltaBytes": 0,
+              "contentDeltaBytes": 0,
+              "firstEventAfterMs": 40,
+              "firstReasoningAfterMs": null,
+              "firstContentAfterMs": null,
+              "lastEventAfterMs": 40,
+              "usageReceived": false,
+              "reportedUsage": {
+                "promptTokens": null,
+                "completionTokens": null,
+                "totalTokens": null
+              },
+              "failureCode": "nvidia_stream_provider_error",
+              "providerErrorStatusCode": 503,
+              "terminal": "PROVIDER_ERROR"
+            },
+            "delivery": {
+              "policy": "nvidia-capacity/1",
+              "requestsPerMinute": 40,
+              "scope": "PROCESS_LOCAL_FIXED_NVIDIA_ENDPOINT",
+              "httpAttempts": 4,
+              "rateLimitedResponses": 0,
+              "transientUnavailableResponses": 4,
+              "timedOutAttempts": 0,
+              "capacityWaitMs": 180003,
+              "state": "STOPPED",
+              "notBeforeEpochMs": null,
+              "authorityRenewed": false,
+              "attemptTimeout": {
+                "configuredMs": 120000,
+                "finalAttemptMs": 180000,
+                "callerDeadlineEpochMs": 1792230305609,
+                "finalAttemptUsed": true,
+                "selection": "REMAINING_REQUEST_WINDOW",
+                "allocatedAttemptMs": [
+                  300000,
+                  239675,
+                  179344,
+                  119032
+                ],
+                "requestLifetimeMs": 300000,
+                "authorityRenewed": false
+              },
+              "httpAttemptBudget": {
+                "scope": "HOST_OWNED_RUN_INCLUDING_RETRIES",
+                "limit": 4,
+                "dispatched": 4,
+                "remainingAttempts": 0,
+                "exhausted": true,
+                "dispatchDenied": false,
+                "renewed": false,
+                "transientRecovery": "WITHIN_SHARED_BUDGET"
+              }
+            }
+          }
+        ],
+        "eventOutcomes": [
+          {
+            "sequence": 1,
+            "eventType": "MODEL",
+            "outcome": "PROVIDER_ERROR",
+            "evidenceClass": "E4"
+          }
+        ],
+        "sourceRepositoryMutated": false,
+        "broaderAuthorityGranted": false,
+        "arm": "CURRENT_NYX_CLOSED_BOOK",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "implementation": "EXISTING_NYX_CHAT_SESSION_REPLY_ONLY",
+        "scope": "CLOSED_BOOK_PATH_NOT_FULL_TOOL_ENABLED_RESEARCH_ARCHITECTURE",
+        "authorization": {
+          "allowedActions": [
+            "REPLY"
+          ],
+          "repositoryReadsExecuted": 0,
+          "toolsExecuted": 0,
+          "authorityDelta": "NONE"
+        },
+        "cleanup": {
+          "sourceUnchanged": true,
+          "cleanupVerified": true,
+          "lifecycleTerminations": 0,
+          "provisionedLifecycles": 0
+        },
+        "logicalRequests": 1,
+        "uncertainty": "NOT_MEASURED_NOT_INFERRED_FROM_CORRECTNESS"
+      }
+    ],
+    "results": [],
+    "summary": {
+      "arms": [
+        {
+          "arm": "STANDALONE_ULTRA",
+          "selected": 4,
+          "attempted": 0,
+          "graded": 0,
+          "correct": 0,
+          "wrong": 0,
+          "ungraded": 0,
+          "unexecuted": 4,
+          "completePilot": false,
+          "pilotAccuracy": null,
+          "fullBenchmarkScore": null
+        },
+        {
+          "arm": "CURRENT_NYX_CLOSED_BOOK",
+          "selected": 4,
+          "attempted": 0,
+          "graded": 0,
+          "correct": 0,
+          "wrong": 0,
+          "ungraded": 0,
+          "unexecuted": 4,
+          "completePilot": false,
+          "pilotAccuracy": null,
+          "fullBenchmarkScore": null
+        }
+      ],
+      "pairs": [
+        {
+          "taskId": "AIME-2026-19",
+          "bothGraded": false,
+          "standaloneCorrect": null,
+          "nyxCorrect": null,
+          "exactlyMatchedReportedModelCompute": false,
+          "reportedTokenDifference": null
+        },
+        {
+          "taskId": "GPQA-DIAMOND-070",
+          "bothGraded": false,
+          "standaloneCorrect": null,
+          "nyxCorrect": null,
+          "exactlyMatchedReportedModelCompute": false,
+          "reportedTokenDifference": null
+        },
+        {
+          "taskId": "AIME-2026-15",
+          "bothGraded": false,
+          "standaloneCorrect": null,
+          "nyxCorrect": null,
+          "exactlyMatchedReportedModelCompute": false,
+          "reportedTokenDifference": null
+        },
+        {
+          "taskId": "GPQA-DIAMOND-145",
+          "bothGraded": false,
+          "standaloneCorrect": null,
+          "nyxCorrect": null,
+          "exactlyMatchedReportedModelCompute": false,
+          "reportedTokenDifference": null
+        }
+      ],
+      "bothCorrect": 0,
+      "standaloneOnly": 0,
+      "nyxOnly": 0,
+      "neitherCorrectGraded": 0,
+      "ungradedOrUnexecutedPairs": 4,
+      "cognitivePromotion": false,
+      "freshGeneralizationClaim": false,
+      "officialBenchmarkScoreClaim": false
+    },
+    "usage": {
+      "benchmark": {
+        "logicalCalls": 0,
+        "physicalCalls": 0,
+        "httpAttempts": 0,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 0,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 0,
+        "providerFailures": 0,
+        "retries": 0
+      },
+      "developmentAvailability": {
+        "logicalCalls": 2,
+        "physicalCalls": 8,
+        "httpAttempts": 8,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 8,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 362690,
+        "providerFailures": 8,
+        "retries": 6
+      },
+      "allCompletedCells": {
+        "logicalCalls": 2,
+        "physicalCalls": 8,
+        "httpAttempts": 8,
+        "reportedTokens": 0,
+        "unknownUsageCalls": 8,
+        "toolCalls": 0,
+        "toolWorkUnits": 0,
+        "wallClockMs": 362690,
+        "providerFailures": 8,
+        "retries": 6
+      },
+      "interruptedAttempt": null
+    },
+    "capacityWaits": [
+      {
+        "taskId": "ULTRA-AVAILABILITY-DEVELOPMENT",
+        "arm": "STANDALONE_ULTRA",
+        "state": "READY",
+        "waitedMs": 0
+      },
+      {
+        "taskId": "ULTRA-AVAILABILITY-DEVELOPMENT",
+        "arm": "CURRENT_NYX_CLOSED_BOOK",
+        "state": "READY",
+        "waitedMs": 60053
+      }
+    ],
+    "stopReason": "AVAILABILITY_NOT_PASSED_NO_BENCHMARK_CALLS",
+    "infrastructureCode": null,
+    "elapsedMs": 422767,
+    "sourceUnchanged": true,
+    "inFlight": null,
+    "rawQuestionsStored": false,
+    "rawAnswersStored": false,
+    "rawModelReasoningStored": false,
+    "lowEntropyAnswerHashesStored": false,
+    "credentialsStored": false,
+    "historicalSuccessesMerged": false,
+    "wholeResearchArchitectureExercised": false,
+    "toolsOrRepositoryActionsAuthorized": false,
+    "benchmarkHarness": "CUSTOM_NYX_FIRST_REPLY_PILOT_NOT_AUTHOR_INFERENCE_HARNESS_OR_FULL_BENCHMARK",
+    "defaultUltraChanged": false,
+    "authorityDelta": "NONE",
+    "architecturalPromotion": false,
+    "interpretation": "AVAILABILITY_DOES_NOT_PROVE_PROVIDER_STABILITY_PILOT_DOES_NOT_PROVE_GENERAL_CAPABILITY"
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "direct": [
+      "Exact Ultra identity; no fallback",
+      "Reality over prediction and incomplete coverage is not a score",
+      "General corrections require an actual attributable failure"
+    ],
+    "supporting": [
+      "Independent source/data custody and deterministic grading",
+      "Finite budgets, leases, cleanup and unchanged authority"
+    ],
+    "deferred": [
+      "Complete current Ultra baselines",
+      "Tool-enabled Ultra contribution and fresh matched transfer",
+      "General cognitive gains and human-reviewed promotion"
+    ],
+    "conflicts": []
+  }
+}
