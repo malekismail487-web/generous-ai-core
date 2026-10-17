@@ -1,5 +1,40 @@
 # NYX benchmark capability program
 
+### MEDIUM pair terminal: provider-blocked, no benchmark questions sent — 2026-10-17
+
+The [terminal receipt](../../../docs/omega/evidence/nyx-ultra-medium-pair-e47d672c.json)
+binds run `39019640861`, job `117358704100`, candidate `e47d672c`. Both MEDIUM
+availability arms exhausted four attempts with HTTP-200 SSE envelopes containing
+terminal provider **503** errors. No 429 rate-limit response was observed.
+**Four benchmark questions were selected; zero were sent or graded; all eight
+task-arm cells remain unexecuted.** This is neither a zero benchmark score nor a
+reasoning failure. Eight HTTP attempts have unknown token usage; zero reported
+tokens must not be read as zero actual consumption. Epoch wall time was 422,634 ms
+including capacity waits, not pure inference latency.
+
+The 4,722-byte ZIP SHA256, CRC, all 14 frozen source bindings, full 30/198 source
+populations, selected identities/input digests, prepared-data digests and
+report/log agreement were independently checked. Clean hosted CI passed **121
+suites / 17,799 checks**, TypeScript zero, secret scan, production build and package
+smoke. Source preservation and disposable cleanup passed. Original HIGH,
+development-attempt and historical Super evidence remain unchanged. No capability,
+configuration, authority, benchmark-superiority or fresh-generalization promotion.
+
+MEDIUM's earlier isolated successes did not reproduce as stable service. They
+cannot establish that HIGH was the cause of 503s or justify promoting MEDIUM.
+The spent push trigger is removed; only explicit manual workflow dispatch remains.
+No additional inference, automatic rerun, fallback, model change or budget/lease
+extension is scheduled. Further live scoring needs reliable authorized serving
+of the same Ultra model. A new API key is not an evidence-supported remedy for
+these 503s. Full goal completion remains unproven; no research objective is
+redefined as merely having a working harness.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: reality over prediction,
+delivery versus reasoning separation, honest incomplete coverage and compute.
+Supporting: independent custody, unchanged acceptance/scope and negative-evidence
+preservation. Deferred: live baselines, tool-enabled contribution, general
+mathematical/scientific capability gains and independent transfer. No conflicts.
+
 ### Frozen MEDIUM-only Ultra closed-book pair — 2026-10-17
 
 The [exact-repeat receipt](../../../docs/omega/evidence/nyx-ultra-effort-development-d2d2016-attempt2.json)

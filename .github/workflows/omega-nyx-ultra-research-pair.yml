@@ -7,9 +7,6 @@ on:
         options: [BENCHMARK_PAIR, BENCHMARK_MEDIUM_PAIR, DEVELOPMENT_EFFORT]
         default: BENCHMARK_PAIR
         description: Separately frozen HIGH pair, MEDIUM pair, or synthetic native-effort ablation
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-nyx-ultra-research-pair.yml]
 permissions:
   contents: read
 concurrency:
@@ -17,13 +14,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   paired-ultra:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'eval(nyx): freeze Ultra medium-only closed-book comparison'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 80
     env:
-      NYX_ULTRA_RESEARCH_MODE: ${{ github.event_name == 'push' && 'BENCHMARK_MEDIUM_PAIR' || inputs.mode || 'BENCHMARK_PAIR' }}
+      NYX_ULTRA_RESEARCH_MODE: ${{ inputs.mode || 'BENCHMARK_PAIR' }}
     steps:
       - uses: actions/checkout@v4
         with:
