@@ -1,5 +1,40 @@
 # NYX benchmark capability program
 
+### AIME 2026 Ultra repeat terminal: blocked before benchmark execution — 2026-10-17
+
+The [attempt-2 receipt](../../../docs/omega/evidence/aime2026-ultra-streaming-4ded77ea-attempt2.json)
+captures run `38741717845`, attempt **2**, job `117368069723`, frozen candidate
+`4ded77ea`. Ultra HIGH / `FROZEN_STREAM_BENCHMARK` failed the first development
+preflight: four HTTP attempts returned terminal in-band **503** errors inside
+HTTP-200 SSE envelopes. No 429, timeout, reasoning delta or final content was
+observed. **30 selected; 0 attempted; 0 graded; 30 unexecuted. Score: null.**
+This is neither a zero benchmark score nor evidence of reasoning failure.
+
+One logical call / four physical attempts have zero reported tokens and **four
+unknown-usage attempts**, not proven zero compute. Artifact wall time was
+181,618 ms; the terminal log snapshot was 12 ms later. In-request capacity waits
+totaled 180,003 ms; pre-task capacity wait was zero. The original six-minute task,
+five-minute request, four-attempt, 16,384-token and 200-minute epoch limits stood.
+
+The exact attempt-2 ZIP SHA256/CRC, all 11 frozen source bindings, complete author
+input population/digest and report/log agreement except elapsed time passed.
+Input verification projected only problem identity/text, not reference answers.
+Source preservation passed; the frozen runner's cleanup assertions reported no
+failure. Before inference, **119 suites / 17,729 checks**, TypeScript zero and
+secret scan passed. These are infrastructure checks, not cognitive gains.
+
+Original attempt 1 remains unchanged: 30 attempted, 12 graded/correct and 18
+ungraded. No old success is merged, no Super fallback or fresh-generalization
+claim is made, and no other benchmark or inference is launched by this capture.
+The smallest supported next investigation is reliable authorized **Ultra serving**
+at the configured NVIDIA endpoint. A key replacement or NYX reasoning patch is
+not an established remedy for these 503s. The completion watch pauses after capture.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: honest incomplete coverage,
+exact model identity and first-attempt preservation. Supporting: frozen custody,
+strict acceptance, finite leases and authority. Deferred: complete Ultra baseline,
+general correction, fresh matched transfer and further benchmark campaigns.
+
 ### Ultra HIGH recheck terminal: serving unavailable — 2026-10-17
 
 The [attempt-2 receipt](../../../docs/omega/evidence/nyx-ultra-research-pair-dfed49a5-attempt2.json)
