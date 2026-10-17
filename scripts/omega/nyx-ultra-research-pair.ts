@@ -10,7 +10,7 @@ import {theoryDigest} from "../../src/lib/codelab/research/theoryContracts";
 import {parseAime2026Data, AIME_2026_SOURCE} from "./nyx-aime26-live-eval";
 import {parsePinnedGpqaData, GPQA_DIAMOND_SOURCE, textInferenceUsage, type PrivateTextTask} from "./benchmarks/nyxTextBenchmark";
 import {ULTRA_RESEARCH_PAIR_POLICY as P, ultraResearchModel, ultraResearchProviderConfig,
-  ultraResearchSelection, runUltraResearchArm, summarizeUltraResearchPairs,
+  ultraResearchSelection, runUltraResearchArm, summarizeUltraResearchPairs, ultraResearchPairPolicy,
   type UltraResearchArm, type UltraResearchRow, type UltraNativeEffort} from "./benchmarks/ultraResearchPair";
 import {ULTRA_EFFORT_DEVELOPMENT_POLICY, ultraEffortDevelopmentTasks, ultraResearchMode,
   ultraEffortOrder, summarizeUltraEffortDevelopment} from "./benchmarks/ultraEffortDevelopment";
@@ -21,6 +21,8 @@ const AVAILABILITY_TASK: PrivateTextTask = Object.freeze({family: "DEVELOPMENT_D
 export async function runUltraResearchPair() {
   const model = ultraResearchModel(process.env);
   const mode = ultraResearchMode(process.env.NYX_ULTRA_RESEARCH_MODE), development = mode === "DEVELOPMENT_EFFORT";
+  const benchmarkEffort: UltraNativeEffort = mode === "BENCHMARK_MEDIUM_PAIR" ? "MEDIUM" : "HIGH";
+  const benchmarkPolicy = ultraResearchPairPolicy(benchmarkEffort);
   if (process.env.OMEGA_ALLOW_NVIDIA_NETWORK !== "1" || !process.env.NVIDIA_API_KEY?.trim())
     throw Error("ultra_pair_requires_authorized_network_and_injected_secret");
   const git = (...args: string[]) => execFileSync("git", args, {encoding: "utf8", stdio: ["ignore", "pipe", "ignore"]}).trim();
@@ -34,7 +36,7 @@ export async function runUltraResearchPair() {
       throw Error("ultra_pair_verified_data_required");
     const aime = parseAime2026Data(await readFile(resolve(process.env.NYX_ULTRA_PAIR_AIME), "utf8"), process.env.NYX_ULTRA_PAIR_AIME_SHA256);
     const gpqa = parsePinnedGpqaData(await readFile(resolve(process.env.NYX_ULTRA_PAIR_GPQA), "utf8")).tasks;
-    selected = ultraResearchSelection(aime, gpqa);
+    selected = ultraResearchSelection(aime, gpqa, benchmarkEffort);
   }
   const began = Date.now(), epochDeadline = began + P.maxEpochMs;
   const sourceBindings = Object.fromEntries(await Promise.all([
@@ -58,9 +60,11 @@ export async function runUltraResearchPair() {
   }, {logicalCalls: 0, physicalCalls: 0, httpAttempts: 0, reportedTokens: 0, unknownUsageCalls: 0,
     toolCalls: 0, toolWorkUnits: 0, wallClockMs: 0, providerFailures: 0, retries: 0});
   const snapshot = () => ({schemaVersion: 1, identity: development ? "NYX-ULTRA-NATIVE-EFFORT-DEVELOPMENT-001"
+    : mode === "BENCHMARK_MEDIUM_PAIR" ? "NYX-ULTRA-MEDIUM-STANDALONE-CLOSED-BOOK-PAIR-001"
     : "NYX-ULTRA-STANDALONE-CLOSED-BOOK-PAIR-001", mode, candidate,
     executionIdentity: `github-actions-${process.env.GITHUB_RUN_ID}`, environment: `${process.platform}-${process.arch}-node-${process.version}`,
-    policy: development ? ULTRA_EFFORT_DEVELOPMENT_POLICY : P,
+    policy: development ? ULTRA_EFFORT_DEVELOPMENT_POLICY : benchmarkPolicy,
+    ...(development ? {} : {benchmarkEffort}),
     modelIdentifierScope: "EXACT_REQUESTED_IDENTIFIER_NOT_WEIGHT_DIGEST_OR_IMMUTABLE_SERVING_BUILD",
     sourceBindings, sources: development ? {development: "FOUR_SYNTHETIC_OBJECTIVES_NOT_BENCHMARK_QUESTIONS"}
       : {aime: AIME_2026_SOURCE, gpqa: GPQA_DIAMOND_SOURCE},
@@ -75,7 +79,7 @@ export async function runUltraResearchPair() {
         {arm: "CURRENT_NYX_CLOSED_BOOK", nativeEffort: ultraEffortOrder(index)[1]}]
         : Math.floor(index / 2) % 2 === 0 ? [...P.arms] : [...P.arms].reverse()})),
     preflight, results: rows, summary: development ? summarizeUltraEffortDevelopment(selected.map(t => t.taskId), rows)
-      : summarizeUltraResearchPairs(selected.map(t => t.taskId), rows),
+      : summarizeUltraResearchPairs(selected.map(t => t.taskId), rows, benchmarkEffort),
     usage: {...(development ? {developmentComparison: usage(rows)} : {benchmark: usage(rows)}),
       developmentAvailability: usage(preflight), allCompletedCells: usage([...preflight, ...rows]),
       interruptedAttempt: pending ? {taskId: pending.taskId, arm: pending.arm, nativeEffort: pending.nativeEffort,
@@ -97,7 +101,7 @@ export async function runUltraResearchPair() {
     console.log(`NYX_ULTRA_PAIR_PROGRESS ${JSON.stringify({candidate, mode, preflightCells: preflight.length,
       comparisonCells: rows.length, stopReason})}`);
   };
-  const execute = async (task: PrivateTextTask, arm: UltraResearchArm, nativeEffort: UltraNativeEffort = "HIGH") => {
+  const execute = async (task: PrivateTextTask, arm: UltraResearchArm, nativeEffort: UltraNativeEffort) => {
     const ready = await liveNvidiaCapacity.waitUntilReady(epochDeadline, new AbortController().signal);
     waits.push({taskId: task.taskId, arm, nativeEffort, state: ready.state, waitedMs: ready.waitedMs});
     if (ready.state !== "READY" || Date.now() >= epochDeadline) return null;
@@ -109,7 +113,7 @@ export async function runUltraResearchPair() {
   await checkpoint();
   try {
     const availabilityCells = development ? ULTRA_EFFORT_DEVELOPMENT_POLICY.profiles.map(nativeEffort =>
-      ({arm: "CURRENT_NYX_CLOSED_BOOK" as const, nativeEffort})) : P.arms.map(arm => ({arm, nativeEffort: "HIGH" as const}));
+      ({arm: "CURRENT_NYX_CLOSED_BOOK" as const, nativeEffort})) : P.arms.map(arm => ({arm, nativeEffort: benchmarkEffort}));
     for (const {arm, nativeEffort} of availabilityCells) {
       const row = await execute(AVAILABILITY_TASK, arm, nativeEffort); if (!row) {stopReason = "AVAILABILITY_WAIT_LIMIT"; break;}
       preflight.push(row); await checkpoint();
@@ -119,7 +123,7 @@ export async function runUltraResearchPair() {
     else {
       outer: for (const [index, task] of selected.entries()) {
         const order = development ? ultraEffortOrder(index).map(nativeEffort => ({arm: "CURRENT_NYX_CLOSED_BOOK" as const, nativeEffort}))
-          : (Math.floor(index / 2) % 2 === 0 ? [...P.arms] : [...P.arms].reverse()).map(arm => ({arm, nativeEffort: "HIGH" as const}));
+          : (Math.floor(index / 2) % 2 === 0 ? [...P.arms] : [...P.arms].reverse()).map(arm => ({arm, nativeEffort: benchmarkEffort}));
         for (const {arm, nativeEffort} of order) {
           const row = await execute(task, arm, nativeEffort); if (!row) {stopReason = "EPOCH_OR_CAPACITY_LIMIT"; break outer;}
           rows.push(row); await checkpoint();

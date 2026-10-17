@@ -12,10 +12,11 @@ export const ULTRA_EFFORT_DEVELOPMENT_POLICY = Object.freeze({...BASE,
   hypothesis: "NATIVE_REASONING_EFFORT_MAY_AFFECT_FINAL_ANSWER_COMPLETION_WITHIN_EXISTING_REQUEST_LIFETIME",
   calibrationMeasured: false, automaticProfilePromotion: false,
 });
-export type UltraResearchMode = "BENCHMARK_PAIR" | "DEVELOPMENT_EFFORT";
+export type UltraResearchMode = "BENCHMARK_PAIR" | "BENCHMARK_MEDIUM_PAIR" | "DEVELOPMENT_EFFORT";
 export function ultraResearchMode(value: string | undefined): UltraResearchMode {
   if (value === undefined || value === "BENCHMARK_PAIR") return "BENCHMARK_PAIR";
   if (value === "DEVELOPMENT_EFFORT") return value;
+  if (value === "BENCHMARK_MEDIUM_PAIR") return value;
   throw Error("ultra_research_mode_not_authorized");
 }
 

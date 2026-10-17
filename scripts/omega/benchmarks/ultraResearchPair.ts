@@ -24,6 +24,16 @@ export const ULTRA_RESEARCH_PAIR_POLICY = Object.freeze({
 });
 export type UltraResearchArm = typeof ULTRA_RESEARCH_PAIR_POLICY.arms[number];
 export type UltraNativeEffort = "HIGH" | "MEDIUM";
+/** Separately frozen configuration, never an automatic fallback or default.
+ * Both arms use MEDIUM; do not splice this study into the historical HIGH pair. */
+export const ULTRA_MEDIUM_RESEARCH_PAIR_POLICY = Object.freeze({...ULTRA_RESEARCH_PAIR_POLICY,
+  version: "nyx-ultra-medium-closed-book-pair/1",
+  reasoningEffort: "MEDIUM_NATIVE_EXPERIMENT_NOT_DEFAULT_PROMOTION",
+});
+export function ultraResearchPairPolicy(effort: UltraNativeEffort = "HIGH") {
+  if (effort !== "HIGH" && effort !== "MEDIUM") throw Error("ultra_research_effort_not_authorized");
+  return effort === "HIGH" ? ULTRA_RESEARCH_PAIR_POLICY : ULTRA_MEDIUM_RESEARCH_PAIR_POLICY;
+}
 export interface UltraResearchModel {
   complete(request: NvidiaNimCompletionRequest): Promise<NvidiaNimCompletionResult>;
 }
@@ -44,12 +54,14 @@ export function ultraResearchModel(env: Readonly<Record<string, string | undefin
 }
 
 /** Membership/order cannot depend on a reference, prediction or prior outcome. */
-export function ultraResearchSelection(aime: readonly PrivateTextTask[], gpqa: readonly PrivateTextTask[]) {
+export function ultraResearchSelection(aime: readonly PrivateTextTask[], gpqa: readonly PrivateTextTask[],
+  nativeEffort: UltraNativeEffort = "HIGH") {
+  const policy = ultraResearchPairPolicy(nativeEffort);
   const check = (tasks: readonly PrivateTextTask[], family: string, count: number) => {
     if (tasks.length !== count || new Set(tasks.map(t => t.taskId)).size !== count
       || tasks.some(t => t.family !== family)) throw Error("ultra_research_population_invalid");
     return [...tasks].sort((a, b) => {
-      const rank = (id: string) => createHash("sha256").update(`${ULTRA_RESEARCH_PAIR_POLICY.version}:${family}:${id}`).digest("hex");
+      const rank = (id: string) => createHash("sha256").update(`${policy.version}:${family}:${id}`).digest("hex");
       const left = rank(a.taskId), right = rank(b.taskId);
       return left < right ? -1 : left > right ? 1 : 0;
     }).slice(0, ULTRA_RESEARCH_PAIR_POLICY.samplePerFamily);
@@ -156,10 +168,12 @@ export async function runUltraResearchArm(task: PrivateTextTask, arm: UltraResea
 export type UltraResearchRow = Awaited<ReturnType<typeof runUltraResearchArm>>;
 
 /** Require actual, independently graded work before comparing realized compute. */
-export function summarizeUltraResearchPairs(selected: readonly string[], rows: readonly UltraResearchRow[]) {
+export function summarizeUltraResearchPairs(selected: readonly string[], rows: readonly UltraResearchRow[],
+  nativeEffort: UltraNativeEffort = "HIGH") {
+  ultraResearchPairPolicy(nativeEffort);
   if (!selected.length || new Set(selected).size !== selected.length
     || new Set(rows.map(r => `${r.arm}:${r.taskId}`)).size !== rows.length
-    || rows.some(r => !selected.includes(r.taskId) || !ULTRA_RESEARCH_PAIR_POLICY.arms.includes(r.arm) || r.nativeEffort !== "HIGH"
+    || rows.some(r => !selected.includes(r.taskId) || !ULTRA_RESEARCH_PAIR_POLICY.arms.includes(r.arm) || r.nativeEffort !== nativeEffort
       || (r.correct === true) !== (r.state === "PASS")
       || (r.correct === false) !== (r.state === "REASONING_FAILURE"))) throw Error("ultra_research_result_identity_invalid");
   const arms = ULTRA_RESEARCH_PAIR_POLICY.arms.map(arm => {

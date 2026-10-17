@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {ULTRA_RESEARCH_PAIR_POLICY as P, ultraResearchModel, ultraResearchSelection, standaloneUltraRequest,
   standaloneUltraResult, runUltraResearchArm, summarizeUltraResearchPairs, ultraResearchProviderConfig,
+  ULTRA_MEDIUM_RESEARCH_PAIR_POLICY, ultraResearchPairPolicy,
   type UltraResearchModel} from "./omega/benchmarks/ultraResearchPair";
 import type {NvidiaNimCompletionRequest, NvidiaNimCompletionResult, NvidiaNimEvidence} from "../src/lib/codelab/model/nvidiaNimProvider";
 import type {PrivateTextTask} from "./omega/benchmarks/nyxTextBenchmark";
@@ -72,6 +73,52 @@ await check("recognized tool action has no standalone authority", () => {
 const captured: NvidiaNimCompletionRequest[] = [];
 const direct = await runUltraResearchArm(task, "STANDALONE_ULTRA", model(reply("42"), r => captured.push(r)), "a".repeat(40), Date.now() + 10000);
 const nyx = await runUltraResearchArm(task, "CURRENT_NYX_CLOSED_BOOK", model(reply("42"), r => captured.push(r)), "a".repeat(40), Date.now() + 10000);
+await check("medium is a separately versioned experiment with identical resource and acceptance limits", () => {
+  const {version: _v, reasoningEffort: _e, ...medium} = ULTRA_MEDIUM_RESEARCH_PAIR_POLICY;
+  const {version: _hv, reasoningEffort: _he, ...high} = P;
+  assert.deepEqual(medium, high); assert.notEqual(_v, _hv);
+  assert.equal(ultraResearchPairPolicy(), P);
+  assert.equal(ultraResearchPairPolicy("MEDIUM"), ULTRA_MEDIUM_RESEARCH_PAIR_POLICY);
+  assert.throws(() => ultraResearchPairPolicy("LOW" as "HIGH"));
+});
+await check("medium selection has its own frozen rank independent of answers and input order", () => {
+  const ids = (rows: readonly PrivateTextTask[]) => rows.map(t => t.taskId);
+  const selected = ultraResearchSelection(aime, gpqa, "MEDIUM");
+  assert.deepEqual(ids(selected), ids(ultraResearchSelection([...aime].reverse().map(t => ({...t, answer: "0"})),
+    [...gpqa].reverse().map(t => ({...t, answer: "D"})), "MEDIUM")));
+  assert.equal(selected.length, 4);
+  assert.notDeepEqual(ids(selected), ids(ultraResearchSelection(aime, gpqa)));
+  assert.throws(() => ultraResearchSelection(aime, gpqa, "AUTO" as "MEDIUM"));
+});
+const mediumCaptured: NvidiaNimCompletionRequest[] = [];
+const mediumDirect = await runUltraResearchArm(task, "STANDALONE_ULTRA", model(reply("42"), r => mediumCaptured.push(r)),
+  "a".repeat(40), Date.now() + 10000, [], "MEDIUM");
+const mediumNyx = await runUltraResearchArm(task, "CURRENT_NYX_CLOSED_BOOK", model(reply("42"), r => mediumCaptured.push(r)),
+  "a".repeat(40), Date.now() + 10000, [], "MEDIUM");
+await check("both medium arms use the same native wire profile and unchanged strict parser and oracle", () => {
+  assert(mediumCaptured.length === 2 && mediumCaptured.every(r => r.reasoningEffort === "MEDIUM"
+    && r.reasoningControl === "ULTRA_HOSTED_NATIVE" && r.reasoningBudgetTokens === undefined
+    && r.maxTokens === P.maxOutputTokens && r.temperature === P.temperature && r.structuredOutputMode === "STRICT_LOCAL"));
+  assert(mediumDirect.correct && mediumNyx.correct);
+  for (const r of [mediumDirect, mediumNyx]) assert(r.cleanup.sourceUnchanged && r.cleanup.cleanupVerified
+    && r.authorization.toolsExecuted === 0 && r.authorization.repositoryReadsExecuted === 0);
+});
+await check("medium results require explicit medium summary and cannot contaminate historical high evidence", () => {
+  const summary = summarizeUltraResearchPairs([task.taskId], [mediumDirect, mediumNyx], "MEDIUM");
+  assert.equal(summary.bothCorrect, 1); assert.equal(summary.cognitivePromotion, false);
+  assert.equal(summary.officialBenchmarkScoreClaim, false);
+  assert.throws(() => summarizeUltraResearchPairs([task.taskId], [mediumDirect, mediumNyx]));
+  assert.throws(() => summarizeUltraResearchPairs([task.taskId], [direct, mediumNyx], "MEDIUM"));
+  assert.throws(() => summarizeUltraResearchPairs([task.taskId], [direct, nyx], "MEDIUM"));
+});
+await check("medium preserves wrong-answer and incomplete-coverage semantics", async () => {
+  const wrong = await runUltraResearchArm(task, "STANDALONE_ULTRA", model(reply("43")),
+    "a".repeat(40), Date.now() + 10000, [], "MEDIUM");
+  assert.equal(wrong.state, "REASONING_FAILURE"); assert.equal(wrong.correct, false);
+  const summary = summarizeUltraResearchPairs([task.taskId, "UNEXECUTED"], [wrong, mediumNyx], "MEDIUM");
+  assert.equal(summary.nyxOnly, 1); assert.equal(summary.ungradedOrUnexecutedPairs, 1);
+  assert(summary.arms.every(a => a.pilotAccuracy === null));
+});
 await check("both real disposable fixture paths admit the same independently graded reply", () => {
   assert.equal(direct.correct, true); assert.equal(nyx.correct, true);
   for (const row of [direct, nyx]) {assert(row.cleanup?.cleanupVerified); assert(row.cleanup?.sourceUnchanged);

@@ -1,5 +1,67 @@
 # NYX benchmark capability program
 
+### Frozen MEDIUM-only Ultra closed-book pair — 2026-10-17
+
+The [exact-repeat receipt](../../../docs/omega/evidence/nyx-ultra-effort-development-d2d2016-attempt2.json)
+records run `38794509659`, attempt **2**, at the unchanged `d2d2016c` candidate.
+HIGH's availability check again exhausted four attempts with in-band 503s.
+MEDIUM passed after two 503 retries. **No comparison objective was attempted**;
+seven HTTP attempts used 424 known reported tokens, with six attempts' usage
+unknown. The 4,586-byte artifact's SHA256, CRC, 14 frozen source bindings and
+terminal-log agreement were verified. Clean CI passed 121 suites / 17,794 checks,
+TypeScript zero and secret scan. Both attempts remain independent and unchanged.
+This does not establish a causal HIGH defect, MEDIUM reasoning superiority, or
+an architectural gain. Another exact repeat is not the next experiment.
+
+Instead, `BENCHMARK_MEDIUM_PAIR` freezes a **new configuration study** using
+`nvidia/nemotron-3-ultra-550b-a55b` with native MEDIUM effort in **both** standalone
+and existing NYX closed-book arms. This is a supported setting in the
+[NVIDIA inference reference](https://docs.api.nvidia.com/nim/reference/nvidia-nemotron-3-ultra-550b-a55b-infer).
+The hosted documentation's `reasoning_budget` field remains omitted: earlier
+live rejection evidence is not overwritten by documentation. Default HIGH and
+historical studies are unchanged; there is no fallback, Super override or
+automatic configuration/capability promotion.
+
+`nyx-ultra-medium-closed-book-pair/1` uses its own prospective hash rank to choose
+two AIME 2026 and two GPQA Diamond items from their unchanged pinned populations,
+without consulting references or outcomes. These are public/exposed benchmark
+corpora, **not fresh generalization**. Original HIGH results cannot be admitted
+to the MEDIUM summary, and vice versa. Both arms must pass their own MEDIUM
+availability checks before any benchmark inference. A failed gate stops this
+study; no silent HIGH-to-MEDIUM recovery is permitted.
+
+Unchanged limits: one logical call / four HTTP attempts per task-arm, 16,384 total
+completion tokens per call, temperature 0.2, 300-second request / 360-second task
+lifetime, 65-minute epoch, ten logical calls / 40 HTTP attempts including both
+availability cells. Same strict typed reply, final-answer graders, SSE transport,
+closed-book/no-tools authority, counterbalanced arm order and verified cleanup.
+Report actual calls/tokens/unknown usage and incomplete grading separately.
+Matched ceilings do **not** establish matched realized compute. No answer-specific
+repair, historical-success merging, official full-score or frontier claim.
+
+This reuses the existing runner, provider, NYX session, disposable lifecycle,
+grader and evidence model. It measures closed-book integration, **not** the full
+tool-enabled research architecture. The one-shot launch requires the exact
+commit message `eval(nyx): freeze Ultra medium-only closed-book comparison`;
+remove that trigger after terminal capture. No model call is implied by tests
+or ordinary pushes. This supporting experiment must yield actual outcomes before
+choosing a general reasoning correction and fresh transfer/ablation study.
+
+Pre-launch local verification: paired policy/selection/admission **41/41**,
+native-effort mode preservation **16/16**, provider/capacity **368/368**,
+SSE **43/43**, text grading **238/238**, historical Ultra mathematics **52/52**;
+**758 checks** in total, plus scoped compilation, TypeScript zero, secret scan,
+receipt/workflow validation and the staged-source W0 inventory check. The Python
+oracle suites used the existing isolated interpreter; no test or oracle was
+weakened to accommodate Windows aliases. These are E3 checks, not live capability.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: comparable Ultra-versus-NYX
+baseline, explicit configuration separation, no self-certification and bounded
+resources. Supporting: source/data provenance, strict acceptance, scope and
+cleanup. Deferred: tool-enabled contribution, fresh cognitive transfer, broader
+benchmark coverage and human-reviewed promotion. No authority increase or
+supersession of earlier evidence.
+
 ### Goal resumed; frozen Ultra configuration experiment — 2026-10-17
 
 The mathematical/scientific research goal is active again. The acquisition

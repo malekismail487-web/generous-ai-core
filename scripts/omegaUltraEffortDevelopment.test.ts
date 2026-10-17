@@ -15,6 +15,7 @@ const tasks = ultraEffortDevelopmentTasks();
 await check("only explicit development mode changes the campaign family", () => {
   assert.equal(ultraResearchMode(undefined), "BENCHMARK_PAIR");
   assert.equal(ultraResearchMode("DEVELOPMENT_EFFORT"), "DEVELOPMENT_EFFORT");
+  assert.equal(ultraResearchMode("BENCHMARK_MEDIUM_PAIR"), "BENCHMARK_MEDIUM_PAIR");
   for (const value of ["", "AUTO", "SUPER", "development_effort"]) assert.throws(() => ultraResearchMode(value));
 });
 await check("native effort varies only the supported field within the reviewed Ultra request", () => {
