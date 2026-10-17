@@ -1,9 +1,6 @@
 name: Omega Ultra two-request serving diagnostic
 on:
   workflow_dispatch:
-  push:
-    branches: [sol/omega-institutional-spine]
-    paths: [.github/workflows/omega-ultra-serving-diagnostic.yml]
 permissions:
   contents: read
 concurrency:
@@ -11,9 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   serving-diagnostic:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.head_commit.message == 'test(nyx): run authorized two-request Ultra serving diagnostic'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

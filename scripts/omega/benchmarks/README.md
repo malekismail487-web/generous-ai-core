@@ -1,5 +1,39 @@
 # NYX benchmark capability program
 
+### Two-request result: 503 reproduced without NYX cognition — 2026-10-17
+
+[Receipt](../../../docs/omega/evidence/ultra-serving-diagnostic-f22521d6.json),
+run `39045187106`, candidate `f22521d6`: **both physical requests returned HTTP-200
+SSE envelopes with terminal provider 503 errors and no reasoning/content deltas**.
+Minimal official-style request: one attempt, 559 ms. Existing NYX session: one
+attempt, 460 ms. Both actually sent exact Ultra, HIGH and the same supported wire
+field names with no hosted response-format grammar. Two attempts total; zero
+reported tokens, two unknown-usage attempts. No benchmark was loaded or scored.
+
+NYX's outer `RESOURCE_EXHAUSTION` label is retained: its deliberately one-attempt
+scope stops recovery after the captured 503. It is not evidence of a wrong answer
+or an Omega authority refusal. The 61,072 ms epoch includes capacity waiting,
+which was not separately recorded; this is not pure inference latency. Workflow
+success means the diagnosis completed, **not** that Ultra serving succeeded.
+
+ZIP SHA256/CRC, all 12 frozen bindings, report/log agreement (15 ms final snapshot
+difference), source preservation and NYX fixture cleanup passed. Hosted checks:
+53 pair/diagnostic checks, 43 stream checks, scoped compilation, TypeScript zero
+and secret scan. Full candidate CI passed **121 suites / 17,819 checks**, build,
+package smoke and generated inventories. No key, provider, model, benchmark budget or acceptance rule
+was substituted. The temporary launch trigger has now been removed.
+
+The failure no longer requires a NYX cognition session to reproduce. This points
+to the shared serving path but does not isolate account/region/backend load or
+prove a global outage. Both arms share HTTP/SSE infrastructure and ran sequentially.
+An explicitly authorized alternative endpoint for **the same Ultra model** is a
+reasonable next trial; a new key on the same backend is not a demonstrated fix.
+No migration or further inference is automatically launched from this result.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: simpler control, attribution and
+delivery/cognition separation. Supporting: reuse, bounded cost and custody.
+Deferred: endpoint selection/validation, complete baselines and general cognition.
+
 ### Authorized two-request Ultra serving diagnosis — 2026-10-17
 
 The operator authorized one minimal API request versus the existing NYX session,

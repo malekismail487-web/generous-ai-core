@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "identity": "NYX-ULTRA-TWO-REQUEST-SERVING-DIAGNOSTIC-f22521d6",
+  "candidate": "f22521d6dad1f2666d73ee31857e518df6c6f34e",
+  "run": {
+    "id": 39045187106,
+    "attempt": 1,
+    "jobId": 117432392256,
+    "conclusion": "success",
+    "conclusionMeaning": "DIAGNOSIS_COMPLETED_NOT_HEALTHY_MODEL_SERVICE",
+    "url": "https://github.com/malekismail487-web/generous-ai-core/actions/runs/39045187106",
+    "startedAt": "2026-10-17T15:28:22Z",
+    "completedAt": "2026-10-17T15:30:10Z"
+  },
+  "artifact": {
+    "id": 12105059554,
+    "bytes": 2277,
+    "sha256": "e1cdc44cbcfad2271ceba92632bc587f5e5e9074a4866e9252a8b3da5f28dd78",
+    "member": "ultra-serving-f22521d6dad1f2666d73ee31857e518df6c6f34e.json",
+    "reportSha256": "993b1d677434f891a658f305a0ae050665f04d15aae37461170cacae76ee0ece"
+  },
+  "custody": {
+    "archiveCrcChecked": true,
+    "frozenSourceBindingsVerified": 12,
+    "reportLogAgreementExceptElapsedMs": true,
+    "artifactElapsedMs": 61072,
+    "logElapsedMs": 61087,
+    "sourceUnchanged": true,
+    "nyxDisposableCleanupVerified": true,
+    "artifactFixityIsNotAuthentication": true,
+    "rawModelContentAccessedByInvestigator": false,
+    "rawPrivateReasoningStored": false,
+    "credentialAccess": "EXISTING_SECRET_INJECTED_ONLY_AT_DISPATCH_NOT_READ_BY_INVESTIGATOR_OR_PERSISTED"
+  },
+  "validation": {
+    "ultraPairAndServingChecks": 53,
+    "eventStreamChecks": 43,
+    "typeScript": "5.8.3 baseline=0 current=0 new=0",
+    "scopedTypecheck": "PASS",
+    "secretScan": "1465_TEXT_FILES_ZERO_FINDINGS"
+  },
+  "cleanCi": {
+    "runId": 39045187058,
+    "jobId": 117432392095,
+    "candidate": "f22521d6dad1f2666d73ee31857e518df6c6f34e",
+    "conclusion": "success",
+    "suites": 121,
+    "passedChecks": 17819,
+    "failedSuites": 0,
+    "typeScript": "5.8.3 baseline=0 current=0 new=0",
+    "secretScan": "1465_TEXT_FILES_ZERO_FINDINGS",
+    "productionBuild": "PASS",
+    "packageSmoke": "PASS",
+    "generatedInventories": "PASS",
+    "offlineChecks": 334,
+    "staticAuditChecks": 9
+  },
+  "interpretation": {
+    "finding": "503_REPRODUCED_WITHOUT_NYX_SESSION_AND_WITH_EXISTING_NYX_SESSION",
+    "minimal": {
+      "httpStatus": 200,
+      "terminalProviderStatus": 503,
+      "httpAttempts": 1,
+      "delivered": false,
+      "elapsedMs": 559
+    },
+    "nyx": {
+      "httpStatus": 200,
+      "terminalProviderStatus": 503,
+      "httpAttempts": 1,
+      "delivered": false,
+      "elapsedMs": 460,
+      "outerOutcome": "RESOURCE_EXHAUSTION",
+      "outerOutcomeExplanation": "The one-attempt scope prevents recovery after the observed provider 503; preserve this wrapper outcome rather than calling it a reasoning or Omega authorization failure."
+    },
+    "physicalHttpAttempts": 2,
+    "reportedTokens": 0,
+    "unknownUsageAttempts": 2,
+    "actualTokenUsage": "UNKNOWN_NOT_ZERO",
+    "benchmarkQuestionsLoaded": 0,
+    "benchmarkScore": null,
+    "nativeEffort": "HIGH_IN_BOTH_REQUEST_BODIES",
+    "hostedResponseFormat": "ABSENT_IN_BOTH_REQUEST_BODIES",
+    "sameWireFieldNames": true,
+    "noReasoningOrContentDeltas": true,
+    "epochWallMs": 61072,
+    "preTaskCapacityWait": "NOT_SEPARATELY_RECORDED_EPOCH_WALL_INCLUDES_WAIT_NOT_PURE_INFERENCE",
+    "sourceUnchanged": true,
+    "authorityDelta": "NONE",
+    "modelOrEndpointChanged": false,
+    "benchmarkAcceptanceChanged": false,
+    "nyxCognitionNecessaryToReproduceFailure": false,
+    "exactRootCauseEstablished": false,
+    "globalOutageEstablished": false,
+    "keyInvalidityEstablished": false,
+    "sharedComponentLimitations": "Both use the fixed NVIDIA endpoint, same account/secret path, common HTTP/SSE infrastructure and sequential rather than randomized order. This localizes failure outside the NYX cognition session but does not isolate account, region, load balancer or backend cause.",
+    "cognitiveImprovementClaim": false,
+    "causalFormatDefectClaim": false,
+    "defaultOrConfigurationPromotion": false,
+    "priorEvidencePreserved": true,
+    "recommendedNextStep": "An explicitly authorized, separately labeled smoke check of another serving endpoint for the exact Ultra model is reasonable. A new key on the same backend is not a proven fix. Provider, base URL, exact model identifier and serving differences need validation before migration; do not request a key in chat.",
+    "noAdditionalModelCallsScheduled": true
+  },
+  "report": {
+    "schemaVersion": 1,
+    "identity": "NYX-ULTRA-TWO-REQUEST-SERVING-DIAGNOSTIC-001",
+    "candidate": "f22521d6dad1f2666d73ee31857e518df6c6f34e",
+    "executionIdentity": "github-actions-39045187106",
+    "policy": {
+      "version": "ultra-serving-diagnostic/1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "maxHttpAttempts": 2,
+      "maxOutputTokens": 16384,
+      "maxRequestMs": 120000,
+      "maxEpochMs": 330000,
+      "reasoningEffort": "high",
+      "temperature": 0.2,
+      "arms": [
+        "MINIMAL_OFFICIAL_REQUEST",
+        "EXISTING_NYX_SESSION"
+      ]
+    },
+    "sourceBindings": {
+      "scripts/omega/nyx-ultra-serving-diagnostic.ts": "2ee23b036fd5f41588e9ae36540938b68380424acb62514bde1fda0b5639340b",
+      "scripts/omega/benchmarks/ultraResearchPair.ts": "fcd6f88a8a245fbb717a68f37737f071a4e0779b913fe0efffca31f54f5ee837",
+      "scripts/omega/benchmarks/nyxTextBenchmark.ts": "5b630eddbe1dfaeb9580451ebaf705b9bb1b2c76cf7a54140e63dcf300e8585a",
+      "scripts/omega/benchmarks/r3RepositorySession.ts": "f2b60dd4cd3ec29d719519f21c3cc58af6a9989a9f65134239ee7cd7dd373536",
+      "src/lib/codelab/cli/nyxChatSession.ts": "8fac7ca3d54df9e1d2a061099dc5b763673c0a7af08f1b3d8ea7d012984cc0f0",
+      "src/lib/codelab/cli/nyxChatProtocol.ts": "7895e0e39a7d65ba7d678c89ddeb435b41b90edda2b50ac605e83cbb0daafd2d",
+      "src/lib/codelab/model/nvidiaNimProvider.ts": "dcae17a73232c37b3f93d8afc78ef29c0a6a7c76bbcbc4a080b2d270df310604",
+      "src/lib/codelab/model/nvidiaEventStream.ts": "4498aaf108465f68f1db8fbdf5c89a438d0e20fe960ce7568b828b14d1a513b4",
+      "src/lib/codelab/model/nvidiaCapacity.ts": "6bc1154b98db896c2f4a0bae53bef7cec4cd39792cae0804ac87dbe0d9771d4a",
+      "src/lib/codelab/executor/readOnlyExecutor.ts": "fde4893c4e663c1eeebafba8f7c3194e7d429883993bb933c624a23637bb9bef",
+      "scripts/omega/nyx-aime26-live-eval.ts": "03e961bde512b6da72cf93c1d85d6a39e4bf0eb6ff3ce1b717f13352770ec4ef",
+      ".github/workflows/omega-ultra-serving-diagnostic.yml": "341b2143199b16c2298d971cd06462b1bbcd79ce9d1a07636f7cc2636df37cc3"
+    },
+    "rows": [
+      {
+        "arm": "MINIMAL_OFFICIAL_REQUEST",
+        "state": "PROVIDER_ERROR",
+        "delivered": false,
+        "syntheticResponseAccepted": null,
+        "httpStatus": 200,
+        "providerStatus": 503,
+        "finishReason": null,
+        "httpAttempts": 1,
+        "reportedTokens": null,
+        "elapsedMs": 559,
+        "stream": {
+          "mode": "BOUNDED_SSE",
+          "scope": "LAST_HTTP_ATTEMPT_ONLY",
+          "timingOrigin": "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
+          "wireBytes": 116,
+          "chunks": 1,
+          "events": 1,
+          "reasoningDeltaBytes": 0,
+          "contentDeltaBytes": 0,
+          "firstEventAfterMs": 2,
+          "firstReasoningAfterMs": null,
+          "firstContentAfterMs": null,
+          "lastEventAfterMs": 2,
+          "usageReceived": false,
+          "reportedUsage": {
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null
+          },
+          "failureCode": "nvidia_stream_provider_error",
+          "providerErrorStatusCode": 503,
+          "terminal": "PROVIDER_ERROR"
+        },
+        "cleanupVerified": null
+      },
+      {
+        "arm": "EXISTING_NYX_SESSION",
+        "state": "RESOURCE_EXHAUSTION",
+        "delivered": false,
+        "syntheticResponseAccepted": null,
+        "httpStatus": 200,
+        "providerStatus": 503,
+        "finishReason": null,
+        "httpAttempts": 1,
+        "reportedTokens": null,
+        "elapsedMs": 460,
+        "stream": {
+          "mode": "BOUNDED_SSE",
+          "scope": "LAST_HTTP_ATTEMPT_ONLY",
+          "timingOrigin": "RESPONSE_HEADERS_RECEIVED_NOT_DISPATCH",
+          "wireBytes": 116,
+          "chunks": 1,
+          "events": 1,
+          "reasoningDeltaBytes": 0,
+          "contentDeltaBytes": 0,
+          "firstEventAfterMs": 0,
+          "firstReasoningAfterMs": null,
+          "firstContentAfterMs": null,
+          "lastEventAfterMs": 0,
+          "usageReceived": false,
+          "reportedUsage": {
+            "promptTokens": null,
+            "completionTokens": null,
+            "totalTokens": null
+          },
+          "failureCode": "nvidia_stream_provider_error",
+          "providerErrorStatusCode": 503,
+          "terminal": "PROVIDER_ERROR"
+        },
+        "cleanupVerified": true
+      }
+    ],
+    "wireProfiles": [
+      {
+        "arm": "MINIMAL_OFFICIAL_REQUEST",
+        "keys": [
+          "max_tokens",
+          "messages",
+          "model",
+          "reasoning_effort",
+          "stream",
+          "stream_options",
+          "temperature"
+        ],
+        "requestDigest": "bf0af621f7df5a878a45202e1a0c93cb74c3bfca01d8d1b0f1dc7ca398a776a6",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "maxTokens": 16384,
+        "reasoningEffort": "high",
+        "hostedResponseFormat": null,
+        "stream": true
+      },
+      {
+        "arm": "EXISTING_NYX_SESSION",
+        "keys": [
+          "max_tokens",
+          "messages",
+          "model",
+          "reasoning_effort",
+          "stream",
+          "stream_options",
+          "temperature"
+        ],
+        "requestDigest": "dabe70bb876d694c3515fa108148a7d2dc21aa66a0645b85973ee8333429f2d1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "maxTokens": 16384,
+        "reasoningEffort": "high",
+        "hostedResponseFormat": null,
+        "stream": true
+      }
+    ],
+    "httpDispatches": 2,
+    "summary": {
+      "complete": true,
+      "finding": "503_REPRODUCED_OUTSIDE_NYX_AND_IN_NYX",
+      "physicalCalls": 2,
+      "reportedTokens": 0,
+      "unknownUsageCalls": 2,
+      "benchmarkScore": null,
+      "cognitiveGain": false,
+      "causalFormatDefectEstablished": false,
+      "limitations": "TWO_SEQUENTIAL_SYNTHETIC_REQUESTS_WITH_DIFFERENT_PROMPTS_NOT_MATCHED_COGNITIVE_COMPARISON_OR_GLOBAL_OUTAGE_PROOF"
+    },
+    "activeArm": null,
+    "stopReason": "TWO_REQUEST_DIAGNOSIS_COMPLETE",
+    "infrastructureCode": null,
+    "elapsedMs": 61072,
+    "sourceUnchanged": true,
+    "benchmarkDataLoaded": false,
+    "rawContentStored": false,
+    "rawReasoningStored": false,
+    "credentialsStored": false,
+    "sourceRepositoryMutation": false,
+    "authorityDelta": "NONE",
+    "defaultModelChanged": false,
+    "endpointChanged": false
+  },
+  "planCoverage": {
+    "status": "PARTIAL / JUST-IN-TIME",
+    "direct": [
+      "Separate model capability, configuration, integration and delivery failures",
+      "Test a simpler control before blaming architecture",
+      "Fixed model, endpoint and finite request budget"
+    ],
+    "supporting": [
+      "Reuse existing NYX session and Omega confinement",
+      "Sanitized evidence and independent custody"
+    ],
+    "deferred": [
+      "Same-model endpoint migration pending explicit scope",
+      "Complete Ultra benchmark baseline",
+      "General cognitive improvement and fresh transfer"
+    ],
+    "conflicts": []
+  }
+}
