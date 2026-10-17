@@ -1,5 +1,37 @@
 # NYX benchmark capability program
 
+### Candidate NVIDIA key: same Ultra serving failure — 2026-10-17
+
+[Receipt](../../../docs/omega/evidence/ultra-serving-candidate-key-5b5cf1a7.json),
+run `39046833227`, candidate `5b5cf1a7`: the separately injected
+`NYX_ULTRA_CANDIDATE_API_KEY` did **not** resolve the observed provider failure.
+Both the minimal request (532 ms) and existing NYX session (441 ms) returned
+HTTP-200 SSE envelopes containing terminal **503**, without reasoning or content.
+Exact Ultra / HIGH, endpoint, runtime source, two-attempt limit and acceptance
+checks remained unchanged. The original `NVIDIA_API_KEY` and default runtime
+configuration were not changed; the investigator never read either key value.
+
+Two physical requests; zero reported tokens and two unknown-usage requests,
+not proof of zero compute. No benchmark was loaded or scored. NYX's outer
+`RESOURCE_EXHAUSTION` reflects its one-attempt limit after the provider error,
+not an incorrect answer or authorization refusal. Epoch wall time was 61,046 ms,
+including capacity waiting. ZIP SHA256/CRC, all 12 source bindings, report/log
+agreement (14 ms snapshot difference), source preservation and cleanup passed.
+Hosted diagnostic checks: 53 pair/serving + 43 parser, scoped compilation,
+TypeScript zero and secret scan. An initial YAML-rejected launch created no jobs
+or model calls; its scalar syntax was corrected and parser-validated before retry.
+The temporary push trigger has been removed; the diagnostic is manual-only.
+
+This preserves, rather than replaces, the earlier failure evidence. It does not
+prove key invalidity, a global outage or the exact backend cause. Next useful
+change: restored serving or an explicitly identified, authorized alternative
+endpoint for **the same Ultra model**, not speculative cognition changes or more
+same-backend key rotations. No further inference is automatically scheduled.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: delivery/cognition separation,
+bounded simpler control and honest unknown usage. Supporting: reused confinement,
+secret injection and custody. Deferred: complete baselines and fresh transfer.
+
 ### Two-request result: 503 reproduced without NYX cognition — 2026-10-17
 
 [Receipt](../../../docs/omega/evidence/ultra-serving-diagnostic-f22521d6.json),
