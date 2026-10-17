@@ -1,5 +1,51 @@
 # NYX benchmark capability program
 
+### Goal resumed; frozen Ultra configuration experiment — 2026-10-17
+
+The mathematical/scientific research goal is active again. The acquisition
+sections below record historical paused-goal milestones, not current goal status.
+At resume checkpoint `6b10c8a7`, all **1,842 bound artifacts / 29,249,440,638
+bytes** were rehashed with zero missing or mismatched files. This verifies retained
+bytes, not evaluator operational readiness or model capability. Kaggle access,
+large-release storage, private/remote graders and compatible isolated runtimes
+remain scoped prerequisites; no requirement was waived.
+
+Captured the previously terminal [native-effort development result](../../../docs/omega/evidence/nyx-ultra-effort-development-d2d2016-attempt1.json)
+from frozen candidate `d2d2016c`, run `38794509659`, attempt **1**. HIGH effort's
+availability check exhausted four HTTP attempts with in-band 503s; MEDIUM passed
+in one attempt. **Zero of the four comparison objectives were attempted.**
+The artifact SHA256, archive CRC, all 14 frozen source bindings and terminal-log
+agreement were verified. Known usage was 420 tokens; four HTTP attempts have
+unknown token usage. This is an incomplete configuration experiment, not evidence
+that MEDIUM has better reasoning, not a benchmark score, and not grounds for
+changing the Ultra default.
+
+After goal resumption, exactly one bounded repeat was requested through the
+GitHub integration: the same run, attempt **2**, job `117355638664`, same frozen
+candidate, model, objectives, strict oracles, finite leases and resource limits.
+It was observed running; **no repeat outcome is claimed here**. Preserve both
+attempts separately and inspect this job before taking any further inference
+action. All 14 bound files were unchanged at the resume checkpoint. No Super
+fallback or additional campaign was started. The spent one-shot push trigger
+has been removed; this does not alter the already-running frozen job.
+
+Local checks: native-effort development **16/16**, paired comparison **36/36**,
+acquisition safety **19/19**, TypeScript 5.8.3 **0/0/0**, secret scan zero findings.
+The first local oracle test could not find Python through its default alias;
+rerunning with the already installed isolated Python passed, without changing
+the test or oracle. Eight unrelated UI edits remain outside this milestone.
+
+Capability promotion remains deferred. The next empirical decision is whether
+the complete frozen repeat can distinguish configuration effects from provider
+failure. Fresh cross-domain, tool-enabled NYX-versus-Ultra comparisons and genuine
+general reasoning improvements remain required by the full goal.
+
+Ω coverage: **PARTIAL / JUST-IN-TIME**. Direct: preserve negative evidence,
+separate availability/configuration from capability, freeze comparable conditions,
+and retain explicit compute uncertainty. Supporting: provenance, independent
+oracles, unchanged authority and cleanup. Deferred: complete baselines, fresh
+transfer and human-reviewed promotion. No architectural conflict or authority delta.
+
 ### SciCode numeric data acquired — 2026-10-17
 
 The normal author-provided anonymous download succeeded: complete `test_data.h5`,
